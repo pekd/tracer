@@ -91,7 +91,8 @@ public class Ptrace implements Closeable {
         regs.rip = ptr;
         setRegisters(regs);
         for (MemorySegment s : map.getSegments()) {
-            if (!s.contains(regs.rip)) {
+            // avoid unmapping the vsyscall (e.g. ffffffffff600000-ffffffffff601000)
+            if (!s.contains(regs.rip) && s.start > 0) {
                 munmap(s.start, s.length);
             }
         }
