@@ -38,29 +38,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.test;
+package org.graalvm.vm.x86.isa;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.graalvm.vm.memory.exception.SegmentationViolation;
 
-import org.graalvm.vm.x86.isa.AMD64Instruction;
-import org.graalvm.vm.x86.isa.AMD64InstructionDecoder;
-import org.graalvm.vm.x86.isa.CodeArrayReader;
-import org.graalvm.vm.x86.isa.CodeReader;
+public class CodeArrayReader extends CodeReader {
+    private int offset;
+    private byte[] code;
 
-public class InstructionTest {
-    protected AMD64Instruction decode(byte[] code) {
-        CodeReader reader = new CodeArrayReader(code, 0);
-        AMD64Instruction insn = AMD64InstructionDecoder.decode(0, reader);
-        assertNotNull(insn);
-        assertEquals(code.length, reader.getPC());
-        return insn;
+    public CodeArrayReader(byte[] code, int offset) {
+        this.offset = offset;
+        this.code = code;
     }
 
-    protected void check(byte[] code, String asm, Class<? extends AMD64Instruction> clazz) {
-        AMD64Instruction insn = decode(code);
-        assertTrue("wrong class: " + insn.getClass().getCanonicalName() + ", expected: " + clazz.getCanonicalName(), clazz.isInstance(insn));
-        assertEquals(asm, insn.getDisassembly());
+    @Override
+    public long getPC() {
+        return offset;
+    }
+
+    @Override
+    public void setPC(long pc) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public byte peek8(int off) {
+        int ptr = offset + off;
+        if (ptr < 0 || ptr >= code.length) {
+            throw new SegmentationViolation(ptr);
+        }
+        return code[ptr];
+    }
+
+    @Override
+    public byte read8() {
+        return code[offset++];
+    }
+
+    public int available() {
+        return code.length - offset;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return available() > 0;
     }
 }

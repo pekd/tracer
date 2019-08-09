@@ -54,6 +54,8 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
     private byte[] deltaId;
     private long[] deltaValue;
 
+    private long pc;
+
     public DeltaCpuStateRecord() {
         super(MAGIC);
     }
@@ -116,9 +118,6 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             cnt++;
         }
         if (lastState.r15 != state.r15) {
-            cnt++;
-        }
-        if (lastState.rip != state.rip) {
             cnt++;
         }
         if (lastState.fs != state.fs) {
@@ -224,41 +223,38 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             deltaValue[pos] = state.r15;
             pos++;
         }
-        if (lastState.rip != state.rip) {
-            deltaId[pos] = 16;
-            deltaValue[pos] = state.rip;
-            pos++;
-        }
         if (lastState.fs != state.fs) {
-            deltaId[pos] = 17;
+            deltaId[pos] = 16;
             deltaValue[pos] = state.fs;
             pos++;
         }
         if (lastState.gs != state.gs) {
-            deltaId[pos] = 18;
+            deltaId[pos] = 17;
             deltaValue[pos] = state.gs;
             pos++;
         }
         if (lastState.getRFL() != state.getRFL()) {
-            deltaId[pos] = 19;
+            deltaId[pos] = 18;
             deltaValue[pos] = state.getRFL();
             pos++;
         }
         if (lastState.instructionCount != state.instructionCount) {
-            deltaId[pos] = 20;
+            deltaId[pos] = 19;
             deltaValue[pos] = state.instructionCount;
             pos++;
         }
         for (int i = 0; i < 16; i++) {
             if (!lastState.xmm[i].equals(state.xmm[i])) {
-                deltaId[pos] = (byte) (21 + 2 * i);
+                deltaId[pos] = (byte) (20 + 2 * i);
                 deltaValue[pos] = state.xmm[i].getI64(0);
                 pos++;
-                deltaId[pos] = (byte) (22 + 2 * i);
+                deltaId[pos] = (byte) (21 + 2 * i);
                 deltaValue[pos] = state.xmm[i].getI64(1);
                 pos++;
             }
         }
+
+        pc = state.rip;
     }
 
     @Override
@@ -268,6 +264,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         } else {
             // compute state
             CpuState state = getLastState().clone();
+            state.rip = pc;
             clearLastState();
             for (int i = 0; i < deltaId.length; i++) {
                 long val = deltaValue[i];
@@ -321,23 +318,20 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
                         state.r15 = val;
                         break;
                     case 16:
-                        state.rip = val;
-                        break;
-                    case 17:
                         state.fs = val;
                         break;
-                    case 18:
+                    case 17:
                         state.gs = val;
                         break;
-                    case 19:
+                    case 18:
                         state.setRFL(val);
                         break;
-                    case 20:
+                    case 19:
                         state.instructionCount = val;
                         break;
                     default:
-                        if (deltaId[i] > 20 && deltaId[i] < (21 + 16 * 2)) {
-                            int v = deltaId[i] - 21;
+                        if (deltaId[i] > 19 && deltaId[i] < (20 + 16 * 2)) {
+                            int v = deltaId[i] - 20;
                             int reg = v / 2;
                             state.xmm[reg].setI64(v % 2 == 0 ? 0 : 1, val);
                         } else {
@@ -351,12 +345,18 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
     }
 
     @Override
+    public long getPC() {
+        return pc;
+    }
+
+    @Override
     protected int getDataSize() {
-        return 1 + deltaId.length + 8 * deltaId.length;
+        return 1 + deltaId.length + 8 * deltaId.length + 8;
     }
 
     @Override
     protected void readRecord(WordInputStream in) throws IOException {
+        pc = in.read64bit();
         int cnt = in.read8bit();
         deltaId = new byte[cnt];
         deltaValue = new long[cnt];
@@ -368,6 +368,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
+        out.write64bit(pc);
         out.write8bit((byte) deltaId.length);
         for (int i = 0; i < deltaId.length; i++) {
             out.write8bit(deltaId[i]);

@@ -49,6 +49,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,12 +62,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
-import org.graalvm.vm.x86.node.debug.trace.LocationRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
@@ -100,10 +102,16 @@ public class InstructionView extends JPanel {
     private List<ChangeListener> changeListeners;
     private List<CallListener> callListeners;
 
+    private SymbolResolver resolver;
+    private MappedFiles mappedFiles;
+
     public InstructionView(Consumer<String> status) {
         super(new BorderLayout());
         changeListeners = new ArrayList<>();
         callListeners = new ArrayList<>();
+
+        resolver = new SymbolResolver(new TreeMap<>());
+        mappedFiles = new MappedFiles(new TreeMap<>());
 
         insns = new JList<>(model = new DefaultListModel<>());
         insns.setFont(MainWindow.FONT);
@@ -123,7 +131,7 @@ public class InstructionView extends JPanel {
             } else {
                 step = (StepRecord) ((RecordNode) node).getRecord();
             }
-            LocationRecord loc = step.getLocation();
+            Location loc = Location.getLocation(resolver, mappedFiles, step);
             StringBuilder buf = new StringBuilder();
             buf.append("PC=0x");
             buf.append(HexFormatter.tohex(loc.getPC(), 16));
@@ -134,8 +142,10 @@ public class InstructionView extends JPanel {
             if (loc.getFilename() != null) {
                 buf.append(" [");
                 buf.append(loc.getFilename());
-                buf.append(" @ 0x");
-                buf.append(HexFormatter.tohex(loc.getOffset(), 8));
+                if (loc.getOffset() != -1) {
+                    buf.append(" @ 0x");
+                    buf.append(HexFormatter.tohex(loc.getOffset(), 8));
+                }
                 buf.append("]");
             }
             status.accept(buf.toString());
@@ -158,6 +168,14 @@ public class InstructionView extends JPanel {
                 trace();
             }
         });
+    }
+
+    public void setSymbolResolver(SymbolResolver resolver) {
+        this.resolver = resolver;
+    }
+
+    public void setMappedFiles(MappedFiles files) {
+        this.mappedFiles = files;
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -217,7 +235,7 @@ public class InstructionView extends JPanel {
             fireCallEvent((BlockNode) node);
         } else {
             StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
-            if (step.getLocation().getMnemonic().equals("ret")) {
+            if (step.getMnemonic().equals("ret")) {
                 fireRetEvent((RecordNode) node);
             }
         }
@@ -231,18 +249,18 @@ public class InstructionView extends JPanel {
         buf.append("</span></pre></body></html>");
     }
 
-    private static String format(StepRecord step) {
-        LocationRecord loc = step.getLocation();
+    private String format(StepRecord step) {
+        Location loc = Location.getLocation(resolver, mappedFiles, step);
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
         buf.append(HexFormatter.tohex(loc.getPC(), 16));
         buf.append(": ");
-        buf.append(Utils.tab(loc.getDisassembly(), 12));
+        buf.append(Utils.tab(loc.getAsm(), 12));
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.contentEquals("syscall")) {
             String decoded = SyscallDecoder.decode(step.getState().getState());
             if (decoded != null) {
-                comment(buf, loc.getDisassembly(), decoded);
+                comment(buf, loc.getAsm(), decoded);
             }
         }
         return buf.toString();
@@ -264,7 +282,7 @@ public class InstructionView extends JPanel {
                 model.addElement(format(step));
             } else if (n instanceof BlockNode) {
                 StepRecord step = ((BlockNode) n).getHead();
-                LocationRecord loc = ((BlockNode) n).getFirstStep().getLocation();
+                Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
                 StringBuilder buf = new StringBuilder(format(step));
                 if (loc.getSymbol() != null) {
                     buf.append(" # <");
@@ -367,7 +385,7 @@ public class InstructionView extends JPanel {
                 c.setForeground(CALL_FG);
             } else if (node instanceof RecordNode) {
                 StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
-                String mnemonic = step.getLocation().getMnemonic();
+                String mnemonic = step.getMnemonic();
                 switch (mnemonic) {
                     case "ret":
                         c.setForeground(RET_FG);

@@ -51,13 +51,13 @@ import org.graalvm.vm.memory.MemoryPage;
 import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.posix.api.ProcessExitException;
 import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.AMD64Context;
 import org.graalvm.vm.x86.AMD64Language;
 import org.graalvm.vm.x86.ArchitecturalState;
 import org.graalvm.vm.x86.CpuRuntimeException;
 import org.graalvm.vm.x86.Options;
-import org.graalvm.vm.x86.SymbolResolver;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.isa.IndirectException;
@@ -74,6 +74,7 @@ import org.graalvm.vm.x86.node.WriteNode;
 import org.graalvm.vm.x86.node.debug.PrintArgumentsNode;
 import org.graalvm.vm.x86.node.debug.PrintStateNode;
 import org.graalvm.vm.x86.node.debug.TraceArgumentsNode;
+import org.graalvm.vm.x86.node.debug.TraceStateNode;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceWriter;
 import org.graalvm.vm.x86.node.init.CopyToCpuStateNode;
 import org.graalvm.vm.x86.posix.InteropException;
@@ -97,6 +98,7 @@ public class AMD64BasicBlock extends AMD64Node {
     private static final boolean PRINT_STATE = getBoolean(Options.DEBUG_PRINT_STATE);
     private static final boolean PRINT_ONCE = getBoolean(Options.DEBUG_PRINT_ONCE);
     private static final boolean PRINT_ARGS = getBoolean(Options.DEBUG_PRINT_ARGS);
+    private static final boolean EXEC_TRACE = getBoolean(Options.EXEC_TRACE);
 
     @CompilationFinal private static boolean DEBUG_COMPILER = false;
 
@@ -108,6 +110,7 @@ public class AMD64BasicBlock extends AMD64Node {
     @CompilationFinal ExecutionTraceWriter traceWriter;
     @Child private CopyToCpuStateNode readCpuState;
     @Child private TraceArgumentsNode traceArgs;
+    @Child private TraceStateNode traceState;
 
     @Child private ReadNode readInstructionCount;
     @Child private WriteNode writeInstructionCount;
@@ -166,10 +169,14 @@ public class AMD64BasicBlock extends AMD64Node {
     }
 
     private void createChildren() {
-        ArchitecturalState state = AMD64Language.getCurrentContextReference().get().getState();
+        AMD64Context ctx = AMD64Language.getCurrentContextReference().get();
+        ArchitecturalState state = ctx.getState();
         instructionCount = state.getInstructionCount();
         readInstructionCount = new RegisterReadNode(instructionCount);
         writeInstructionCount = new RegisterWriteNode(instructionCount);
+        if (EXEC_TRACE) {
+            traceState = new TraceStateNode(ctx);
+        }
     }
 
     public boolean isIndirect() {
@@ -246,29 +253,7 @@ public class AMD64BasicBlock extends AMD64Node {
 
     @TruffleBoundary
     private void writeTrace(CpuState state, AMD64Instruction insn) {
-        long pc = state.rip;
-        AMD64Context ctx = ctxref.get();
-        Symbol sym = symbolResolver.getSymbol(pc);
-        long base = 0;
-
-        if (sym == null) {
-            PosixEnvironment posix = ctx.getPosixEnvironment();
-            sym = posix.getSymbol(pc);
-            long b = posix.getBase(pc);
-            if (b != -1) {
-                base = pc - b;
-            }
-        }
-
-        String func = sym == null ? null : sym.getName();
-        String filename = null;
-        VirtualMemory mem = ctx.getMemory();
-        MemoryPage page = mem.get(pc);
-        if (page != null && page.name != null) {
-            filename = page.name;
-        }
-
-        traceWriter.step(state, filename, func, base, insn);
+        traceWriter.step(state, insn);
     }
 
     @TruffleBoundary
@@ -382,6 +367,11 @@ public class AMD64BasicBlock extends AMD64Node {
             for (AMD64Instruction insn : instructions) {
                 if (DEBUG) {
                     debug(frame, pc, insn);
+                }
+                if (EXEC_TRACE) {
+                    updateInstructionCount(frame, n);
+                    n = 0;
+                    traceState.execute(frame, pc, insn);
                 }
                 // rdtsc/call needs current instruction count
                 if (insn instanceof Rdtsc || insn instanceof Call) {

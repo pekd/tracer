@@ -46,6 +46,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +56,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
@@ -78,8 +80,12 @@ public class CallStackView extends JPanel {
     private List<LevelUpListener> listeners;
     private List<LevelPeekListener> peekListeners;
 
+    private SymbolResolver resolver;
+
     public CallStackView() {
         super(new BorderLayout());
+
+        resolver = new SymbolResolver(new TreeMap<>());
 
         listeners = new ArrayList<>();
         peekListeners = new ArrayList<>();
@@ -114,6 +120,10 @@ public class CallStackView extends JPanel {
                 }
             }
         });
+    }
+
+    public void setSymbolResolver(SymbolResolver resolver) {
+        this.resolver = resolver;
     }
 
     public void addLevelUpListener(LevelUpListener listener) {
@@ -190,17 +200,17 @@ public class CallStackView extends JPanel {
         }
     }
 
-    private static String format(StepRecord step) {
+    private String format(StepRecord step) {
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
-        buf.append(HexFormatter.tohex(step.getLocation().getPC(), 16));
-        if (step.getLocation().getSymbol() != null) {
+        buf.append(HexFormatter.tohex(step.getPC(), 16));
+        if (resolver.getSymbol(step.getPC()) != null && resolver.getSymbol(step.getPC()).getName() != null) {
             buf.append(" <");
-            buf.append(step.getLocation().getSymbol());
+            buf.append(resolver.getSymbol(step.getPC()).getName());
             buf.append('>');
         }
         buf.append(' ');
-        buf.append(step.getLocation().getDisassembly().replace('\t', ' '));
+        buf.append(step.getDisassembly().replace('\t', ' '));
         return buf.toString();
     }
 
@@ -215,7 +225,7 @@ public class CallStackView extends JPanel {
         }
         if (block != null && block.getHead() == null) {
             StepRecord first = block.getFirstStep();
-            callStack.add("0x" + HexFormatter.tohex(first.getLocation().getPC(), 16) + " <_start>");
+            callStack.add("0x" + HexFormatter.tohex(first.getPC(), 16) + " <_start>");
             callStackBlocks.add(block);
         }
         Collections.reverse(callStack);

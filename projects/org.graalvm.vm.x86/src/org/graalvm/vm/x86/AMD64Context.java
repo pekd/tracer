@@ -47,6 +47,7 @@ import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.Stack;
 import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceWriter;
 import org.graalvm.vm.x86.node.debug.trace.LogStreamHandler;

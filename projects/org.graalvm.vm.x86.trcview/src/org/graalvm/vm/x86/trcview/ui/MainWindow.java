@@ -71,7 +71,7 @@ import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.analysis.Search;
-import org.graalvm.vm.x86.trcview.analysis.Symbol;
+import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
@@ -145,7 +145,7 @@ public class MainWindow extends JFrame {
             StepRecord step = view.getSelectedInstruction();
             String input;
             if (step != null) {
-                long loc = step.getLocation().getPC();
+                long loc = step.getPC();
                 input = JOptionPane.showInputDialog("Enter address:", HexFormatter.tohex(loc));
                 if (input != null && input.trim().length() > 0) {
                     try {
@@ -162,7 +162,7 @@ public class MainWindow extends JFrame {
                     }
                 }
             } else {
-                Optional<Symbol> first = symbols.getSymbols().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).findFirst();
+                Optional<ComputedSymbol> first = symbols.getSymbols().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).findFirst();
                 if (first.isPresent()) {
                     input = JOptionPane.showInputDialog("Enter address:", HexFormatter.tohex(first.get().address));
                 } else {
@@ -192,7 +192,7 @@ public class MainWindow extends JFrame {
         gotoNext.addActionListener(e -> {
             StepRecord step = view.getSelectedInstruction();
             if (step != null) {
-                long pc = step.getLocation().getPC();
+                long pc = step.getPC();
                 Node n = Search.nextPC(view.getSelectedNode(), pc);
                 if (n != null) {
                     log.info("Jumping to next occurence of PC=0x" + HexFormatter.tohex(pc));
@@ -235,9 +235,11 @@ public class MainWindow extends JFrame {
             setStatus("Trace loaded");
             setTitle(file + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
+                view.setComputedSymbols(analysis.getComputedSymbolTable());
+                view.setSymbolResolver(analysis.getSymbolResolver());
+                view.setMappedFiles(analysis.getMappedFiles());
                 view.setRoot(root);
-                view.setSymbols(analysis.getSymbolTable());
-                symbols = analysis.getSymbolTable();
+                symbols = analysis.getComputedSymbolTable();
                 trace = root;
                 gotoPC.setEnabled(true);
                 gotoNext.setEnabled(true);

@@ -272,4 +272,80 @@ public class CopyToCpuStateNode extends AMD64Node {
         state.instructionCount = FrameUtil.getLongSafe(frame, instructionCount);
         return state;
     }
+
+    @ExplodeLoop
+    public CpuState executeDynamic(VirtualFrame frame, long pc, CpuState state, boolean[] gprMask, boolean[] avxMask) {
+        createChildrenIfNecessary();
+        if (gprMask == null || avxMask == null) {
+            CompilerDirectives.transferToInterpreter();
+            throw new NullPointerException("gprMask=" + gprMask + "; avxMask=" + avxMask);
+        }
+        if (gprMask[Register.RAX.getID()]) {
+            state.rax = readRAX.executeI64(frame);
+        }
+        if (gprMask[Register.RBX.getID()]) {
+            state.rbx = readRBX.executeI64(frame);
+        }
+        if (gprMask[Register.RCX.getID()]) {
+            state.rcx = readRCX.executeI64(frame);
+        }
+        if (gprMask[Register.RDX.getID()]) {
+            state.rdx = readRDX.executeI64(frame);
+        }
+        if (gprMask[Register.RSI.getID()]) {
+            state.rsi = readRSI.executeI64(frame);
+        }
+        if (gprMask[Register.RDI.getID()]) {
+            state.rdi = readRDI.executeI64(frame);
+        }
+        if (gprMask[Register.RBP.getID()]) {
+            state.rbp = readRBP.executeI64(frame);
+        }
+        if (gprMask[Register.RSP.getID()]) {
+            state.rsp = readRSP.executeI64(frame);
+        }
+        if (gprMask[Register.R8.getID()]) {
+            state.r8 = readR8.executeI64(frame);
+        }
+        if (gprMask[Register.R9.getID()]) {
+            state.r9 = readR9.executeI64(frame);
+        }
+        if (gprMask[Register.R10.getID()]) {
+            state.r10 = readR10.executeI64(frame);
+        }
+        if (gprMask[Register.R11.getID()]) {
+            state.r11 = readR11.executeI64(frame);
+        }
+        if (gprMask[Register.R12.getID()]) {
+            state.r12 = readR12.executeI64(frame);
+        }
+        if (gprMask[Register.R13.getID()]) {
+            state.r13 = readR13.executeI64(frame);
+        }
+        if (gprMask[Register.R14.getID()]) {
+            state.r14 = readR14.executeI64(frame);
+        }
+        if (gprMask[Register.R15.getID()]) {
+            state.r15 = readR15.executeI64(frame);
+        }
+        state.fs = readFS.executeI64(frame);
+        state.gs = readGS.executeI64(frame);
+        state.rip = pc;
+        state.cf = readCF.execute(frame);
+        state.pf = readPF.execute(frame);
+        state.af = readAF.execute(frame);
+        state.zf = readZF.execute(frame);
+        state.sf = readSF.execute(frame);
+        state.df = readDF.execute(frame);
+        state.of = readOF.execute(frame);
+        state.ac = readAC.execute(frame);
+        state.id = readID.execute(frame);
+        for (int i = 0; i < 16; i++) {
+            if (avxMask[i]) {
+                state.xmm[i].setI128(readZMM[i].executeI128(frame));
+            }
+        }
+        state.instructionCount = FrameUtil.getLongSafe(frame, instructionCount);
+        return state;
+    }
 }

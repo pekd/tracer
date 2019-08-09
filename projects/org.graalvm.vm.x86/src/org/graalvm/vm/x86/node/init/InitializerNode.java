@@ -158,7 +158,7 @@ public class InitializerNode extends AMD64Node {
         MemoryPage stack = new MemoryPage(stackMemory, stackbase, stacksize, "[stack]");
         memory.add(stack);
         if (ctx.getTraceWriter() != null) {
-            ctx.getTraceWriter().mmap(stack.base, stack.size, Mman.PROT_READ | Mman.PROT_WRITE, Mman.MAP_FIXED | Mman.MAP_ANONYMOUS, -1, 0, stack.base, null);
+            ctx.getTraceWriter().mmap(stack.base, stack.size, Mman.PROT_READ | Mman.PROT_WRITE, Mman.MAP_FIXED | Mman.MAP_ANONYMOUS, -1, 0, stack.base, "[stack]", null);
         }
         long sp = AMD64.STACK_ADDRESS - 16;
         assert (sp & 0xf) == 0;

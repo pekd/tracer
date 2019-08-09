@@ -47,8 +47,8 @@ import java.util.List;
 import java.util.Map;
 
 public class SymbolTable extends Section {
-    private List<Symbol> symbols;
-    private Map<String, Symbol> globals;
+    private List<ElfSymbol> symbols;
+    private Map<String, ElfSymbol> globals;
 
     public SymbolTable(Section section) {
         super(section);
@@ -62,7 +62,7 @@ public class SymbolTable extends Section {
         symbols = new ArrayList<>();
         globals = new HashMap<>();
         for (int i = 0; i < cnt; i++) {
-            Symbol sym = new Symbol(section, i);
+            ElfSymbol sym = new ElfSymbol(section, i);
             symbols.add(sym);
             if (sym.getVisibility() == Symbol.DEFAULT) {
                 if (sym.getBind() == Symbol.GLOBAL) {
@@ -74,15 +74,15 @@ public class SymbolTable extends Section {
         }
     }
 
-    public Symbol getSymbol(int i) {
+    public ElfSymbol getSymbol(int i) {
         return symbols.get(i);
     }
 
-    public Symbol getSymbol(String name) {
+    public ElfSymbol getSymbol(String name) {
         return globals.get(name);
     }
 
-    public List<Symbol> getSymbols() {
+    public List<ElfSymbol> getSymbols() {
         return Collections.unmodifiableList(symbols);
     }
 

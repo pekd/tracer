@@ -313,7 +313,7 @@ public class ElfLoader {
                     if (p.x) {
                         prot |= Mman.PROT_EXEC;
                     }
-                    traceWriter.mmap(start, p.size, prot, Mman.MAP_PRIVATE | Mman.MAP_FIXED, -1, off, p.base, load);
+                    traceWriter.mmap(start, p.size, prot, Mman.MAP_PRIVATE | Mman.MAP_FIXED, -1, off, p.base, filename, load);
                 }
 
                 long end = load_bias + hdr.getVirtualAddress() + segment.length;
@@ -345,6 +345,10 @@ public class ElfLoader {
                     }
                 }
             }
+        }
+
+        if (traceWriter != null) {
+            traceWriter.symbolTable(load_bias, filename, load_bias, brk - load_bias, symbols);
         }
 
         entry = load_bias + elf.getEntryPoint();
@@ -379,6 +383,7 @@ public class ElfLoader {
                 base = 0;
             }
 
+            long interpend = base;
             for (ProgramHeader hdr : interpelf.getProgramHeaders()) {
                 if (hdr.getType() == Elf.PT_LOAD) {
                     // round size to page size
@@ -408,18 +413,25 @@ public class ElfLoader {
                         if (p.x) {
                             prot |= Mman.PROT_EXEC;
                         }
-                        traceWriter.mmap(base + hdr.getVirtualAddress(), p.size, prot, Mman.MAP_PRIVATE | Mman.MAP_FIXED, -1, fileOffset, p.base, segment);
+                        traceWriter.mmap(base + hdr.getVirtualAddress(), p.size, prot, Mman.MAP_PRIVATE | Mman.MAP_FIXED, -1, fileOffset, p.base, interpreter, segment);
+                    }
+
+                    if (interpend < base + hdr.getVirtualAddress() + hdr.getMemorySize()) {
+                        interpend = end;
                     }
                 }
             }
 
             pc = base + interpelf.getEntryPoint();
 
+            NavigableMap<Long, Symbol> interpSymbols = new TreeMap<>();
+
             symtab = interpelf.getSymbolTable();
             if (symtab != null) {
                 for (Symbol sym : symtab.getSymbols()) {
                     if (sym.getSectionIndex() != Symbol.SHN_UNDEF) {
                         symbols.put(sym.getValue() + base, sym.offset(base));
+                        interpSymbols.put(sym.getValue() + base, sym.offset(base));
                         if (DEBUG) {
                             log.log(Levels.DEBUG, "Adding symbol " + sym + " for address 0x" + HexFormatter.tohex(sym.getValue() + base, 16));
                         }
@@ -432,11 +444,16 @@ public class ElfLoader {
                 for (Symbol sym : symtab.getSymbols()) {
                     if (sym.getSectionIndex() != Symbol.SHN_UNDEF) {
                         symbols.put(sym.getValue() + base, sym.offset(base));
+                        interpSymbols.put(sym.getValue() + base, sym.offset(base));
                         if (DEBUG) {
                             log.log(Levels.DEBUG, "Adding symbol " + sym + " for address 0x" + HexFormatter.tohex(sym.getValue() + base, 16));
                         }
                     }
                 }
+            }
+
+            if (traceWriter != null) {
+                traceWriter.symbolTable(base, interpreter, base, interpend - base, interpSymbols);
             }
         }
 

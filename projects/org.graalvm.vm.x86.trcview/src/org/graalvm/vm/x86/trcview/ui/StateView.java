@@ -50,8 +50,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 
 @SuppressWarnings("serial")
 public class StateView extends JPanel {
@@ -83,6 +85,9 @@ public class StateView extends JPanel {
     private StepRecord previous;
     private CallArgsRecord args;
 
+    private SymbolResolver resolver;
+    private MappedFiles mappedFiles;
+
     public StateView() {
         super(new BorderLayout());
         text = new JTextPane();
@@ -90,6 +95,16 @@ public class StateView extends JPanel {
         text.setEditable(false);
         text.setContentType("text/html");
         add(BorderLayout.CENTER, new JScrollPane(text));
+    }
+
+    public void setSymbolResolver(SymbolResolver resolver) {
+        this.resolver = resolver;
+        update();
+    }
+
+    public void setMappedFiles(MappedFiles mappedFiles) {
+        this.mappedFiles = mappedFiles;
+        update();
     }
 
     public void setState(StepRecord step) {
@@ -117,9 +132,9 @@ public class StateView extends JPanel {
 
     private String get() {
         if (previous != null) {
-            return StateEncoder.encode(previous, step);
+            return StateEncoder.encode(resolver, mappedFiles, previous, step);
         } else {
-            return StateEncoder.encode(step);
+            return StateEncoder.encode(resolver, mappedFiles, step);
         }
     }
 

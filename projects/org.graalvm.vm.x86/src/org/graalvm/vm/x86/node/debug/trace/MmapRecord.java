@@ -57,13 +57,14 @@ public class MmapRecord extends Record {
     private long off;
     private long result;
 
+    private String filename;
     private byte[] data;
 
     MmapRecord() {
         super(MAGIC);
     }
 
-    public MmapRecord(long addr, long len, int prot, int flags, int fildes, long off, long result) {
+    public MmapRecord(long addr, long len, int prot, int flags, int fildes, long off, String filename, long result) {
         this();
         this.addr = addr;
         this.len = len;
@@ -71,6 +72,7 @@ public class MmapRecord extends Record {
         this.flags = flags;
         this.fildes = fildes;
         this.off = off;
+        this.filename = filename;
         this.result = result;
     }
 
@@ -98,6 +100,10 @@ public class MmapRecord extends Record {
         return off;
     }
 
+    public String getFilename() {
+        return filename;
+    }
+
     public long getResult() {
         return result;
     }
@@ -112,7 +118,7 @@ public class MmapRecord extends Record {
 
     @Override
     protected int getDataSize() {
-        return 4 * 8 + 3 * 4 + sizeArray(data);
+        return 4 * 8 + 3 * 4 + sizeArray(data) + sizeString(filename);
     }
 
     @Override
@@ -124,6 +130,7 @@ public class MmapRecord extends Record {
         fildes = in.read32bit();
         off = in.read64bit();
         result = in.read64bit();
+        filename = readString(in);
         data = readArray(in);
     }
 
@@ -136,6 +143,7 @@ public class MmapRecord extends Record {
         out.write32bit(fildes);
         out.write64bit(off);
         out.write64bit(result);
+        writeString(out, filename);
         writeArray(out, data);
     }
 

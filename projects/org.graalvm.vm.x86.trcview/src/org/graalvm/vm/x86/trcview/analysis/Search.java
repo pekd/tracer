@@ -101,13 +101,13 @@ public class Search {
     private static Node nextPCChildren(Node start, long pc) {
         if (start instanceof BlockNode) {
             BlockNode block = (BlockNode) start;
-            if (block.getHead().getLocation().getPC() == pc) {
+            if (block.getHead().getPC() == pc) {
                 return block;
             }
             for (Node n : block.getNodes()) {
                 if (n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
                     StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
-                    if (step.getLocation().getPC() == pc) {
+                    if (step.getPC() == pc) {
                         return n;
                     }
                 } else if (n instanceof BlockNode) {
@@ -119,7 +119,7 @@ public class Search {
             }
             return null;
         } else if (start instanceof RecordNode && ((RecordNode) start).getRecord() instanceof StepRecord) {
-            if (((StepRecord) ((RecordNode) start).getRecord()).getLocation().getPC() == pc) {
+            if (((StepRecord) ((RecordNode) start).getRecord()).getPC() == pc) {
                 return start;
             }
             BlockNode parent = start.getParent();
@@ -128,7 +128,7 @@ public class Search {
                 if (started) {
                     if (n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
                         StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
-                        if (step.getLocation().getPC() == pc) {
+                        if (step.getPC() == pc) {
                             return n;
                         }
                     } else if (n instanceof BlockNode) {

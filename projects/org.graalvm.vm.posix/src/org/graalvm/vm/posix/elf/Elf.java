@@ -533,7 +533,7 @@ public class Elf {
         return null;
     }
 
-    public Symbol getSymbol(String name) {
+    public ElfSymbol getSymbol(String name) {
         if (symtab == null) {
             symtab = getSection(".symtab");
         }
@@ -543,7 +543,7 @@ public class Elf {
         return symtab.getSymbol(name);
     }
 
-    public Symbol getDynamicSymbol(String name) {
+    public ElfSymbol getDynamicSymbol(String name) {
         if (dynsym == null) {
             dynsym = getSection(".dynsym");
         }

@@ -41,91 +41,100 @@
 package org.graalvm.vm.x86.node.debug.trace;
 
 import java.io.IOException;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
-import org.graalvm.vm.x86.isa.AMD64Instruction;
-import org.graalvm.vm.x86.isa.AMD64InstructionDecoder;
-import org.graalvm.vm.x86.isa.CodeArrayReader;
 
-public class StepRecord extends Record {
-    public static final int MAGIC = 0x53544550; // STEP
+public class SymbolTableRecord extends Record {
+    public static final int MAGIC = 0x53594d54; // SYMT
 
-    private byte[] machinecode;
-    private CpuStateRecord cpuState;
+    private NavigableMap<Long, Symbol> symbols;
+    private String filename;
+    private long loadBias;
+    private long address;
+    private long size;
 
-    private String disasm;
-    private String[] disasmParts;
-
-    StepRecord() {
+    public SymbolTableRecord() {
         super(MAGIC);
     }
 
-    StepRecord(byte[] machinecode, CpuStateRecord cpuState) {
+    public SymbolTableRecord(long loadBias, String filename, long address, long size, NavigableMap<Long, Symbol> symbols) {
         super(MAGIC);
-        this.machinecode = machinecode;
-        this.cpuState = cpuState;
+        this.symbols = symbols;
+        this.filename = filename;
+        this.loadBias = loadBias;
+        this.address = address;
+        this.size = size;
     }
 
-    public byte[] getMachinecode() {
-        return machinecode;
+    public NavigableMap<Long, Symbol> getSymbols() {
+        return symbols;
     }
 
-    public AMD64Instruction getInstruction() {
-        return AMD64InstructionDecoder.decode(getPC(), new CodeArrayReader(machinecode, 0));
+    public String getFilename() {
+        return filename;
     }
 
-    public String getDisassembly() {
-        if (disasm == null) {
-            AMD64Instruction insn = getInstruction();
-            disasm = insn.getDisassembly();
-            disasmParts = insn.getDisassemblyComponents();
-        }
-        return disasm;
+    public long getLoadBias() {
+        return loadBias;
     }
 
-    public String[] getDisassemblyComponents() {
-        if (disasmParts == null) {
-            AMD64Instruction insn = getInstruction();
-            disasm = insn.getDisassembly();
-            disasmParts = insn.getDisassemblyComponents();
-        }
-        return disasmParts;
+    public long getAddress() {
+        return address;
     }
 
-    public String getMnemonic() {
-        // don't cache the result here
-        if (disasmParts != null) {
-            return disasmParts[0];
-        } else {
-            String[] parts = getInstruction().getDisassemblyComponents();
-            return parts[0];
-        }
+    public long getSize() {
+        return size;
     }
 
-    public CpuStateRecord getState() {
-        return cpuState;
-    }
-
-    public long getPC() {
-        return getState().getPC();
+    private static int getSize(Symbol symbol) {
+        return sizeString(symbol.getName()) + 21;
     }
 
     @Override
     protected int getDataSize() {
-        return sizeArray(machinecode) + cpuState.size() + 8;
+        return 4 + 3 * 8 + sizeString(filename) + symbols.values().stream().mapToInt(SymbolTableRecord::getSize).sum();
     }
 
     @Override
     protected void readRecord(WordInputStream in) throws IOException {
-        machinecode = readArray(in);
-        cpuState = Record.read(in, getLastStateSupplier());
-        clearLastState();
+        symbols = new TreeMap<>();
+        loadBias = in.read64bit();
+        address = in.read64bit();
+        size = in.read64bit();
+        filename = readString(in);
+        int count = in.read32bit();
+        for (int i = 0; i < count; i++) {
+            long value = in.read64bit();
+            long sz = in.read64bit();
+            short shndx = in.read16bit();
+            int bind = in.read();
+            int type = in.read();
+            int visibility = in.read();
+            String name = readString(in);
+            Symbol sym = new TraceSymbol(name, value, sz, bind, type, visibility, shndx);
+            symbols.put(sym.getValue(), sym);
+        }
     }
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        writeArray(out, machinecode);
-        cpuState.write(out);
+        out.write64bit(loadBias);
+        out.write64bit(address);
+        out.write64bit(size);
+        writeString(out, filename);
+        out.write32bit(symbols.size());
+        for (Symbol symbol : symbols.values()) {
+            out.write64bit(symbol.getValue());
+            out.write64bit(symbol.getSize());
+            out.write16bit(symbol.getSectionIndex());
+            out.write(symbol.getBind());
+            out.write(symbol.getType());
+            out.write(symbol.getVisibility());
+            writeString(out, symbol.getName());
+        }
     }
 }

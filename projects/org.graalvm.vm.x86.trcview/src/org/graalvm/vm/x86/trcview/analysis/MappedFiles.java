@@ -38,37 +38,80 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.util.log;
+package org.graalvm.vm.x86.trcview.analysis;
 
-import java.util.logging.Level;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 
-public class Levels {
-    public static final Level FATAL = create("FATAL", 11000, 'F');
-    public static final Level ERROR = create("ERROR", 1000, 'E');
-    public static final Level WARNING = create("WARNING", 900, 'W');
-    public static final Level AUDIT = create("AUDIT", 850, 'A');
-    public static final Level INFO = create("INFO", 800, 'I');
-    public static final Level DEBUG = create("DEBUG", 500, 'D');
-    public static final Level STDOUT = create("STDOUT", 1000, 'O');
-    public static final Level STDERR = create("STDERR", 1000, 'R');
+public class MappedFiles {
+    private NavigableMap<Long, MappedFile> mappedFiles;
 
-    private static final Level[] LEVELS = {DEBUG, INFO, AUDIT, WARNING, ERROR, FATAL};
-
-    static Level create(String name, int value, char letter) {
-        return new LogLevel(name, value, letter);
+    public MappedFiles(NavigableMap<Long, MappedFile> mappedFiles) {
+        this.mappedFiles = mappedFiles;
     }
 
-    public static Level get(Level level) {
-        if (level instanceof LogLevel) {
-            return level;
+    public long getBase(long pc) {
+        if (mappedFiles == null) {
+            return 0;
         }
-        int value = level.intValue();
-        for (int i = 0; i < LEVELS.length; i++) {
-            int lvl = LEVELS[i].intValue();
-            if (value <= lvl) {
-                return LEVELS[i];
+        Long result = mappedFiles.floorKey(pc);
+        if (result == null) {
+            return -1;
+        } else {
+            return result;
+        }
+    }
+
+    public long getLoadBias(long pc) {
+        if (mappedFiles == null) {
+            return -1;
+        }
+        Entry<Long, MappedFile> entry = mappedFiles.floorEntry(pc);
+        if (entry != null && entry.getValue().contains(pc)) {
+            return entry.getValue().getLoadBias();
+        }
+        return -1;
+    }
+
+    public long getOffset(long pc) {
+        long loadBias = getLoadBias(pc);
+        if (loadBias == -1) {
+            return -1;
+        } else {
+            return pc - loadBias;
+        }
+    }
+
+    public long getFileOffset(long pc) {
+        if (mappedFiles == null) {
+            return -1;
+        }
+        Long result = mappedFiles.floorKey(pc);
+        if (result == null) {
+            return -1;
+        } else {
+            MappedFile file = mappedFiles.get(result);
+            if (file == null || !file.contains(pc)) {
+                return -1;
+            }
+            if (file.getOffset() == -1) {
+                return pc - file.getAddress();
+            } else {
+                return pc - file.getAddress() + file.getOffset();
             }
         }
-        return level;
+    }
+
+    public String getFilename(long pc) {
+        if (mappedFiles != null) {
+            Entry<Long, MappedFile> entry = mappedFiles.floorEntry(pc);
+            if (entry != null && entry.getValue().contains(pc)) {
+                return entry.getValue().getFilename();
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
     }
 }

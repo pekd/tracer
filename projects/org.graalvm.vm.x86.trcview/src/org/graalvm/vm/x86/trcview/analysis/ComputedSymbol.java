@@ -38,50 +38,62 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.test;
+package org.graalvm.vm.x86.trcview.analysis;
 
-import org.graalvm.vm.memory.exception.SegmentationViolation;
-import org.graalvm.vm.x86.isa.CodeReader;
+import java.util.ArrayList;
+import java.util.List;
 
-public class CodeArrayReader extends CodeReader {
-    private int offset;
-    private byte[] code;
+import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.x86.trcview.io.Node;
 
-    public CodeArrayReader(byte[] code, int offset) {
-        this.offset = offset;
-        this.code = code;
+public class ComputedSymbol {
+    public static enum Type {
+        SUBROUTINE,
+        LOCATION;
     }
 
-    @Override
-    public long getPC() {
-        return offset;
-    }
+    public final String name;
+    public final long address;
+    public final Type type;
+    public final List<Node> visits;
 
-    @Override
-    public void setPC(long pc) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public byte peek8(int off) {
-        int ptr = offset + off;
-        if (ptr < 0 || ptr >= code.length) {
-            throw new SegmentationViolation(ptr);
+    public ComputedSymbol(String name, long address, Type type) {
+        if (name == null) {
+            throw new NullPointerException("name is null");
         }
-        return code[ptr];
+
+        this.name = name;
+        this.address = address;
+        this.type = type;
+        visits = new ArrayList<>();
+    }
+
+    public void addVisit(Node node) {
+        visits.add(node);
     }
 
     @Override
-    public byte read8() {
-        return code[offset++];
-    }
-
-    public int available() {
-        return code.length - offset;
+    public int hashCode() {
+        return (int) address;
     }
 
     @Override
-    public boolean isAvailable() {
-        return available() > 0;
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof ComputedSymbol)) {
+            return false;
+        }
+        ComputedSymbol s = (ComputedSymbol) o;
+        return s.address == address && s.name.equals(name);
+    }
+
+    @Override
+    public String toString() {
+        return "<" + name + ">@0x" + HexFormatter.tohex(address);
     }
 }

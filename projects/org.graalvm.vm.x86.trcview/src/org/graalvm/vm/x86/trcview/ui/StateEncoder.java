@@ -43,11 +43,12 @@ package org.graalvm.vm.x86.trcview.ui;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
-import org.graalvm.vm.x86.node.debug.trace.LocationRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 
 public class StateEncoder {
     private static String html(String text) {
@@ -115,8 +116,8 @@ public class StateEncoder {
         return StringUtils.repeat(" ", c);
     }
 
-    private static String getDisassembly(LocationRecord loc) {
-        String[] assembly = loc.getAssembly();
+    private static String getDisassembly(Location loc) {
+        String[] assembly = loc.getDisassembly();
         if (assembly == null) {
             return null;
         }
@@ -127,20 +128,22 @@ public class StateEncoder {
         }
     }
 
-    private static String encode(LocationRecord location) {
+    private static String encode(Location location) {
         StringBuilder buf = new StringBuilder();
         buf.append("IN: ");
         buf.append(str(location.getSymbol(), "symbol"));
         if (location.getFilename() != null) {
             buf.append(" # ");
             buf.append(html(location.getFilename()));
-            buf.append(" @ 0x");
-            buf.append(HexFormatter.tohex(location.getOffset(), 8));
+            if (location.getOffset() != -1) {
+                buf.append(" @ 0x");
+                buf.append(HexFormatter.tohex(location.getOffset(), 8));
+            }
         }
         buf.append("\n0x");
         buf.append(HexFormatter.tohex(location.getPC(), 8));
         buf.append(":\t");
-        if (location.getAssembly() != null) {
+        if (location.getDisassembly() != null) {
             buf.append(getDisassembly(location));
             buf.append(" <span class=\"comment\">; ");
             buf.append(html(location.getPrintableBytes()));
@@ -149,15 +152,15 @@ public class StateEncoder {
         return buf.toString();
     }
 
-    public static String encode(StepRecord step) {
-        LocationRecord location = step.getLocation();
+    public static String encode(SymbolResolver resolver, MappedFiles mappedFiles, StepRecord step) {
+        Location location = Location.getLocation(resolver, mappedFiles, step);
         CpuStateRecord state = step.getState();
         String loc = encode(location);
         return loc + "\n\n" + html(state.toString());
     }
 
-    public static String encode(StepRecord previous, StepRecord current) {
-        LocationRecord location = current.getLocation();
+    public static String encode(SymbolResolver resolver, MappedFiles mappedFiles, StepRecord previous, StepRecord current) {
+        Location location = Location.getLocation(resolver, mappedFiles, current);
         CpuStateRecord state1 = previous.getState();
         CpuStateRecord state2 = current.getState();
         String loc = encode(location);

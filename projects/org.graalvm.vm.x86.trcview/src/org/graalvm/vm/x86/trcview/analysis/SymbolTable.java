@@ -53,16 +53,16 @@ import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
 
 public class SymbolTable {
-    private final Map<Long, Symbol> symbols = new HashMap<>();
+    private final Map<Long, ComputedSymbol> symbols = new HashMap<>();
 
-    private static Symbol sub(long pc) {
+    private static ComputedSymbol sub(long pc) {
         String name = "sub_" + HexFormatter.tohex(pc, 1);
-        return new Symbol(name, pc, Symbol.Type.SUBROUTINE);
+        return new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE);
     }
 
-    private static Symbol loc(long pc) {
+    private static ComputedSymbol loc(long pc) {
         String name = "loc_" + HexFormatter.tohex(pc, 1);
-        return new Symbol(name, pc, Symbol.Type.LOCATION);
+        return new ComputedSymbol(name, pc, ComputedSymbol.Type.LOCATION);
     }
 
     public void addSubroutine(long pc) {
@@ -70,11 +70,11 @@ public class SymbolTable {
     }
 
     public void addSubroutine(long pc, String name) {
-        symbols.put(pc, new Symbol(name, pc, Symbol.Type.SUBROUTINE));
+        symbols.put(pc, new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE));
     }
 
     public void addLocation(long pc) {
-        Symbol sym = symbols.get(pc);
+        ComputedSymbol sym = symbols.get(pc);
         if (sym == null) {
             symbols.put(pc, loc(pc));
         }
@@ -83,27 +83,27 @@ public class SymbolTable {
     public void visit(Node node) {
         if (node instanceof RecordNode && ((RecordNode) node).getRecord() instanceof StepRecord) {
             StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
-            long pc = step.getLocation().getPC();
-            Symbol sym = symbols.get(pc);
+            long pc = step.getPC();
+            ComputedSymbol sym = symbols.get(pc);
             if (sym != null) {
                 sym.addVisit(node);
             }
         }
     }
 
-    public Symbol get(long pc) {
+    public ComputedSymbol get(long pc) {
         return symbols.get(pc);
     }
 
-    public Set<Symbol> getSubroutines() {
-        return symbols.values().stream().filter(s -> s.type == Symbol.Type.SUBROUTINE).collect(Collectors.toSet());
+    public Set<ComputedSymbol> getSubroutines() {
+        return symbols.values().stream().filter(s -> s.type == ComputedSymbol.Type.SUBROUTINE).collect(Collectors.toSet());
     }
 
-    public Set<Symbol> getLocations() {
-        return symbols.values().stream().filter(s -> s.type == Symbol.Type.LOCATION).collect(Collectors.toSet());
+    public Set<ComputedSymbol> getLocations() {
+        return symbols.values().stream().filter(s -> s.type == ComputedSymbol.Type.LOCATION).collect(Collectors.toSet());
     }
 
-    public Collection<Symbol> getSymbols() {
+    public Collection<ComputedSymbol> getSymbols() {
         return Collections.unmodifiableCollection(symbols.values());
     }
 }

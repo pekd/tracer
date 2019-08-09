@@ -40,9 +40,16 @@
  */
 package org.graalvm.vm.x86.trcview.analysis;
 
-import org.graalvm.vm.x86.node.debug.trace.LocationRecord;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+
+import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
@@ -51,8 +58,15 @@ public class Analysis {
     private SymbolTable symbols;
     private StepRecord lastStep;
 
+    private NavigableMap<Long, Symbol> symbolTable;
+    private NavigableMap<Long, MappedFile> mappedFiles;
+    private SymbolResolver resolver;
+
     public Analysis() {
         symbols = new SymbolTable();
+        symbolTable = new TreeMap<>();
+        mappedFiles = new TreeMap<>();
+        resolver = new SymbolResolver(symbolTable);
     }
 
     public void start() {
@@ -62,22 +76,41 @@ public class Analysis {
     public void process(Record record) {
         if (record instanceof StepRecord) {
             StepRecord step = (StepRecord) record;
-            LocationRecord loc = step.getLocation();
             if (lastStep != null) {
-                switch (lastStep.getLocation().getMnemonic()) {
+                long pc = step.getPC();
+                Symbol sym;
+                switch (lastStep.getMnemonic()) {
                     case "jmp":
-                        symbols.addLocation(loc.getPC());
+                        symbols.addLocation(pc);
                         break;
                     case "call":
-                        if (loc.getSymbol() != null) {
-                            symbols.addSubroutine(loc.getPC(), loc.getSymbol());
+                        sym = resolver.getSymbol(pc);
+                        if (sym != null && sym.getName() != null) {
+                            symbols.addSubroutine(pc, sym.getName());
                         } else {
-                            symbols.addSubroutine(loc.getPC());
+                            symbols.addSubroutine(pc);
                         }
                         break;
                 }
             }
             lastStep = step;
+        } else if (record instanceof SymbolTableRecord) {
+            SymbolTableRecord symtab = (SymbolTableRecord) record;
+            symbolTable.putAll(symtab.getSymbols());
+            long addr = symtab.getLoadBias();
+            long end = addr + symtab.getSize();
+            while (addr < end) {
+                Entry<Long, MappedFile> file = mappedFiles.ceilingEntry(addr);
+                if (file != null && file.getValue().getFilename().equals(symtab.getFilename())) {
+                    file.getValue().setLoadBias(symtab.getLoadBias());
+                    addr = file.getKey() + 1;
+                } else {
+                    break;
+                }
+            }
+        } else if (record instanceof MmapRecord) {
+            MmapRecord mmap = (MmapRecord) record;
+            mappedFiles.put(mmap.getAddress(), new MappedFile(mmap.getFileDescriptor(), mmap.getAddress(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
         }
     }
 
@@ -97,7 +130,15 @@ public class Analysis {
         resolveCalls(root);
     }
 
-    public SymbolTable getSymbolTable() {
+    public SymbolTable getComputedSymbolTable() {
         return symbols;
+    }
+
+    public SymbolResolver getSymbolResolver() {
+        return resolver;
+    }
+
+    public MappedFiles getMappedFiles() {
+        return new MappedFiles(mappedFiles);
     }
 }

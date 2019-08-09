@@ -38,29 +38,54 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.test;
+package org.graalvm.vm.x86.trcview.analysis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+public class MappedFile {
+    private int fd;
+    private long address;
+    private long size;
+    private long offset;
+    private long loadBias;
+    private String filename;
 
-import org.graalvm.vm.x86.isa.AMD64Instruction;
-import org.graalvm.vm.x86.isa.AMD64InstructionDecoder;
-import org.graalvm.vm.x86.isa.CodeArrayReader;
-import org.graalvm.vm.x86.isa.CodeReader;
-
-public class InstructionTest {
-    protected AMD64Instruction decode(byte[] code) {
-        CodeReader reader = new CodeArrayReader(code, 0);
-        AMD64Instruction insn = AMD64InstructionDecoder.decode(0, reader);
-        assertNotNull(insn);
-        assertEquals(code.length, reader.getPC());
-        return insn;
+    public MappedFile(int fd, long address, long size, long offset, String filename, long loadBias) {
+        this.fd = fd;
+        this.address = address;
+        this.size = size;
+        this.offset = offset;
+        this.filename = filename;
+        this.loadBias = loadBias;
     }
 
-    protected void check(byte[] code, String asm, Class<? extends AMD64Instruction> clazz) {
-        AMD64Instruction insn = decode(code);
-        assertTrue("wrong class: " + insn.getClass().getCanonicalName() + ", expected: " + clazz.getCanonicalName(), clazz.isInstance(insn));
-        assertEquals(asm, insn.getDisassembly());
+    public int getFileDescriptor() {
+        return fd;
+    }
+
+    public long getAddress() {
+        return address;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public long getLoadBias() {
+        return loadBias;
+    }
+
+    public void setLoadBias(long loadBias) {
+        this.loadBias = loadBias;
+    }
+
+    public boolean contains(long addr) {
+        return Long.compareUnsigned(address, addr) <= 0 && Long.compareUnsigned(address + size, addr) >= 0;
     }
 }

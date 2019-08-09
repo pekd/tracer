@@ -151,7 +151,7 @@ public class BlockNode extends Node {
         analysis.process(record);
         if (record instanceof StepRecord) {
             StepRecord step = (StepRecord) record;
-            if (step.getLocation().getMnemonic().equals("call")) {
+            if (step.getMnemonic().equals("call")) {
                 if (progress != null) {
                     progress.progressUpdate(in.tell());
                 }
@@ -168,7 +168,7 @@ public class BlockNode extends Node {
                     }
                     if (child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof StepRecord) {
                         StepRecord s = (StepRecord) ((RecordNode) child).getRecord();
-                        if (s.getLocation().getMnemonic().equals("ret")) {
+                        if (s.getMnemonic().equals("ret")) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
                             }

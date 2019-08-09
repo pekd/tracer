@@ -67,6 +67,11 @@ public class FullCpuStateRecord extends CpuStateRecord {
     }
 
     @Override
+    public long getPC() {
+        return state.rip;
+    }
+
+    @Override
     protected int getDataSize() {
         return 21 * 8 + 16 * 16;
     }

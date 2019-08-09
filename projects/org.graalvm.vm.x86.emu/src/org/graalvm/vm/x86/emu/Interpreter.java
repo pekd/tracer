@@ -49,10 +49,10 @@ import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.ProcessExitException;
 import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.Options;
-import org.graalvm.vm.x86.SymbolResolver;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
 import org.graalvm.vm.x86.isa.AMD64InstructionDecoder;
 import org.graalvm.vm.x86.isa.CodeMemoryReader;
@@ -432,7 +432,7 @@ public class Interpreter {
                 System.out.println(regs);
             } else {
                 CpuState state = regs.toCpuState();
-                trace.step(state, null, func, 0, insn);
+                trace.step(state, insn);
             }
             memory.setDebug(wasDebug);
         }

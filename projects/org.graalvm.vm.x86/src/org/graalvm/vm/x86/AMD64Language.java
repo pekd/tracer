@@ -64,6 +64,7 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
 
     private static final boolean DEBUG = Options.getBoolean(Options.DEBUG_EXEC);
     private static final boolean DEBUG_TRACE = Options.getBoolean(Options.DEBUG_EXEC_TRACE);
+    private static final boolean EXEC_TRACE = Options.getBoolean(Options.EXEC_TRACE);
 
     protected FrameDescriptor fd = new FrameDescriptor();
 
@@ -78,7 +79,7 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
         } catch (UnsatisfiedLinkError e) {
             // ignore
         }
-        if (DEBUG && DEBUG_TRACE) {
+        if (DEBUG && DEBUG_TRACE || EXEC_TRACE) {
             String traceFile = Options.getString(Options.DEBUG_EXEC_TRACEFILE);
             log.info("Opening trace file " + traceFile);
             try {

@@ -38,75 +38,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86;
-
-import java.util.HashMap;
-import java.util.Map.Entry;
+package org.graalvm.vm.x86.node.debug.trace;
 
 import org.graalvm.vm.posix.elf.Symbol;
 
-import java.util.NavigableMap;
-import java.util.TreeMap;
+public class TraceSymbol implements Symbol {
+    private String name;
+    private long value;
+    private long size;
+    private int bind;
+    private int type;
+    private int visibility;
+    private short shndx;
 
-public class SymbolResolver {
-    private final NavigableMap<Long, Symbol> symbols;
-    private final NavigableMap<Long, Symbol> globalSymbols;
-
-    private final HashMap<String, Symbol> addresses;
-
-    public SymbolResolver(NavigableMap<Long, Symbol> symbols) {
-        this.symbols = symbols;
-
-        // compute global symbols
-        this.globalSymbols = new TreeMap<>();
-        for (Entry<Long, Symbol> entry : symbols.entrySet()) {
-            Symbol sym = entry.getValue();
-            if (sym.getBind() == Symbol.GLOBAL) {
-                globalSymbols.put(sym.getValue(), sym);
-            }
-        }
-
-        // compute global addr -> symbol
-        addresses = new HashMap<>();
-        for (Entry<Long, Symbol> entry : symbols.entrySet()) {
-            Symbol sym = entry.getValue();
-            if (sym.getBind() == Symbol.GLOBAL) {
-                addresses.put(sym.getName(), sym);
-            }
-        }
+    TraceSymbol(String name, long value, long size, int bind, int type, int visibility, short shndx) {
+        this.name = name;
+        this.value = value;
+        this.size = size;
+        this.bind = bind;
+        this.type = type;
+        this.visibility = visibility;
+        this.shndx = shndx;
     }
 
-    public Symbol getSymbol(long pc) {
-        Symbol global = getSymbol(pc, globalSymbols);
-        if (global == null) {
-            return getSymbol(pc, symbols);
-        } else {
-            return global;
-        }
+    public String getName() {
+        return name;
     }
 
-    private static Symbol getSymbol(long pc, NavigableMap<Long, Symbol> symbols) {
-        Symbol sym = symbols.get(pc);
-        if (sym != null) {
-            return sym;
-        }
-        Entry<Long, Symbol> entry = symbols.floorEntry(pc);
-        if (entry != null) {
-            sym = entry.getValue();
-            long start = sym.getValue();
-            long end = start + sym.getSize();
-            if (Long.compareUnsigned(pc, start) >= 0 && Long.compareUnsigned(pc, end) < 0) {
-                return sym;
-            }
-        }
-        return null;
+    public int getBind() {
+        return bind;
     }
 
-    public Symbol getSymbol(String name) {
-        return addresses.get(name);
+    public int getType() {
+        return type;
     }
 
-    public Symbol getSymbolExact(long pc) {
-        return symbols.get(pc);
+    public int getVisibility() {
+        return visibility;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getValue() {
+        return value;
+    }
+
+    public short getSectionIndex() {
+        return shndx;
+    }
+
+    public Symbol offset(long off) {
+        return new TraceSymbol(name, value + off, size, bind, type, visibility, shndx);
     }
 }

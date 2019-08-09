@@ -47,7 +47,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
+import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
@@ -57,7 +63,11 @@ import org.graalvm.vm.x86.node.debug.trace.MprotectRecord;
 import org.graalvm.vm.x86.node.debug.trace.MunmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 import org.graalvm.vm.x86.node.debug.trace.SystemLogRecord;
+import org.graalvm.vm.x86.trcview.analysis.MappedFile;
+import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
+import org.graalvm.vm.x86.trcview.ui.Location;
 
 public class TextDump {
     public static void main(String[] args) throws IOException {
@@ -134,6 +144,10 @@ public class TextDump {
                         PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(args[1])));
                         ExecutionTraceReader in = new ExecutionTraceReader(fin)) {
             Record record;
+            NavigableMap<Long, Symbol> symbols = new TreeMap<>();
+            NavigableMap<Long, MappedFile> filenames = new TreeMap<>();
+            SymbolResolver resolver = new SymbolResolver(symbols);
+            MappedFiles files = new MappedFiles(filenames);
             while ((record = in.read()) != null) {
                 if (record instanceof MemoryEventRecord) {
                     if (dumpMemory) {
@@ -163,6 +177,26 @@ public class TextDump {
                     if (dumpMman) {
                         out.println(record.toString());
                     }
+                } else if (record instanceof SymbolTableRecord) {
+                    SymbolTableRecord symtab = (SymbolTableRecord) record;
+                    symbols.putAll(symtab.getSymbols());
+                    long addr = symtab.getLoadBias();
+                    long end = addr + symtab.getSize();
+                    while (addr < end) {
+                        Entry<Long, MappedFile> file = filenames.ceilingEntry(addr);
+                        if (file != null && file.getValue().getFilename().equals(symtab.getFilename())) {
+                            file.getValue().setLoadBias(symtab.getLoadBias());
+                            addr = file.getKey() + 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    files = new MappedFiles(filenames);
+                    resolver = new SymbolResolver(symbols);
+                } else if (record instanceof MmapRecord) {
+                    MmapRecord mmap = (MmapRecord) record;
+                    filenames.put(mmap.getAddress(), new MappedFile(mmap.getFileDescriptor(), mmap.getAddress(), mmap.getOffset(), mmap.getLength(), mmap.getFilename(), -1));
+                    files = new MappedFiles(filenames);
                 } else if (record instanceof StepRecord) {
                     StepRecord step = (StepRecord) record;
                     if (dumpState) {
@@ -173,7 +207,8 @@ public class TextDump {
                         if (!dumpState) {
                             out.print("[tid=" + step.getTid() + "] ");
                         }
-                        out.println(step.getLocation());
+                        Location loc = Location.getLocation(resolver, files, step);
+                        out.println(encode(loc));
                     }
                     if (dumpState) {
                         out.println();
@@ -182,5 +217,36 @@ public class TextDump {
                 }
             }
         }
+    }
+
+    private static String str(String s) {
+        if (s == null) {
+            return "";
+        } else {
+            return s;
+        }
+    }
+
+    private static String encode(Location location) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("IN: ");
+        buf.append(str(location.getSymbol()));
+        if (location.getFilename() != null) {
+            buf.append(" # ");
+            buf.append(location.getFilename());
+            if (location.getOffset() != -1) {
+                buf.append(" @ 0x");
+                buf.append(HexFormatter.tohex(location.getOffset(), 8));
+            }
+        }
+        buf.append("\n0x");
+        buf.append(HexFormatter.tohex(location.getPC(), 8));
+        buf.append(":\t");
+        if (location.getDisassembly() != null) {
+            buf.append(location.getAsm());
+            buf.append(" ; ");
+            buf.append(location.getPrintableBytes());
+        }
+        return buf.toString();
     }
 }

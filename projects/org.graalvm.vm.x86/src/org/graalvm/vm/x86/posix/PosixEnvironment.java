@@ -91,6 +91,7 @@ import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.posix.elf.ProgramHeader;
 import org.graalvm.vm.posix.elf.Section;
 import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.posix.elf.SymbolTable;
 import org.graalvm.vm.posix.vfs.FileSystem;
 import org.graalvm.vm.posix.vfs.VFS;
@@ -101,7 +102,6 @@ import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.AMD64;
 import org.graalvm.vm.x86.Options;
-import org.graalvm.vm.x86.SymbolResolver;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceWriter;
 
 import com.oracle.truffle.api.Assumption;
@@ -112,7 +112,7 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 public class PosixEnvironment {
     private static final Logger log = Trace.create(PosixEnvironment.class);
 
-    private static final boolean DEBUG = Options.getBoolean(Options.DEBUG_EXEC) || Options.getBoolean(Options.DEBUG_SYMBOLS);
+    private static final boolean SYMBOLS = Options.getBoolean(Options.EXEC_TRACE) || Options.getBoolean(Options.DEBUG_EXEC) || Options.getBoolean(Options.DEBUG_SYMBOLS);
     private static final boolean STATIC_TIME = Options.getBoolean(Options.USE_STATIC_TIME);
 
     private final VirtualMemory mem;
@@ -134,7 +134,7 @@ public class PosixEnvironment {
         this.traceWriter = traceWriter;
         posix = new Posix();
         strace = System.getProperty("posix.strace") != null;
-        if (DEBUG) {
+        if (SYMBOLS) {
             symbols = new TreeMap<>();
             symbolResolver = new SymbolResolver(symbols);
             libraries = new TreeMap<>();
@@ -264,12 +264,13 @@ public class PosixEnvironment {
 
                     // find program header of this segment
                     long loadBias = ptr - offset; // strange assumption
+                    String filename = null;
                     for (ProgramHeader phdr : elf.getProgramHeaders()) {
                         if (phdr.p_offset == offset) { // this is it, probably
                             loadBias = ptr - phdr.p_vaddr;
                             log.log(Levels.DEBUG, "Program header found: " + String.format("0x%08x-0x%08x", phdr.p_vaddr, phdr.p_vaddr + phdr.p_memsz));
                             log.log(Levels.DEBUG, "Computed load bias is " + HexFormatter.tohex(loadBias, 16));
-                            String filename = posix.getFileDescriptor(fildes).name;
+                            filename = posix.getFileDescriptor(fildes).name;
                             if (filename == null) {
                                 filename = "/proc/self/fd/" + fildes;
                             }
@@ -282,14 +283,19 @@ public class PosixEnvironment {
                     if (symtab == null) {
                         symtab = elf.getDynamicSymbolTable();
                     }
+                    NavigableMap<Long, Symbol> librarySymbols = new TreeMap<>();
                     if (symtab != null) {
                         log.log(Levels.DEBUG, "Loading symbols in range " + HexFormatter.tohex(ptr, 16) + "-" + HexFormatter.tohex(ptr + length, 16) + "...");
                         for (Symbol sym : symtab.getSymbols()) {
                             if (sym.getSectionIndex() != Symbol.SHN_UNDEF && sym.getValue() >= offset && sym.getValue() < offset + length) {
                                 symbols.put(sym.getValue() + loadBias, sym.offset(loadBias));
+                                librarySymbols.put(sym.getValue() + loadBias, sym.offset(loadBias));
                                 log.log(Levels.DEBUG, "Adding symbol " + sym + " for address 0x" + HexFormatter.tohex(sym.getValue() + loadBias, 16));
                             }
                         }
+                    }
+                    if (traceWriter != null) {
+                        traceWriter.symbolTable(loadBias, filename, ptr, length, librarySymbols);
                     }
                 }
             }
@@ -853,7 +859,12 @@ public class PosixEnvironment {
 
     private void logMmap(long addr, long length, int prot, int flags, int fildes, long offset, long result) {
         if (traceWriter != null) {
-            traceWriter.mmap(addr, length, prot, flags, fildes, offset, result, null);
+            try {
+                String filename = posix.getFileDescriptor(fildes).name;
+                traceWriter.mmap(addr, length, prot, flags, fildes, offset, result, filename, null);
+            } catch (PosixException e) {
+                traceWriter.mmap(addr, length, prot, flags, fildes, offset, result, null, null);
+            }
         }
     }
 
@@ -867,7 +878,12 @@ public class PosixEnvironment {
             } catch (Throwable t) {
                 // swallow
             }
-            traceWriter.mmap(addr, length, prot, flags, fildes, offset, result, data);
+            try {
+                String filename = posix.getFileDescriptor(fildes).name;
+                traceWriter.mmap(addr, length, prot, flags, fildes, offset, result, filename, data);
+            } catch (PosixException e) {
+                traceWriter.mmap(addr, length, prot, flags, fildes, offset, result, null, data);
+            }
         }
     }
 
@@ -919,7 +935,7 @@ public class PosixEnvironment {
                 assert mem.roundToPageSize(ptr.size()) == mem.roundToPageSize(length);
                 result = getPointer(ptr, r, w, x, offset, priv);
             }
-            if (DEBUG) {
+            if (SYMBOLS) {
                 loadSymbols(fildes, offset, result, length);
             }
             logMmap(addr, length, pr, fl, fildes, offset, result, ptr);

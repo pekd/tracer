@@ -51,8 +51,10 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
@@ -161,8 +163,19 @@ public class TraceView extends JPanel {
         state.setState(root.getFirstStep());
     }
 
-    public void setSymbols(SymbolTable symbols) {
+    public void setComputedSymbols(SymbolTable symbols) {
         this.symbols.setSymbols(symbols);
+    }
+
+    public void setSymbolResolver(SymbolResolver resolver) {
+        insns.setSymbolResolver(resolver);
+        stack.setSymbolResolver(resolver);
+        state.setSymbolResolver(resolver);
+    }
+
+    public void setMappedFiles(MappedFiles mappedFiles) {
+        insns.setMappedFiles(mappedFiles);
+        state.setMappedFiles(mappedFiles);
     }
 
     public Node getSelectedNode() {

@@ -58,7 +58,7 @@ import javax.swing.JScrollPane;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.trcview.analysis.Symbol;
+import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
@@ -68,7 +68,7 @@ public class SymbolView extends JPanel {
     private static final Logger log = Trace.create(SymbolView.class);
 
     private JList<String> syms;
-    private List<Symbol> symbols;
+    private List<ComputedSymbol> symbols;
     private List<JumpListener> jumpListeners;
 
     public SymbolView() {
@@ -85,7 +85,7 @@ public class SymbolView extends JPanel {
                     if (i == -1) {
                         return;
                     }
-                    Symbol sym = symbols.get(i);
+                    ComputedSymbol sym = symbols.get(i);
                     log.info("jumping to first execution of " + sym.name);
                     fireJumpEvent(sym.visits.get(0));
                 }
@@ -94,7 +94,7 @@ public class SymbolView extends JPanel {
         add(BorderLayout.CENTER, new JScrollPane(syms));
     }
 
-    private static final String format(Symbol sym, int width) {
+    private static final String format(ComputedSymbol sym, int width) {
         int len = 32 - sym.name.length();
         if (len < 1) {
             len = 1;
@@ -107,7 +107,7 @@ public class SymbolView extends JPanel {
     }
 
     public void setSymbols(SymbolTable symbols) {
-        List<Symbol> sym = new ArrayList<>();
+        List<ComputedSymbol> sym = new ArrayList<>();
         DefaultListModel<String> model = new DefaultListModel<>();
         OptionalInt max = symbols.getSubroutines().stream().mapToInt(s -> s.visits.size()).max();
         if (max.isPresent()) {

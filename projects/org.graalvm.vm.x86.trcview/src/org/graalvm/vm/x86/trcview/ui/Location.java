@@ -38,62 +38,88 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.trcview.analysis;
+package org.graalvm.vm.x86.trcview.ui;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 
-public class Symbol {
-    public static enum Type {
-        SUBROUTINE,
-        LOCATION;
+public class Location {
+    private long pc;
+    private Symbol symbol;
+    private String filename;
+    private long base;
+    private long offset;
+    private String[] disasm;
+    private byte[] machinecode;
+
+    public static Location getLocation(SymbolResolver resolver, MappedFiles files, StepRecord step) {
+        long pc = step.getPC();
+        Location loc = new Location();
+        loc.pc = pc;
+        loc.symbol = resolver.getSymbol(pc);
+        loc.filename = files.getFilename(pc);
+        loc.base = files.getBase(pc);
+        loc.offset = files.getOffset(pc);
+        loc.disasm = step.getDisassemblyComponents();
+        loc.machinecode = step.getMachinecode();
+        return loc;
     }
 
-    public final String name;
-    public final long address;
-    public final Type type;
-    public final List<Node> visits;
+    public long getPC() {
+        return pc;
+    }
 
-    public Symbol(String name, long address, Type type) {
-        if (name == null) {
-            throw new NullPointerException("name is null");
+    public String getSymbol() {
+        return symbol == null ? null : symbol.getName();
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public long getBase() {
+        return base;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public byte[] getMachinecode() {
+        return machinecode;
+    }
+
+    public String[] getDisassembly() {
+        return disasm;
+    }
+
+    public String getAsm() {
+        if (disasm == null) {
+            return null;
         }
-
-        this.name = name;
-        this.address = address;
-        this.type = type;
-        visits = new ArrayList<>();
-    }
-
-    public void addVisit(Node node) {
-        visits.add(node);
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) address;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null) {
-            return false;
+        if (disasm.length == 1) {
+            return disasm[0];
+        } else {
+            return disasm[0] + "\t" + Stream.of(disasm).skip(1).collect(Collectors.joining(","));
         }
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof Symbol)) {
-            return false;
-        }
-        Symbol s = (Symbol) o;
-        return s.address == address && s.name.equals(name);
     }
 
-    @Override
-    public String toString() {
-        return "<" + name + ">@0x" + HexFormatter.tohex(address);
+    public String getMnemonic() {
+        return disasm[0];
+    }
+
+    public String getPrintableBytes() {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < machinecode.length; i++) {
+            buf.append(' ');
+            buf.append(HexFormatter.tohex(Byte.toUnsignedInt(machinecode[i]), 2));
+        }
+        return buf.toString().substring(1);
     }
 }

@@ -62,14 +62,15 @@ import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
+import org.graalvm.vm.x86.node.debug.trace.EofRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
-import org.graalvm.vm.x86.node.debug.trace.LocationRecord;
 import org.graalvm.vm.x86.node.debug.trace.MemoryEventRecord;
 import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.MprotectRecord;
 import org.graalvm.vm.x86.node.debug.trace.MunmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 import org.graalvm.vm.x86.node.debug.trace.SystemLogRecord;
 
 public class Verify86 {
@@ -164,8 +165,7 @@ public class Verify86 {
     public void step() throws ProcessExitException, PosixException {
         StepRecord record = (StepRecord) currentRecord;
         CpuState state = record.getState().getState();
-        LocationRecord loc = record.getLocation();
-        byte[] mcode = loc.getMachinecode();
+        byte[] mcode = record.getMachinecode();
         regs = ptrace.getRegisters();
         if (transfer) {
             // transfer registers from trace to host cpu
@@ -327,7 +327,7 @@ public class Verify86 {
                     MemoryEventRecord evt = (MemoryEventRecord) currentRecord;
                     String mnemonic = null;
                     if (lastStep != null) {
-                        mnemonic = lastStep.getLocation().getMnemonic();
+                        mnemonic = lastStep.getMnemonic();
                     }
                     if ((evt.getAddress() & 0xFFFFFFFFFFFFFFF0L) == (memwatchAddress & 0xFFFFFFFFFFFFFFF0L)) {
                         if (!check && evt.getAddress() == memwatchAddress && evt.getValue() == memwatchValue) {
@@ -373,12 +373,12 @@ public class Verify86 {
                                 // read (no previous step)
                                 checkRead(evt);
                             } else {
-                                String[] cmd = lastStep.getLocation().getAssembly();
+                                String[] cmd = lastStep.getDisassemblyComponents();
                                 if (cmd.length == 1) {
                                     checkRead(evt);
                                 } else if (cmd.length > 1 && cmd[1].contains("[")) {
                                     if (!MNEMONIC_MEM_IGNORE.contains(mnemonic)) {
-                                        log.info("[MEM] ignoring " + evt + ": " + lastStep.getLocation().getDisassembly());
+                                        log.info("[MEM] ignoring " + evt + ": " + lastStep.getDisassembly());
                                     }
                                     // don't check (instruction probably contains a store operation)
                                 } else {
@@ -446,6 +446,10 @@ public class Verify86 {
                     log.info("[LOG] " + currentRecord);
                 } else if (currentRecord instanceof CallArgsRecord) {
                     // ignore
+                } else if (currentRecord instanceof SymbolTableRecord) {
+                    // ignore
+                } else if (currentRecord instanceof EofRecord) {
+                    return 0;
                 } else {
                     throw new AssertionError("unknown record type: " + (currentRecord == null ? "null" : currentRecord.getClass().getCanonicalName()));
                 }

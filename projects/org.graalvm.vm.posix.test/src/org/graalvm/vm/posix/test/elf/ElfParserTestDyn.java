@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.graalvm.vm.posix.elf.Elf;
+import org.graalvm.vm.posix.elf.ElfSymbol;
 import org.graalvm.vm.posix.elf.ProgramHeader;
 import org.graalvm.vm.posix.elf.Section;
 import org.graalvm.vm.posix.elf.Symbol;
@@ -205,7 +206,7 @@ public class ElfParserTestDyn {
 
     @Test
     public void testSymbolTable() {
-        Symbol main = elf.getSymbol("main");
+        ElfSymbol main = elf.getSymbol("main");
         assertEquals(0x100002d0, main.getValue());
         assertEquals(44, main.getSize());
         assertEquals(Symbol.FUNC, main.getType());
@@ -217,7 +218,7 @@ public class ElfParserTestDyn {
 
     @Test
     public void testDynamicSymbolTable() {
-        Symbol main = elf.getDynamicSymbol("puts");
+        ElfSymbol main = elf.getDynamicSymbol("puts");
         assertEquals(0, main.getValue());
         assertEquals(0, main.getSize());
         assertEquals(Symbol.FUNC, main.getType());

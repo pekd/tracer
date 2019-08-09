@@ -148,6 +148,9 @@ public abstract class Record {
             case BrkRecord.MAGIC:
                 record = new BrkRecord();
                 break;
+            case SymbolTableRecord.MAGIC:
+                record = new SymbolTableRecord();
+                break;
             case EofRecord.MAGIC:
                 record = new EofRecord();
                 break;

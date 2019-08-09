@@ -46,10 +46,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.NavigableMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.vector.Vector128;
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.io.BEOutputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.util.log.Trace;
@@ -77,12 +79,18 @@ public class ExecutionTraceWriter implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
+        try {
+            Record record = new EofRecord();
+            record.write(out);
+        } catch (IOException e) {
+            log.log(Level.WARNING, "Error while writing eof event: " + e.getMessage(), e);
+        }
         out.close();
     }
 
     @TruffleBoundary
-    public synchronized void step(CpuState state, String filename, String symbol, long offset, AMD64Instruction insn) {
+    public synchronized void step(CpuState state, AMD64Instruction insn) {
         CpuStateRecord stateRecord;
         if (steps > STEP_THRESHOLD || lastState == null) {
             stateRecord = new FullCpuStateRecord(state);
@@ -92,12 +100,21 @@ public class ExecutionTraceWriter implements Closeable {
             steps++;
         }
         lastState = state;
-        LocationRecord locationRecord = new LocationRecord(filename, symbol, offset, state.rip, insn.getBytes(), insn.getDisassemblyComponents());
-        StepRecord record = new StepRecord(locationRecord, stateRecord);
+        StepRecord record = new StepRecord(insn.getBytes(), stateRecord);
         try {
             record.write(out);
         } catch (IOException e) {
-            log.log(Level.WARNING, "Error while writing step event: " + e.getMessage(), e);
+            log.log(Level.WARNING, "Error while writing cpu step event: " + e.getMessage(), e);
+        }
+    }
+
+    @TruffleBoundary
+    public synchronized void symbolTable(long loadBias, String filename, long address, long size, NavigableMap<Long, Symbol> symbols) {
+        SymbolTableRecord record = new SymbolTableRecord(loadBias, filename, address, size, symbols);
+        try {
+            record.write(out);
+        } catch (IOException e) {
+            log.log(Level.WARNING, "Error while writing symbol table event: " + e.getMessage(), e);
         }
     }
 
@@ -152,8 +169,8 @@ public class ExecutionTraceWriter implements Closeable {
     }
 
     @TruffleBoundary
-    public synchronized void mmap(long addr, long len, int prot, int flags, int fildes, long off, long result, byte[] data) {
-        MmapRecord record = new MmapRecord(addr, len, prot, flags, fildes, off, result);
+    public synchronized void mmap(long addr, long len, int prot, int flags, int fildes, long off, long result, String filename, byte[] data) {
+        MmapRecord record = new MmapRecord(addr, len, prot, flags, fildes, off, filename, result);
         record.setData(data);
         try {
             record.write(out);

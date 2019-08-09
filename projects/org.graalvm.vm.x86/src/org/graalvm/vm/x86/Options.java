@@ -91,6 +91,9 @@ public class Options {
     public static final BooleanOption ENABLE_SUBSTITUTIONS = new BooleanOption("vmx86.exec.subst", false);
     public static final BooleanOption TRACE_SUBSTITUTIONS = new BooleanOption("vmx86.exec.subst.trace", false);
 
+    // tracing
+    public static final BooleanOption EXEC_TRACE = new BooleanOption("vmx86.exec.trace", false);
+
     private static class BooleanOption {
         public final String name;
         public final boolean value;
