@@ -66,6 +66,7 @@ import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
+import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
@@ -84,6 +85,7 @@ public class InstructionView extends JPanel {
     public static final Color RET_FG = Color.RED;
     public static final Color SYSCALL_FG = Color.MAGENTA;
     public static final Color JMP_FG = Color.LIGHT_GRAY;
+    public static final Color INDIRECTJMP_FG = new Color(0xAA, 0x55, 0x00);
     public static final Color JCC_FG = new Color(0xFF, 0x80, 0x00);
     public static final Color ENDBR_FG = Color.GRAY;
 
@@ -249,7 +251,7 @@ public class InstructionView extends JPanel {
         buf.append("</span></pre></body></html>");
     }
 
-    private String format(StepRecord step) {
+    private String format(StepRecord step, StepRecord next) {
         Location loc = Location.getLocation(resolver, mappedFiles, step);
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
@@ -258,7 +260,7 @@ public class InstructionView extends JPanel {
         buf.append(Utils.tab(loc.getAsm(), 12));
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.contentEquals("syscall")) {
-            String decoded = SyscallDecoder.decode(step.getState().getState());
+            String decoded = SyscallDecoder.decode(step.getState().getState(), next.getState().getState());
             if (decoded != null) {
                 comment(buf, loc.getAsm(), decoded);
             }
@@ -276,14 +278,40 @@ public class InstructionView extends JPanel {
             }
         }
         model = new DefaultListModel<>();
+        int i = 0;
         for (Node n : instructions) {
+            i++;
             if (n instanceof RecordNode) {
+                assert i < instructions.size() && n == instructions.get(i);
                 StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
-                model.addElement(format(step));
+                if (i < instructions.size()) {
+                    StepRecord next;
+                    Node nn = instructions.get(i);
+                    if (nn instanceof BlockNode) {
+                        next = ((BlockNode) nn).getHead();
+                    } else {
+                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                    }
+                    model.addElement(format(step, next));
+                } else {
+                    model.addElement(format(step, null));
+                }
             } else if (n instanceof BlockNode) {
                 StepRecord step = ((BlockNode) n).getHead();
                 Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
-                StringBuilder buf = new StringBuilder(format(step));
+                StringBuilder buf = new StringBuilder();
+                if (i < instructions.size()) {
+                    StepRecord next;
+                    Node nn = instructions.get(i);
+                    if (nn instanceof BlockNode) {
+                        next = ((BlockNode) nn).getHead();
+                    } else {
+                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                    }
+                    buf.append(format(step, next));
+                } else {
+                    buf.append(format(step, null));
+                }
                 if (loc.getSymbol() != null) {
                     buf.append(" # <");
                     buf.append(loc.getSymbol());
@@ -394,7 +422,11 @@ public class InstructionView extends JPanel {
                         c.setForeground(SYSCALL_FG);
                         break;
                     case "jmp":
-                        c.setForeground(JMP_FG);
+                        if (step.getInstruction() instanceof JmpIndirect) {
+                            c.setForeground(INDIRECTJMP_FG);
+                        } else {
+                            c.setForeground(JMP_FG);
+                        }
                         break;
                     case "ja":
                     case "jae":

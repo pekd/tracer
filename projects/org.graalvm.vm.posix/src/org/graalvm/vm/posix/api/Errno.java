@@ -115,7 +115,7 @@ public class Errno {
     public static final int EBADRQC         = 56;     /* Invalid request code */
     public static final int EBADSLT         = 57;     /* Invalid slot */
 
-    public static final int EDEADLOCK       = EDEADLK;
+    public static final int EDEADLOCK       = 58;     /* File locking deadlock error */
 
     public static final int EBFONT          = 59;     /* Bad font file format */
     public static final int ENOSTR          = 60;     /* Device not a stream */
@@ -200,6 +200,7 @@ public class Errno {
     // @formatter:on
 
     private static final Map<Integer, String> names;
+    private static final Map<Integer, String> constants;
 
     static {
         names = new HashMap<>();
@@ -260,7 +261,7 @@ public class Errno {
         names.put(55, "No anode");
         names.put(56, "Invalid request code");
         names.put(57, "Invalid slot");
-
+        names.put(58, "File locking deadlock error");
         names.put(59, "Bad font file format");
         names.put(60, "Device not a stream");
         names.put(61, "No data available");
@@ -340,10 +341,161 @@ public class Errno {
         names.put(132, "Operation not possible due to RF-kill");
 
         names.put(133, "Memory page has hardware error");
+
+        constants = new HashMap<>();
+        constants.put(1, "EPERM");
+        constants.put(2, "ENOENT");
+        constants.put(3, "ESRCH");
+        constants.put(4, "EINTR");
+        constants.put(5, "EIO");
+        constants.put(6, "ENXIO");
+        constants.put(7, "E2BIG");
+        constants.put(8, "ENOEXEC");
+        constants.put(9, "EBADF");
+        constants.put(10, "ECHILD");
+        constants.put(11, "EAGAIN");
+        constants.put(12, "ENOMEM");
+        constants.put(13, "EACCES");
+        constants.put(14, "EFAULT");
+        constants.put(15, "ENOTBLK");
+        constants.put(16, "EBUSY");
+        constants.put(17, "EEXIST");
+        constants.put(18, "EXDEV");
+        constants.put(19, "ENODEV");
+        constants.put(20, "ENOTDIR");
+        constants.put(21, "EISDIR");
+        constants.put(22, "EINVAL");
+        constants.put(23, "ENFILE");
+        constants.put(24, "EMFILE");
+        constants.put(25, "ENOTTY");
+        constants.put(26, "ETXTBSY");
+        constants.put(27, "EFBIG");
+        constants.put(28, "ENOSPC");
+        constants.put(29, "ESPIPE");
+        constants.put(30, "EROFS");
+        constants.put(31, "EMLINK");
+        constants.put(32, "EPIPE");
+        constants.put(33, "EDOM");
+        constants.put(34, "ERANGE");
+
+        constants.put(35, "EDEADLK");
+        constants.put(36, "ENAMETOOLONG");
+        constants.put(37, "ENOLCK");
+
+        constants.put(38, "ENOSYS");
+
+        constants.put(39, "ENOTEMPTY");
+        constants.put(40, "ELOOP");
+        constants.put(41, "EWOULDBLOCK");
+        constants.put(42, "ENOMSG");
+        constants.put(43, "EIDRM");
+        constants.put(44, "ECHRNG");
+        constants.put(45, "EL2NSYNC");
+        constants.put(46, "EL3HLT");
+        constants.put(47, "EL3RST");
+        constants.put(48, "ELNRNG");
+        constants.put(49, "EUNATCH");
+        constants.put(50, "ENOCSI");
+        constants.put(51, "EL2HLT");
+        constants.put(52, "EBADE");
+        constants.put(53, "EBADR");
+        constants.put(54, "EXFULL");
+        constants.put(55, "ENOANO");
+        constants.put(56, "EBADRQC");
+        constants.put(57, "EBADSLT");
+        constants.put(58, "EDEADLOCK");
+        constants.put(59, "EBFONT");
+        constants.put(60, "ENOSTR");
+        constants.put(61, "ENODATA");
+        constants.put(62, "ETIME");
+        constants.put(63, "ENOSR");
+        constants.put(64, "ENONET");
+        constants.put(65, "ENOPKG");
+        constants.put(66, "EREMOTE");
+        constants.put(67, "ENOLINK");
+        constants.put(68, "EADV");
+        constants.put(69, "ESRMNT");
+        constants.put(70, "ECOMM");
+        constants.put(71, "EPROTO");
+        constants.put(72, "EMULTIHOP");
+        constants.put(73, "EDOTDOT");
+        constants.put(74, "EBADMSG");
+        constants.put(75, "EOVERFLOW");
+        constants.put(76, "ENOTUNIQ");
+        constants.put(77, "EBADFD");
+        constants.put(78, "EREMCHG");
+        constants.put(79, "ELIBACC");
+        constants.put(80, "ELIBBAD");
+        constants.put(81, "ELIBSCN");
+        constants.put(82, "ELIBMAX");
+        constants.put(83, "ELIBEXEC");
+        constants.put(84, "EILSEQ");
+        constants.put(85, "ERESTART");
+        constants.put(86, "ESTRPIPE");
+        constants.put(87, "EUSERS");
+        constants.put(88, "ENOTSOCK");
+        constants.put(89, "EDESTADDRREQ");
+        constants.put(90, "EMSGSIZE");
+        constants.put(91, "EPROTOTYPE");
+        constants.put(92, "ENOPROTOOPT");
+        constants.put(93, "EPROTONOSUPPORT");
+        constants.put(94, "ESOCKTNOSUPPORT");
+        constants.put(95, "EOPNOTSUPP");
+        constants.put(96, "EPFNOSUPPORT");
+        constants.put(97, "EAFNOSUPPORT");
+        constants.put(98, "EADDRINUSE");
+        constants.put(99, "EADDRNOTAVAIL");
+        constants.put(100, "ENETDOWN");
+        constants.put(101, "ENETUNREACH");
+        constants.put(102, "ENETRESET");
+        constants.put(103, "ECONNABORTED");
+        constants.put(104, "ECONNRESET");
+        constants.put(105, "ENOBUFS");
+        constants.put(106, "EISCONN");
+        constants.put(107, "ENOTCONN");
+        constants.put(108, "ESHUTDOWN");
+        constants.put(109, "ETOOMANYREFS");
+        constants.put(110, "ETIMEDOUT");
+        constants.put(111, "ECONNREFUSED");
+        constants.put(112, "EHOSTDOWN");
+        constants.put(113, "EHOSTUNREACH");
+        constants.put(114, "EALREADY");
+        constants.put(115, "EINPROGRESS");
+        constants.put(116, "ESTALE");
+        constants.put(117, "EUCLEAN");
+        constants.put(118, "ENOTNAM");
+        constants.put(119, "ENAVAIL");
+        constants.put(120, "EISNAM");
+        constants.put(121, "EREMOTEIO");
+        constants.put(122, "EDQUOT");
+
+        constants.put(123, "ENOMEDIUM");
+        constants.put(124, "EMEDIUMTYPE");
+        constants.put(125, "ECANCELED");
+        constants.put(126, "ENOKEY");
+        constants.put(127, "EKEYEXPIRED");
+        constants.put(128, "EKEYREVOKED");
+        constants.put(129, "EKEYREJECTED");
+
+        constants.put(130, "EOWNERDEAD");
+        constants.put(131, "ENOTRECOVERABLE");
+
+        constants.put(132, "ERFKILL");
+
+        constants.put(133, "EHWPOISON");
     }
 
     public static Set<Integer> getErrorNumbers() {
         return Collections.unmodifiableSet(names.keySet());
+    }
+
+    public static String getConstant(int errno) {
+        String name = constants.get(errno);
+        if (name == null) {
+            return Integer.toString(errno);
+        } else {
+            return name;
+        }
     }
 
     public static String toString(int errno) {
