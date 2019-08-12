@@ -46,6 +46,7 @@ import java.util.TreeMap;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
 import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
@@ -79,11 +80,11 @@ public class Analysis {
             if (lastStep != null) {
                 long pc = step.getPC();
                 Symbol sym;
-                switch (lastStep.getMnemonic()) {
-                    case "jmp":
+                switch (AMD64InstructionQuickInfo.getType(lastStep.getMachinecode())) {
+                    case JMP:
                         symbols.addLocation(pc);
                         break;
-                    case "call":
+                    case CALL:
                         sym = resolver.getSymbol(pc);
                         if (sym != null && sym.getName() != null) {
                             symbols.addSubroutine(pc, sym.getName());

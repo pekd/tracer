@@ -49,6 +49,7 @@ import java.util.logging.Logger;
 
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
+import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.Record;
@@ -151,7 +152,7 @@ public class BlockNode extends Node {
         analysis.process(record);
         if (record instanceof StepRecord) {
             StepRecord step = (StepRecord) record;
-            if (step.getMnemonic().equals("call")) {
+            if (AMD64InstructionQuickInfo.isCall(step.getMachinecode())) {
                 if (progress != null) {
                     progress.progressUpdate(in.tell());
                 }
@@ -168,7 +169,7 @@ public class BlockNode extends Node {
                     }
                     if (child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof StepRecord) {
                         StepRecord s = (StepRecord) ((RecordNode) child).getRecord();
-                        if (s.getMnemonic().equals("ret")) {
+                        if (AMD64InstructionQuickInfo.isRet(s.getMachinecode())) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
                             }
