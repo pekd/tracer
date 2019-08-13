@@ -43,9 +43,12 @@ package org.graalvm.vm.x86.trcview.analysis;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
 import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
@@ -56,12 +59,16 @@ import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
 
 public class Analysis {
+    private static final Logger log = Trace.create(Analysis.class);
+
     private SymbolTable symbols;
     private StepRecord lastStep;
 
     private NavigableMap<Long, Symbol> symbolTable;
     private NavigableMap<Long, MappedFile> mappedFiles;
     private SymbolResolver resolver;
+
+    private long steps;
 
     public Analysis() {
         symbols = new SymbolTable();
@@ -72,16 +79,19 @@ public class Analysis {
 
     public void start() {
         lastStep = null;
+        steps = 0;
     }
 
     public void process(Record record) {
         if (record instanceof StepRecord) {
+            steps++;
             StepRecord step = (StepRecord) record;
             if (lastStep != null) {
                 long pc = step.getPC();
                 Symbol sym;
                 switch (AMD64InstructionQuickInfo.getType(lastStep.getMachinecode())) {
                     case JMP:
+                    case JCC:
                         symbols.addLocation(pc);
                         break;
                     case CALL:
@@ -102,7 +112,7 @@ public class Analysis {
             long end = addr + symtab.getSize();
             while (addr < end) {
                 Entry<Long, MappedFile> file = mappedFiles.ceilingEntry(addr);
-                if (file != null && file.getValue().getFilename().equals(symtab.getFilename())) {
+                if (file != null && file.getValue().getFilename() != null && file.getValue().getFilename().equals(symtab.getFilename())) {
                     file.getValue().setLoadBias(symtab.getLoadBias());
                     addr = file.getKey() + 1;
                 } else {
@@ -129,6 +139,7 @@ public class Analysis {
 
     public void finish(BlockNode root) {
         resolveCalls(root);
+        log.log(Levels.INFO, "The trace contains " + steps + " steps");
     }
 
     public SymbolTable getComputedSymbolTable() {

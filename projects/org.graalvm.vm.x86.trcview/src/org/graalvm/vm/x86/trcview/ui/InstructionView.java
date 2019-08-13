@@ -66,6 +66,7 @@ import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
+import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
@@ -260,7 +261,8 @@ public class InstructionView extends JPanel {
         buf.append(Utils.tab(loc.getAsm(), 12));
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.contentEquals("syscall")) {
-            String decoded = SyscallDecoder.decode(step.getState().getState(), next.getState().getState());
+            CpuState ns = next == null ? null : next.getState().getState();
+            String decoded = SyscallDecoder.decode(step.getState().getState(), ns);
             if (decoded != null) {
                 comment(buf, loc.getAsm(), decoded);
             }
