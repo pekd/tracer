@@ -46,6 +46,7 @@ public class AMD64InstructionQuickInfo {
         CALL,
         RET,
         JCC,
+        SYSCALL,
         OTHER;
     }
 
@@ -216,6 +217,8 @@ public class AMD64InstructionQuickInfo {
                     case AMD64Opcode.JP32:
                     case AMD64Opcode.JS32:
                         return InstructionType.JCC;
+                    case AMD64Opcode.SYSCALL:
+                        return InstructionType.SYSCALL;
                     default:
                         return InstructionType.OTHER;
                 }

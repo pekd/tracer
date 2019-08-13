@@ -45,6 +45,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -55,8 +56,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractListModel;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -66,6 +67,8 @@ import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
+import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
+import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo.InstructionType;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
@@ -99,7 +102,7 @@ public class InstructionView extends JPanel {
     public static final int COMMENT_COLUMN = 48;
 
     private List<Node> instructions;
-    private DefaultListModel<String> model;
+    private InstructionViewModel model;
     private JList<String> insns;
 
     private List<ChangeListener> changeListeners;
@@ -116,9 +119,14 @@ public class InstructionView extends JPanel {
         resolver = new SymbolResolver(new TreeMap<>());
         mappedFiles = new MappedFiles(new TreeMap<>());
 
-        insns = new JList<>(model = new DefaultListModel<>());
+        instructions = new ArrayList<>();
+        insns = new JList<>(model = new InstructionViewModel());
         insns.setFont(MainWindow.FONT);
         insns.setCellRenderer(new CellRenderer());
+        KeyListener[] listeners = insns.getKeyListeners();
+        for (KeyListener l : listeners) {
+            insns.removeKeyListener(l);
+        }
         add(BorderLayout.CENTER, new JScrollPane(insns));
 
         insns.addListSelectionListener(e -> {
@@ -270,6 +278,14 @@ public class InstructionView extends JPanel {
         return buf.toString();
     }
 
+    private static String stripHTML(String s) {
+        String result = s.replaceAll("<style>.*</style>", "");
+        result = result.replaceAll("&gt;", ">");
+        result = result.replaceAll("&lt;", "<");
+        result = result.replaceAll("&amp;", "&");
+        return result.replaceAll("<.*?>", "");
+    }
+
     public void set(BlockNode block) {
         instructions = new ArrayList<>();
         for (Node n : block.getNodes()) {
@@ -279,61 +295,55 @@ public class InstructionView extends JPanel {
                 instructions.add(n);
             }
         }
-        model = new DefaultListModel<>();
-        int i = 0;
-        for (Node n : instructions) {
-            i++;
-            if (n instanceof RecordNode) {
-                assert i < instructions.size() && n == instructions.get(i);
-                StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
-                if (i < instructions.size()) {
-                    StepRecord next;
-                    Node nn = instructions.get(i);
-                    if (nn instanceof BlockNode) {
-                        next = ((BlockNode) nn).getHead();
-                    } else {
-                        next = (StepRecord) ((RecordNode) nn).getRecord();
+        int max = 0;
+        if (instructions.size() > 10000) {
+            // compute max size
+            max = 20 + 12;
+            for (int i = 0; i < instructions.size(); i++) {
+                Node n = instructions.get(i);
+                if (n instanceof BlockNode) {
+                    Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
+                    int len = 0;
+                    if (loc.getSymbol() != null) {
+                        len += 5 + loc.getSymbol().length();
+                        if (loc.getFilename() != null) {
+                            len += 3 + loc.getFilename().length();
+                        }
+                    } else if (loc.getFilename() != null) {
+                        len += 8 + HexFormatter.tohex(loc.getPC(), 8).length();
+                        len += loc.getFilename().length();
                     }
-                    model.addElement(format(step, next));
-                } else {
-                    model.addElement(format(step, null));
-                }
-            } else if (n instanceof BlockNode) {
-                StepRecord step = ((BlockNode) n).getHead();
-                Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
-                StringBuilder buf = new StringBuilder();
-                if (i < instructions.size()) {
-                    StepRecord next;
-                    Node nn = instructions.get(i);
-                    if (nn instanceof BlockNode) {
-                        next = ((BlockNode) nn).getHead();
-                    } else {
-                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                    max = Math.max(max, 20 + 12 + 18 + len); // pc = 20, insn = 12, arg = 18
+                } else if (n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
+                    StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
+                    InstructionType type = AMD64InstructionQuickInfo.getType(step.getMachinecode());
+                    switch (type) {
+                        case SYSCALL: {
+                            if (i + 1 < instructions.size()) {
+                                StepRecord next;
+                                Node nn = instructions.get(i + 1);
+                                if (nn instanceof BlockNode) {
+                                    next = ((BlockNode) nn).getHead();
+                                } else {
+                                    next = (StepRecord) ((RecordNode) nn).getRecord();
+                                }
+                                CpuState ns = next == null ? null : next.getState().getState();
+                                String decoded = SyscallDecoder.decode(step.getState().getState(), ns);
+                                max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
+                            }
+                        }
                     }
-                    buf.append(format(step, next));
-                } else {
-                    buf.append(format(step, null));
                 }
-                if (loc.getSymbol() != null) {
-                    buf.append(" # <");
-                    buf.append(loc.getSymbol());
-                    buf.append(">");
-                    if (loc.getFilename() != null) {
-                        buf.append(" [");
-                        buf.append(loc.getFilename());
-                        buf.append("]");
-                    }
-                } else if (loc.getFilename() != null) {
-                    buf.append(" # 0x");
-                    buf.append(HexFormatter.tohex(loc.getPC(), 8));
-                    buf.append(" [");
-                    buf.append(loc.getFilename());
-                    buf.append("]");
-                }
-                model.addElement(buf.toString());
+            }
+        } else {
+            for (int i = 0; i < model.getSize(); i++) {
+                String s = stripHTML(model.getElementAt(i));
+                max = Math.max(max, s.length());
             }
         }
-        insns.setModel(model);
+        insns.setPrototypeCellValue(StringUtils.repeat("x", max + 10)); // +10 is a hack
+        model.changed();
+        // insns.setModel(model);
         insns.setSelectedIndex(0);
         insns.repaint();
     }
@@ -471,6 +481,72 @@ public class InstructionView extends JPanel {
                 }
             }
             return c;
+        }
+    }
+
+    public class InstructionViewModel extends AbstractListModel<String> {
+        @Override
+        public String getElementAt(int i) {
+            Node n = instructions.get(i);
+            if (n instanceof RecordNode) {
+                StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
+                if (i + 1 < instructions.size()) {
+                    StepRecord next;
+                    Node nn = instructions.get(i + 1);
+                    if (nn instanceof BlockNode) {
+                        next = ((BlockNode) nn).getHead();
+                    } else {
+                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                    }
+                    return format(step, next);
+                } else {
+                    return format(step, null);
+                }
+            } else if (n instanceof BlockNode) {
+                StepRecord step = ((BlockNode) n).getHead();
+                Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
+                StringBuilder buf = new StringBuilder();
+                if (i + 1 < instructions.size()) {
+                    StepRecord next;
+                    Node nn = instructions.get(i + 1);
+                    if (nn instanceof BlockNode) {
+                        next = ((BlockNode) nn).getHead();
+                    } else {
+                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                    }
+                    buf.append(format(step, next));
+                } else {
+                    buf.append(format(step, null));
+                }
+                if (loc.getSymbol() != null) {
+                    buf.append(" # <");
+                    buf.append(loc.getSymbol());
+                    buf.append(">");
+                    if (loc.getFilename() != null) {
+                        buf.append(" [");
+                        buf.append(loc.getFilename());
+                        buf.append("]");
+                    }
+                } else if (loc.getFilename() != null) {
+                    buf.append(" # 0x");
+                    buf.append(HexFormatter.tohex(loc.getPC(), 8));
+                    buf.append(" [");
+                    buf.append(loc.getFilename());
+                    buf.append("]");
+                }
+                return buf.toString();
+            } else {
+                throw new IllegalStateException("invalid node type: " + n.getClass().getSimpleName());
+            }
+        }
+
+        @Override
+        public int getSize() {
+            return instructions.size();
+        }
+
+        public void changed() {
+            fireContentsChanged(this, 0, getSize());
         }
     }
 }
