@@ -156,7 +156,8 @@ public class StateEncoder {
         Location location = Location.getLocation(resolver, mappedFiles, step);
         CpuStateRecord state = step.getState();
         String loc = encode(location);
-        return loc + "\n\n" + html(state.toString());
+        String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getState().getState().instructionCount;
+        return loc + "\n\n" + html(state.toString()) + "\n" + pos;
     }
 
     public static String encode(SymbolResolver resolver, MappedFiles mappedFiles, StepRecord previous, StepRecord current) {
@@ -164,6 +165,7 @@ public class StateEncoder {
         CpuStateRecord state1 = previous.getState();
         CpuStateRecord state2 = current.getState();
         String loc = encode(location);
-        return loc + "\n\n" + diff(state1.toString(), state2.toString());
+        String pos = "TID: " + state2.getTid() + "\ninstruction: " + state2.getState().instructionCount;
+        return loc + "\n\n" + diff(state1.toString(), state2.toString()) + "\n" + pos;
     }
 }

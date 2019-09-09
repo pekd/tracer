@@ -95,7 +95,7 @@ public abstract class Record {
         lastStateSupplier = null;
     }
 
-    public long getTid() {
+    public int getTid() {
         return tid;
     }
 

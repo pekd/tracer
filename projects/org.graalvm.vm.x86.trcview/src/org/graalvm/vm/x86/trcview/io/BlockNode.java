@@ -115,7 +115,7 @@ public class BlockNode extends Node {
     public static BlockNode read(ExecutionTraceReader in, Analysis analysis, ProgressListener progress) throws IOException {
         List<Node> nodes = new ArrayList<>();
         Node node;
-        long tid = 0;
+        int tid = 0;
         while ((node = parseRecord(in, analysis, progress, tid)) != null) {
             nodes.add(node);
             if (tid == 0) {
@@ -129,8 +129,8 @@ public class BlockNode extends Node {
         return new BlockNode(null, nodes);
     }
 
-    private static Node parseRecord(ExecutionTraceReader in, Analysis analysis, ProgressListener progress, long thread) throws IOException {
-        long tid = thread;
+    private static Node parseRecord(ExecutionTraceReader in, Analysis analysis, ProgressListener progress, int thread) throws IOException {
+        int tid = thread;
         Record record = null;
         try {
             record = in.read();
