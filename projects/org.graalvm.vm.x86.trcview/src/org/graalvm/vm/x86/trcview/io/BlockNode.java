@@ -158,12 +158,19 @@ public class BlockNode extends Node {
                 }
                 List<Node> result = new ArrayList<>();
                 CallArgsRecord args = null;
+                int cnt = 0;
                 while (true) {
                     Node child = parseRecord(in, analysis, progress, tid);
                     if (child == null) {
                         break;
                     }
                     result.add(child);
+                    if (progress != null && cnt > 10_000) {
+                        cnt = 0;
+                        progress.progressUpdate(in.tell());
+                    } else {
+                        cnt++;
+                    }
                     if (args == null && child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof CallArgsRecord) {
                         args = (CallArgsRecord) ((RecordNode) child).getRecord();
                     }
