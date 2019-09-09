@@ -136,6 +136,7 @@ public class TraceView extends JPanel {
         stack.set(block);
         insns.set(block);
         insns.select(node);
+        insns.fireChangeEvent();
     }
 
     private void up(BlockNode block) {
