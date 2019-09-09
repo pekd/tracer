@@ -111,6 +111,10 @@ public class StepRecord extends Record {
         return getState().getPC();
     }
 
+    public long getInstructionCount() {
+        return getState().getInstructionCount();
+    }
+
     @Override
     protected int getDataSize() {
         return sizeArray(machinecode) + cpuState.size() + 8;
@@ -127,5 +131,10 @@ public class StepRecord extends Record {
     protected void writeRecord(WordOutputStream out) throws IOException {
         writeArray(out, machinecode);
         cpuState.write(out);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("0x%08x: %s # step %d", getPC(), getInstruction().getDisassembly(), getInstructionCount());
     }
 }

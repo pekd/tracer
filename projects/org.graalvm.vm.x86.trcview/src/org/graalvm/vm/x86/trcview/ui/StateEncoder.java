@@ -156,7 +156,7 @@ public class StateEncoder {
         Location location = Location.getLocation(resolver, mappedFiles, step);
         CpuStateRecord state = step.getState();
         String loc = encode(location);
-        String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getState().getState().instructionCount;
+        String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getInstructionCount();
         return loc + "\n\n" + html(state.toString()) + "\n" + pos;
     }
 
@@ -165,7 +165,7 @@ public class StateEncoder {
         CpuStateRecord state1 = previous.getState();
         CpuStateRecord state2 = current.getState();
         String loc = encode(location);
-        String pos = "TID: " + state2.getTid() + "\ninstruction: " + state2.getState().instructionCount;
+        String pos = "TID: " + state2.getTid() + "\ninstruction: " + state2.getInstructionCount();
         return loc + "\n\n" + diff(state1.toString(), state2.toString()) + "\n" + pos;
     }
 }

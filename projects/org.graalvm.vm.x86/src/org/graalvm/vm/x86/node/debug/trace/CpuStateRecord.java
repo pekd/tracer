@@ -50,4 +50,6 @@ public abstract class CpuStateRecord extends Record {
     public abstract CpuState getState();
 
     public abstract long getPC();
+
+    public abstract long getInstructionCount();
 }

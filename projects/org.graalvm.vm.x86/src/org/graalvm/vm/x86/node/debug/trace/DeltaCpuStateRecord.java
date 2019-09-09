@@ -55,6 +55,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
     private long[] deltaValue;
 
     private long pc;
+    private long instructionCount;
 
     public DeltaCpuStateRecord() {
         super(MAGIC);
@@ -127,9 +128,6 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             cnt++;
         }
         if (lastState.getRFL() != state.getRFL()) {
-            cnt++;
-        }
-        if (lastState.instructionCount != state.instructionCount) {
             cnt++;
         }
         for (int i = 0; i < 16; i++) {
@@ -238,23 +236,19 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             deltaValue[pos] = state.getRFL();
             pos++;
         }
-        if (lastState.instructionCount != state.instructionCount) {
-            deltaId[pos] = 19;
-            deltaValue[pos] = state.instructionCount;
-            pos++;
-        }
         for (int i = 0; i < 16; i++) {
             if (!lastState.xmm[i].equals(state.xmm[i])) {
-                deltaId[pos] = (byte) (20 + 2 * i);
+                deltaId[pos] = (byte) (19 + 2 * i);
                 deltaValue[pos] = state.xmm[i].getI64(0);
                 pos++;
-                deltaId[pos] = (byte) (21 + 2 * i);
+                deltaId[pos] = (byte) (20 + 2 * i);
                 deltaValue[pos] = state.xmm[i].getI64(1);
                 pos++;
             }
         }
 
         pc = state.rip;
+        instructionCount = state.instructionCount;
     }
 
     @Override
@@ -265,6 +259,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             // compute state
             CpuState state = getLastState().clone();
             state.rip = pc;
+            state.instructionCount = instructionCount;
             clearLastState();
             for (int i = 0; i < deltaId.length; i++) {
                 long val = deltaValue[i];
@@ -326,12 +321,9 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
                     case 18:
                         state.setRFL(val);
                         break;
-                    case 19:
-                        state.instructionCount = val;
-                        break;
                     default:
-                        if (deltaId[i] > 19 && deltaId[i] < (20 + 16 * 2)) {
-                            int v = deltaId[i] - 20;
+                        if (deltaId[i] > 18 && deltaId[i] < (19 + 16 * 2)) {
+                            int v = deltaId[i] - 19;
                             int reg = v / 2;
                             state.xmm[reg].setI64(v % 2 == 0 ? 0 : 1, val);
                         } else {
@@ -350,13 +342,19 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
     }
 
     @Override
+    public long getInstructionCount() {
+        return instructionCount;
+    }
+
+    @Override
     protected int getDataSize() {
-        return 1 + deltaId.length + 8 * deltaId.length + 8;
+        return 1 + deltaId.length + 8 * deltaId.length + 2 * 8;
     }
 
     @Override
     protected void readRecord(WordInputStream in) throws IOException {
         pc = in.read64bit();
+        instructionCount = in.read64bit();
         int cnt = in.read8bit();
         deltaId = new byte[cnt];
         deltaValue = new long[cnt];
@@ -369,6 +367,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
         out.write64bit(pc);
+        out.write64bit(instructionCount);
         out.write8bit((byte) deltaId.length);
         for (int i = 0; i < deltaId.length; i++) {
             out.write8bit(deltaId[i]);

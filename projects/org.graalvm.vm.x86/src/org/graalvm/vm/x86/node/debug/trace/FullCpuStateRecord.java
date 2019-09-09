@@ -72,6 +72,11 @@ public class FullCpuStateRecord extends CpuStateRecord {
     }
 
     @Override
+    public long getInstructionCount() {
+        return state.instructionCount;
+    }
+
+    @Override
     protected int getDataSize() {
         return 21 * 8 + 16 * 16;
     }
