@@ -58,6 +58,7 @@ import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.posix.ArchPrctl;
 import org.graalvm.vm.x86.posix.SyscallNames;
 import org.graalvm.vm.x86.posix.Syscalls;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 
 public class SyscallDecoder {
@@ -185,7 +186,7 @@ public class SyscallDecoder {
                 }
                 append(buf, b);
             }
-        } catch (Throwable t) {
+        } catch (MemoryNotMappedException e) {
             return "0x" + hex(addr);
         }
     }
@@ -202,7 +203,7 @@ public class SyscallDecoder {
                 append(buf, b);
             }
             return "\"" + buf + "\"";
-        } catch (Throwable t) {
+        } catch (MemoryNotMappedException e) {
             return "0x" + hex(addr);
         }
     }

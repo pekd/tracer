@@ -116,10 +116,10 @@ public class MemoryTrace {
         }
     }
 
-    public byte getByte(long addr, long instructionCount) {
+    public byte getByte(long addr, long instructionCount) throws MemoryNotMappedException {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
-            throw new AssertionError(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
         }
         return page.getByte(addr, instructionCount);
     }

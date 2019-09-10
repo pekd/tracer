@@ -68,12 +68,17 @@ public class TraceView extends JPanel {
     private CallStackView stack;
     private StateView state;
     private InstructionView insns;
+    private MemoryView mem;
 
     public TraceView(Consumer<String> status) {
         super(new BorderLayout());
+        JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        rightSplit.setTopComponent(state = new StateView());
+        rightSplit.setBottomComponent(mem = new MemoryView());
+        rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         content.setLeftComponent(insns = new InstructionView(status));
-        content.setRightComponent(state = new StateView());
+        content.setRightComponent(rightSplit);
         content.setResizeWeight(1.0);
         content.setDividerLocation(400);
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -97,6 +102,7 @@ public class TraceView extends JPanel {
                     state.setState(step);
                 }
                 state.setCallArguments(args);
+                mem.setInstruction(step.getInstructionCount());
             }
         });
 
@@ -105,6 +111,7 @@ public class TraceView extends JPanel {
                 stack.set(call);
                 insns.set(call);
                 insns.select(call.getFirstNode());
+                mem.setInstruction(call.getFirstStep().getInstructionCount());
             }
 
             public void ret(RecordNode ret) {
@@ -113,6 +120,7 @@ public class TraceView extends JPanel {
                     stack.set(parent);
                     insns.set(parent);
                     insns.select(ret.getParent());
+                    mem.setInstruction(ret.getParent().getHead().getInstructionCount());
                 }
             }
         });
@@ -163,6 +171,7 @@ public class TraceView extends JPanel {
         insns.set(root);
         insns.select(root.getFirstNode());
         state.setState(root.getFirstStep());
+        mem.setInstruction(root.getFirstStep().getInstructionCount());
     }
 
     public void setComputedSymbols(SymbolTable symbols) {
@@ -182,6 +191,7 @@ public class TraceView extends JPanel {
 
     public void setMemoryTrace(MemoryTrace memory) {
         insns.setMemoryTrace(memory);
+        mem.setMemoryTrace(memory);
     }
 
     public Node getSelectedNode() {
