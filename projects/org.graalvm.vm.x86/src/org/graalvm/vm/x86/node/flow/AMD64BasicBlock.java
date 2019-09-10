@@ -365,12 +365,14 @@ public class AMD64BasicBlock extends AMD64Node {
         CompilerAsserts.partialEvaluationConstant(pc);
         try {
             for (AMD64Instruction insn : instructions) {
+                if (DEBUG || EXEC_TRACE) {
+                    updateInstructionCount(frame, n);
+                    n = 0;
+                }
                 if (DEBUG) {
                     debug(frame, pc, insn);
                 }
                 if (EXEC_TRACE) {
-                    updateInstructionCount(frame, n);
-                    n = 0;
                     traceState.execute(frame, pc, insn);
                 }
                 // rdtsc/call needs current instruction count
