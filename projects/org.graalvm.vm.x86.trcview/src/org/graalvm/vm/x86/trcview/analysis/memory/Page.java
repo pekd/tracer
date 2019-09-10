@@ -1,6 +1,7 @@
 package org.graalvm.vm.x86.trcview.analysis.memory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.graalvm.vm.util.io.Endianess;
@@ -60,27 +61,51 @@ public class Page {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
-        MemoryUpdate last = null;
-        for (MemoryUpdate update : updates) {
-            if (update.address <= addr && update.address + update.size > addr) {
-                if (update.instructionCount == instructionCount) {
-                    return update.getByte(addr);
-                } else if (update.instructionCount > instructionCount) {
-                    if (last == null) {
-                        return data[(int) (addr - address)];
-                    } else {
-                        return last.getByte(addr);
-                    }
-                } else {
-                    last = update;
+        // find update timestamp
+        MemoryUpdate target = new MemoryUpdate(addr, (byte) 1, 0, 0, instructionCount, null);
+        int idx = Collections.binarySearch(updates, target, (a, b) -> {
+            return Long.compareUnsigned(a.instructionCount, b.instructionCount);
+        });
+
+        if (idx > 0) {
+            // timestamp found: search first update with matching timestamp
+            while (idx > 0 && updates.get(idx).instructionCount == instructionCount) {
+                idx--;
+            }
+
+            assert idx >= 0;
+            assert updates.get(idx).instructionCount < instructionCount;
+
+            // check updates with same timestamp
+            for (int i = idx; i < updates.size(); i++) {
+                MemoryUpdate update = updates.get(i);
+                if (update.instructionCount > instructionCount) {
+                    break;
                 }
+                if (update.contains(addr)) {
+                    return update.getByte(addr);
+                }
+            }
+        } else {
+            // no match: points to next update after the timestamp we're looking for
+            idx = ~idx - 1;
+            if (idx < 0) {
+                idx = 0;
             }
         }
 
-        if (last != null) {
-            return last.getByte(addr);
+        assert idx >= 0;
+        assert updates.get(idx).instructionCount < instructionCount;
+
+        // go backwards in time
+        for (int i = idx; i >= 0; i--) {
+            MemoryUpdate update = updates.get(i);
+            if (update.contains(addr)) {
+                return update.getByte(addr);
+            }
         }
 
+        // no update found
         return data[(int) (addr - address)];
     }
 

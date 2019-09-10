@@ -25,6 +25,10 @@ public class MemoryUpdate {
         return (byte) (value >> (off * 8));
     }
 
+    public boolean contains(long addr) {
+        return address <= addr && address + size > addr;
+    }
+
     @Override
     public String toString() {
         return String.format("[0x%08x] = 0x%x [%d bytes] @ PC=0x%x/%d", address, value, size, pc, instructionCount);

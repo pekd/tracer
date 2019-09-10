@@ -136,6 +136,9 @@ public class MemoryView extends JPanel {
         long ptr = p;
         long ptr2 = ptr;
         boolean nl = true;
+        byte[] line = new byte[LINESZ];
+        boolean[] linevalid = new boolean[LINESZ];
+        boolean[] linechange = new boolean[LINESZ];
         for (int i = 0; i < size; i++) {
             byte u8;
             nl = true;
@@ -158,8 +161,12 @@ public class MemoryView extends JPanel {
             }
             try {
                 u8 = getI8(ptr);
+                line[i % LINESZ] = u8;
+                linevalid[i % LINESZ] = true;
+                linechange[i % LINESZ] = change;
                 buf.append(HexFormatter.tohex(Byte.toUnsignedInt(u8), 2));
             } catch (MemoryNotMappedException e) {
+                linevalid[i % LINESZ] = false;
                 buf.append("--");
             }
             if (change) {
@@ -175,9 +182,9 @@ public class MemoryView extends JPanel {
             if (i % LINESZ == (LINESZ - 1)) {
                 buf.append("   ");
                 for (int j = 0; j < LINESZ; j++) {
-                    try {
-                        u8 = getI8(ptr2);
-                    } catch (MemoryNotMappedException e) {
+                    if (linevalid[j % LINESZ]) {
+                        u8 = line[j % LINESZ];
+                    } else {
                         u8 = '?';
                     }
                     char ch = (char) (u8 & 0xff);
@@ -187,7 +194,7 @@ public class MemoryView extends JPanel {
                     if (isHighlight(ptr2)) {
                         buf.append("<span class=\"highlight\">");
                     }
-                    change = isChanged(ptr2);
+                    change = linechange[j % LINESZ] && linevalid[j % LINESZ];
                     if (change) {
                         if (ptr2 == address) {
                             buf.append("<span class=\"changeaddr\">");
