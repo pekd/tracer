@@ -58,6 +58,7 @@ import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.posix.ArchPrctl;
 import org.graalvm.vm.x86.posix.SyscallNames;
 import org.graalvm.vm.x86.posix.Syscalls;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 
 public class SyscallDecoder {
     public static final int SEEK_SET = 0;
@@ -114,11 +115,11 @@ public class SyscallDecoder {
         }
     }
 
-    public static String decode(CpuState state, CpuState next) {
+    public static String decode(CpuState state, CpuState next, MemoryTrace mem) {
         if (next == null) {
-            return decode(state);
+            return decode(state, mem);
         } else {
-            String call = decode(state);
+            String call = decode(state, mem);
             String result = decodeResult((int) state.rax, next);
             return call + " = " + result;
         }
@@ -138,7 +139,75 @@ public class SyscallDecoder {
         }
     }
 
-    public static String decode(CpuState state) {
+    private static void append(StringBuilder buf, int b) {
+        switch (b) {
+            case '"':
+                buf.append("\\\"");
+                break;
+            case '\\':
+                buf.append("\\\\");
+                break;
+            case '\r':
+                buf.append("\\r");
+                break;
+            case '\n':
+                buf.append("\\n");
+                break;
+            case '\t':
+                buf.append("\\t");
+                break;
+            case '\f':
+                buf.append("\\f");
+                break;
+            case '\b':
+                buf.append("\\b");
+                break;
+            default:
+                if (b < 0x20) {
+                    buf.append(String.format("\\x%02x", b));
+                } else {
+                    buf.append((char) b);
+                }
+        }
+    }
+
+    public static String cstr(long addr, long insn, MemoryTrace mem) {
+        if (addr == 0) {
+            return "NULL";
+        }
+        try {
+            StringBuilder buf = new StringBuilder();
+            long ptr = addr;
+            while (true) {
+                int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
+                if (b == 0) {
+                    return "\"" + buf + "\"";
+                }
+                append(buf, b);
+            }
+        } catch (Throwable t) {
+            return "0x" + hex(addr);
+        }
+    }
+
+    public static String mem(long addr, long length, long insn, MemoryTrace mem) {
+        if (addr == 0) {
+            return "NULL";
+        }
+        try {
+            StringBuilder buf = new StringBuilder();
+            long ptr = addr;
+            for (int i = 0; i < length; i++) {
+                int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
+                append(buf, b);
+            }
+            return "\"" + buf + "\"";
+        } catch (Throwable t) {
+            return "0x" + hex(addr);
+        }
+    }
+
+    public static String decode(CpuState state, MemoryTrace mem) {
         int id = (int) state.rax;
         long a1 = state.rdi;
         long a2 = state.rsi;
@@ -150,17 +219,17 @@ public class SyscallDecoder {
             case Syscalls.SYS_read:
                 return "read(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_write:
-                return "write(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
+                return "write(" + a1 + ", " + mem(a2, a3, state.instructionCount, mem) + ", " + a3 + ")";
             case Syscalls.SYS_open:
-                return "open(" + ptr(a1) + ", " + Fcntl.flags((int) a2) + ", " + Stat.mode((int) a3) + ")";
+                return "open(" + cstr(a1, state.instructionCount, mem) + ", " + Fcntl.flags((int) a2) + ", " + Stat.mode((int) a3) + ")";
             case Syscalls.SYS_close:
                 return "close(" + a1 + ")";
             case Syscalls.SYS_stat:
-                return "stat(" + ptr(a1) + ", " + ptr(a2) + ")";
+                return "stat(" + cstr(a1, state.instructionCount, mem) + ", " + ptr(a2) + ")";
             case Syscalls.SYS_fstat:
                 return "fstat(" + a1 + ", " + ptr(a2) + ")";
             case Syscalls.SYS_lstat:
-                return "lstat(" + ptr(a1) + ", " + ptr(a2) + ")";
+                return "lstat(" + cstr(a1, state.instructionCount, mem) + ", " + ptr(a2) + ")";
             case Syscalls.SYS_poll:
                 return "poll(" + ptr(a1) + ", " + a2 + ", " + a3 + ")";
             case Syscalls.SYS_lseek:
@@ -182,13 +251,13 @@ public class SyscallDecoder {
             case Syscalls.SYS_pread64:
                 return "pread64(" + a1 + ", " + ptr(a2) + ", " + a3 + ", " + a4 + ")";
             case Syscalls.SYS_pwrite64:
-                return "pwrite64(" + a1 + ", " + ptr(a2) + ", " + a3 + ", " + a4 + ")";
+                return "pwrite64(" + a1 + ", " + mem(a2, a3, state.instructionCount, mem) + ", " + a3 + ", " + a4 + ")";
             case Syscalls.SYS_readv:
                 return "readv(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_writev:
                 return "writev(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_access:
-                return "access(" + ptr(a1) + ", " + Unistd.amode((int) a2) + ")";
+                return "access(" + cstr(a1, state.instructionCount, mem) + ", " + Unistd.amode((int) a2) + ")";
             case Syscalls.SYS_dup:
                 return "dup(" + a1 + ")";
             case Syscalls.SYS_dup2:
@@ -202,7 +271,7 @@ public class SyscallDecoder {
             case Syscalls.SYS_connect:
                 return "connect(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_sendto:
-                return "sendto(" + a1 + ", " + ptr(a2) + ", " + a3 + ", " + Socket.sendrecvFlags((int) a4) + ", " + ptr(a5) + ", " + a6 + ")";
+                return "sendto(" + a1 + ", " + mem(a2, a3, state.instructionCount, mem) + ", " + a3 + ", " + Socket.sendrecvFlags((int) a4) + ", " + ptr(a5) + ", " + a6 + ")";
             case Syscalls.SYS_recvfrom:
                 return "recvfrom(" + a1 + ", " + ptr(a2) + ", " + a3 + ", " + Socket.sendrecvFlags((int) a4) + ", " + ptr(a5) + ", " + ptr(a6) + ")";
             case Syscalls.SYS_recvmsg:
@@ -234,11 +303,11 @@ public class SyscallDecoder {
             case Syscalls.SYS_getcwd:
                 return "getcwd(" + ptr(a1) + ", " + a2 + ")";
             case Syscalls.SYS_creat:
-                return "creat(" + ptr(a1) + ", " + Stat.mode((int) a2) + ")";
+                return "creat(" + cstr(a1, state.instructionCount, mem) + ", " + Stat.mode((int) a2) + ")";
             case Syscalls.SYS_unlink:
-                return "unlink(" + ptr(a1) + ")";
+                return "unlink(" + cstr(a1, state.instructionCount, mem) + ")";
             case Syscalls.SYS_readlink:
-                return "readlink(" + ptr(a1) + ", " + ptr(a2) + ", " + a3 + ")";
+                return "readlink(" + cstr(a1, state.instructionCount, mem) + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_gettimeofday:
                 return "gettimeofday(" + ptr(a1) + ", " + ptr(a2) + ")";
             case Syscalls.SYS_sysinfo:
@@ -286,7 +355,7 @@ public class SyscallDecoder {
             case Syscalls.SYS_tgkill:
                 return "tgkill(" + a1 + ", " + a2 + ", " + Signal.toString((int) a3) + ")";
             case Syscalls.SYS_openat:
-                return "open(" + a1 + ", " + ptr(a2) + ", " + Fcntl.flags((int) a3) + ", " + Stat.mode((int) a4) + ")";
+                return "openat(" + (int) a1 + ", " + cstr(a2, state.instructionCount, mem) + ", " + Fcntl.flags((int) a3) + ", " + Stat.mode((int) a4) + ")";
             case Syscalls.SYS_dup3:
                 return "dup3(" + a1 + ", " + a2 + ", " + a3 + ")";
             case Syscalls.SYS_prlimit64:

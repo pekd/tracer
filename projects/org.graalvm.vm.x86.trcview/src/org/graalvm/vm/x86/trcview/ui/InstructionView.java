@@ -74,6 +74,7 @@ import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
@@ -110,6 +111,8 @@ public class InstructionView extends JPanel {
 
     private SymbolResolver resolver;
     private MappedFiles mappedFiles;
+
+    private MemoryTrace memory;
 
     public InstructionView(Consumer<String> status) {
         super(new BorderLayout());
@@ -187,6 +190,10 @@ public class InstructionView extends JPanel {
 
     public void setMappedFiles(MappedFiles files) {
         this.mappedFiles = files;
+    }
+
+    public void setMemoryTrace(MemoryTrace memory) {
+        this.memory = memory;
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -270,7 +277,7 @@ public class InstructionView extends JPanel {
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.contentEquals("syscall")) {
             CpuState ns = next == null ? null : next.getState().getState();
-            String decoded = SyscallDecoder.decode(step.getState().getState(), ns);
+            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
             if (decoded != null) {
                 comment(buf, loc.getAsm(), decoded);
             }
@@ -328,7 +335,7 @@ public class InstructionView extends JPanel {
                                     next = (StepRecord) ((RecordNode) nn).getRecord();
                                 }
                                 CpuState ns = next == null ? null : next.getState().getState();
-                                String decoded = SyscallDecoder.decode(step.getState().getState(), ns);
+                                String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
                                 max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
                             }
                         }

@@ -238,6 +238,7 @@ public class MainWindow extends JFrame {
                 view.setComputedSymbols(analysis.getComputedSymbolTable());
                 view.setSymbolResolver(analysis.getSymbolResolver());
                 view.setMappedFiles(analysis.getMappedFiles());
+                view.setMemoryTrace(analysis.getMemoryTrace());
                 view.setRoot(root);
                 symbols = analysis.getComputedSymbolTable();
                 trace = root;
@@ -263,5 +264,12 @@ public class MainWindow extends JFrame {
         Trace.setup();
         MainWindow w = new MainWindow();
         w.setVisible(true);
+        if (args.length == 1) {
+            try {
+                w.load(new File(args[0]));
+            } catch (Throwable t) {
+                System.out.println("Failed to load the file specified by the argument");
+            }
+        }
     }
 }

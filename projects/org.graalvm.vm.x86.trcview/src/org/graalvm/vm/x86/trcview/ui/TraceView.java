@@ -56,6 +56,7 @@ import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
@@ -177,6 +178,10 @@ public class TraceView extends JPanel {
     public void setMappedFiles(MappedFiles mappedFiles) {
         insns.setMappedFiles(mappedFiles);
         state.setMappedFiles(mappedFiles);
+    }
+
+    public void setMemoryTrace(MemoryTrace memory) {
+        insns.setMemoryTrace(memory);
     }
 
     public Node getSelectedNode() {

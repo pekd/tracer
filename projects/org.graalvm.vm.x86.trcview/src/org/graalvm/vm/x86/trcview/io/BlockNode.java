@@ -63,6 +63,10 @@ public class BlockNode extends Node {
     private CallArgsRecord callArgs;
     private List<Node> children;
 
+    public BlockNode(StepRecord head) {
+        this(head, null, null);
+    }
+
     public BlockNode(StepRecord head, List<Node> children) {
         this(head, children, null);
     }
@@ -70,10 +74,22 @@ public class BlockNode extends Node {
     public BlockNode(StepRecord head, List<Node> children, CallArgsRecord args) {
         this.head = head;
         this.callArgs = args;
-        this.children = children;
-        for (Node n : children) {
-            n.setParent(this);
+        if (children != null) {
+            setChildren(children);
         }
+    }
+
+    public void setChildren(List<Node> children) {
+        this.children = children;
+        if (children != null) {
+            for (Node n : children) {
+                n.setParent(this);
+            }
+        }
+    }
+
+    public void setArguments(CallArgsRecord args) {
+        this.callArgs = args;
     }
 
     public StepRecord getHead() {
@@ -149,10 +165,11 @@ public class BlockNode extends Node {
         if (tid == 0) {
             tid = record.getTid();
         }
-        analysis.process(record);
         if (record instanceof StepRecord) {
             StepRecord step = (StepRecord) record;
             if (AMD64InstructionQuickInfo.isCall(step.getMachinecode())) {
+                BlockNode block = new BlockNode(step);
+                analysis.process(record, block);
                 if (progress != null) {
                     progress.progressUpdate(in.tell());
                 }
@@ -184,12 +201,18 @@ public class BlockNode extends Node {
                         }
                     }
                 }
-                return new BlockNode(step, result, args);
+                block.setChildren(result);
+                block.setArguments(args);
+                return block;
             } else {
-                return new RecordNode(record);
+                RecordNode node = new RecordNode(record);
+                analysis.process(record, node);
+                return node;
             }
         } else {
-            return new RecordNode(record);
+            RecordNode node = new RecordNode(record);
+            analysis.process(record, node);
+            return node;
         }
     }
 }

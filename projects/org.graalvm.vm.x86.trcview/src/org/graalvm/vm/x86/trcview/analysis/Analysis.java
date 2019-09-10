@@ -45,15 +45,20 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
+import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
+import org.graalvm.vm.x86.node.debug.trace.MemoryEventRecord;
 import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
+import org.graalvm.vm.x86.node.debug.trace.SystemLogRecord;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
@@ -70,11 +75,14 @@ public class Analysis {
 
     private long steps;
 
+    private MemoryTrace memory;
+
     public Analysis() {
         symbols = new SymbolTable();
         symbolTable = new TreeMap<>();
         mappedFiles = new TreeMap<>();
         resolver = new SymbolResolver(symbolTable);
+        memory = new MemoryTrace();
     }
 
     public void start() {
@@ -82,7 +90,7 @@ public class Analysis {
         steps = 0;
     }
 
-    public void process(Record record) {
+    public void process(Record record, Node node) {
         if (record instanceof StepRecord) {
             steps++;
             StepRecord step = (StepRecord) record;
@@ -121,7 +129,51 @@ public class Analysis {
             }
         } else if (record instanceof MmapRecord) {
             MmapRecord mmap = (MmapRecord) record;
-            mappedFiles.put(mmap.getAddress(), new MappedFile(mmap.getFileDescriptor(), mmap.getAddress(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
+            mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
+            long pc = 0;
+            long insn = 0;
+            if (lastStep != null) {
+                pc = lastStep.getPC();
+                insn = lastStep.getInstructionCount();
+            }
+            if (mmap.getResult() != -1) {
+                if (mmap.getData() != null) {
+                    memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node);
+                } else {
+                    memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node);
+                }
+            }
+        } else if (record instanceof MemoryEventRecord) {
+            MemoryEventRecord event = (MemoryEventRecord) record;
+            if (event.isWrite()) {
+                long pc = 0;
+                long insn = 0;
+                if (lastStep != null) {
+                    pc = lastStep.getPC();
+                    insn = lastStep.getInstructionCount();
+                }
+                long addr = event.getAddress();
+                if (event.getSize() <= 8) {
+                    long value = event.getValue();
+                    memory.write(addr, (byte) event.getSize(), value, pc, insn, node);
+                } else if (event.getSize() == 16) {
+                    Vector128 value = event.getVector();
+                    memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node);
+                    memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node);
+                } else {
+                    throw new AssertionError("unknown size: " + event.getSize());
+                }
+            }
+        } else if (record instanceof BrkRecord) {
+            BrkRecord brk = (BrkRecord) record;
+            long newbrk = brk.getResult();
+            long pc = 0;
+            long insn = 0;
+            if (lastStep != null) {
+                pc = lastStep.getPC();
+                insn = lastStep.getInstructionCount();
+            }
+            memory.brk(newbrk, pc, insn, node);
         }
     }
 
@@ -140,6 +192,7 @@ public class Analysis {
     public void finish(BlockNode root) {
         resolveCalls(root);
         log.log(Levels.INFO, "The trace contains " + steps + " steps");
+        memory.printStats();
     }
 
     public SymbolTable getComputedSymbolTable() {
@@ -152,5 +205,9 @@ public class Analysis {
 
     public MappedFiles getMappedFiles() {
         return new MappedFiles(mappedFiles);
+    }
+
+    public MemoryTrace getMemoryTrace() {
+        return memory;
     }
 }
