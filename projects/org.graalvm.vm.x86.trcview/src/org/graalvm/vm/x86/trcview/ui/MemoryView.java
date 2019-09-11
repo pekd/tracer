@@ -5,16 +5,24 @@ import static org.graalvm.vm.x86.trcview.ui.Utils.color;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.ParseException;
+import java.util.function.Consumer;
 
-import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 
 import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.expression.EvaluationException;
+import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
+import org.graalvm.vm.x86.trcview.expression.Parser;
+import org.graalvm.vm.x86.trcview.expression.ast.Expression;
 
 @SuppressWarnings("serial")
 public class MemoryView extends JPanel {
@@ -46,26 +54,49 @@ public class MemoryView extends JPanel {
                     "</style>";
 
     private JTextPane text;
-    private JFormattedTextField addrinput;
+    private JTextField addrinput;
     private MemoryTrace memory;
     private long address;
     private long highlightStart;
     private long highlightEnd;
     private long insn;
+    private StepRecord step;
+    private Expression expr;
 
-    public MemoryView() {
+    private Consumer<String> status;
+
+    public MemoryView(Consumer<String> status) {
         super(new BorderLayout());
+        this.status = status;
+
         text = new JTextPane();
         text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
         text.setEditable(false);
         text.setContentType("text/html");
         add(BorderLayout.CENTER, new JScrollPane(text));
 
-        addrinput = new JFormattedTextField(new HexFormat());
-        addrinput.addPropertyChangeListener("value", (e) -> setAddress((long) e.getNewValue()));
+        addrinput = new JTextField("0x" + HexFormatter.tohex(0, 16));
         int sz = addrinput.getFont().getSize();
         addrinput.setFont(new Font(Font.MONOSPACED, Font.PLAIN, sz));
-        setAddress(0);
+        addrinput.setForeground(Color.BLACK);
+        addrinput.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String s = addrinput.getText();
+                Parser parser = new Parser(s.trim());
+                try {
+                    expr = parser.parse();
+                    addrinput.setForeground(Color.BLACK);
+                    status.accept("Expression parsed successfully");
+                    if (eval() != address) {
+                        update();
+                    }
+                } catch (ParseException ex) {
+                    addrinput.setForeground(Color.RED);
+                    status.accept("Parse error: " + ex.getMessage());
+                }
+            }
+        });
 
         add(BorderLayout.NORTH, addrinput);
     }
@@ -83,20 +114,18 @@ public class MemoryView extends JPanel {
         }
     }
 
-    public void setAddress(long address) {
-        this.address = address;
-        addrinput.setValue(address);
-        update();
-    }
-
     public void setHighlight(long start, long end) {
         highlightStart = start;
         highlightEnd = end;
         update();
     }
 
-    public void setInstruction(long insn) {
-        this.insn = insn;
+    public void setStep(StepRecord step) {
+        if (this.step == step) {
+            return;
+        }
+        this.step = step;
+        this.insn = step.getInstructionCount();
         update();
     }
 
@@ -128,6 +157,22 @@ public class MemoryView extends JPanel {
             return val1 != val2;
         } catch (MemoryNotMappedException e) {
             return false;
+        }
+    }
+
+    private long eval() {
+        if (expr == null) {
+            return 0;
+        } else if (step == null) {
+            return 0;
+        } else {
+            ExpressionContext ctx = new ExpressionContext(step);
+            try {
+                return expr.evaluate(ctx);
+            } catch (EvaluationException e) {
+                status.accept("Error evaluating expression: " + e.getMessage());
+                return 0;
+            }
         }
     }
 
@@ -227,6 +272,7 @@ public class MemoryView extends JPanel {
     }
 
     private void update() {
+        address = eval();
         String content = "";
         if (memory != null) {
             content = dump((address - 4 * LINESZ) & 0xFFFFFFFFFFFFFFF0L, 12 * LINESZ);
@@ -234,24 +280,5 @@ public class MemoryView extends JPanel {
         String html = "<html><head>" + STYLE + "</head><body><pre>" + content + "</pre></body></html>";
         text.setText(html);
         text.setCaretPosition(0);
-    }
-
-    private static class HexFormat extends JFormattedTextField.AbstractFormatter {
-        @Override
-        public Object stringToValue(String str) throws ParseException {
-            try {
-                return Long.parseUnsignedLong(str, 16);
-            } catch (NumberFormatException e) {
-                throw new ParseException(e.getMessage(), 0);
-            }
-        }
-
-        @Override
-        public String valueToString(Object value) throws ParseException {
-            if (value == null || !(value instanceof Long)) {
-                throw new ParseException("NULL is not a valid value", 0);
-            }
-            return HexFormatter.tohex((Long) value, 16);
-        }
     }
 }

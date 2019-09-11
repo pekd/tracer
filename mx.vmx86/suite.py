@@ -232,6 +232,19 @@ suite = {
       "license" : "UPL",
     },
 
+    "org.graalvm.vm.x86.trcview.test" : {
+      "subDir" : "projects",
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "org.graalvm.vm.x86.trcview",
+        "mx:JUNIT",
+      ],
+      "javaCompliance" : "1.8+",
+      "workingSets" : "vmx86",
+      "testProject" : True,
+      "license" : "UPL",
+    },
+
     "org.graalvm.vm.x86.emu" : {
       "subDir" : "projects",
       "sourceDirs" : ["src"],

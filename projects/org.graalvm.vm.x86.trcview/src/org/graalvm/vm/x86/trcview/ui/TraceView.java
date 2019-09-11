@@ -74,7 +74,7 @@ public class TraceView extends JPanel {
         super(new BorderLayout());
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
-        rightSplit.setBottomComponent(mem = new MemoryView());
+        rightSplit.setBottomComponent(mem = new MemoryView(status));
         rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         content.setLeftComponent(insns = new InstructionView(status));
@@ -102,7 +102,7 @@ public class TraceView extends JPanel {
                     state.setState(step);
                 }
                 state.setCallArguments(args);
-                mem.setInstruction(step.getInstructionCount());
+                mem.setStep(step);
             }
         });
 
@@ -111,7 +111,7 @@ public class TraceView extends JPanel {
                 stack.set(call);
                 insns.set(call);
                 insns.select(call.getFirstNode());
-                mem.setInstruction(call.getFirstStep().getInstructionCount());
+                mem.setStep(call.getFirstStep());
             }
 
             public void ret(RecordNode ret) {
@@ -120,7 +120,7 @@ public class TraceView extends JPanel {
                     stack.set(parent);
                     insns.set(parent);
                     insns.select(ret.getParent());
-                    mem.setInstruction(ret.getParent().getHead().getInstructionCount());
+                    mem.setStep(ret.getParent().getHead());
                 }
             }
         });
@@ -171,7 +171,7 @@ public class TraceView extends JPanel {
         insns.set(root);
         insns.select(root.getFirstNode());
         state.setState(root.getFirstStep());
-        mem.setInstruction(root.getFirstStep().getInstructionCount());
+        mem.setStep(root.getFirstStep());
     }
 
     public void setComputedSymbols(SymbolTable symbols) {

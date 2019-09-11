@@ -56,9 +56,15 @@ public class Page {
         }
     }
 
-    public byte getByte(long addr, long instructionCount) {
+    public byte getByte(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        if (updates.isEmpty() || instructionCount == firstInstructionCount) {
+            return data[(int) (addr - address)];
+        } else if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException("memory is not mapped at this time");
         }
 
         // find update timestamp
