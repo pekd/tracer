@@ -254,6 +254,6 @@ public class MemoryEventRecord extends Record {
         if (str != null) {
             val.append(", '").append(str).append("'");
         }
-        return "Memory access to 0x" + HexFormatter.tohex(address, 16) + ": " + (!write ? "read" : "write") + " " + size + " bytes" + (data ? " (" + val + ")" : "");
+        return "Memory access to 0x" + HexFormatter.tohex(address, 16) + ": " + (!write ? "read" : "write") + " " + size + (size > 1 ? " bytes" : " byte") + (data ? " (" + val + ")" : "");
     }
 }
