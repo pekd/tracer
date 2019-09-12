@@ -89,6 +89,7 @@ public class MainWindow extends JFrame {
 
     private JMenuItem open;
     private JMenuItem gotoPC;
+    private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
 
     private SymbolTable symbols;
@@ -186,6 +187,29 @@ public class MainWindow extends JFrame {
         });
         gotoPC.setEnabled(false);
         viewMenu.add(gotoPC);
+        gotoInsn = new JMenuItem("Goto instruction...");
+        gotoInsn.setMnemonic('i');
+        gotoInsn.setAccelerator(KeyStroke.getKeyStroke('i'));
+        gotoInsn.addActionListener(e -> {
+            String input;
+            input = JOptionPane.showInputDialog("Enter instruction number:", "0");
+            if (input != null && input.trim().length() > 0) {
+                try {
+                    long insn = Long.parseLong(input.trim());
+                    Node n = Search.instruction(trace, insn);
+                    if (n != null) {
+                        log.info("Jumping to instruction " + insn);
+                        view.jump(n);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error: cannot find instruction " + insn, "Goto...", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Error: invalid number", "Goto instruction...", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        gotoInsn.setEnabled(false);
+        viewMenu.add(gotoInsn);
         gotoNext = new JMenuItem("Goto next");
         gotoNext.setMnemonic('n');
         gotoNext.setAccelerator(KeyStroke.getKeyStroke('n'));
@@ -243,6 +267,7 @@ public class MainWindow extends JFrame {
                 symbols = analysis.getComputedSymbolTable();
                 trace = root;
                 gotoPC.setEnabled(true);
+                gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
             });
         } catch (Throwable t) {

@@ -74,7 +74,7 @@ public class TraceView extends JPanel {
         super(new BorderLayout());
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
-        rightSplit.setBottomComponent(mem = new MemoryView(status));
+        rightSplit.setBottomComponent(mem = new MemoryView(status, this::jump));
         rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         content.setLeftComponent(insns = new InstructionView(status));

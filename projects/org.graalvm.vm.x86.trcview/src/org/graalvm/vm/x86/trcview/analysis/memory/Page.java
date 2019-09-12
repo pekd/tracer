@@ -57,12 +57,37 @@ public class Page {
     }
 
     public byte getByte(long addr, long instructionCount) throws MemoryNotMappedException {
+        MemoryUpdate update = getLastUpdate(addr, instructionCount);
+        if (update == null) {
+            return data[(int) (addr - address)];
+        } else {
+            return update.getByte(addr);
+        }
+    }
+
+    public MemoryUpdate getLastUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
         if (updates.isEmpty() || instructionCount == firstInstructionCount) {
-            return data[(int) (addr - address)];
+            // no update until now
+            return null;
+        } else if (updates.get(0).instructionCount > instructionCount) {
+            // first update is after instructionCount
+            return null;
+        } else if (updates.get(0).instructionCount == instructionCount) {
+            // updates start at our timestamp; find last update
+            MemoryUpdate result = null;
+            for (MemoryUpdate update : updates) {
+                if (update.instructionCount > instructionCount) {
+                    return result;
+                }
+                if (update.contains(addr)) {
+                    result = update;
+                }
+            }
+            return result;
         } else if (instructionCount < firstInstructionCount) {
             throw new MemoryNotMappedException("memory is not mapped at this time");
         }
@@ -80,7 +105,7 @@ public class Page {
             }
 
             assert idx >= 0;
-            assert updates.get(idx).instructionCount < instructionCount;
+            assert updates.get(idx).instructionCount < instructionCount : String.format("%d vs %d", updates.get(idx).instructionCount, instructionCount);
 
             // check updates with same timestamp
             for (int i = idx; i < updates.size(); i++) {
@@ -89,7 +114,7 @@ public class Page {
                     break;
                 }
                 if (update.contains(addr)) {
-                    return update.getByte(addr);
+                    return update;
                 }
             }
         } else {
@@ -101,18 +126,18 @@ public class Page {
         }
 
         assert idx >= 0;
-        assert updates.get(idx).instructionCount < instructionCount;
+        assert updates.get(idx).instructionCount < instructionCount : String.format("%d vs %d", updates.get(idx).instructionCount, instructionCount);
 
         // go backwards in time
         for (int i = idx; i >= 0; i--) {
             MemoryUpdate update = updates.get(i);
             if (update.contains(addr)) {
-                return update.getByte(addr);
+                return update;
             }
         }
 
         // no update found
-        return data[(int) (addr - address)];
+        return null;
     }
 
     public long getInitialPC() {

@@ -10,6 +10,7 @@ import java.awt.event.KeyEvent;
 import java.text.ParseException;
 import java.util.function.Consumer;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -17,12 +18,18 @@ import javax.swing.JTextPane;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
 import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.expression.Parser;
 import org.graalvm.vm.x86.trcview.expression.ast.Expression;
+import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
 
 @SuppressWarnings("serial")
 public class MemoryView extends JPanel {
@@ -62,10 +69,12 @@ public class MemoryView extends JPanel {
     private long insn;
     private StepRecord step;
     private Expression expr;
+    private Node lastUpdateNode;
+    private JButton gotoLastUpdate;
 
     private Consumer<String> status;
 
-    public MemoryView(Consumer<String> status) {
+    public MemoryView(Consumer<String> status, JumpListener jump) {
         super(new BorderLayout());
         this.status = status;
 
@@ -99,6 +108,15 @@ public class MemoryView extends JPanel {
         });
 
         add(BorderLayout.NORTH, addrinput);
+
+        gotoLastUpdate = new JButton("Goto last update");
+        gotoLastUpdate.setEnabled(lastUpdateNode != null);
+        gotoLastUpdate.addActionListener(e -> {
+            if (lastUpdateNode != null) {
+                jump.jump(lastUpdateNode);
+            }
+        });
+        add(BorderLayout.SOUTH, gotoLastUpdate);
     }
 
     private static String html(char c) {
@@ -275,10 +293,42 @@ public class MemoryView extends JPanel {
         address = eval();
         String content = "";
         if (memory != null) {
-            content = dump((address - 4 * LINESZ) & 0xFFFFFFFFFFFFFFF0L, 12 * LINESZ);
+            content = dump((address - 4 * LINESZ) & 0xFFFFFFFFFFFFFFF0L, 12 * LINESZ) + "\n\n";
+            try {
+                MemoryUpdate update = memory.getLastWrite(address, insn);
+                if (update != null) {
+                    content += "Last update: " + update.node;
+                    if (update.node instanceof RecordNode && ((RecordNode) update.node).getRecord() instanceof StepRecord) {
+                        lastUpdateNode = update.node;
+                        StepRecord record = (StepRecord) ((RecordNode) update.node).getRecord();
+                        content += "\nStep: 0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                    } else {
+                        Node lastStep = Search.previousStep(update.node);
+                        lastUpdateNode = lastStep;
+                        if (lastStep != null) {
+                            StepRecord record = null;
+                            if (lastStep instanceof BlockNode) {
+                                record = ((BlockNode) lastStep).getHead();
+                            } else {
+                                record = (StepRecord) ((RecordNode) lastStep).getRecord();
+                            }
+                            assert record != null : "record is null, last step is " + lastStep;
+                            content += "\n0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                        }
+                    }
+                } else {
+                    lastUpdateNode = null;
+                    content += "No write to this address found";
+                }
+            } catch (MemoryNotMappedException e) {
+                lastUpdateNode = null;
+                content += "Memory not mapped at this point in time";
+            }
         }
         String html = "<html><head>" + STYLE + "</head><body><pre>" + content + "</pre></body></html>";
         text.setText(html);
         text.setCaretPosition(0);
+
+        gotoLastUpdate.setEnabled(lastUpdateNode != null);
     }
 }

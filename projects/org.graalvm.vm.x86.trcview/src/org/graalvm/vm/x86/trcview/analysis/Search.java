@@ -40,6 +40,8 @@
  */
 package org.graalvm.vm.x86.trcview.analysis;
 
+import java.util.List;
+
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
@@ -64,6 +66,49 @@ public class Search {
         } else {
             throw new IllegalArgumentException("Not a BlockNode/RecordNode");
         }
+    }
+
+    public static Node nextStep(Node node) {
+        if (node instanceof BlockNode) {
+            BlockNode block = (BlockNode) node;
+            return block.getFirstNode();
+        } else if (node instanceof RecordNode) {
+            BlockNode block = node.getParent();
+            boolean start = false;
+            for (Node n : block.getNodes()) {
+                if (n == node) {
+                    start = true;
+                } else if (start && (n instanceof BlockNode || ((RecordNode) n).getRecord() instanceof StepRecord)) {
+                    return n;
+                }
+            }
+            return null;
+        } else {
+            throw new IllegalArgumentException("Not a BlockNode/RecordNode");
+        }
+    }
+
+    public static Node previousStep(Node node) {
+        BlockNode block = node.getParent();
+        if (block == null) {
+            return null;
+        }
+        if (node == block.getFirstNode()) {
+            return block;
+        }
+        Node last = null;
+        for (Node n : block.getNodes()) {
+            if (n == node) {
+                if (last != null) {
+                    return last;
+                } else {
+                    return block;
+                }
+            } else if (n instanceof BlockNode || ((RecordNode) n).getRecord() instanceof StepRecord) {
+                last = n;
+            }
+        }
+        return null;
     }
 
     public static Node nextPC(Node startNode, long pc) {
@@ -148,6 +193,64 @@ public class Search {
             } else {
                 throw new IllegalArgumentException("invalid start node type: " + start.getClass().getCanonicalName());
             }
+        }
+    }
+
+    private static long getInstruction(Node node) {
+        if (node instanceof BlockNode) {
+            return ((BlockNode) node).getHead().getInstructionCount();
+        } else if (node instanceof RecordNode && ((RecordNode) node).getRecord() instanceof StepRecord) {
+            return ((StepRecord) ((RecordNode) node).getRecord()).getInstructionCount();
+        } else {
+            return -1;
+        }
+    }
+
+    public static Node instruction(Node root, long insn) {
+        assert root != null;
+        if (root instanceof RecordNode) {
+            if (((RecordNode) root).getRecord() instanceof StepRecord) {
+                StepRecord step = (StepRecord) ((RecordNode) root).getRecord();
+                return step.getInstructionCount() == insn ? root : null;
+            } else {
+                throw new IllegalArgumentException("Not a BlockNode/RecordNode");
+            }
+        } else if (root instanceof BlockNode) {
+            BlockNode block = (BlockNode) root;
+            if (block.getHead() != null) {
+                if (block.getHead().getInstructionCount() == insn) {
+                    return block;
+                } else if (block.getHead().getInstructionCount() > insn) {
+                    return null;
+                }
+            }
+
+            // TODO: use binary search here
+            List<Node> nodes = block.getNodes();
+            BlockNode previous = null;
+            for (Node node : nodes) {
+                long cnt = getInstruction(node);
+                if (cnt == insn) {
+                    return node;
+                } else if (cnt > insn) {
+                    if (previous == null) {
+                        return null;
+                    } else {
+                        return instruction(previous, insn);
+                    }
+                } else {
+                    if (node instanceof BlockNode) {
+                        previous = (BlockNode) node;
+                    }
+                }
+            }
+            if (previous != null) {
+                return instruction(previous, insn);
+            } else {
+                return null;
+            }
+        } else {
+            throw new IllegalArgumentException("Not a BlockNode/RecordNode");
         }
     }
 }

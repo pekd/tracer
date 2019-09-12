@@ -124,6 +124,14 @@ public class MemoryTrace {
         return page.getByte(addr, instructionCount);
     }
 
+    public MemoryUpdate getLastWrite(long addr, long instructionCount) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getLastUpdate(addr, instructionCount);
+    }
+
     public void printStats() {
         log.log(Levels.INFO, "Memory consists of " + pages.size() + " pages (4k/page)");
     }
