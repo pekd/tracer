@@ -22,6 +22,7 @@ import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
+import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
 import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.expression.Parser;
@@ -184,7 +185,8 @@ public class MemoryView extends JPanel {
         } else if (step == null) {
             return 0;
         } else {
-            ExpressionContext ctx = new ExpressionContext(step);
+            VirtualMemorySnapshot mem = new VirtualMemorySnapshot(memory, insn);
+            ExpressionContext ctx = new ExpressionContext(step, mem);
             try {
                 return expr.evaluate(ctx);
             } catch (EvaluationException e) {
@@ -297,11 +299,11 @@ public class MemoryView extends JPanel {
             try {
                 MemoryUpdate update = memory.getLastWrite(address, insn);
                 if (update != null) {
-                    content += "Last update: " + update.node;
+                    content += "Last write to this location:\n";
                     if (update.node instanceof RecordNode && ((RecordNode) update.node).getRecord() instanceof StepRecord) {
                         lastUpdateNode = update.node;
                         StepRecord record = (StepRecord) ((RecordNode) update.node).getRecord();
-                        content += "\nStep: 0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                        content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
                     } else {
                         Node lastStep = Search.previousStep(update.node);
                         lastUpdateNode = lastStep;
@@ -312,10 +314,14 @@ public class MemoryView extends JPanel {
                             } else {
                                 record = (StepRecord) ((RecordNode) lastStep).getRecord();
                             }
-                            assert record != null : "record is null, last step is " + lastStep;
-                            content += "\n0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                            if (record != null) {
+                                content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                            } else {
+                                content += "Written by the kernel";
+                            }
                         }
                     }
+                    content += "\n" + update.node;
                 } else {
                     lastUpdateNode = null;
                     content += "No write to this address found";

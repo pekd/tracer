@@ -97,8 +97,7 @@ public class MemoryTrace {
         if (page == null) {
             throw new AssertionError(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
         }
-        long offset = addr - page.getAddress();
-        if (offset + size >= 4096) {
+        if (getPageAddress(addr) != getPageAddress(addr + 8)) {
             // write across page boundary
             long val = value;
             for (int i = 0; i < size; i++) {
@@ -106,7 +105,11 @@ public class MemoryTrace {
                 if (a < page.getAddress() + 4096) {
                     page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node);
                 } else {
+                    long oldaddr = page.getAddress();
                     page = pages.get(page.getAddress() + 4096);
+                    if (page == null) {
+                        throw new AssertionError(String.format("no memory mapped to 0x%x", oldaddr + 4096));
+                    }
                     page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node);
                 }
                 val >>= 8;
@@ -122,6 +125,32 @@ public class MemoryTrace {
             throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
         }
         return page.getByte(addr, instructionCount);
+    }
+
+    public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        if (getPageAddress(addr) != getPageAddress(addr + 8)) {
+            // write across page boundary
+            long value = 0;
+            for (int i = 0; i < 8; i++) {
+                long a = addr + i;
+                value <<= 8;
+                if (a < page.getAddress() + 4096) {
+                    long oldaddr = page.getAddress();
+                    page = pages.get(page.getAddress() + 4096);
+                    if (page == null) {
+                        throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x", oldaddr + 4096));
+                    }
+                }
+                value |= page.getByte(addr, instructionCount);
+            }
+            return value;
+        } else {
+            return page.getWord(addr, instructionCount);
+        }
     }
 
     public MemoryUpdate getLastWrite(long addr, long instructionCount) throws MemoryNotMappedException {

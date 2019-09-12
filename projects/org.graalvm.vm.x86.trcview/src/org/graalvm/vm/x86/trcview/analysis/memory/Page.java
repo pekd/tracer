@@ -140,6 +140,96 @@ public class Page {
         return null;
     }
 
+    public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        byte bytes = 0;
+        long value = Endianess.get64bitLE(data, (int) (addr - address));
+        if (updates.isEmpty() || instructionCount == firstInstructionCount) {
+            // no update until now
+            return value;
+        } else if (updates.get(0).instructionCount > instructionCount) {
+            // first update is after instructionCount
+            return value;
+        } else if (updates.get(0).instructionCount == instructionCount) {
+            // updates start at our timestamp; find last update
+            for (MemoryUpdate update : updates) {
+                if (update.instructionCount > instructionCount) {
+                    return value;
+                }
+                for (int i = 0; i < 8; i++) {
+                    if (update.contains(addr + i)) {
+                        bytes |= 1 << i;
+                        value = (value & ~(0xFFL << (i * 8))) | (Byte.toUnsignedLong(update.getByte(addr + i)) << (i * 8));
+                    }
+                }
+            }
+            return value;
+        } else if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException("memory is not mapped at this time");
+        }
+
+        // find update timestamp
+        MemoryUpdate target = new MemoryUpdate(addr, (byte) 1, 0, 0, instructionCount, null);
+        int idx = Collections.binarySearch(updates, target, (a, b) -> {
+            return Long.compareUnsigned(a.instructionCount, b.instructionCount);
+        });
+
+        if (idx > 0) {
+            // timestamp found: search first update with matching timestamp
+            while (idx > 0 && updates.get(idx).instructionCount == instructionCount) {
+                idx--;
+            }
+
+            assert idx >= 0;
+            assert updates.get(idx).instructionCount < instructionCount : String.format("%d vs %d", updates.get(idx).instructionCount, instructionCount);
+
+            // check updates with same timestamp
+            for (MemoryUpdate update : updates) {
+                if (update.instructionCount > instructionCount) {
+                    break;
+                }
+                for (int i = 0; i < 8; i++) {
+                    if (update.contains(addr + i)) {
+                        bytes |= 1 << i;
+                        value = (value & ~(0xFFL << (i * 8))) | (Byte.toUnsignedLong(update.getByte(addr + i)) << (i * 8));
+                    }
+                }
+            }
+
+            if (bytes == -1) {
+                return value;
+            }
+        } else {
+            // no match: points to next update after the timestamp we're looking for
+            idx = ~idx - 1;
+            if (idx < 0) {
+                idx = 0;
+            }
+        }
+
+        assert idx >= 0;
+        assert updates.get(idx).instructionCount < instructionCount : String.format("%d vs %d", updates.get(idx).instructionCount, instructionCount);
+
+        // go backwards in time
+        for (int i = idx; i >= 0; i--) {
+            MemoryUpdate update = updates.get(i);
+            for (int j = 0; j < 8; j++) {
+                if (update.contains(addr + j)) {
+                    bytes |= 1 << j;
+                    value = (value & ~(0xFFL << (j * 8))) | (Byte.toUnsignedLong(update.getByte(addr + j)) << (j * 8));
+                }
+            }
+            if (bytes == -1) {
+                return value;
+            }
+        }
+
+        return value;
+    }
+
     public long getInitialPC() {
         return firstPC;
     }
