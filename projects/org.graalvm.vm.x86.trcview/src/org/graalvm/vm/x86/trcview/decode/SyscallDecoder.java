@@ -66,6 +66,8 @@ public class SyscallDecoder {
     public static final int SEEK_CUR = 1;
     public static final int SEEK_END = 2;
 
+    public static final int STRING_MAXLEN = 50;
+
     private static String whence(long whence) {
         switch ((int) whence) {
             case SEEK_SET:
@@ -179,12 +181,15 @@ public class SyscallDecoder {
         try {
             StringBuilder buf = new StringBuilder();
             long ptr = addr;
-            while (true) {
+            for (int i = 0; true; i++) {
                 int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
                 if (b == 0) {
                     return "\"" + buf + "\"";
                 }
                 append(buf, b);
+                if (i >= STRING_MAXLEN) {
+                    return "\"" + buf + "\"...";
+                }
             }
         } catch (MemoryNotMappedException e) {
             return "0x" + hex(addr);
@@ -201,6 +206,9 @@ public class SyscallDecoder {
             for (int i = 0; i < length; i++) {
                 int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
                 append(buf, b);
+                if (i >= STRING_MAXLEN) {
+                    return "\"" + buf + "\"...";
+                }
             }
             return "\"" + buf + "\"";
         } catch (MemoryNotMappedException e) {
