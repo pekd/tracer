@@ -278,33 +278,31 @@ public class Verify86 {
         switch (evt.getSize()) {
             case 1:
                 if (memory.getI8(evt.getAddress()) != (byte) evt.getValue()) {
-                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" + HexFormatter.tohex(memory.getI8(evt.getAddress()), 2) +
-                                    " vs 0x" + HexFormatter.tohex((byte) evt.getValue(), 2));
+                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" +
+                                    HexFormatter.tohex(Byte.toUnsignedLong(memory.getI8(evt.getAddress())), 2) + " vs 0x" + HexFormatter.tohex(Byte.toUnsignedLong((byte) evt.getValue()), 2));
                 }
                 break;
             case 2:
                 if (memory.getI16(evt.getAddress()) != (short) evt.getValue()) {
-                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" + HexFormatter.tohex(memory.getI16(evt.getAddress()), 4) +
-                                    " vs 0x" + HexFormatter.tohex((short) evt.getValue(), 4));
+                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" +
+                                    HexFormatter.tohex(Short.toUnsignedLong(memory.getI16(evt.getAddress())), 4) + " vs 0x" + HexFormatter.tohex(Short.toUnsignedLong((short) evt.getValue()), 4));
                 }
                 break;
             case 4:
                 if (memory.getI32(evt.getAddress()) != (int) evt.getValue()) {
-                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" + HexFormatter.tohex(memory.getI32(evt.getAddress()), 8) +
-                                    " vs 0x" + HexFormatter.tohex((int) evt.getValue(), 8));
+                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" +
+                                    HexFormatter.tohex(Integer.toUnsignedLong(memory.getI32(evt.getAddress())), 8) + " vs 0x" + HexFormatter.tohex(Integer.toUnsignedLong((int) evt.getValue()), 8));
                 }
                 break;
             case 8:
                 if (memory.getI64(evt.getAddress()) != evt.getValue()) {
-                    throw new AssertionError(
-                                    "memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" + HexFormatter.tohex(memory.getI64(evt.getAddress()), 16) +
-                                                    " vs 0x" + HexFormatter.tohex(evt.getValue(), 16));
+                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" + HexFormatter.tohex(memory.getI64(evt.getAddress()), 16) + " vs 0x" +
+                                    HexFormatter.tohex(evt.getValue(), 16));
                 }
                 break;
             case 16:
                 if (!memory.getI128(evt.getAddress()).equals(evt.getVector())) {
-                    throw new AssertionError(
-                                    "memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": " + memory.getI128(evt.getAddress()) + " vs " + evt.getVector());
+                    throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": " + memory.getI128(evt.getAddress()) + " vs " + evt.getVector());
                 }
                 break;
         }
