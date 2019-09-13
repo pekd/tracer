@@ -52,7 +52,7 @@ public class ComputedSymbol {
         LOCATION;
     }
 
-    public final String name;
+    public String name;
     public final long address;
     public final Type type;
     public final List<Node> visits;

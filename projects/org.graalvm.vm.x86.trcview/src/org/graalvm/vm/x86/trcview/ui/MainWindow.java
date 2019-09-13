@@ -88,6 +88,7 @@ public class MainWindow extends JFrame {
     private TraceView view;
 
     private JMenuItem open;
+    private JMenuItem renameSymbol;
     private JMenuItem gotoPC;
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
@@ -138,7 +139,34 @@ public class MainWindow extends JFrame {
         fileMenu.setMnemonic('F');
         menu.add(fileMenu);
 
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.setMnemonic('e');
+        renameSymbol = new JMenuItem("Rename symbol...");
+        renameSymbol.setMnemonic('r');
+        renameSymbol.setAccelerator(KeyStroke.getKeyStroke('n'));
+        renameSymbol.addActionListener(e -> {
+            ComputedSymbol selected = view.getSelectedSymbol();
+            if (selected == null) {
+                return;
+            }
+            String input = JOptionPane.showInputDialog("Enter name:", selected.name);
+            if (input != null && input.trim().length() > 0) {
+                String name = input.trim();
+                for (ComputedSymbol sym : symbols.getSymbols()) {
+                    if (sym != selected && sym.name.equals(name)) {
+                        JOptionPane.showMessageDialog(this, "Error: symbol name already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+                symbols.renameSubroutine(selected, name);
+            }
+        });
+        renameSymbol.setEnabled(false);
+        editMenu.add(renameSymbol);
+        menu.add(editMenu);
+
         JMenu viewMenu = new JMenu("View");
+        viewMenu.setMnemonic('v');
         gotoPC = new JMenuItem("Goto PC...");
         gotoPC.setMnemonic('g');
         gotoPC.setAccelerator(KeyStroke.getKeyStroke('g'));
@@ -212,7 +240,7 @@ public class MainWindow extends JFrame {
         viewMenu.add(gotoInsn);
         gotoNext = new JMenuItem("Goto next");
         gotoNext.setMnemonic('n');
-        gotoNext.setAccelerator(KeyStroke.getKeyStroke('n'));
+        gotoNext.setAccelerator(KeyStroke.getKeyStroke('c'));
         gotoNext.addActionListener(e -> {
             StepRecord step = view.getSelectedInstruction();
             if (step != null) {
@@ -266,6 +294,7 @@ public class MainWindow extends JFrame {
                 view.setRoot(root);
                 symbols = analysis.getComputedSymbolTable();
                 trace = root;
+                renameSymbol.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);

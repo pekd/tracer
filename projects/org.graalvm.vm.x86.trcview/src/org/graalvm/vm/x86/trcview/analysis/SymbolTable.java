@@ -40,9 +40,11 @@
  */
 package org.graalvm.vm.x86.trcview.analysis;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,6 +56,7 @@ import org.graalvm.vm.x86.trcview.io.RecordNode;
 
 public class SymbolTable {
     private final Map<Long, ComputedSymbol> symbols = new HashMap<>();
+    private final List<SymbolRenameListener> listeners = new ArrayList<>();
 
     private static ComputedSymbol sub(long pc) {
         String name = "sub_" + HexFormatter.tohex(pc, 1);
@@ -105,5 +108,20 @@ public class SymbolTable {
 
     public Collection<ComputedSymbol> getSymbols() {
         return Collections.unmodifiableCollection(symbols.values());
+    }
+
+    public void addSymbolRenameListener(SymbolRenameListener l) {
+        listeners.add(l);
+    }
+
+    public void removeSymbolRenameListener(SymbolRenameListener l) {
+        listeners.remove(l);
+    }
+
+    public void renameSubroutine(ComputedSymbol sub, String name) {
+        sub.name = name;
+        for (SymbolRenameListener l : listeners) {
+            l.symbolRenamed(sub);
+        }
     }
 }

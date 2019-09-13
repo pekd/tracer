@@ -70,6 +70,7 @@ public class SymbolView extends JPanel {
     private JList<String> syms;
     private List<ComputedSymbol> symbols;
     private List<JumpListener> jumpListeners;
+    private int width;
 
     public SymbolView() {
         super(new BorderLayout());
@@ -94,6 +95,25 @@ public class SymbolView extends JPanel {
         add(BorderLayout.CENTER, new JScrollPane(syms));
     }
 
+    public ComputedSymbol getSelectedSymbol() {
+        int selected = syms.getSelectedIndex();
+        if (selected != -1) {
+            return symbols.get(selected);
+        } else {
+            return null;
+        }
+    }
+
+    public void symbolRenamed(ComputedSymbol sym) {
+        for (int i = 0; i < symbols.size(); i++) {
+            ComputedSymbol s = symbols.get(i);
+            if (s == sym) {
+                ((DefaultListModel<String>) syms.getModel()).set(i, format(s, width));
+                return;
+            }
+        }
+    }
+
     private static final String format(ComputedSymbol sym, int width) {
         int len = 32 - sym.name.length();
         if (len < 1) {
@@ -107,12 +127,13 @@ public class SymbolView extends JPanel {
     }
 
     public void setSymbols(SymbolTable symbols) {
+        symbols.addSymbolRenameListener(this::symbolRenamed);
         List<ComputedSymbol> sym = new ArrayList<>();
         DefaultListModel<String> model = new DefaultListModel<>();
         OptionalInt max = symbols.getSubroutines().stream().mapToInt(s -> s.visits.size()).max();
         if (max.isPresent()) {
             int m = max.getAsInt();
-            int width = (m == 0 ? 0 : (int) Math.ceil(Math.log10(m)));
+            width = (m == 0 ? 0 : (int) Math.ceil(Math.log10(m)));
             symbols.getSubroutines().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
                 model.addElement(format(s, width));
                 sym.add(s);

@@ -54,6 +54,7 @@ import javax.swing.KeyStroke;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
@@ -138,6 +139,10 @@ public class TraceView extends JPanel {
                 }
             }
         });
+    }
+
+    public ComputedSymbol getSelectedSymbol() {
+        return symbols.getSelectedSymbol();
     }
 
     public void jump(Node node) {
