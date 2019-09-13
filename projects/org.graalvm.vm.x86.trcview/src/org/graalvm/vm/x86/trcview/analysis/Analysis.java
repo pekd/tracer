@@ -185,6 +185,10 @@ public class Analysis {
     }
 
     private void resolveCalls(BlockNode root) {
+        StepRecord first = root.getFirstStep();
+        if (symbols.get(first.getPC()) == null) {
+            symbols.addSubroutine(first.getPC(), "_start");
+        }
         for (Node node : root.getNodes()) {
             if (node instanceof BlockNode) {
                 BlockNode block = (BlockNode) node;
