@@ -99,7 +99,12 @@ public class Analysis {
                 switch (AMD64InstructionQuickInfo.getType(lastStep.getMachinecode())) {
                     case JMP:
                     case JCC:
-                        symbols.addLocation(pc);
+                        sym = resolver.getSymbol(pc);
+                        if (sym != null && sym.getType() == Symbol.FUNC && sym.getValue() == pc) {
+                            symbols.addSubroutine(pc, sym.getName());
+                        } else {
+                            symbols.addLocation(pc);
+                        }
                         break;
                     case CALL:
                         sym = resolver.getSymbol(pc);
