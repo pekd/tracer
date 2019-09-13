@@ -93,7 +93,7 @@ public class ProcfsProcessDirectory extends VFSDirectory {
     }
 
     private VFSEntry getExe() {
-        return new ProcfsSymlink(this, "exe", 0, 0, 0777, posix.getExecfn());
+        return new ProcfsSymlink(this, "exe", 0, 0, 0777, posix.getExecpath());
     }
 
     private VFSEntry getRoot() {

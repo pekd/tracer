@@ -175,6 +175,10 @@ public class PosixEnvironment {
         posix.setExecfn(execfn);
     }
 
+    public void setExecpath(String execpath) {
+        posix.setExecpath(execpath);
+    }
+
     public ExecutionTraceWriter getTraceWriter() {
         return traceWriter;
     }

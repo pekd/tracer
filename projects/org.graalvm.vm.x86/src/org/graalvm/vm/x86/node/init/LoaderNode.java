@@ -126,6 +126,8 @@ public class LoaderNode extends AMD64Node {
         }
         posix.getPosix().chdir(posixPath.toString());
 
+        posix.setExecpath(vfs.resolve(execfn));
+
         try {
             Procfs proc = new Procfs(vfs, posix.getPosix());
             posix.mount("/proc", proc);

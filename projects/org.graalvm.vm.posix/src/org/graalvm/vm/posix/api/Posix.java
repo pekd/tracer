@@ -115,6 +115,7 @@ public class Posix {
     private volatile int exitCode;
 
     private String execfn;
+    private String execpath;
     private MemoryMapProvider mapsProvider;
 
     public Posix() {
@@ -1548,6 +1549,14 @@ public class Posix {
 
     public String getExecfn() {
         return execfn;
+    }
+
+    public void setExecpath(String execpath) {
+        this.execpath = execpath;
+    }
+
+    public String getExecpath() {
+        return execpath;
     }
 
     public void setMemoryMapProvider(MemoryMapProvider provider) {
