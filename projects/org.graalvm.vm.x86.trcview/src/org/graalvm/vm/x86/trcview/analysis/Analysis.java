@@ -46,6 +46,7 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.vector.Vector128;
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.log.Levels;
@@ -71,6 +72,7 @@ public class Analysis {
     private NavigableMap<Long, Symbol> symbolTable;
     private NavigableMap<Long, MappedFile> mappedFiles;
     private SymbolResolver resolver;
+    private SymbolResolver augmentedResolver;
 
     private long steps;
 
@@ -80,7 +82,8 @@ public class Analysis {
         symbols = new SymbolTable();
         symbolTable = new TreeMap<>();
         mappedFiles = new TreeMap<>();
-        resolver = new SymbolResolver(symbolTable);
+        resolver = new DefaultSymbolResolver(symbolTable);
+        augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
         memory = new MemoryTrace();
     }
 
@@ -204,7 +207,7 @@ public class Analysis {
     }
 
     public SymbolResolver getSymbolResolver() {
-        return resolver;
+        return augmentedResolver;
     }
 
     public MappedFiles getMappedFiles() {

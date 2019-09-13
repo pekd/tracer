@@ -51,6 +51,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
@@ -146,7 +147,7 @@ public class TextDump {
             Record record;
             NavigableMap<Long, Symbol> symbols = new TreeMap<>();
             NavigableMap<Long, MappedFile> filenames = new TreeMap<>();
-            SymbolResolver resolver = new SymbolResolver(symbols);
+            SymbolResolver resolver = new DefaultSymbolResolver(symbols);
             MappedFiles files = new MappedFiles(filenames);
             while ((record = in.read()) != null) {
                 if (record instanceof MemoryEventRecord) {
@@ -192,7 +193,7 @@ public class TextDump {
                         }
                     }
                     files = new MappedFiles(filenames);
-                    resolver = new SymbolResolver(symbols);
+                    resolver = new DefaultSymbolResolver(symbols);
                 } else if (record instanceof MmapRecord) {
                     MmapRecord mmap = (MmapRecord) record;
                     filenames.put(mmap.getAddress(), new MappedFile(mmap.getFileDescriptor(), mmap.getAddress(), mmap.getOffset(), mmap.getLength(), mmap.getFilename(), -1));

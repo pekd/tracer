@@ -48,6 +48,7 @@ import java.util.logging.Logger;
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.ProcessExitException;
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
@@ -99,7 +100,7 @@ public class Interpreter {
         this.memory = memory;
         this.trace = trace;
         regs = ptrace.getRegisters();
-        symbolResolver = new SymbolResolver(symbols);
+        symbolResolver = new DefaultSymbolResolver(symbols);
         insncnt = 0;
     }
 

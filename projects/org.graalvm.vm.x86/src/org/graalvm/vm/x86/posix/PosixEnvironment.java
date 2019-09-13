@@ -87,6 +87,7 @@ import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.posix.api.net.Msghdr;
 import org.graalvm.vm.posix.api.net.RecvResult;
 import org.graalvm.vm.posix.api.net.Sockaddr;
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.posix.elf.ProgramHeader;
 import org.graalvm.vm.posix.elf.Section;
@@ -136,7 +137,7 @@ public class PosixEnvironment {
         strace = System.getProperty("posix.strace") != null;
         if (SYMBOLS) {
             symbols = new TreeMap<>();
-            symbolResolver = new SymbolResolver(symbols);
+            symbolResolver = new DefaultSymbolResolver(symbols);
             libraries = new TreeMap<>();
         }
         exitGroupAssumption = Truffle.getRuntime().createAssumption("exit_group");
@@ -299,7 +300,7 @@ public class PosixEnvironment {
                     }
                 }
             }
-            symbolResolver = new SymbolResolver(symbols);
+            symbolResolver = new DefaultSymbolResolver(symbols);
         } catch (PosixException | IOException e) {
             log.log(Level.WARNING, "Error while reading symbols: " + e.getMessage(), e);
         }

@@ -56,6 +56,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
@@ -85,7 +86,7 @@ public class CallStackView extends JPanel {
     public CallStackView() {
         super(new BorderLayout());
 
-        resolver = new SymbolResolver(new TreeMap<>());
+        resolver = new DefaultSymbolResolver(new TreeMap<>());
 
         listeners = new ArrayList<>();
         peekListeners = new ArrayList<>();

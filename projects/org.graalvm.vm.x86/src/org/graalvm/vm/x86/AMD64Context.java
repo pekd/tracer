@@ -46,6 +46,7 @@ import java.util.NavigableMap;
 import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.Stack;
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.isa.CpuState;
@@ -195,7 +196,7 @@ public class AMD64Context {
         substitutions = new SubstitutionRegistry();
         state = new ArchitecturalState(this);
         symbols = Collections.emptyNavigableMap();
-        symbolResolver = new SymbolResolver(symbols);
+        symbolResolver = new DefaultSymbolResolver(symbols);
         scratchMemory = 0;
     }
 
@@ -228,7 +229,7 @@ public class AMD64Context {
     @TruffleBoundary
     public void setSymbols(NavigableMap<Long, Symbol> symbols) {
         this.symbols = symbols;
-        this.symbolResolver = new SymbolResolver(symbols);
+        this.symbolResolver = new DefaultSymbolResolver(symbols);
     }
 
     public NavigableMap<Long, Symbol> getSymbols() {

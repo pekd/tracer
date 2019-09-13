@@ -63,6 +63,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
+import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
@@ -119,7 +120,7 @@ public class InstructionView extends JPanel {
         changeListeners = new ArrayList<>();
         callListeners = new ArrayList<>();
 
-        resolver = new SymbolResolver(new TreeMap<>());
+        resolver = new DefaultSymbolResolver(new TreeMap<>());
         mappedFiles = new MappedFiles(new TreeMap<>());
 
         instructions = new ArrayList<>();
