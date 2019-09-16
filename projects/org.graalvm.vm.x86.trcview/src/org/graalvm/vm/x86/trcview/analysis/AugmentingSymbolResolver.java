@@ -16,7 +16,7 @@ public class AugmentingSymbolResolver extends SymbolResolver {
         if (sym != null) {
             ComputedSymbol s = augmentation.get(sym.getValue());
             if (s != null) {
-                return new AugmentedSymbol(sym, s.name);
+                return new AugmentedSymbol(sym, s.name, s.prototype);
             }
         }
         return sym;

@@ -40,6 +40,7 @@
  */
 package org.graalvm.vm.x86.trcview.analysis;
 
+import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -59,6 +60,9 @@ import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.analysis.type.DataType;
+import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.analysis.type.Type;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
@@ -196,6 +200,17 @@ public class Analysis {
             } else if (node instanceof RecordNode) {
                 RecordNode record = (RecordNode) node;
                 symbols.visit(record);
+            }
+        }
+
+        for (ComputedSymbol sym : symbols.getSymbols()) {
+            switch (sym.name) {
+                case "main":
+                    sym.prototype = new Prototype(new Type(DataType.S32),
+                                    Arrays.asList(new Type(DataType.S32),
+                                                    new Type(new Type(DataType.STRING)),
+                                                    new Type(new Type(DataType.STRING))));
+                    break;
             }
         }
     }

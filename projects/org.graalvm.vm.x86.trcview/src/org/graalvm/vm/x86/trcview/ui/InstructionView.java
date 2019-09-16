@@ -64,6 +64,7 @@ import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
 import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
@@ -74,8 +75,11 @@ import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.AugmentedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.analysis.type.Function;
+import org.graalvm.vm.x86.trcview.decode.CallDecoder;
 import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
@@ -276,7 +280,7 @@ public class InstructionView extends JPanel {
         buf.append(": ");
         buf.append(Utils.tab(loc.getAsm(), 12));
         String mnemonic = loc.getMnemonic();
-        if (mnemonic != null && mnemonic.contentEquals("syscall")) {
+        if (mnemonic != null && mnemonic.equals("syscall")) {
             CpuState ns = next == null ? null : next.getState().getState();
             String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
             if (decoded != null) {
@@ -327,6 +331,7 @@ public class InstructionView extends JPanel {
                     InstructionType type = AMD64InstructionQuickInfo.getType(step.getMachinecode());
                     switch (type) {
                         case SYSCALL: {
+                            CpuState ns = null;
                             if (i + 1 < instructions.size()) {
                                 StepRecord next;
                                 Node nn = instructions.get(i + 1);
@@ -335,10 +340,11 @@ public class InstructionView extends JPanel {
                                 } else {
                                     next = (StepRecord) ((RecordNode) nn).getRecord();
                                 }
-                                CpuState ns = next == null ? null : next.getState().getState();
-                                String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
-                                max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
+                                ns = next == null ? null : next.getState().getState();
                             }
+                            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
+                            max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
+                            break;
                         }
                     }
                 }
@@ -514,8 +520,8 @@ public class InstructionView extends JPanel {
                 StepRecord step = ((BlockNode) n).getHead();
                 Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
                 StringBuilder buf = new StringBuilder();
+                StepRecord next = null;
                 if (i + 1 < instructions.size()) {
-                    StepRecord next;
                     Node nn = instructions.get(i + 1);
                     if (nn instanceof BlockNode) {
                         next = ((BlockNode) nn).getHead();
@@ -541,6 +547,29 @@ public class InstructionView extends JPanel {
                     buf.append(" [");
                     buf.append(loc.getFilename());
                     buf.append("]");
+                }
+
+                Symbol sym = resolver.getSymbol(loc.getPC());
+                if (sym != null && sym instanceof AugmentedSymbol && ((AugmentedSymbol) sym).getPrototype() != null) {
+                    AugmentedSymbol s = (AugmentedSymbol) sym;
+                    Function fun = new Function(s.getName(), s.getPrototype());
+                    CpuState ns = next == null ? null : next.getState().getState();
+                    String decoded = CallDecoder.decode(fun, step.getState().getState(), ns, memory);
+                    if (decoded != null) {
+                        int length = buf.length();
+                        String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+                        buf = new StringBuilder();
+                        buf.append("<html><head><style>").append(STYLE).append("</style></head><body><pre>");
+                        buf.append(str);
+                        if (length >= COMMENT_COLUMN) {
+                            buf.append(" ");
+                        } else {
+                            buf.append(StringUtils.repeat(" ", COMMENT_COLUMN - length));
+                        }
+                        buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
+                        buf.append(decoded);
+                        buf.append("</span></pre></body></html>");
+                    }
                 }
                 return buf.toString();
             } else {

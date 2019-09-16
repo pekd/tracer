@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.io.Node;
 
 public class ComputedSymbol {
@@ -56,6 +57,8 @@ public class ComputedSymbol {
     public final long address;
     public final Type type;
     public final List<Node> visits;
+
+    public Prototype prototype;
 
     public ComputedSymbol(String name, long address, Type type) {
         if (name == null) {

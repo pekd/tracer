@@ -31,6 +31,22 @@ public class Token {
         RPAR,
         COMMA,
         IDENT,
+        SIGNED,
+        UNSIGNED,
+        CHAR,
+        SHORT,
+        INT,
+        LONG,
+        U8,
+        U16,
+        U32,
+        U64,
+        S8,
+        S16,
+        S32,
+        S64,
+        VOID,
+        CONST,
         EOF;
     }
 

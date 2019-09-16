@@ -41,6 +41,9 @@
 package org.graalvm.vm.x86.trcview.decode;
 
 import static org.graalvm.vm.util.HexFormatter.tohex;
+import static org.graalvm.vm.x86.trcview.decode.DecoderUtils.cstr;
+import static org.graalvm.vm.x86.trcview.decode.DecoderUtils.mem;
+import static org.graalvm.vm.x86.trcview.decode.DecoderUtils.ptr;
 
 import org.graalvm.vm.posix.api.Clock;
 import org.graalvm.vm.posix.api.Errno;
@@ -58,15 +61,12 @@ import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.posix.ArchPrctl;
 import org.graalvm.vm.x86.posix.SyscallNames;
 import org.graalvm.vm.x86.posix.Syscalls;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 
 public class SyscallDecoder {
     public static final int SEEK_SET = 0;
     public static final int SEEK_CUR = 1;
     public static final int SEEK_END = 2;
-
-    public static final int STRING_MAXLEN = 50;
 
     private static String whence(long whence) {
         switch ((int) whence) {
@@ -110,14 +110,6 @@ public class SyscallDecoder {
         return tohex(x, 1);
     }
 
-    private static String ptr(long x) {
-        if (x == 0) {
-            return "NULL";
-        } else {
-            return "0x" + hex(x);
-        }
-    }
-
     public static String decode(CpuState state, CpuState next, MemoryTrace mem) {
         if (next == null) {
             return decode(state, mem);
@@ -139,80 +131,6 @@ public class SyscallDecoder {
                 default:
                     return Long.toString(state.rax);
             }
-        }
-    }
-
-    private static void append(StringBuilder buf, int b) {
-        switch (b) {
-            case '"':
-                buf.append("\\\"");
-                break;
-            case '\\':
-                buf.append("\\\\");
-                break;
-            case '\r':
-                buf.append("\\r");
-                break;
-            case '\n':
-                buf.append("\\n");
-                break;
-            case '\t':
-                buf.append("\\t");
-                break;
-            case '\f':
-                buf.append("\\f");
-                break;
-            case '\b':
-                buf.append("\\b");
-                break;
-            default:
-                if (b < 0x20) {
-                    buf.append(String.format("\\x%02x", b));
-                } else {
-                    buf.append((char) b);
-                }
-        }
-    }
-
-    public static String cstr(long addr, long insn, MemoryTrace mem) {
-        if (addr == 0) {
-            return "NULL";
-        }
-        try {
-            StringBuilder buf = new StringBuilder();
-            long ptr = addr;
-            for (int i = 0; true; i++) {
-                int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
-                if (b == 0) {
-                    return "\"" + buf + "\"";
-                }
-                append(buf, b);
-                if (i >= STRING_MAXLEN) {
-                    return "\"" + buf + "\"...";
-                }
-            }
-        } catch (MemoryNotMappedException e) {
-            return "0x" + hex(addr);
-        }
-    }
-
-    public static String mem(long addr, long length, long insn, MemoryTrace mem) {
-        if (addr == 0) {
-            return "NULL";
-        }
-        try {
-            StringBuilder buf = new StringBuilder();
-            long ptr = addr;
-            for (int i = 0; i < length; i++) {
-                int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
-                append(buf, b);
-                if (i >= STRING_MAXLEN) {
-                    return "\"" + buf + "\"...";
-                }
-            }
-            return "\"" + buf + "\"";
-        } catch (MemoryNotMappedException e) {
-            return "0x" + hex(addr);
         }
     }
 

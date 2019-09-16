@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
 
@@ -123,5 +124,10 @@ public class SymbolTable {
         for (SymbolRenameListener l : listeners) {
             l.symbolRenamed(sub);
         }
+    }
+
+    public void setFunctionType(ComputedSymbol sub, Function type) {
+        sub.prototype = type.getPrototype();
+        renameSubroutine(sub, type.getName());
     }
 }

@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,9 +71,11 @@ import org.graalvm.vm.util.ui.MessageBox;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
-import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
+import org.graalvm.vm.x86.trcview.analysis.type.Function;
+import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 
@@ -89,6 +92,7 @@ public class MainWindow extends JFrame {
 
     private JMenuItem open;
     private JMenuItem renameSymbol;
+    private JMenuItem setFunctionType;
     private JMenuItem gotoPC;
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
@@ -154,7 +158,7 @@ public class MainWindow extends JFrame {
                 String name = input.trim();
                 for (ComputedSymbol sym : symbols.getSymbols()) {
                     if (sym != selected && sym.name.equals(name)) {
-                        JOptionPane.showMessageDialog(this, "Error: symbol name already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 }
@@ -163,6 +167,41 @@ public class MainWindow extends JFrame {
         });
         renameSymbol.setEnabled(false);
         editMenu.add(renameSymbol);
+        setFunctionType = new JMenuItem("Set function type...");
+        setFunctionType.setMnemonic('t');
+        setFunctionType.setAccelerator(KeyStroke.getKeyStroke('y'));
+        setFunctionType.addActionListener(e -> {
+            ComputedSymbol selected = view.getSelectedSymbol();
+            if (selected == null) {
+                return;
+            }
+            String prototype;
+            if (selected.prototype != null) {
+                prototype = new Function(selected.name, selected.prototype).toString();
+            } else {
+                prototype = "void " + selected.name + "()";
+            }
+            String input = JOptionPane.showInputDialog("Enter prototype:", prototype);
+            if (input != null && input.trim().length() > 0) {
+                try {
+                    TypeParser parser = new TypeParser(input.trim());
+                    Function fun = parser.parse();
+                    String name = fun.getName();
+                    for (ComputedSymbol sym : symbols.getSymbols()) {
+                        if (sym != selected && sym.name.equals(name)) {
+                            JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Set function type...", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                    }
+                    symbols.setFunctionType(selected, fun);
+                } catch (ParseException ex) {
+                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set function type...", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+        });
+        setFunctionType.setEnabled(false);
+        editMenu.add(setFunctionType);
         menu.add(editMenu);
 
         JMenu viewMenu = new JMenu("View");
@@ -295,6 +334,7 @@ public class MainWindow extends JFrame {
                 symbols = analysis.getComputedSymbolTable();
                 trace = root;
                 renameSymbol.setEnabled(true);
+                setFunctionType.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
