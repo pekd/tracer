@@ -58,6 +58,7 @@ import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
@@ -70,6 +71,7 @@ public class TraceView extends JPanel {
     private StateView state;
     private InstructionView insns;
     private MemoryView mem;
+    private MemoryTrace memory;
 
     public TraceView(Consumer<String> status) {
         super(new BorderLayout());
@@ -195,6 +197,7 @@ public class TraceView extends JPanel {
     }
 
     public void setMemoryTrace(MemoryTrace memory) {
+        this.memory = memory;
         insns.setMemoryTrace(memory);
         mem.setMemoryTrace(memory);
     }
@@ -205,5 +208,14 @@ public class TraceView extends JPanel {
 
     public StepRecord getSelectedInstruction() {
         return insns.getSelectedInstruction();
+    }
+
+    public VirtualMemorySnapshot getMemorySnapshot() {
+        StepRecord selected = getSelectedInstruction();
+        if (selected != null && memory != null) {
+            return new VirtualMemorySnapshot(memory, selected.getInstructionCount());
+        } else {
+            return null;
+        }
     }
 }

@@ -63,6 +63,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.graalvm.vm.util.HexFormatter;
@@ -74,6 +75,7 @@ import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
+import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
@@ -96,6 +98,7 @@ public class MainWindow extends JFrame {
     private JMenuItem gotoPC;
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
+    private JMenuItem exportMemory;
 
     private SymbolTable symbols;
     private BlockNode trace;
@@ -104,6 +107,7 @@ public class MainWindow extends JFrame {
         super(WINDOW_TITLE);
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
+        ExportMemoryDialog exportMemoryDialog = new ExportMemoryDialog(this);
 
         setLayout(new BorderLayout());
         add(BorderLayout.CENTER, view = new TraceView(this::setStatus));
@@ -146,7 +150,7 @@ public class MainWindow extends JFrame {
         JMenu editMenu = new JMenu("Edit");
         editMenu.setMnemonic('e');
         renameSymbol = new JMenuItem("Rename symbol...");
-        renameSymbol.setMnemonic('r');
+        renameSymbol.setMnemonic('n');
         renameSymbol.setAccelerator(KeyStroke.getKeyStroke('n'));
         renameSymbol.addActionListener(e -> {
             ComputedSymbol selected = view.getSelectedSymbol();
@@ -168,7 +172,7 @@ public class MainWindow extends JFrame {
         renameSymbol.setEnabled(false);
         editMenu.add(renameSymbol);
         setFunctionType = new JMenuItem("Set function type...");
-        setFunctionType.setMnemonic('t');
+        setFunctionType.setMnemonic('y');
         setFunctionType.setAccelerator(KeyStroke.getKeyStroke('y'));
         setFunctionType.addActionListener(e -> {
             ComputedSymbol selected = view.getSelectedSymbol();
@@ -297,6 +301,25 @@ public class MainWindow extends JFrame {
         viewMenu.add(gotoNext);
         menu.add(viewMenu);
 
+        JMenu toolsMenu = new JMenu("Tools");
+        toolsMenu.setMnemonic('t');
+
+        exportMemory = new JMenuItem("Export memory region");
+        exportMemory.setMnemonic('e');
+        exportMemory.addActionListener(e -> {
+            VirtualMemorySnapshot mem = view.getMemorySnapshot();
+            if (mem == null) {
+                return;
+            }
+
+            SwingUtilities.invokeLater(exportMemoryDialog::focus);
+            exportMemoryDialog.setMemory(mem);
+            exportMemoryDialog.setVisible(true);
+        });
+        exportMemory.setEnabled(false);
+        toolsMenu.add(exportMemory);
+        menu.add(toolsMenu);
+
         setJMenuBar(menu);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -338,6 +361,7 @@ public class MainWindow extends JFrame {
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
+                exportMemory.setEnabled(true);
             });
         } catch (Throwable t) {
             log.log(Level.INFO, "Loading failed: " + t, t);
