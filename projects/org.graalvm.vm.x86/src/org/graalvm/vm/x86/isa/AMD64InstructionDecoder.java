@@ -396,6 +396,9 @@ import org.graalvm.vm.x86.isa.instruction.Pushf.Pushfq;
 import org.graalvm.vm.x86.isa.instruction.Pushf.Pushfw;
 import org.graalvm.vm.x86.isa.instruction.Pxor;
 import org.graalvm.vm.x86.isa.instruction.Rcpps;
+import org.graalvm.vm.x86.isa.instruction.Rdrand.Rdrandl;
+import org.graalvm.vm.x86.isa.instruction.Rdrand.Rdrandq;
+import org.graalvm.vm.x86.isa.instruction.Rdrand.Rdrandw;
 import org.graalvm.vm.x86.isa.instruction.Rdssp.Rdsspq;
 import org.graalvm.vm.x86.isa.instruction.Rdtsc;
 import org.graalvm.vm.x86.isa.instruction.Rep;
@@ -3614,6 +3617,25 @@ public class AMD64InstructionDecoder {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (np) {
                             return new Rcpps(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else {
+                            return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
+                        }
+                    }
+                    case AMD64Opcode.RDRAND: {
+                        Args args = new Args(code, rex, segment, addressOverride);
+                        if (np) {
+                            switch (args.modrm.getReg()) {
+                                case 6:
+                                    if (rex != null && rex.w) {
+                                        return new Rdrandq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                    } else if (sizeOverride) {
+                                        return new Rdrandw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                    } else {
+                                        return new Rdrandl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                    }
+                                default:
+                                    return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
+                            }
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                         }

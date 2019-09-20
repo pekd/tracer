@@ -388,6 +388,8 @@ public class AMD64Opcode {
 
     public static final byte RCPPS_X_XM = 0x53;
 
+    public static final byte RDRAND = (byte) 0xC7;
+
     public static final byte RDTSC = 0x31;
 
     public static final byte RET_FAR = (byte) 0xCB;
