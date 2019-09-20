@@ -1473,6 +1473,17 @@ public class PosixEnvironment {
         return time;
     }
 
+    public long getrandom(long buf, long buflen, int flags) throws SyscallException {
+        try {
+            return posix.getrandom(posixPointer(buf), buflen, flags);
+        } catch (PosixException e) {
+            if (strace) {
+                log.log(Level.INFO, "getrandom failed: " + Errno.toString(e.getErrno()));
+            }
+            throw new SyscallException(e.getErrno());
+        }
+    }
+
     public Posix getPosix() {
         return posix;
     }

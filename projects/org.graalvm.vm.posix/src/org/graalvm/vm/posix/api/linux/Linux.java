@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,6 +58,8 @@ public class Linux {
     private final Futex futex = new Futex();
     private static final ThreadLocal<PosixPointer> clear_child_tid = new ThreadLocal<>();
     private static final ThreadLocal<PosixPointer> robust_list = new ThreadLocal<>();
+
+    private static final SecureRandom rng = new SecureRandom();
 
     static class Line {
         public final String name;
@@ -156,5 +159,24 @@ public class Linux {
         }
         robust_list.set(head);
         return 0;
+    }
+
+    public long getrandom(PosixPointer buf, long buflen, int flags) throws PosixException {
+        if ((flags & ~(Random.GRND_NONBLOCK | Random.GRND_RANDOM)) != 0) {
+            throw new PosixException(Errno.EINVAL);
+        }
+        PosixPointer ptr = buf;
+        int i;
+        for (i = 0; i < buflen - 8; i += 8) {
+            ptr.setI64(rng.nextLong());
+            ptr = ptr.add(8);
+        }
+        byte[] b = new byte[1];
+        for (; i < buflen; i++) {
+            rng.nextBytes(b);
+            ptr.setI8(b[0]);
+            ptr = ptr.add(1);
+        }
+        return buflen;
     }
 }

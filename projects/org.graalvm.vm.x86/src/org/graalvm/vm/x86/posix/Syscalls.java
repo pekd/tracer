@@ -117,6 +117,7 @@ public class Syscalls {
     public static final int SYS_set_robust_list = 273;
     public static final int SYS_dup3 = 292;
     public static final int SYS_prlimit64 = 302;
+    public static final int SYS_getrandom = 318;
 
     public static final int SYS_DEBUG = 0xDEADBEEF;
     public static final int SYS_PRINTK = 0xDEADBABE;

@@ -87,6 +87,7 @@ import org.graalvm.vm.util.log.Trace;
 
 public class Posix {
     private static final Logger log = Trace.create(Posix.class);
+
     private boolean strace;
 
     private final FileDescriptorManager fds;
@@ -1371,6 +1372,13 @@ public class Posix {
     }
 
     // Linux specific functions
+    public long getrandom(PosixPointer buf, long buflen, int flags) throws PosixException {
+        if (strace) {
+            log.log(Levels.INFO, () -> String.format("getrandom(%s, %s, %s)", buf, buflen, org.graalvm.vm.posix.api.linux.Random.toString(flags)));
+        }
+        return linux.getrandom(buf, buflen, flags);
+    }
+
     public int sysinfo(Sysinfo info) throws PosixException {
         if (strace) {
             log.log(Levels.INFO, "sysinfo(...)");
