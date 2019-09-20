@@ -108,6 +108,9 @@ public class StreamSocketStream extends NetworkStream {
                         case Socket.SO_REUSEADDR:
                             socket.setOption(StandardSocketOptions.SO_REUSEADDR, option_value != 0);
                             return 0;
+                        case Socket.SO_OOBINLINE:
+                            // FIXME: really implement this
+                            return 0;
                         default:
                             throw new PosixException(Errno.EINVAL);
                     }
