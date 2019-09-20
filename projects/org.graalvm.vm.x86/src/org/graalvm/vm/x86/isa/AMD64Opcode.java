@@ -80,6 +80,8 @@ public class AMD64Opcode {
 
     public static final byte BT_RM_R = (byte) 0xA3;
 
+    public static final byte BTC_RM_R = (byte) 0xBB;
+
     public static final byte BTR_RM_R = (byte) 0xB3;
 
     public static final byte BTS_RM_R = (byte) 0xAB;

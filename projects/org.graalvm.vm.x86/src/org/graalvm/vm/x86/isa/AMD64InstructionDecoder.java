@@ -2282,6 +2282,16 @@ public class AMD64InstructionDecoder {
                             return new Btl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                         }
                     }
+                    case AMD64Opcode.BTC_RM_R: {
+                        Args args = new Args(code, rex, segment, addressOverride);
+                        if (rex != null && rex.w) {
+                            return new Btcq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else if (sizeOverride) {
+                            return new Btcw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else {
+                            return new Btcl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        }
+                    }
                     case AMD64Opcode.BTR_RM_R: {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (rex != null && rex.w) {
