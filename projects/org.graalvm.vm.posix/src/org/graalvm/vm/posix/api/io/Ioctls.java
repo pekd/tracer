@@ -63,6 +63,9 @@ public class Ioctls {
     public static final int FIOCLEX = 0x20006601; // Ioctl._IO('f', 1);
     public static final int FIONCLEX = 0x20006602; // Ioctl._IO('f', 2);
 
+    // sockets
+    public static final int FIONBIO = 0x8004667e; // Ioctl._IOW('f', 126, 4);
+
     static {
         ioctls = new HashMap<>();
         ioctls.put(TCGETS, "TCGETS");

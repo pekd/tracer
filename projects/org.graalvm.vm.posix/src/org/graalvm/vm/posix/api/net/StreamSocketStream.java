@@ -62,6 +62,7 @@ import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.PosixPointer;
 import org.graalvm.vm.posix.api.io.Fcntl;
+import org.graalvm.vm.posix.api.io.Ioctls;
 import org.graalvm.vm.posix.api.io.Iovec;
 import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.io.Endianess;
@@ -502,5 +503,24 @@ public class StreamSocketStream extends NetworkStream {
     @Override
     public SocketChannel getChannel() {
         return socket;
+    }
+
+    @Override
+    public int ioctl(long request, PosixPointer argp) throws PosixException {
+        switch ((int) request) {
+            case Ioctls.FIONBIO: {
+                int val = argp.getI32();
+                long flags = getFlags();
+                if (val != 0) {
+                    flags |= Fcntl.O_NONBLOCK;
+                } else {
+                    flags &= ~Fcntl.O_NONBLOCK;
+                }
+                setFlags((int) flags);
+                return 0;
+            }
+            default:
+                return super.ioctl(request, argp);
+        }
     }
 }

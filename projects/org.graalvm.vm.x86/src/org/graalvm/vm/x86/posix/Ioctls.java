@@ -55,6 +55,7 @@ public class Ioctls {
     public static final int TIOCSWINSZ = 0x5414;
     public static final int FIONCLEX = 0x5450;
     public static final int FIOCLEX = 0x5451;
+    public static final int FIONBIO = 0x5421;
 
     static {
         ioctls.put(TCGETS, org.graalvm.vm.posix.api.io.Ioctls.TCGETS);
@@ -66,6 +67,7 @@ public class Ioctls {
         ioctls.put(TIOCSWINSZ, org.graalvm.vm.posix.api.io.Ioctls.TIOCSWINSZ);
         ioctls.put(FIONCLEX, org.graalvm.vm.posix.api.io.Ioctls.FIONCLEX);
         ioctls.put(FIOCLEX, org.graalvm.vm.posix.api.io.Ioctls.FIOCLEX);
+        ioctls.put(FIONBIO, org.graalvm.vm.posix.api.io.Ioctls.FIONBIO);
     }
 
     public static int translate(int request) {
