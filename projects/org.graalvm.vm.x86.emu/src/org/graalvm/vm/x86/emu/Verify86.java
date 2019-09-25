@@ -278,24 +278,36 @@ public class Verify86 {
         switch (evt.getSize()) {
             case 1:
                 if (memory.getI8(evt.getAddress()) != (byte) evt.getValue()) {
+                    for (int i = -10; i < 10; i++) {
+                        System.out.printf("0x%016x: 0x%02x%s\n", evt.getAddress() + i, Byte.toUnsignedInt(memory.getI8(evt.getAddress() + i)), i == 0 ? " <==" : "");
+                    }
                     throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" +
                                     HexFormatter.tohex(Byte.toUnsignedLong(memory.getI8(evt.getAddress())), 2) + " vs 0x" + HexFormatter.tohex(Byte.toUnsignedLong((byte) evt.getValue()), 2));
                 }
                 break;
             case 2:
                 if (memory.getI16(evt.getAddress()) != (short) evt.getValue()) {
+                    for (int i = -10; i < 10; i++) {
+                        System.out.printf("0x%016x: 0x%04x%s\n", evt.getAddress() + 2 * i, Short.toUnsignedInt(memory.getI16(evt.getAddress() + 2 * i)), i == 0 ? " <==" : "");
+                    }
                     throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" +
                                     HexFormatter.tohex(Short.toUnsignedLong(memory.getI16(evt.getAddress())), 4) + " vs 0x" + HexFormatter.tohex(Short.toUnsignedLong((short) evt.getValue()), 4));
                 }
                 break;
             case 4:
                 if (memory.getI32(evt.getAddress()) != (int) evt.getValue()) {
+                    for (int i = -10; i < 10; i++) {
+                        System.out.printf("0x%016x: 0x%08x%s\n", evt.getAddress() + 4 * i, Integer.toUnsignedLong(memory.getI32(evt.getAddress() + 4 * i)), i == 0 ? " <==" : "");
+                    }
                     throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" +
                                     HexFormatter.tohex(Integer.toUnsignedLong(memory.getI32(evt.getAddress())), 8) + " vs 0x" + HexFormatter.tohex(Integer.toUnsignedLong((int) evt.getValue()), 8));
                 }
                 break;
             case 8:
                 if (memory.getI64(evt.getAddress()) != evt.getValue()) {
+                    for (int i = -10; i < 10; i++) {
+                        System.out.printf("0x%016x: 0x%016x%s\n", evt.getAddress() + 8 * i, memory.getI32(evt.getAddress() + 8 * i), i == 0 ? " <==" : "");
+                    }
                     throw new AssertionError("memory data mismatch at 0x" + HexFormatter.tohex(evt.getAddress(), 16) + ": 0x" + HexFormatter.tohex(memory.getI64(evt.getAddress()), 16) + " vs 0x" +
                                     HexFormatter.tohex(evt.getValue(), 16));
                 }
