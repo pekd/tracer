@@ -11,6 +11,8 @@ import org.graalvm.vm.x86.trcview.io.Node;
 public class MemoryTrace {
     private static final Logger log = Trace.create(MemoryTrace.class);
 
+    private static final int SIZE_THRESHOLD = 4096 * 10;
+
     private final Map<Long, Page> pages = new HashMap<>();
 
     private long brk = -1;
@@ -26,8 +28,12 @@ public class MemoryTrace {
         while (sz > 0) {
             Page page = pages.get(addr);
             if (page == null) {
-                pages.put(addr, new Page(addr, pc, instructionCount, node));
+                pages.put(addr, new CoarsePage(addr, pc, instructionCount, node));
             } else {
+                if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                    page = ((CoarsePage) page).transformToFine();
+                    pages.put(page.getAddress(), page);
+                }
                 page.clear(pc, instructionCount, node);
             }
             sz -= 4096;
@@ -59,11 +65,15 @@ public class MemoryTrace {
             Page page = pages.get(addr);
             if (page == null) {
                 if (length > 0) {
-                    pages.put(addr, new Page(addr, pageData, pc, instructionCount, node));
+                    pages.put(addr, new CoarsePage(addr, pageData, pc, instructionCount, node));
                 } else {
-                    pages.put(addr, new Page(addr, pc, instructionCount, node));
+                    pages.put(addr, new CoarsePage(addr, pc, instructionCount, node));
                 }
             } else {
+                if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                    page = ((CoarsePage) page).transformToFine();
+                    pages.put(page.getAddress(), page);
+                }
                 if (length > 0) {
                     page.overwrite(pageData, pc, instructionCount, node);
                 } else {
@@ -83,8 +93,12 @@ public class MemoryTrace {
         while (this.brk < newbrk) {
             Page page = pages.get(this.brk);
             if (page == null) {
-                pages.put(this.brk, new Page(this.brk, pc, instructionCount, node));
+                pages.put(this.brk, new CoarsePage(this.brk, pc, instructionCount, node));
             } else {
+                if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                    page = ((CoarsePage) page).transformToFine();
+                    pages.put(page.getAddress(), page);
+                }
                 page.clear(pc, instructionCount, node);
             }
             this.brk += 4096;
@@ -103,6 +117,10 @@ public class MemoryTrace {
             for (int i = 0; i < size; i++) {
                 long a = addr + i;
                 if (a < page.getAddress() + 4096) {
+                    if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                        page = ((CoarsePage) page).transformToFine();
+                        pages.put(page.getAddress(), page);
+                    }
                     page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node);
                 } else {
                     long oldaddr = page.getAddress();
@@ -110,11 +128,19 @@ public class MemoryTrace {
                     if (page == null) {
                         throw new AssertionError(String.format("no memory mapped to 0x%x", oldaddr + 4096));
                     }
+                    if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                        page = ((CoarsePage) page).transformToFine();
+                        pages.put(page.getAddress(), page);
+                    }
                     page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node);
                 }
                 val >>= 8;
             }
         } else {
+            if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                page = ((CoarsePage) page).transformToFine();
+                pages.put(page.getAddress(), page);
+            }
             page.addUpdate(addr, size, value, pc, instructionCount, node);
         }
     }
@@ -162,6 +188,14 @@ public class MemoryTrace {
     }
 
     public void printStats() {
-        log.log(Levels.INFO, "Memory consists of " + pages.size() + " pages (4k/page)");
+        int fine = 0;
+        for (Page page : pages.values()) {
+            if (page instanceof FinePage) {
+                fine++;
+            }
+        }
+        if (pages.size() > 0) {
+            log.log(Levels.INFO, "Memory consists of " + pages.size() + " pages (4k/page); " + fine + " fine pages [" + ((double) fine / pages.size() * 100.0) + "%]");
+        }
     }
 }
