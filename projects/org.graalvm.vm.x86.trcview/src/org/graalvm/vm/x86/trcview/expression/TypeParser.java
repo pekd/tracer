@@ -7,12 +7,13 @@ import java.util.List;
 import org.graalvm.vm.x86.trcview.analysis.type.DataType;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.analysis.type.Representation;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
 import org.graalvm.vm.x86.trcview.expression.Token.TokenType;
 
 /*
  * prototype = type ident "(" [ type [ ident ] { "," type [ ident ] } ] ")" .
- * type      = basic { "*" ["const"] } .
+ * type      = basic { "*" ["const"] } ["$out" | "$dec" | "$hex" | "$char"] .
  * basic     = ["const"]
  *           ( ["unsigned" | "signed"] integer
  *           | "u8"
@@ -86,6 +87,7 @@ public class TypeParser {
                     break;
                 case "u64":
                 case "uint64_t":
+                case "size_t":
                     la = new Token(TokenType.U64);
                     break;
                 case "s8":
@@ -102,6 +104,7 @@ public class TypeParser {
                     break;
                 case "s64":
                 case "int64_t":
+                case "ssize_t":
                     la = new Token(TokenType.S64);
                     break;
                 case "void":
@@ -174,6 +177,30 @@ public class TypeParser {
                 type = new Type(type, true);
             } else {
                 type = new Type(type, false);
+            }
+        }
+        if (sym == TokenType.IDENT) {
+            switch (la.str) {
+                case "$out":
+                    scan();
+                    if (type.getType() == DataType.PTR) {
+                        type.setRepresentation(Representation.HEX);
+                    }
+                    break;
+                case "$char":
+                    scan();
+                    type.setRepresentation(Representation.CHAR);
+                    break;
+                case "$dec":
+                    scan();
+                    type.setRepresentation(Representation.DEC);
+                    break;
+                case "$hex":
+                    scan();
+                    type.setRepresentation(Representation.HEX);
+                    break;
+                default:
+                    return type;
             }
         }
         return type;

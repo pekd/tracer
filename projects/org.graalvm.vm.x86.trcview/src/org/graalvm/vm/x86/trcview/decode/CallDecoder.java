@@ -5,9 +5,9 @@ import static org.graalvm.vm.x86.trcview.decode.DecoderUtils.ptr;
 
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
-import org.graalvm.vm.x86.trcview.analysis.type.DataType;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.analysis.type.Representation;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
 
 public class CallDecoder {
@@ -31,11 +31,12 @@ public class CallDecoder {
     }
 
     private static String str(Type type, long val, CpuState state, MemoryTrace mem) {
+        Representation repr = type.getRepresentation();
         switch (type.getType()) {
             case VOID:
                 return "";
             case PTR:
-                if (type.getPointee().getType() == DataType.U8 || type.getPointee().getType() == DataType.S8) {
+                if (repr == Representation.STRING) {
                     return cstr(val, state.instructionCount, mem);
                 } else {
                     return ptr(val);
@@ -43,21 +44,109 @@ public class CallDecoder {
             case STRING:
                 return cstr(val, state.instructionCount, mem);
             case U8:
-                return Integer.toString(Byte.toUnsignedInt((byte) val));
+                switch (repr) {
+                    case CHAR:
+                        return "'" + DecoderUtils.encode(Byte.toUnsignedInt((byte) val)) + "'";
+                    default:
+                    case DEC:
+                        return Integer.toString(Byte.toUnsignedInt((byte) val));
+                    case HEX:
+                        return "0x" + Integer.toHexString(Byte.toUnsignedInt((byte) val));
+                }
             case S8:
-                Byte.toString((byte) val);
+                switch (repr) {
+                    case CHAR:
+                        return "'" + DecoderUtils.encode(Byte.toUnsignedInt((byte) val)) + "'";
+                    default:
+                    case DEC:
+                        return Byte.toString((byte) val);
+                    case HEX:
+                        return Integer.toHexString(Byte.toUnsignedInt((byte) val));
+                }
             case U16:
-                return Integer.toString(Short.toUnsignedInt((short) val));
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Integer.toString(Short.toUnsignedInt((short) val));
+                        }
+                    default:
+                    case DEC:
+                        return Integer.toString(Short.toUnsignedInt((short) val));
+                    case HEX:
+                        return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
+                }
             case S16:
-                return Short.toString((short) val);
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    default:
+                    case DEC:
+                        return Short.toString((short) val);
+                    case HEX:
+                        return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
+                }
             case U32:
-                return Integer.toUnsignedString((int) val);
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    default:
+                    case DEC:
+                        return Integer.toUnsignedString((int) val);
+                    case HEX:
+                        return "0x" + Integer.toUnsignedString((int) val, 16);
+                }
             case S32:
-                return Integer.toString((int) val);
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    default:
+                    case DEC:
+                        return Integer.toString((int) val);
+                    case HEX:
+                        return "0x" + Integer.toUnsignedString((int) val, 16);
+                }
             case U64:
-                return Long.toUnsignedString(val);
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    default:
+                    case DEC:
+                        return Long.toUnsignedString(val);
+                    case HEX:
+                        return "0x" + Long.toUnsignedString(val, 16);
+                }
             case S64:
-                return Long.toString(val);
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    default:
+                    case DEC:
+                        return Long.toString(val);
+                    case HEX:
+                        return "0x" + Long.toUnsignedString(val, 16);
+                }
             case STRUCT:
                 return "/* struct */";
         }

@@ -2,6 +2,7 @@ package org.graalvm.vm.x86.trcview.decode;
 
 import static org.graalvm.vm.util.HexFormatter.tohex;
 
+import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 
@@ -20,34 +21,27 @@ public class DecoderUtils {
         }
     }
 
-    private static void append(StringBuilder buf, int b) {
+    public static String encode(int b) {
         switch (b) {
             case '"':
-                buf.append("\\\"");
-                break;
+                return "\\\"";
             case '\\':
-                buf.append("\\\\");
-                break;
+                return "\\\\";
             case '\r':
-                buf.append("\\r");
-                break;
+                return "\\r";
             case '\n':
-                buf.append("\\n");
-                break;
+                return "\\n";
             case '\t':
-                buf.append("\\t");
-                break;
+                return "\\t";
             case '\f':
-                buf.append("\\f");
-                break;
+                return "\\f";
             case '\b':
-                buf.append("\\b");
-                break;
+                return "\\b";
             default:
                 if (b < 0x20) {
-                    buf.append(String.format("\\x%02x", b));
+                    return "\\x" + HexFormatter.tohex(b, 2);
                 } else {
-                    buf.append((char) b);
+                    return Character.toString((char) b);
                 }
         }
     }
@@ -64,7 +58,7 @@ public class DecoderUtils {
                 if (b == 0) {
                     return "\"" + buf + "\"";
                 }
-                append(buf, b);
+                buf.append(encode(b));
                 if (i >= STRING_MAXLEN) {
                     return "\"" + buf + "\"...";
                 }
@@ -83,7 +77,7 @@ public class DecoderUtils {
             long ptr = addr;
             for (int i = 0; i < length; i++) {
                 int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
-                append(buf, b);
+                buf.append(encode(b));
                 if (i >= STRING_MAXLEN) {
                     return "\"" + buf + "\"...";
                 }

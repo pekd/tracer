@@ -47,11 +47,14 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -93,6 +96,7 @@ public class MainWindow extends JFrame {
     private TraceView view;
 
     private JMenuItem open;
+    private JMenuItem loadPrototypes;
     private JMenuItem renameSymbol;
     private JMenuItem setFunctionType;
     private JMenuItem gotoPC;
@@ -107,6 +111,7 @@ public class MainWindow extends JFrame {
         super(WINDOW_TITLE);
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
+        FileDialog loadSyms = new FileDialog(this, "Open...", FileDialog.LOAD);
         ExportMemoryDialog exportMemoryDialog = new ExportMemoryDialog(this);
 
         setLayout(new BorderLayout());
@@ -137,11 +142,35 @@ public class MainWindow extends JFrame {
             };
             worker.execute();
         });
+        loadPrototypes = new JMenuItem("Load prototypes...");
+        loadPrototypes.setMnemonic('l');
+        loadPrototypes.addActionListener(e -> {
+            loadSyms.setVisible(true);
+            if (loadSyms.getFile() == null) {
+                return;
+            }
+            String filename = loadSyms.getDirectory() + loadSyms.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        loadPrototypes(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        loadPrototypes.setEnabled(false);
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
         exit.addActionListener(e -> exit());
         fileMenu.add(open);
+        fileMenu.addSeparator();
+        fileMenu.add(loadPrototypes);
         fileMenu.addSeparator();
         fileMenu.add(exit);
         fileMenu.setMnemonic('F');
@@ -356,6 +385,7 @@ public class MainWindow extends JFrame {
                 view.setRoot(root);
                 symbols = analysis.getComputedSymbolTable();
                 trace = root;
+                loadPrototypes.setEnabled(true);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
                 gotoPC.setEnabled(true);
@@ -371,6 +401,46 @@ public class MainWindow extends JFrame {
             open.setEnabled(true);
         }
         log.info("File loaded");
+    }
+
+    public void loadPrototypes(File file) throws IOException {
+        log.info("Loading prototype file " + file + "...");
+        loadPrototypes.setEnabled(false);
+        Map<String, ComputedSymbol> syms = symbols.getNamedSymbols();
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line;
+            int lineno = 0;
+            while ((line = in.readLine()) != null) {
+                lineno++;
+                if (line.contains("//")) {
+                    line = line.substring(0, line.indexOf("//"));
+                }
+                line = line.trim();
+                if (line.endsWith(";")) {
+                    line = line.substring(0, line.length() - 1);
+                }
+                if (line.length() > 0) {
+                    try {
+                        TypeParser parser = new TypeParser(line);
+                        Function fun = parser.parse();
+                        ComputedSymbol sym = syms.get(fun.getName());
+                        if (sym != null) {
+                            sym.prototype = fun.getPrototype();
+                        }
+                    } catch (ParseException e) {
+                        log.info("Parse error in line " + lineno + ": " + e.getMessage());
+                        setStatus("Parse error in line " + lineno + ": " + e.getMessage());
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            log.log(Level.WARNING, "Loading failed: " + t, t);
+            setStatus("Loading failed: " + t);
+            throw t;
+        } finally {
+            loadPrototypes.setEnabled(true);
+        }
+        log.info("Prototype file loaded");
     }
 
     private void exit() {

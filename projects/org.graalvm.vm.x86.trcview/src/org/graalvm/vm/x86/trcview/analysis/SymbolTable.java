@@ -130,4 +130,12 @@ public class SymbolTable {
         sub.prototype = type.getPrototype();
         renameSubroutine(sub, type.getName());
     }
+
+    public Map<String, ComputedSymbol> getNamedSymbols() {
+        Map<String, ComputedSymbol> map = new HashMap<>();
+        for (ComputedSymbol sym : symbols.values()) {
+            map.put(sym.name, sym);
+        }
+        return map;
+    }
 }
