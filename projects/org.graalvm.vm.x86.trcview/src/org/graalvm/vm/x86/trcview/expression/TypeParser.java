@@ -295,6 +295,9 @@ public class TypeParser {
             case VOID:
                 scan();
                 return new Type(DataType.VOID);
+            case IDENT: // TODO: user defined types
+                scan();
+                return new Type(DataType.VOID);
             default:
                 error("unexpected token " + sym);
                 throw new AssertionError("unreachable");

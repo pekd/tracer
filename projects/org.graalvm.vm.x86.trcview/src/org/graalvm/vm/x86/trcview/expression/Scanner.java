@@ -26,7 +26,7 @@ public class Scanner {
     }
 
     private static boolean isIdent(char c) {
-        if (c == '_' || c == '$') {
+        if (c == '_' || c == '$' || c == '.' || c == '@') {
             return true;
         }
         if (c >= '0' && c <= '9') {

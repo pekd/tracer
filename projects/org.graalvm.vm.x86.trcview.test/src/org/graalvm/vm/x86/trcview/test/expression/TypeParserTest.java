@@ -7,6 +7,7 @@ import java.text.ParseException;
 import org.graalvm.vm.x86.trcview.analysis.type.DataType;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.analysis.type.Representation;
 import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.junit.Test;
 
@@ -54,5 +55,41 @@ public class TypeParserTest {
         assertEquals(DataType.PTR, proto.args.get(1).getType());
         assertEquals(DataType.PTR, proto.args.get(1).getPointee().getType());
         assertEquals(DataType.S8, proto.args.get(1).getPointee().getPointee().getType());
+    }
+
+    @Test
+    public void testRepr001() throws ParseException {
+        TypeParser p = new TypeParser("void putch(char c)");
+        Function fun = p.parse();
+        assertEquals("putch", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.VOID, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.S8, proto.args.get(0).getType());
+        assertEquals(Representation.DEC, proto.args.get(0).getRepresentation());
+    }
+
+    @Test
+    public void testRepr002() throws ParseException {
+        TypeParser p = new TypeParser("void putch(char $char)");
+        Function fun = p.parse();
+        assertEquals("putch", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.VOID, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.S8, proto.args.get(0).getType());
+        assertEquals(Representation.CHAR, proto.args.get(0).getRepresentation());
+    }
+
+    @Test
+    public void testRepr003() throws ParseException {
+        TypeParser p = new TypeParser("void putch(char $char c)");
+        Function fun = p.parse();
+        assertEquals("putch", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.VOID, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.S8, proto.args.get(0).getType());
+        assertEquals(Representation.CHAR, proto.args.get(0).getRepresentation());
     }
 }

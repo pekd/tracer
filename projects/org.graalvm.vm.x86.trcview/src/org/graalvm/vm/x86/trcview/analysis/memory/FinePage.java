@@ -97,6 +97,10 @@ public class FinePage implements Page {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
+        if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x", addr));
+        }
+
         int off = (int) (addr - address);
         if (updates[off] == null) {
             return null;

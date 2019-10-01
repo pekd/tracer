@@ -39,9 +39,6 @@ public class MemoryTrace {
             sz -= 4096;
             addr += 4096;
         }
-        if (brk == -1) {
-            brk = addr;
-        }
     }
 
     public void mmap(long address, long size, byte[] data, long pc, long instructionCount, Node node) {
@@ -84,13 +81,32 @@ public class MemoryTrace {
             addr += 4096;
             offset += 4096;
         }
-        if (brk == -1) {
-            brk = addr;
-        }
     }
 
     public void brk(long newbrk, long pc, long instructionCount, Node node) {
-        while (this.brk < newbrk) {
+        if (brk == -1) {
+            brk = getPageAddress(newbrk);
+            if (brk != newbrk) {
+                brk += 4096;
+            }
+            long p = newbrk;
+            while (p > 0) {
+                Page page = pages.get(p);
+                if (page == null) {
+                    pages.put(this.brk, new CoarsePage(p, pc, instructionCount, node));
+                } else {
+                    break;
+                }
+                p -= 4096;
+            }
+            return;
+        }
+
+        long end = getPageAddress(newbrk);
+        if (end != newbrk) {
+            end += 4096;
+        }
+        while (this.brk < end) {
             Page page = pages.get(this.brk);
             if (page == null) {
                 pages.put(this.brk, new CoarsePage(this.brk, pc, instructionCount, node));
@@ -103,7 +119,6 @@ public class MemoryTrace {
             }
             this.brk += 4096;
         }
-        this.brk = newbrk;
     }
 
     public void write(long addr, byte size, long value, long pc, long instructionCount, Node node) {
@@ -185,6 +200,19 @@ public class MemoryTrace {
             throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
         }
         return page.getLastUpdate(addr, instructionCount);
+    }
+
+    // TODO: use instructionCount to find *last* map time
+    public Node getMapNode(long addr, @SuppressWarnings("unused") long instructionCount) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        if (page.getInitialInstruction() <= instructionCount) {
+            return page.getInitialNode();
+        } else {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
     }
 
     public void printStats() {

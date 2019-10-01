@@ -57,6 +57,9 @@ public class CoarsePage implements Page {
     }
 
     public byte getByte(long addr, long instructionCount) throws MemoryNotMappedException {
+        if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x", addr));
+        }
         MemoryUpdate update = getLastUpdate(addr, instructionCount);
         if (update == null) {
             return data[(int) (addr - address)];
@@ -70,7 +73,7 @@ public class CoarsePage implements Page {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
-        if (updates.isEmpty() || instructionCount == firstInstructionCount) {
+        if (updates.isEmpty() || instructionCount <= firstInstructionCount) {
             // no update until now
             return null;
         } else if (updates.get(0).instructionCount > instructionCount) {
@@ -143,6 +146,10 @@ public class CoarsePage implements Page {
     public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x", addr));
         }
 
         byte bytes = 0;

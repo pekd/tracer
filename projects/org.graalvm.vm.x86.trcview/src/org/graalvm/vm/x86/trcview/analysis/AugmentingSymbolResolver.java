@@ -22,10 +22,23 @@ public class AugmentingSymbolResolver extends SymbolResolver {
         return sym;
     }
 
+    private Symbol compute(long pc) {
+        ComputedSymbol s = augmentation.get(pc);
+        if (s != null) {
+            return new AugmentedSymbol(new SyntheticSymbol(s), s.name, s.prototype);
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public Symbol getSymbol(long pc) {
         Symbol sym = root.getSymbol(pc);
-        return augment(sym);
+        if (sym == null) {
+            return compute(pc);
+        } else {
+            return augment(sym);
+        }
     }
 
     @Override
@@ -37,6 +50,10 @@ public class AugmentingSymbolResolver extends SymbolResolver {
     @Override
     public Symbol getSymbolExact(long pc) {
         Symbol sym = root.getSymbolExact(pc);
-        return augment(sym);
+        if (sym == null) {
+            return compute(pc);
+        } else {
+            return augment(sym);
+        }
     }
 }

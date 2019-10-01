@@ -131,10 +131,15 @@ public class SymbolTable {
         renameSubroutine(sub, type.getName());
     }
 
-    public Map<String, ComputedSymbol> getNamedSymbols() {
-        Map<String, ComputedSymbol> map = new HashMap<>();
+    public Map<String, List<ComputedSymbol>> getNamedSymbols() {
+        Map<String, List<ComputedSymbol>> map = new HashMap<>();
         for (ComputedSymbol sym : symbols.values()) {
-            map.put(sym.name, sym);
+            List<ComputedSymbol> entry = map.get(sym.name);
+            if (entry == null) {
+                entry = new ArrayList<>();
+                map.put(sym.name, entry);
+            }
+            entry.add(sym);
         }
         return map;
     }

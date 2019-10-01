@@ -298,14 +298,20 @@ public class MemoryView extends JPanel {
             content = dump((address - 4 * LINESZ) & 0xFFFFFFFFFFFFFFF0L, 12 * LINESZ) + "\n\n";
             try {
                 MemoryUpdate update = memory.getLastWrite(address, insn);
+                Node node = null;
                 if (update != null) {
+                    node = update.node;
+                } else {
+                    node = memory.getMapNode(address, insn);
+                }
+                if (node != null) {
                     content += "Last write to this location:\n";
-                    if (update.node instanceof RecordNode && ((RecordNode) update.node).getRecord() instanceof StepRecord) {
-                        lastUpdateNode = update.node;
-                        StepRecord record = (StepRecord) ((RecordNode) update.node).getRecord();
+                    if (node instanceof RecordNode && ((RecordNode) node).getRecord() instanceof StepRecord) {
+                        lastUpdateNode = node;
+                        StepRecord record = (StepRecord) ((RecordNode) node).getRecord();
                         content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
                     } else {
-                        Node lastStep = Search.previousStep(update.node);
+                        Node lastStep = Search.previousStep(node);
                         lastUpdateNode = lastStep;
                         if (lastStep != null) {
                             StepRecord record = null;
@@ -321,7 +327,7 @@ public class MemoryView extends JPanel {
                             }
                         }
                     }
-                    content += "\n" + update.node;
+                    content += "\n" + node;
                 } else {
                     lastUpdateNode = null;
                     content += "No write to this address found";

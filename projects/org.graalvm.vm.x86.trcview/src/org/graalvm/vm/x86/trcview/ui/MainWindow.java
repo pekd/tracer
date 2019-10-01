@@ -54,6 +54,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -406,7 +407,7 @@ public class MainWindow extends JFrame {
     public void loadPrototypes(File file) throws IOException {
         log.info("Loading prototype file " + file + "...");
         loadPrototypes.setEnabled(false);
-        Map<String, ComputedSymbol> syms = symbols.getNamedSymbols();
+        Map<String, List<ComputedSymbol>> syms = symbols.getNamedSymbols();
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -423,9 +424,11 @@ public class MainWindow extends JFrame {
                     try {
                         TypeParser parser = new TypeParser(line);
                         Function fun = parser.parse();
-                        ComputedSymbol sym = syms.get(fun.getName());
+                        List<ComputedSymbol> sym = syms.get(fun.getName());
                         if (sym != null) {
-                            sym.prototype = fun.getPrototype();
+                            for (ComputedSymbol sy : sym) {
+                                sy.prototype = fun.getPrototype();
+                            }
                         }
                     } catch (ParseException e) {
                         log.info("Parse error in line " + lineno + ": " + e.getMessage());
