@@ -167,7 +167,7 @@ public class CallDecoder {
         }
         buf.append(')');
         if (nextState != null) {
-            String s = str(prototype.returnType, nextState.rax, state, mem);
+            String s = str(prototype.returnType, nextState.rax, nextState, mem);
             if (s.length() > 0) {
                 buf.append(" = ");
                 buf.append(s);
