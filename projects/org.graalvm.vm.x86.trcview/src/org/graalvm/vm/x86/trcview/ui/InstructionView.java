@@ -98,6 +98,7 @@ public class InstructionView extends JPanel {
     public static final Color INDIRECTJMP_FG = new Color(0xAA, 0x55, 0x00);
     public static final Color JCC_FG = new Color(0xFF, 0x80, 0x00);
     public static final Color ENDBR_FG = Color.GRAY;
+    public static final Color ERROR_FG = Color.RED;
 
     public static final String STYLE = "html, body, pre {" +
                     "    padding: 0;" +
@@ -258,7 +259,7 @@ public class InstructionView extends JPanel {
             fireCallEvent((BlockNode) node);
         } else {
             StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
-            if (step.getMnemonic().equals("ret")) {
+            if (step.getMnemonic() != null && step.getMnemonic().equals("ret")) {
                 fireRetEvent((RecordNode) node);
             }
         }
@@ -440,58 +441,62 @@ public class InstructionView extends JPanel {
             } else if (node instanceof RecordNode) {
                 StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
                 String mnemonic = step.getMnemonic();
-                switch (mnemonic) {
-                    case "ret":
-                        c.setForeground(RET_FG);
-                        break;
-                    case "syscall":
-                        c.setForeground(SYSCALL_FG);
-                        break;
-                    case "jmp":
-                        if (step.getInstruction() instanceof JmpIndirect) {
-                            c.setForeground(INDIRECTJMP_FG);
-                        } else {
-                            c.setForeground(JMP_FG);
-                        }
-                        break;
-                    case "ja":
-                    case "jae":
-                    case "jb":
-                    case "jbe":
-                    case "jc":
-                    case "jcxz":
-                    case "jecxz":
-                    case "je":
-                    case "jg":
-                    case "jge":
-                    case "jl":
-                    case "jle":
-                    case "jna":
-                    case "jnae":
-                    case "jnb":
-                    case "jnbe":
-                    case "jnc":
-                    case "jne":
-                    case "jng":
-                    case "jnge":
-                    case "jnl":
-                    case "jnle":
-                    case "jno":
-                    case "jnp":
-                    case "jns":
-                    case "jnz":
-                    case "jo":
-                    case "jp":
-                    case "jpe":
-                    case "jpo":
-                    case "js":
-                    case "jz":
-                        c.setForeground(JCC_FG);
-                        break;
-                    case "endbr32":
-                    case "endbr64":
-                        c.setForeground(ENDBR_FG);
-                        break;
+                if (mnemonic == null) {
+                    c.setForeground(ERROR_FG);
+                } else {
+                    switch (mnemonic) {
+                        case "ret":
+                            c.setForeground(RET_FG);
+                            break;
+                        case "syscall":
+                            c.setForeground(SYSCALL_FG);
+                            break;
+                        case "jmp":
+                            if (step.getInstruction() instanceof JmpIndirect) {
+                                c.setForeground(INDIRECTJMP_FG);
+                            } else {
+                                c.setForeground(JMP_FG);
+                            }
+                            break;
+                        case "ja":
+                        case "jae":
+                        case "jb":
+                        case "jbe":
+                        case "jc":
+                        case "jcxz":
+                        case "jecxz":
+                        case "je":
+                        case "jg":
+                        case "jge":
+                        case "jl":
+                        case "jle":
+                        case "jna":
+                        case "jnae":
+                        case "jnb":
+                        case "jnbe":
+                        case "jnc":
+                        case "jne":
+                        case "jng":
+                        case "jnge":
+                        case "jnl":
+                        case "jnle":
+                        case "jno":
+                        case "jnp":
+                        case "jns":
+                        case "jnz":
+                        case "jo":
+                        case "jp":
+                        case "jpe":
+                        case "jpo":
+                        case "js":
+                        case "jz":
+                            c.setForeground(JCC_FG);
+                            break;
+                        case "endbr32":
+                        case "endbr64":
+                            c.setForeground(ENDBR_FG);
+                            break;
+                    }
                 }
             }
             return c;

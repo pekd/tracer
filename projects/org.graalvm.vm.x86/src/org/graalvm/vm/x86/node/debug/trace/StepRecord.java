@@ -85,7 +85,7 @@ public class StepRecord extends Record {
     }
 
     public String[] getDisassemblyComponents() {
-        if (disasmParts == null) {
+        if (disasmParts == null && machinecode != null) {
             AMD64Instruction insn = getInstruction();
             disasm = insn.getDisassembly();
             disasmParts = insn.getDisassemblyComponents();
@@ -97,6 +97,8 @@ public class StepRecord extends Record {
         // don't cache the result here
         if (disasmParts != null) {
             return disasmParts[0];
+        } else if (machinecode == null) {
+            return null;
         } else {
             String[] parts = getInstruction().getDisassemblyComponents();
             return parts[0];

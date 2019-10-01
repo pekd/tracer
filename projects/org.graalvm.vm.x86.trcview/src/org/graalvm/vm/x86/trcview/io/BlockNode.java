@@ -167,7 +167,7 @@ public class BlockNode extends Node {
         }
         if (record instanceof StepRecord) {
             StepRecord step = (StepRecord) record;
-            if (AMD64InstructionQuickInfo.isCall(step.getMachinecode())) {
+            if (step.getMachinecode() != null && AMD64InstructionQuickInfo.isCall(step.getMachinecode())) {
                 BlockNode block = new BlockNode(step);
                 analysis.process(record, block);
                 if (progress != null) {
@@ -193,7 +193,7 @@ public class BlockNode extends Node {
                     }
                     if (child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof StepRecord) {
                         StepRecord s = (StepRecord) ((RecordNode) child).getRecord();
-                        if (AMD64InstructionQuickInfo.isRet(s.getMachinecode())) {
+                        if (s.getMachinecode() == null || AMD64InstructionQuickInfo.isRet(s.getMachinecode())) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
                             }

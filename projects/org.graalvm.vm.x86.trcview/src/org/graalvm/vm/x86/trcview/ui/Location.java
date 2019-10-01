@@ -101,7 +101,7 @@ public class Location {
 
     public String getAsm() {
         if (disasm == null) {
-            return null;
+            return "<unreadable>";
         }
         if (disasm.length == 1) {
             return disasm[0];
@@ -111,7 +111,11 @@ public class Location {
     }
 
     public String getMnemonic() {
-        return disasm[0];
+        if (disasm == null) {
+            return "<unreadable>";
+        } else {
+            return disasm[0];
+        }
     }
 
     public String getPrintableBytes() {
