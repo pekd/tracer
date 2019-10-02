@@ -100,6 +100,8 @@ public class InstructionView extends JPanel {
     public static final Color ENDBR_FG = Color.GRAY;
     public static final Color ERROR_FG = Color.RED;
 
+    public static final Color ROP_BG = new Color(0xFF, 0xE0, 0xE0);
+
     public static final String STYLE = "html, body, pre {" +
                     "    padding: 0;" +
                     "    margin: 0;" +
@@ -437,6 +439,20 @@ public class InstructionView extends JPanel {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             Node node = instructions.get(index);
             if (node instanceof BlockNode) {
+                if (index > 0) {
+                    BlockNode block = (BlockNode) node;
+                    Node prev = instructions.get(index - 1);
+                    StepRecord head = block.getHead();
+                    long pc = head.getPC();
+                    if (prev instanceof BlockNode) {
+                        BlockNode b = (BlockNode) prev;
+                        StepRecord step = b.getHead();
+                        long npc = step.getPC() + (step.getMachinecode() != null ? step.getMachinecode().length : 0);
+                        if (!isSelected && pc != npc) {
+                            c.setBackground(ROP_BG);
+                        }
+                    }
+                }
                 c.setForeground(CALL_FG);
             } else if (node instanceof RecordNode) {
                 StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
@@ -496,6 +512,19 @@ public class InstructionView extends JPanel {
                         case "endbr64":
                             c.setForeground(ENDBR_FG);
                             break;
+                    }
+                }
+
+                if (index > 0) {
+                    Node prev = instructions.get(index - 1);
+                    long pc = step.getPC();
+                    if (prev instanceof BlockNode) {
+                        BlockNode b = (BlockNode) prev;
+                        StepRecord s = b.getHead();
+                        long npc = s.getPC() + (s.getMachinecode() != null ? s.getMachinecode().length : 0);
+                        if (!isSelected && pc != npc) {
+                            c.setBackground(ROP_BG);
+                        }
                     }
                 }
             }
