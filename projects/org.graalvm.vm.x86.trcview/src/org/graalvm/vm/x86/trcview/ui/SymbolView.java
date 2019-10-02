@@ -61,6 +61,7 @@ import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
 
 @SuppressWarnings("serial")
@@ -70,11 +71,13 @@ public class SymbolView extends JPanel {
     private JList<String> syms;
     private List<ComputedSymbol> symbols;
     private List<JumpListener> jumpListeners;
+    private List<ChangeListener> changeListeners;
     private int width;
 
     public SymbolView() {
         super(new BorderLayout());
         jumpListeners = new ArrayList<>();
+        changeListeners = new ArrayList<>();
         symbols = Collections.emptyList();
         syms = new JList<>(new DefaultListModel<>());
         syms.setFont(MainWindow.FONT);
@@ -91,6 +94,13 @@ public class SymbolView extends JPanel {
                     fireJumpEvent(sym.visits.get(0));
                 }
             }
+        });
+        syms.addListSelectionListener(e -> {
+            int selected = syms.getSelectedIndex();
+            if (selected == -1) {
+                return;
+            }
+            fireChangeEvent();
         });
         add(BorderLayout.CENTER, new JScrollPane(syms));
     }
@@ -155,6 +165,24 @@ public class SymbolView extends JPanel {
         for (JumpListener l : jumpListeners) {
             try {
                 l.jump(node);
+            } catch (Throwable t) {
+                log.log(Level.WARNING, "Error while running listener: " + t, t);
+            }
+        }
+    }
+
+    public void addChangeListener(ChangeListener listener) {
+        changeListeners.add(listener);
+    }
+
+    public void removeChangeListener(ChangeListener listener) {
+        changeListeners.remove(listener);
+    }
+
+    protected void fireChangeEvent() {
+        for (ChangeListener l : changeListeners) {
+            try {
+                l.valueChanged();
             } catch (Throwable t) {
                 log.log(Level.WARNING, "Error while running listener: " + t, t);
             }

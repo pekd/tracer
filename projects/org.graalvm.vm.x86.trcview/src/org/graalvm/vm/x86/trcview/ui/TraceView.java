@@ -73,6 +73,9 @@ public class TraceView extends JPanel {
     private MemoryView mem;
     private MemoryTrace memory;
 
+    private SymbolTable syms;
+    private ComputedSymbol selectedSymbol;
+
     public TraceView(Consumer<String> status) {
         super(new BorderLayout());
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -93,8 +96,13 @@ public class TraceView extends JPanel {
         add(BorderLayout.CENTER, split);
 
         symbols.addJumpListener(this::jump);
+        symbols.addChangeListener(() -> {
+            selectedSymbol = symbols.getSelectedSymbol();
+        });
 
         insns.addChangeListener(() -> {
+            selectedSymbol = null;
+
             StepRecord step = insns.getSelectedInstruction();
             StepRecord previous = insns.getPreviousInstruction();
             CallArgsRecord args = insns.getSelectedInstructionCallArguments();
@@ -106,6 +114,17 @@ public class TraceView extends JPanel {
                 }
                 state.setCallArguments(args);
                 mem.setStep(step);
+            }
+            if (insns.getSelectedNode() instanceof BlockNode) {
+                BlockNode block = (BlockNode) insns.getSelectedNode();
+                StepRecord first = block.getFirstStep();
+                if (first != null) {
+                    long pc = first.getPC();
+                    ComputedSymbol sym = syms.get(pc);
+                    if (sym != null) {
+                        selectedSymbol = sym;
+                    }
+                }
             }
         });
 
@@ -144,7 +163,7 @@ public class TraceView extends JPanel {
     }
 
     public ComputedSymbol getSelectedSymbol() {
-        return symbols.getSelectedSymbol();
+        return selectedSymbol;
     }
 
     public void jump(Node node) {
@@ -182,6 +201,7 @@ public class TraceView extends JPanel {
     }
 
     public void setComputedSymbols(SymbolTable symbols) {
+        this.syms = symbols;
         this.symbols.setSymbols(symbols);
     }
 
