@@ -65,7 +65,6 @@ import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
-import org.graalvm.vm.x86.trcview.io.RecordNode;
 
 public class Analysis {
     private static final Logger log = Trace.create(Analysis.class);
@@ -122,6 +121,7 @@ public class Analysis {
                         }
                         break;
                 }
+                symbols.visit(node);
             }
             lastStep = step;
         } else if (record instanceof SymbolTableRecord) {
@@ -174,6 +174,22 @@ public class Analysis {
                 } else {
                     throw new AssertionError("unknown size: " + event.getSize());
                 }
+            } else { /* read */
+                long pc = 0;
+                long insn = 0;
+                if (lastStep != null) {
+                    pc = lastStep.getPC();
+                    insn = lastStep.getInstructionCount();
+                }
+                long addr = event.getAddress();
+                if (event.getSize() <= 8) {
+                    memory.read(addr, (byte) event.getSize(), pc, insn, node);
+                } else if (event.getSize() == 16) {
+                    memory.read(addr, (byte) 8, pc, insn, node);
+                    memory.read(addr + 8, (byte) 8, pc, insn, node);
+                } else {
+                    throw new AssertionError("unknown size: " + event.getSize());
+                }
             }
         } else if (record instanceof BrkRecord) {
             BrkRecord brk = (BrkRecord) record;
@@ -188,19 +204,11 @@ public class Analysis {
         }
     }
 
-    private void resolveCalls(BlockNode root) {
+    public void finish(BlockNode root) {
         StepRecord first = root.getFirstStep();
         if (symbols.get(first.getPC()) == null) {
             symbols.addSubroutine(first.getPC(), "_start");
-        }
-        for (Node node : root.getNodes()) {
-            if (node instanceof BlockNode) {
-                BlockNode block = (BlockNode) node;
-                resolveCalls(block);
-            } else if (node instanceof RecordNode) {
-                RecordNode record = (RecordNode) node;
-                symbols.visit(record);
-            }
+            symbols.visit(root.getFirstNode());
         }
 
         for (ComputedSymbol sym : symbols.getSymbols()) {
@@ -213,10 +221,7 @@ public class Analysis {
                     break;
             }
         }
-    }
 
-    public void finish(BlockNode root) {
-        resolveCalls(root);
         log.log(Levels.INFO, "The trace contains " + steps + " steps");
         memory.printStats();
     }

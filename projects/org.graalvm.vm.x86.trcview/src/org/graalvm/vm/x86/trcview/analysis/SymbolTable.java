@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
+import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
 
@@ -59,22 +60,48 @@ public class SymbolTable {
     private final Map<Long, ComputedSymbol> symbols = new HashMap<>();
     private final List<SymbolRenameListener> listeners = new ArrayList<>();
 
+    public static String subname(long pc) {
+        return "sub_" + HexFormatter.tohex(pc, 1);
+    }
+
     private static ComputedSymbol sub(long pc) {
-        String name = "sub_" + HexFormatter.tohex(pc, 1);
-        return new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE);
+        return new ComputedSymbol(subname(pc), pc, ComputedSymbol.Type.SUBROUTINE);
+    }
+
+    public static String locname(long pc) {
+        return "loc_" + HexFormatter.tohex(pc, 1);
     }
 
     private static ComputedSymbol loc(long pc) {
-        String name = "loc_" + HexFormatter.tohex(pc, 1);
-        return new ComputedSymbol(name, pc, ComputedSymbol.Type.LOCATION);
+        return new ComputedSymbol(locname(pc), pc, ComputedSymbol.Type.LOCATION);
     }
 
     public void addSubroutine(long pc) {
-        symbols.put(pc, sub(pc));
+        ComputedSymbol sym = symbols.get(pc);
+        if (sym == null) {
+            symbols.put(pc, sub(pc));
+        } else {
+            if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
+                sym.type = ComputedSymbol.Type.SUBROUTINE;
+            }
+            if (sym.name.equals(locname(pc))) {
+                sym.name = subname(pc);
+            }
+        }
     }
 
     public void addSubroutine(long pc, String name) {
-        symbols.put(pc, new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE));
+        ComputedSymbol sym = symbols.get(pc);
+        if (sym == null) {
+            symbols.put(pc, new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE));
+        } else {
+            if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
+                sym.type = ComputedSymbol.Type.SUBROUTINE;
+            }
+            if (sym.name.equals(locname(pc)) || sym.name.equals(subname(pc))) {
+                sym.name = name;
+            }
+        }
     }
 
     public void addLocation(long pc) {
@@ -88,6 +115,13 @@ public class SymbolTable {
         if (node instanceof RecordNode && ((RecordNode) node).getRecord() instanceof StepRecord) {
             StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
             long pc = step.getPC();
+            ComputedSymbol sym = symbols.get(pc);
+            if (sym != null) {
+                sym.addVisit(node);
+            }
+        } else if (node instanceof BlockNode) {
+            BlockNode block = (BlockNode) node;
+            long pc = block.getHead().getPC();
             ComputedSymbol sym = symbols.get(pc);
             if (sym != null) {
                 sym.addVisit(node);

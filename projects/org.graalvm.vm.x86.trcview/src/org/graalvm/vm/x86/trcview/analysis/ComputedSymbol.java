@@ -55,7 +55,7 @@ public class ComputedSymbol {
 
     public String name;
     public final long address;
-    public final Type type;
+    public Type type;
     public final List<Node> visits;
 
     public Prototype prototype;

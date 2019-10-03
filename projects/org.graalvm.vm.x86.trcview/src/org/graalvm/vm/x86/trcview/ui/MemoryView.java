@@ -5,6 +5,7 @@ import static org.graalvm.vm.x86.trcview.ui.Utils.color;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.text.ParseException;
@@ -20,6 +21,7 @@ import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
+import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
@@ -71,7 +73,9 @@ public class MemoryView extends JPanel {
     private StepRecord step;
     private Expression expr;
     private Node lastUpdateNode;
+    private Node nextReadNode;
     private JButton gotoLastUpdate;
+    private JButton gotoNextRead;
 
     private Consumer<String> status;
 
@@ -117,7 +121,19 @@ public class MemoryView extends JPanel {
                 jump.jump(lastUpdateNode);
             }
         });
-        add(BorderLayout.SOUTH, gotoLastUpdate);
+
+        gotoNextRead = new JButton("Goto next read");
+        gotoNextRead.setEnabled(nextReadNode != null);
+        gotoNextRead.addActionListener(e -> {
+            if (nextReadNode != null) {
+                jump.jump(nextReadNode);
+            }
+        });
+
+        JPanel gotoButtons = new JPanel(new GridLayout(1, 2));
+        gotoButtons.add(gotoLastUpdate);
+        gotoButtons.add(gotoNextRead);
+        add(BorderLayout.SOUTH, gotoButtons);
     }
 
     private static String html(char c) {
@@ -332,8 +348,39 @@ public class MemoryView extends JPanel {
                     lastUpdateNode = null;
                     content += "No write to this address found";
                 }
+
+                MemoryRead read = memory.getNextRead(address, insn);
+                if (read != null) {
+                    content += "\n\nNext read from this location:\n";
+                    if (read.node instanceof RecordNode && ((RecordNode) read.node).getRecord() instanceof StepRecord) {
+                        nextReadNode = read.node;
+                        StepRecord record = (StepRecord) ((RecordNode) read.node).getRecord();
+                        content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                    } else {
+                        Node lastStep = Search.previousStep(read.node);
+                        nextReadNode = lastStep;
+                        if (lastStep != null) {
+                            StepRecord record = null;
+                            if (lastStep instanceof BlockNode) {
+                                record = ((BlockNode) lastStep).getHead();
+                            } else {
+                                record = (StepRecord) ((RecordNode) lastStep).getRecord();
+                            }
+                            if (record != null) {
+                                content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                            } else {
+                                content += "Read by the kernel";
+                            }
+                        }
+                    }
+                    content += "\n" + read.node;
+                } else {
+                    nextReadNode = null;
+                    content += "\n\nNo read from this address found";
+                }
             } catch (MemoryNotMappedException e) {
                 lastUpdateNode = null;
+                nextReadNode = null;
                 content += "Memory not mapped at this point in time";
             }
         }
@@ -342,5 +389,6 @@ public class MemoryView extends JPanel {
         text.setCaretPosition(0);
 
         gotoLastUpdate.setEnabled(lastUpdateNode != null);
+        gotoNextRead.setEnabled(nextReadNode != null);
     }
 }

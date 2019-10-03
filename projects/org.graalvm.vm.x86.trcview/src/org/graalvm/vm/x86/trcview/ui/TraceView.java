@@ -76,6 +76,8 @@ public class TraceView extends JPanel {
     private SymbolTable syms;
     private ComputedSymbol selectedSymbol;
 
+    private BlockNode root;
+
     public TraceView(Consumer<String> status) {
         super(new BorderLayout());
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -168,6 +170,9 @@ public class TraceView extends JPanel {
 
     public void jump(Node node) {
         BlockNode block = node.getParent();
+        if (block == null) {
+            block = root;
+        }
         stack.set(block);
         insns.set(block);
         insns.select(node);
@@ -193,6 +198,7 @@ public class TraceView extends JPanel {
     }
 
     public void setRoot(BlockNode root) {
+        this.root = root;
         stack.set(root);
         insns.set(root);
         insns.select(root.getFirstNode());

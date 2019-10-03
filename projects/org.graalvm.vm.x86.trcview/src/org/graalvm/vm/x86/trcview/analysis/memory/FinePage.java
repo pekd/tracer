@@ -14,6 +14,7 @@ public class FinePage implements Page {
 
     private final long address;
     @SuppressWarnings("unchecked") private final List<MemoryUpdate>[] updates = new ArrayList[4096];
+    @SuppressWarnings("unchecked") private final List<MemoryRead>[] reads = new ArrayList[4096];
     private final byte[] data = new byte[4096]; // initial data
 
     public FinePage(long address, long pc, long instructionCount, Node node) {
@@ -29,26 +30,32 @@ public class FinePage implements Page {
         System.arraycopy(data, 0, this.data, 0, 4096);
     }
 
+    @Override
     public long getAddress() {
         return address;
     }
 
+    @Override
     public byte[] getData() {
         return data;
     }
 
+    @Override
     public long getInitialPC() {
         return firstPC;
     }
 
+    @Override
     public long getInitialInstruction() {
         return firstInstructionCount;
     }
 
+    @Override
     public Node getInitialNode() {
         return firstNode;
     }
 
+    @Override
     public void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
@@ -57,6 +64,17 @@ public class FinePage implements Page {
             updates[off] = new ArrayList<>();
         }
         updates[off].add(new MemoryUpdate(addr, size, value, pc, instructionCount, node));
+    }
+
+    @Override
+    public void addRead(long addr, byte size, long pc, long instructionCount, Node node) {
+        assert addr >= address && addr < (address + data.length);
+        assert addr + size <= (address + data.length);
+        int off = (int) (addr - address);
+        if (reads[off] == null) {
+            reads[off] = new ArrayList<>();
+        }
+        reads[off].add(new MemoryRead(addr, size, pc, instructionCount, node));
     }
 
     public void addUpdate(MemoryUpdate update) {
@@ -70,12 +88,25 @@ public class FinePage implements Page {
         updates[off].add(update);
     }
 
+    public void addRead(MemoryRead read) {
+        long addr = read.address;
+        assert addr >= address && addr < (address + data.length);
+        assert addr + read.size <= (address + data.length);
+        int off = (int) (addr - address);
+        if (reads[off] == null) {
+            reads[off] = new ArrayList<>();
+        }
+        reads[off].add(read);
+    }
+
+    @Override
     public void clear(long pc, long instructionCount, Node node) {
         for (int i = 0; i < 4096; i += 8) {
             addUpdate(address + i, (byte) 8, 0, pc, instructionCount, node);
         }
     }
 
+    @Override
     public void overwrite(byte[] update, long pc, long instructionCount, Node node) {
         for (int i = 0; i < 4096; i += 8) {
             long value = Endianess.get64bitLE(update, i);
@@ -83,6 +114,7 @@ public class FinePage implements Page {
         }
     }
 
+    @Override
     public byte getByte(long addr, long instructionCount) throws MemoryNotMappedException {
         MemoryUpdate update = getLastUpdate(addr, instructionCount);
         if (update == null) {
@@ -92,6 +124,7 @@ public class FinePage implements Page {
         }
     }
 
+    @Override
     public MemoryUpdate getLastUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
@@ -146,6 +179,97 @@ public class FinePage implements Page {
         }
     }
 
+    @Override
+    public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (reads[off] == null) {
+            return null;
+        }
+
+        if (reads[off].isEmpty() || instructionCount == firstInstructionCount) {
+            // no read until now
+            return null;
+        } else if (reads[off].get(0).instructionCount > instructionCount) {
+            // first read is after instructionCount
+            return null;
+        } else if (reads[off].get(0).instructionCount == instructionCount) {
+            // reads start at our timestamp; find last update
+            MemoryRead result = null;
+            for (MemoryRead read : reads[off]) {
+                if (read.instructionCount > instructionCount) {
+                    return result;
+                }
+                if (read.contains(addr)) {
+                    result = read;
+                }
+            }
+            return result;
+        } else if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException("memory is not mapped at this time");
+        }
+
+        // find read timestamp
+        MemoryRead target = new MemoryRead(addr, (byte) 1, 0, instructionCount, null);
+        int idx = Collections.binarySearch(reads[off], target, (a, b) -> {
+            return Long.compareUnsigned(a.instructionCount, b.instructionCount);
+        });
+
+        if (idx > 0) {
+            return reads[off].get(idx);
+        } else {
+            idx = ~idx;
+            if (idx == 0) {
+                return null;
+            } else {
+                return reads[off].get(idx - 1);
+            }
+        }
+    }
+
+    @Override
+    public MemoryRead getNextRead(long addr, long instructionCount) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (reads[off] == null) {
+            return null;
+        }
+
+        if (reads[off].isEmpty()) {
+            // no reads
+            return null;
+        } else if (reads[off].get(0).instructionCount >= instructionCount) {
+            // first read is after instructionCount
+            return reads[off].get(0);
+        } else if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException("memory is not mapped at this time");
+        }
+
+        // find read timestamp
+        MemoryRead target = new MemoryRead(addr, (byte) 1, 0, instructionCount, null);
+        int idx = Collections.binarySearch(reads[off], target, (a, b) -> {
+            return Long.compareUnsigned(a.instructionCount, b.instructionCount);
+        });
+
+        if (idx > 0) {
+            return reads[off].get(idx);
+        } else {
+            idx = ~idx;
+            if (idx >= reads[off].size()) {
+                return null;
+            } else {
+                return reads[off].get(idx);
+            }
+        }
+    }
+
+    @Override
     public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
         // TODO: this could be implemented more efficiently
         long result = 0;

@@ -160,6 +160,43 @@ public class MemoryTrace {
         }
     }
 
+    public void read(long addr, byte size, long pc, long instructionCount, Node node) {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new AssertionError(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        if (getPageAddress(addr) != getPageAddress(addr + 8)) {
+            // write across page boundary
+            for (int i = 0; i < size; i++) {
+                long a = addr + i;
+                if (a < page.getAddress() + 4096) {
+                    if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                        page = ((CoarsePage) page).transformToFine();
+                        pages.put(page.getAddress(), page);
+                    }
+                    page.addRead(a, (byte) 1, pc, instructionCount, node);
+                } else {
+                    long oldaddr = page.getAddress();
+                    page = pages.get(page.getAddress() + 4096);
+                    if (page == null) {
+                        throw new AssertionError(String.format("no memory mapped to 0x%x", oldaddr + 4096));
+                    }
+                    if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                        page = ((CoarsePage) page).transformToFine();
+                        pages.put(page.getAddress(), page);
+                    }
+                    page.addRead(a, (byte) 1, pc, instructionCount, node);
+                }
+            }
+        } else {
+            if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
+                page = ((CoarsePage) page).transformToFine();
+                pages.put(page.getAddress(), page);
+            }
+            page.addRead(addr, size, pc, instructionCount, node);
+        }
+    }
+
     public byte getByte(long addr, long instructionCount) throws MemoryNotMappedException {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
@@ -200,6 +237,22 @@ public class MemoryTrace {
             throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
         }
         return page.getLastUpdate(addr, instructionCount);
+    }
+
+    public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getLastRead(addr, instructionCount);
+    }
+
+    public MemoryRead getNextRead(long addr, long instructionCount) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getNextRead(addr, instructionCount);
     }
 
     // TODO: use instructionCount to find *last* map time
