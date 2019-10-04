@@ -209,6 +209,7 @@ public class TraceView extends JPanel {
     public void setComputedSymbols(SymbolTable symbols) {
         this.syms = symbols;
         this.symbols.setSymbols(symbols);
+        symbols.addSymbolRenameListener((sym) -> insns.repaint());
     }
 
     public void setSymbolResolver(SymbolResolver resolver) {
