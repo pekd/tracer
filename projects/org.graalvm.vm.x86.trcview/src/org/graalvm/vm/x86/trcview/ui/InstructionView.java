@@ -50,7 +50,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,9 +62,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
-import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
@@ -76,14 +73,13 @@ import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.AugmentedSymbol;
-import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.decode.CallDecoder;
 import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.CallListener;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 
@@ -117,18 +113,12 @@ public class InstructionView extends JPanel {
     private List<ChangeListener> changeListeners;
     private List<CallListener> callListeners;
 
-    private SymbolResolver resolver;
-    private MappedFiles mappedFiles;
-
-    private MemoryTrace memory;
+    private TraceAnalyzer trc;
 
     public InstructionView(Consumer<String> status) {
         super(new BorderLayout());
         changeListeners = new ArrayList<>();
         callListeners = new ArrayList<>();
-
-        resolver = new DefaultSymbolResolver(new TreeMap<>());
-        mappedFiles = new MappedFiles(new TreeMap<>());
 
         instructions = new ArrayList<>();
         insns = new JList<>(model = new InstructionViewModel());
@@ -153,7 +143,7 @@ public class InstructionView extends JPanel {
             } else {
                 step = (StepRecord) ((RecordNode) node).getRecord();
             }
-            Location loc = Location.getLocation(resolver, mappedFiles, step);
+            Location loc = Location.getLocation(trc, step);
             StringBuilder buf = new StringBuilder();
             buf.append("PC=0x");
             buf.append(HexFormatter.tohex(loc.getPC(), 16));
@@ -192,16 +182,8 @@ public class InstructionView extends JPanel {
         });
     }
 
-    public void setSymbolResolver(SymbolResolver resolver) {
-        this.resolver = resolver;
-    }
-
-    public void setMappedFiles(MappedFiles files) {
-        this.mappedFiles = files;
-    }
-
-    public void setMemoryTrace(MemoryTrace memory) {
-        this.memory = memory;
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        this.trc = trc;
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -276,7 +258,7 @@ public class InstructionView extends JPanel {
     }
 
     private String format(StepRecord step, StepRecord next) {
-        Location loc = Location.getLocation(resolver, mappedFiles, step);
+        Location loc = Location.getLocation(trc, step);
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
         buf.append(HexFormatter.tohex(loc.getPC(), 16));
@@ -285,7 +267,7 @@ public class InstructionView extends JPanel {
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.equals("syscall")) {
             CpuState ns = next == null ? null : next.getState().getState();
-            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
+            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, trc);
             if (decoded != null) {
                 comment(buf, loc.getAsm(), decoded);
             }
@@ -317,7 +299,7 @@ public class InstructionView extends JPanel {
             for (int i = 0; i < instructions.size(); i++) {
                 Node n = instructions.get(i);
                 if (n instanceof BlockNode) {
-                    Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
+                    Location loc = Location.getLocation(trc, ((BlockNode) n).getFirstStep());
                     int len = 0;
                     if (loc.getSymbol() != null) {
                         len += 5 + loc.getSymbol().length();
@@ -345,7 +327,7 @@ public class InstructionView extends JPanel {
                                 }
                                 ns = next == null ? null : next.getState().getState();
                             }
-                            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, memory);
+                            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, trc);
                             max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
                             break;
                         }
@@ -552,7 +534,7 @@ public class InstructionView extends JPanel {
                 }
             } else if (n instanceof BlockNode) {
                 StepRecord step = ((BlockNode) n).getHead();
-                Location loc = Location.getLocation(resolver, mappedFiles, ((BlockNode) n).getFirstStep());
+                Location loc = Location.getLocation(trc, ((BlockNode) n).getFirstStep());
                 StringBuilder buf = new StringBuilder();
                 StepRecord next = null;
                 if (i + 1 < instructions.size()) {
@@ -583,12 +565,12 @@ public class InstructionView extends JPanel {
                     buf.append("]");
                 }
 
-                Symbol sym = resolver.getSymbol(loc.getPC());
+                Symbol sym = trc.getSymbol(loc.getPC());
                 if (sym != null && sym instanceof AugmentedSymbol && ((AugmentedSymbol) sym).getPrototype() != null) {
                     AugmentedSymbol s = (AugmentedSymbol) sym;
                     Function fun = new Function(s.getName(), s.getPrototype());
                     CpuState ns = next == null ? null : next.getState().getState();
-                    String decoded = CallDecoder.decode(fun, step.getState().getState(), ns, memory);
+                    String decoded = CallDecoder.decode(fun, step.getState().getState(), ns, trc);
                     if (decoded != null) {
                         int length = buf.length();
                         String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");

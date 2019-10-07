@@ -4,11 +4,11 @@ import static org.graalvm.vm.x86.trcview.decode.DecoderUtils.cstr;
 import static org.graalvm.vm.x86.trcview.decode.DecoderUtils.ptr;
 
 import org.graalvm.vm.x86.isa.CpuState;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.analysis.type.Representation;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class CallDecoder {
     private static long getRegister(CpuState state, int reg) {
@@ -30,19 +30,19 @@ public class CallDecoder {
         }
     }
 
-    private static String str(Type type, long val, CpuState state, MemoryTrace mem) {
+    private static String str(Type type, long val, CpuState state, TraceAnalyzer trc) {
         Representation repr = type.getRepresentation();
         switch (type.getType()) {
             case VOID:
                 return "";
             case PTR:
                 if (repr == Representation.STRING) {
-                    return cstr(val, state.instructionCount, mem);
+                    return cstr(val, state.instructionCount, trc);
                 } else {
                     return ptr(val);
                 }
             case STRING:
-                return cstr(val, state.instructionCount, mem);
+                return cstr(val, state.instructionCount, trc);
             case U8:
                 switch (repr) {
                     case CHAR:
@@ -153,7 +153,7 @@ public class CallDecoder {
         throw new AssertionError("this should be unreachable");
     }
 
-    public static String decode(Function function, CpuState state, CpuState nextState, MemoryTrace mem) {
+    public static String decode(Function function, CpuState state, CpuState nextState, TraceAnalyzer trc) {
         StringBuilder buf = new StringBuilder(function.getName());
         buf.append('(');
         Prototype prototype = function.getPrototype();
@@ -163,11 +163,11 @@ public class CallDecoder {
             if (i > 0) {
                 buf.append(", ");
             }
-            buf.append(str(type, val, state, mem));
+            buf.append(str(type, val, state, trc));
         }
         buf.append(')');
         if (nextState != null) {
-            String s = str(prototype.returnType, nextState.rax, nextState, mem);
+            String s = str(prototype.returnType, nextState.rax, nextState, trc);
             if (s.length() > 0) {
                 buf.append(" = ");
                 buf.append(s);

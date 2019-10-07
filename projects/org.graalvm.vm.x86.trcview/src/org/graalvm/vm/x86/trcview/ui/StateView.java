@@ -50,10 +50,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
-import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
 public class StateView extends JPanel {
@@ -85,8 +84,7 @@ public class StateView extends JPanel {
     private StepRecord previous;
     private CallArgsRecord args;
 
-    private SymbolResolver resolver;
-    private MappedFiles mappedFiles;
+    private TraceAnalyzer trc;
 
     public StateView() {
         super(new BorderLayout());
@@ -97,13 +95,8 @@ public class StateView extends JPanel {
         add(BorderLayout.CENTER, new JScrollPane(text));
     }
 
-    public void setSymbolResolver(SymbolResolver resolver) {
-        this.resolver = resolver;
-        update();
-    }
-
-    public void setMappedFiles(MappedFiles mappedFiles) {
-        this.mappedFiles = mappedFiles;
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        this.trc = trc;
         update();
     }
 
@@ -132,9 +125,9 @@ public class StateView extends JPanel {
 
     private String get() {
         if (previous != null) {
-            return StateEncoder.encode(resolver, mappedFiles, previous, step);
+            return StateEncoder.encode(trc, previous, step);
         } else {
-            return StateEncoder.encode(resolver, mappedFiles, step);
+            return StateEncoder.encode(trc, step);
         }
     }
 

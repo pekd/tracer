@@ -78,12 +78,13 @@ import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.Search;
-import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.net.Local;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame {
@@ -105,7 +106,7 @@ public class MainWindow extends JFrame {
     private JMenuItem gotoNext;
     private JMenuItem exportMemory;
 
-    private SymbolTable symbols;
+    private TraceAnalyzer trc;
     private BlockNode trace;
 
     public MainWindow() {
@@ -190,13 +191,13 @@ public class MainWindow extends JFrame {
             String input = JOptionPane.showInputDialog("Enter name:", selected.name);
             if (input != null && input.trim().length() > 0) {
                 String name = input.trim();
-                for (ComputedSymbol sym : symbols.getSymbols()) {
+                for (ComputedSymbol sym : trc.getSymbols()) {
                     if (sym != selected && sym.name.equals(name)) {
                         JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 }
-                symbols.renameSubroutine(selected, name);
+                trc.renameSymbol(selected, name);
             }
         });
         renameSymbol.setEnabled(false);
@@ -221,13 +222,16 @@ public class MainWindow extends JFrame {
                     TypeParser parser = new TypeParser(input.trim());
                     Function fun = parser.parse();
                     String name = fun.getName();
-                    for (ComputedSymbol sym : symbols.getSymbols()) {
+                    for (ComputedSymbol sym : trc.getSymbols()) {
                         if (sym != selected && sym.name.equals(name)) {
                             JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Set function type...", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
                     }
-                    symbols.setFunctionType(selected, fun);
+                    if (!fun.getName().equals(selected.name)) {
+                        trc.renameSymbol(selected, fun.getName());
+                    }
+                    trc.setPrototype(selected, fun.getPrototype());
                 } catch (ParseException ex) {
                     JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set function type...", JOptionPane.ERROR_MESSAGE);
                     return;
@@ -264,7 +268,7 @@ public class MainWindow extends JFrame {
                     }
                 }
             } else {
-                Optional<ComputedSymbol> first = symbols.getSymbols().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).findFirst();
+                Optional<ComputedSymbol> first = trc.getSymbols().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).findFirst();
                 if (first.isPresent()) {
                     input = JOptionPane.showInputDialog("Enter address:", HexFormatter.tohex(first.get().address));
                 } else {
@@ -273,7 +277,7 @@ public class MainWindow extends JFrame {
                 if (input != null && input.trim().length() > 0) {
                     try {
                         long pc = Long.parseLong(input.trim(), 16);
-                        Node n = Search.nextPC(trace, pc);
+                        Node n = trc.getNextPC(trc.getRoot(), pc);
                         if (n != null) {
                             log.info("Jumping to next occurence of PC=0x" + HexFormatter.tohex(pc));
                             view.jump(n);
@@ -379,13 +383,9 @@ public class MainWindow extends JFrame {
             setStatus("Trace loaded");
             setTitle(file + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
-                view.setComputedSymbols(analysis.getComputedSymbolTable());
-                view.setSymbolResolver(analysis.getSymbolResolver());
-                view.setMappedFiles(analysis.getMappedFiles());
-                view.setMemoryTrace(analysis.getMemoryTrace());
-                view.setRoot(root);
-                symbols = analysis.getComputedSymbolTable();
                 trace = root;
+                trc = new Local(root, analysis);
+                view.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
@@ -407,7 +407,7 @@ public class MainWindow extends JFrame {
     public void loadPrototypes(File file) throws IOException {
         log.info("Loading prototype file " + file + "...");
         loadPrototypes.setEnabled(false);
-        Map<String, List<ComputedSymbol>> syms = symbols.getNamedSymbols();
+        Map<String, List<ComputedSymbol>> syms = trc.getNamedSymbols();
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -427,7 +427,7 @@ public class MainWindow extends JFrame {
                         List<ComputedSymbol> sym = syms.get(fun.getName());
                         if (sym != null) {
                             for (ComputedSymbol sy : sym) {
-                                sy.prototype = fun.getPrototype();
+                                trc.setPrototype(sy, fun.getPrototype());
                             }
                         }
                     } catch (ParseException e) {

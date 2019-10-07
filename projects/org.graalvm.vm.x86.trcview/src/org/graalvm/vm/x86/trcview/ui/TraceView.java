@@ -51,17 +51,14 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
-import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
-import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.CallListener;
 
 @SuppressWarnings("serial")
@@ -71,12 +68,10 @@ public class TraceView extends JPanel {
     private StateView state;
     private InstructionView insns;
     private MemoryView mem;
-    private MemoryTrace memory;
 
-    private SymbolTable syms;
     private ComputedSymbol selectedSymbol;
 
-    private BlockNode root;
+    private TraceAnalyzer trc;
 
     public TraceView(Consumer<String> status) {
         super(new BorderLayout());
@@ -122,7 +117,7 @@ public class TraceView extends JPanel {
                 StepRecord first = block.getFirstStep();
                 if (first != null) {
                     long pc = first.getPC();
-                    ComputedSymbol sym = syms.get(pc);
+                    ComputedSymbol sym = trc.getComputedSymbol(pc);
                     if (sym != null) {
                         selectedSymbol = sym;
                     }
@@ -132,19 +127,21 @@ public class TraceView extends JPanel {
 
         insns.addCallListener(new CallListener() {
             public void call(BlockNode call) {
-                stack.set(call);
-                insns.set(call);
-                insns.select(call.getFirstNode());
-                mem.setStep(call.getFirstStep());
+                BlockNode node = trc.getChildren(call);
+                stack.set(node);
+                insns.set(node);
+                insns.select(node.getFirstNode());
+                mem.setStep(node.getFirstStep());
             }
 
             public void ret(RecordNode ret) {
-                BlockNode parent = ret.getParent().getParent();
+                BlockNode par = trc.getParent(ret);
+                BlockNode parent = trc.getParent(par);
                 if (parent != null) {
                     stack.set(parent);
                     insns.set(parent);
-                    insns.select(ret.getParent());
-                    mem.setStep(ret.getParent().getHead());
+                    insns.select(par);
+                    mem.setStep(par.getHead());
                 }
             }
         });
@@ -169,9 +166,9 @@ public class TraceView extends JPanel {
     }
 
     public void jump(Node node) {
-        BlockNode block = node.getParent();
+        BlockNode block = trc.getParent(node);
         if (block == null) {
-            block = root;
+            block = trc.getRoot();
         }
         stack.set(block);
         insns.set(block);
@@ -180,7 +177,7 @@ public class TraceView extends JPanel {
     }
 
     private void up(BlockNode block) {
-        BlockNode parent = block.getParent();
+        BlockNode parent = trc.getParent(block);
         if (parent != null) {
             stack.set(parent);
             insns.set(parent);
@@ -197,36 +194,25 @@ public class TraceView extends JPanel {
         }
     }
 
-    public void setRoot(BlockNode root) {
-        this.root = root;
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        this.trc = trc;
+        stack.setTraceAnalyzer(trc);
+        insns.setTraceAnalyzer(trc);
+        state.setTraceAnalyzer(trc);
+        mem.setTraceAnalyzer(trc);
+        symbols.setTraceAnalyzer(trc);
+
+        trc.addSymbolRenameListener((sym) -> insns.repaint());
+
+        showRoot(trc.getRoot());
+    }
+
+    private void showRoot(BlockNode root) {
         stack.set(root);
         insns.set(root);
         insns.select(root.getFirstNode());
         state.setState(root.getFirstStep());
         mem.setStep(root.getFirstStep());
-    }
-
-    public void setComputedSymbols(SymbolTable symbols) {
-        this.syms = symbols;
-        this.symbols.setSymbols(symbols);
-        symbols.addSymbolRenameListener((sym) -> insns.repaint());
-    }
-
-    public void setSymbolResolver(SymbolResolver resolver) {
-        insns.setSymbolResolver(resolver);
-        stack.setSymbolResolver(resolver);
-        state.setSymbolResolver(resolver);
-    }
-
-    public void setMappedFiles(MappedFiles mappedFiles) {
-        insns.setMappedFiles(mappedFiles);
-        state.setMappedFiles(mappedFiles);
-    }
-
-    public void setMemoryTrace(MemoryTrace memory) {
-        this.memory = memory;
-        insns.setMemoryTrace(memory);
-        mem.setMemoryTrace(memory);
     }
 
     public Node getSelectedNode() {
@@ -239,8 +225,8 @@ public class TraceView extends JPanel {
 
     public VirtualMemorySnapshot getMemorySnapshot() {
         StepRecord selected = getSelectedInstruction();
-        if (selected != null && memory != null) {
-            return new VirtualMemorySnapshot(memory, selected.getInstructionCount());
+        if (selected != null && trc != null) {
+            return new VirtualMemorySnapshot(trc, selected.getInstructionCount());
         } else {
             return null;
         }

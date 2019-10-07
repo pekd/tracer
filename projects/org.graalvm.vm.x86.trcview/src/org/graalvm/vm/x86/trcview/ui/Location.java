@@ -44,10 +44,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.vm.posix.elf.Symbol;
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
-import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class Location {
     private long pc;
@@ -58,14 +57,14 @@ public class Location {
     private String[] disasm;
     private byte[] machinecode;
 
-    public static Location getLocation(SymbolResolver resolver, MappedFiles files, StepRecord step) {
+    public static Location getLocation(TraceAnalyzer trc, StepRecord step) {
         long pc = step.getPC();
         Location loc = new Location();
         loc.pc = pc;
-        loc.symbol = resolver.getSymbol(pc);
-        loc.filename = files.getFilename(pc);
-        loc.base = files.getBase(pc);
-        loc.offset = files.getOffset(pc);
+        loc.symbol = trc.getSymbol(pc);
+        loc.filename = trc.getFilename(pc);
+        loc.base = trc.getBase(pc);
+        loc.offset = trc.getOffset(pc);
         loc.disasm = step.getDisassemblyComponents();
         loc.machinecode = step.getMachinecode();
         return loc;

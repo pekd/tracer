@@ -47,16 +47,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
+import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
 
 public class SymbolTable {
+    private static Logger log = Trace.create(SymbolTable.class);
+
     private final Map<Long, ComputedSymbol> symbols = new HashMap<>();
     private final List<SymbolRenameListener> listeners = new ArrayList<>();
 
@@ -153,16 +159,32 @@ public class SymbolTable {
         listeners.remove(l);
     }
 
-    public void renameSubroutine(ComputedSymbol sub, String name) {
-        sub.name = name;
+    protected void fireSymbolRenameEvent(ComputedSymbol sym) {
         for (SymbolRenameListener l : listeners) {
-            l.symbolRenamed(sub);
+            try {
+                l.symbolRenamed(sym);
+            } catch (Throwable t) {
+                log.log(Levels.WARNING, "SymbolRenameListener failed: " + t, t);
+            }
+        }
+    }
+
+    public void renameSubroutine(ComputedSymbol sub, String name) {
+        if (!sub.name.equals(name)) {
+            sub.name = name;
+            fireSymbolRenameEvent(sub);
         }
     }
 
     public void setFunctionType(ComputedSymbol sub, Function type) {
         sub.prototype = type.getPrototype();
-        renameSubroutine(sub, type.getName());
+        sub.name = type.getName();
+        fireSymbolRenameEvent(sub);
+    }
+
+    public void setPrototype(ComputedSymbol sub, Prototype type) {
+        sub.prototype = type;
+        fireSymbolRenameEvent(sub);
     }
 
     public Map<String, List<ComputedSymbol>> getNamedSymbols() {

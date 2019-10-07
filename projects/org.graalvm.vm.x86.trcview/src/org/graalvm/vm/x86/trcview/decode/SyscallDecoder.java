@@ -61,7 +61,7 @@ import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.posix.ArchPrctl;
 import org.graalvm.vm.x86.posix.SyscallNames;
 import org.graalvm.vm.x86.posix.Syscalls;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class SyscallDecoder {
     public static final int SEEK_SET = 0;
@@ -110,11 +110,11 @@ public class SyscallDecoder {
         return tohex(x, 1);
     }
 
-    public static String decode(CpuState state, CpuState next, MemoryTrace mem) {
+    public static String decode(CpuState state, CpuState next, TraceAnalyzer trc) {
         if (next == null) {
-            return decode(state, mem);
+            return decode(state, trc);
         } else {
-            String call = decode(state, mem);
+            String call = decode(state, trc);
             String result = decodeResult((int) state.rax, next);
             return call + " = " + result;
         }
@@ -134,7 +134,7 @@ public class SyscallDecoder {
         }
     }
 
-    public static String decode(CpuState state, MemoryTrace mem) {
+    public static String decode(CpuState state, TraceAnalyzer trc) {
         int id = (int) state.rax;
         long a1 = state.rdi;
         long a2 = state.rsi;
@@ -146,17 +146,17 @@ public class SyscallDecoder {
             case Syscalls.SYS_read:
                 return "read(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_write:
-                return "write(" + a1 + ", " + mem(a2, a3, state.instructionCount, mem) + ", " + a3 + ")";
+                return "write(" + a1 + ", " + mem(a2, a3, state.instructionCount, trc) + ", " + a3 + ")";
             case Syscalls.SYS_open:
-                return "open(" + cstr(a1, state.instructionCount, mem) + ", " + Fcntl.flags((int) a2) + ", " + Stat.mode((int) a3) + ")";
+                return "open(" + cstr(a1, state.instructionCount, trc) + ", " + Fcntl.flags((int) a2) + ", " + Stat.mode((int) a3) + ")";
             case Syscalls.SYS_close:
                 return "close(" + a1 + ")";
             case Syscalls.SYS_stat:
-                return "stat(" + cstr(a1, state.instructionCount, mem) + ", " + ptr(a2) + ")";
+                return "stat(" + cstr(a1, state.instructionCount, trc) + ", " + ptr(a2) + ")";
             case Syscalls.SYS_fstat:
                 return "fstat(" + a1 + ", " + ptr(a2) + ")";
             case Syscalls.SYS_lstat:
-                return "lstat(" + cstr(a1, state.instructionCount, mem) + ", " + ptr(a2) + ")";
+                return "lstat(" + cstr(a1, state.instructionCount, trc) + ", " + ptr(a2) + ")";
             case Syscalls.SYS_poll:
                 return "poll(" + ptr(a1) + ", " + a2 + ", " + a3 + ")";
             case Syscalls.SYS_lseek:
@@ -178,13 +178,13 @@ public class SyscallDecoder {
             case Syscalls.SYS_pread64:
                 return "pread64(" + a1 + ", " + ptr(a2) + ", " + a3 + ", " + a4 + ")";
             case Syscalls.SYS_pwrite64:
-                return "pwrite64(" + a1 + ", " + mem(a2, a3, state.instructionCount, mem) + ", " + a3 + ", " + a4 + ")";
+                return "pwrite64(" + a1 + ", " + mem(a2, a3, state.instructionCount, trc) + ", " + a3 + ", " + a4 + ")";
             case Syscalls.SYS_readv:
                 return "readv(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_writev:
                 return "writev(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_access:
-                return "access(" + cstr(a1, state.instructionCount, mem) + ", " + Unistd.amode((int) a2) + ")";
+                return "access(" + cstr(a1, state.instructionCount, trc) + ", " + Unistd.amode((int) a2) + ")";
             case Syscalls.SYS_dup:
                 return "dup(" + a1 + ")";
             case Syscalls.SYS_dup2:
@@ -198,7 +198,7 @@ public class SyscallDecoder {
             case Syscalls.SYS_connect:
                 return "connect(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_sendto:
-                return "sendto(" + a1 + ", " + mem(a2, a3, state.instructionCount, mem) + ", " + a3 + ", " + Socket.sendrecvFlags((int) a4) + ", " + ptr(a5) + ", " + a6 + ")";
+                return "sendto(" + a1 + ", " + mem(a2, a3, state.instructionCount, trc) + ", " + a3 + ", " + Socket.sendrecvFlags((int) a4) + ", " + ptr(a5) + ", " + a6 + ")";
             case Syscalls.SYS_recvfrom:
                 return "recvfrom(" + a1 + ", " + ptr(a2) + ", " + a3 + ", " + Socket.sendrecvFlags((int) a4) + ", " + ptr(a5) + ", " + ptr(a6) + ")";
             case Syscalls.SYS_recvmsg:
@@ -230,11 +230,11 @@ public class SyscallDecoder {
             case Syscalls.SYS_getcwd:
                 return "getcwd(" + ptr(a1) + ", " + a2 + ")";
             case Syscalls.SYS_creat:
-                return "creat(" + cstr(a1, state.instructionCount, mem) + ", " + Stat.mode((int) a2) + ")";
+                return "creat(" + cstr(a1, state.instructionCount, trc) + ", " + Stat.mode((int) a2) + ")";
             case Syscalls.SYS_unlink:
-                return "unlink(" + cstr(a1, state.instructionCount, mem) + ")";
+                return "unlink(" + cstr(a1, state.instructionCount, trc) + ")";
             case Syscalls.SYS_readlink:
-                return "readlink(" + cstr(a1, state.instructionCount, mem) + ", " + ptr(a2) + ", " + a3 + ")";
+                return "readlink(" + cstr(a1, state.instructionCount, trc) + ", " + ptr(a2) + ", " + a3 + ")";
             case Syscalls.SYS_gettimeofday:
                 return "gettimeofday(" + ptr(a1) + ", " + ptr(a2) + ")";
             case Syscalls.SYS_sysinfo:
@@ -282,7 +282,7 @@ public class SyscallDecoder {
             case Syscalls.SYS_tgkill:
                 return "tgkill(" + a1 + ", " + a2 + ", " + Signal.toString((int) a3) + ")";
             case Syscalls.SYS_openat:
-                return "openat(" + (int) a1 + ", " + cstr(a2, state.instructionCount, mem) + ", " + Fcntl.flags((int) a3) + ", " + Stat.mode((int) a4) + ")";
+                return "openat(" + (int) a1 + ", " + cstr(a2, state.instructionCount, trc) + ", " + Fcntl.flags((int) a3) + ", " + Stat.mode((int) a4) + ")";
             case Syscalls.SYS_dup3:
                 return "dup3(" + a1 + ", " + a2 + ", " + a3 + ")";
             case Syscalls.SYS_prlimit64:

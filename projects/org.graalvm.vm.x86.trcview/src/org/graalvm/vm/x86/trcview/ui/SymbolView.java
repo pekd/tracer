@@ -44,6 +44,7 @@ import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalInt;
@@ -59,8 +60,8 @@ import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
-import org.graalvm.vm.x86.trcview.analysis.SymbolTable;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
 
@@ -72,6 +73,7 @@ public class SymbolView extends JPanel {
     private List<ComputedSymbol> symbols;
     private List<JumpListener> jumpListeners;
     private List<ChangeListener> changeListeners;
+    private TraceAnalyzer trc;
     private int width;
 
     public SymbolView() {
@@ -117,7 +119,8 @@ public class SymbolView extends JPanel {
     public void symbolRenamed(ComputedSymbol sym) {
         for (int i = 0; i < symbols.size(); i++) {
             ComputedSymbol s = symbols.get(i);
-            if (s == sym) {
+            if (s.address == sym.address) {
+                symbols.set(i, sym);
                 ((DefaultListModel<String>) syms.getModel()).set(i, format(s, width));
                 return;
             }
@@ -136,21 +139,27 @@ public class SymbolView extends JPanel {
         return "0x" + HexFormatter.tohex(sym.address, 12) + " [" + cnt + "] " + sym.name;
     }
 
-    public void setSymbols(SymbolTable symbols) {
-        symbols.addSymbolRenameListener(this::symbolRenamed);
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        this.trc = trc;
+        trc.addSymbolRenameListener(this::symbolRenamed);
+        update();
+    }
+
+    public void update() {
         List<ComputedSymbol> sym = new ArrayList<>();
         DefaultListModel<String> model = new DefaultListModel<>();
-        OptionalInt max = symbols.getSubroutines().stream().mapToInt(s -> s.visits.size()).max();
+        Collection<ComputedSymbol> subroutines = trc.getSubroutines();
+        OptionalInt max = subroutines.stream().mapToInt(s -> s.visits.size()).max();
         if (max.isPresent()) {
             int m = max.getAsInt();
             width = (m == 0 ? 0 : (int) Math.ceil(Math.log10(m)));
-            symbols.getSubroutines().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
+            subroutines.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
                 model.addElement(format(s, width));
                 sym.add(s);
             });
         }
         syms.setModel(model);
-        this.symbols = sym;
+        symbols = sym;
     }
 
     public void addJumpListener(JumpListener listener) {

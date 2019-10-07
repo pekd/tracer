@@ -22,7 +22,6 @@ import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
@@ -32,6 +31,7 @@ import org.graalvm.vm.x86.trcview.expression.ast.Expression;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
 
 @SuppressWarnings("serial")
@@ -65,7 +65,7 @@ public class MemoryView extends JPanel {
 
     private JTextPane text;
     private JTextField addrinput;
-    private MemoryTrace memory;
+    private TraceAnalyzer trc;
     private long address;
     private long highlightStart;
     private long highlightEnd;
@@ -164,8 +164,8 @@ public class MemoryView extends JPanel {
         update();
     }
 
-    public void setMemoryTrace(MemoryTrace memory) {
-        this.memory = memory;
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        this.trc = trc;
         update();
     }
 
@@ -174,7 +174,7 @@ public class MemoryView extends JPanel {
     }
 
     private byte getI8(long addr) throws MemoryNotMappedException {
-        return memory.getByte(addr, insn);
+        return trc.getI8(addr, insn);
     }
 
     private boolean isHighlight(long ptr) {
@@ -187,8 +187,8 @@ public class MemoryView extends JPanel {
             if (insn == 0) {
                 prev = 0;
             }
-            byte val1 = memory.getByte(addr, prev);
-            byte val2 = memory.getByte(addr, insn);
+            byte val1 = trc.getI8(addr, prev);
+            byte val2 = trc.getI8(addr, insn);
             return val1 != val2;
         } catch (MemoryNotMappedException e) {
             return false;
@@ -201,7 +201,7 @@ public class MemoryView extends JPanel {
         } else if (step == null) {
             return 0;
         } else {
-            VirtualMemorySnapshot mem = new VirtualMemorySnapshot(memory, insn);
+            VirtualMemorySnapshot mem = new VirtualMemorySnapshot(trc, insn);
             ExpressionContext ctx = new ExpressionContext(step, mem);
             try {
                 return expr.evaluate(ctx);
@@ -310,15 +310,15 @@ public class MemoryView extends JPanel {
     private void update() {
         address = eval();
         String content = "";
-        if (memory != null) {
+        if (trc != null) {
             content = dump((address - 4 * LINESZ) & 0xFFFFFFFFFFFFFFF0L, 12 * LINESZ) + "\n\n";
             try {
-                MemoryUpdate update = memory.getLastWrite(address, insn);
+                MemoryUpdate update = trc.getLastWrite(address, insn);
                 Node node = null;
                 if (update != null) {
                     node = update.node;
                 } else {
-                    node = memory.getMapNode(address, insn);
+                    node = trc.getMapNode(address, insn);
                 }
                 if (node != null) {
                     content += "Last write to this location:\n";
@@ -349,7 +349,7 @@ public class MemoryView extends JPanel {
                     content += "No write to this address found";
                 }
 
-                MemoryRead read = memory.getNextRead(address, insn);
+                MemoryRead read = trc.getNextRead(address, insn);
                 if (read != null) {
                     content += "\n\nNext read from this location:\n";
                     if (read.node instanceof RecordNode && ((RecordNode) read.node).getRecord() instanceof StepRecord) {

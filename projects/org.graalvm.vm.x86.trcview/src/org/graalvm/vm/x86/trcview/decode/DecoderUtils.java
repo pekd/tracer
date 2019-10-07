@@ -4,7 +4,7 @@ import static org.graalvm.vm.util.HexFormatter.tohex;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
-import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class DecoderUtils {
     public static final int STRING_MAXLEN = 50;
@@ -46,7 +46,7 @@ public class DecoderUtils {
         }
     }
 
-    public static String cstr(long addr, long insn, MemoryTrace mem) {
+    public static String cstr(long addr, long insn, TraceAnalyzer trc) {
         if (addr == 0) {
             return "NULL";
         }
@@ -54,7 +54,7 @@ public class DecoderUtils {
             StringBuilder buf = new StringBuilder();
             long ptr = addr;
             for (int i = 0; true; i++) {
-                int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
+                int b = Byte.toUnsignedInt(trc.getI8(ptr++, insn));
                 if (b == 0) {
                     return "\"" + buf + "\"";
                 }
@@ -68,7 +68,7 @@ public class DecoderUtils {
         }
     }
 
-    public static String mem(long addr, long length, long insn, MemoryTrace mem) {
+    public static String mem(long addr, long length, long insn, TraceAnalyzer trc) {
         if (addr == 0) {
             return "NULL";
         }
@@ -76,7 +76,7 @@ public class DecoderUtils {
             StringBuilder buf = new StringBuilder();
             long ptr = addr;
             for (int i = 0; i < length; i++) {
-                int b = Byte.toUnsignedInt(mem.getByte(ptr++, insn));
+                int b = Byte.toUnsignedInt(trc.getI8(ptr++, insn));
                 buf.append(encode(b));
                 if (i >= STRING_MAXLEN) {
                     return "\"" + buf + "\"...";

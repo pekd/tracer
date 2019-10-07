@@ -46,7 +46,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,12 +55,11 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.LevelPeekListener;
 import org.graalvm.vm.x86.trcview.ui.event.LevelUpListener;
 
@@ -81,12 +79,10 @@ public class CallStackView extends JPanel {
     private List<LevelUpListener> listeners;
     private List<LevelPeekListener> peekListeners;
 
-    private SymbolResolver resolver;
+    private TraceAnalyzer trc;
 
     public CallStackView() {
         super(new BorderLayout());
-
-        resolver = new DefaultSymbolResolver(new TreeMap<>());
 
         listeners = new ArrayList<>();
         peekListeners = new ArrayList<>();
@@ -123,8 +119,8 @@ public class CallStackView extends JPanel {
         });
     }
 
-    public void setSymbolResolver(SymbolResolver resolver) {
-        this.resolver = resolver;
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        this.trc = trc;
     }
 
     public void addLevelUpListener(LevelUpListener listener) {
@@ -205,9 +201,9 @@ public class CallStackView extends JPanel {
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
         buf.append(HexFormatter.tohex(step.getPC(), 16));
-        if (resolver.getSymbol(step.getPC()) != null && resolver.getSymbol(step.getPC()).getName() != null) {
+        if (trc.getSymbol(step.getPC()) != null && trc.getSymbol(step.getPC()).getName() != null) {
             buf.append(" <");
-            buf.append(resolver.getSymbol(step.getPC()).getName());
+            buf.append(trc.getSymbol(step.getPC()).getName());
             buf.append('>');
         }
         buf.append(' ');
@@ -222,7 +218,7 @@ public class CallStackView extends JPanel {
         while (block != null && block.getHead() != null) {
             callStack.add(format(block.getHead()));
             callStackBlocks.add(block);
-            block = block.getParent();
+            block = trc.getParent(block);
         }
         if (block != null && block.getHead() == null) {
             StepRecord first = block.getFirstStep();

@@ -43,12 +43,11 @@ package org.graalvm.vm.x86.trcview.ui;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
-import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
+import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class StateEncoder {
     private static String html(String text) {
@@ -152,16 +151,16 @@ public class StateEncoder {
         return buf.toString();
     }
 
-    public static String encode(SymbolResolver resolver, MappedFiles mappedFiles, StepRecord step) {
-        Location location = Location.getLocation(resolver, mappedFiles, step);
+    public static String encode(TraceAnalyzer trc, StepRecord step) {
+        Location location = Location.getLocation(trc, step);
         CpuStateRecord state = step.getState();
         String loc = encode(location);
         String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getInstructionCount();
         return loc + "\n\n" + html(state.toString()) + "\n" + pos;
     }
 
-    public static String encode(SymbolResolver resolver, MappedFiles mappedFiles, StepRecord previous, StepRecord current) {
-        Location location = Location.getLocation(resolver, mappedFiles, current);
+    public static String encode(TraceAnalyzer trc, StepRecord previous, StepRecord current) {
+        Location location = Location.getLocation(trc, current);
         CpuStateRecord state1 = previous.getState();
         CpuStateRecord state2 = current.getState();
         String loc = encode(location);
