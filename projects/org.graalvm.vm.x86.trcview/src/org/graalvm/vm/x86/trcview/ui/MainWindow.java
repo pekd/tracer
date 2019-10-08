@@ -48,17 +48,22 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -99,6 +104,8 @@ public class MainWindow extends JFrame {
 
     private JMenuItem open;
     private JMenuItem loadPrototypes;
+    private JMenuItem loadSymbols;
+    private JMenuItem saveSymbols;
     private JMenuItem renameSymbol;
     private JMenuItem setFunctionType;
     private JMenuItem gotoPC;
@@ -114,6 +121,7 @@ public class MainWindow extends JFrame {
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
         FileDialog loadSyms = new FileDialog(this, "Open...", FileDialog.LOAD);
+        FileDialog saveSyms = new FileDialog(this, "Save...", FileDialog.SAVE);
         ExportMemoryDialog exportMemoryDialog = new ExportMemoryDialog(this);
 
         setLayout(new BorderLayout());
@@ -145,7 +153,7 @@ public class MainWindow extends JFrame {
             worker.execute();
         });
         loadPrototypes = new JMenuItem("Load prototypes...");
-        loadPrototypes.setMnemonic('l');
+        loadPrototypes.setMnemonic('p');
         loadPrototypes.addActionListener(e -> {
             loadSyms.setVisible(true);
             if (loadSyms.getFile() == null) {
@@ -166,12 +174,58 @@ public class MainWindow extends JFrame {
             worker.execute();
         });
         loadPrototypes.setEnabled(false);
+        loadSymbols = new JMenuItem("Load symbols...");
+        loadSymbols.setMnemonic('l');
+        loadSymbols.addActionListener(e -> {
+            loadSyms.setVisible(true);
+            if (loadSyms.getFile() == null) {
+                return;
+            }
+            String filename = loadSyms.getDirectory() + loadSyms.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        loadSymbols(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        loadSymbols.setEnabled(false);
+        saveSymbols = new JMenuItem("Save symbols...");
+        saveSymbols.setMnemonic('s');
+        saveSymbols.addActionListener(e -> {
+            saveSyms.setVisible(true);
+            if (saveSyms.getFile() == null) {
+                return;
+            }
+            String filename = saveSyms.getDirectory() + saveSyms.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        saveSymbols(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        saveSymbols.setEnabled(false);
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
         exit.addActionListener(e -> exit());
         fileMenu.add(open);
         fileMenu.addSeparator();
+        fileMenu.add(loadSymbols);
+        fileMenu.add(saveSymbols);
         fileMenu.add(loadPrototypes);
         fileMenu.addSeparator();
         fileMenu.add(exit);
@@ -387,6 +441,8 @@ public class MainWindow extends JFrame {
                 trc = new Local(root, analysis);
                 view.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
+                loadSymbols.setEnabled(true);
+                saveSymbols.setEnabled(true);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
                 gotoPC.setEnabled(true);
@@ -406,6 +462,8 @@ public class MainWindow extends JFrame {
 
     public void loadPrototypes(File file) throws IOException {
         log.info("Loading prototype file " + file + "...");
+        setStatus("Loading prototype file " + file + "...");
+        boolean ok = true;
         loadPrototypes.setEnabled(false);
         Map<String, List<ComputedSymbol>> syms = trc.getNamedSymbols();
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
@@ -433,8 +491,13 @@ public class MainWindow extends JFrame {
                     } catch (ParseException e) {
                         log.info("Parse error in line " + lineno + ": " + e.getMessage());
                         setStatus("Parse error in line " + lineno + ": " + e.getMessage());
+                        ok = false;
                     }
                 }
+            }
+            log.info("Prototypes loaded from file " + file);
+            if (ok) {
+                setStatus("Prototypes loaded from file " + file);
             }
         } catch (Throwable t) {
             log.log(Level.WARNING, "Loading failed: " + t, t);
@@ -444,6 +507,116 @@ public class MainWindow extends JFrame {
             loadPrototypes.setEnabled(true);
         }
         log.info("Prototype file loaded");
+    }
+
+    public void loadSymbols(File file) throws IOException {
+        log.info("Loading symbol file " + file + "...");
+        setStatus("Loading symbol file " + file + "...");
+        loadSymbols.setEnabled(false);
+        boolean reanalyze = false;
+        boolean ok = true;
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line;
+            int lineno = 0;
+            while ((line = in.readLine()) != null) {
+                int comment = line.indexOf('#');
+                if (comment > 0) {
+                    line = line.substring(0, comment).trim();
+                }
+                line = line.trim();
+                if (line.length() == 0) {
+                    continue;
+                }
+                lineno++;
+                int idx = line.indexOf('=');
+                if (idx > 0) {
+                    String address = line.substring(0, idx);
+                    String[] name = line.substring(idx + 1).split(";");
+                    long pc;
+                    try {
+                        pc = Long.parseUnsignedLong(address, 16);
+                    } catch (NumberFormatException e) {
+                        log.info("Syntax error in line " + lineno + ": invalid address");
+                        setStatus("Syntax error in line " + lineno + ": invalid address");
+                        ok = false;
+                        continue;
+                    }
+                    if (name.length == 1) {
+                        ComputedSymbol sym = trc.getComputedSymbol(pc);
+                        if (sym == null) {
+                            trc.addSubroutine(pc, name[0], null);
+                            reanalyze = true;
+                        } else {
+                            trc.renameSymbol(sym, name[0]);
+                        }
+                    } else if (name.length == 3) {
+                        String proto = name[1] + " f" + name[2];
+                        Function fun;
+                        try {
+                            fun = new TypeParser(proto).parse();
+                        } catch (ParseException e) {
+                            log.info("Syntax error in line " + lineno + ": " + e.getMessage());
+                            setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
+                            ok = false;
+                            continue;
+                        }
+                        ComputedSymbol sym = trc.getComputedSymbol(pc);
+                        if (sym == null) {
+                            trc.addSubroutine(pc, name[0], fun.getPrototype());
+                            reanalyze = true;
+                        } else {
+                            trc.renameSymbol(sym, name[0]);
+                            trc.setPrototype(sym, fun.getPrototype());
+                        }
+                    } else {
+                        log.info("Syntax error in line " + lineno + ": invalid name");
+                        setStatus("Syntax error in line " + lineno + ": invalid name");
+                        ok = false;
+                    }
+                } else {
+                    log.info("Syntax error in line " + lineno + ": missing '='");
+                    setStatus("Syntax error in line " + lineno + ": missing '='");
+                    ok = false;
+                }
+            }
+            log.info("Symbol file " + file + " loaded successfully");
+            if (ok) {
+                setStatus("Symbol file " + file + " loaded successfully");
+            }
+        } catch (Throwable t) {
+            if (reanalyze) {
+                trc.reanalyze();
+            }
+            log.log(Level.WARNING, "Loading failed: " + t, t);
+            setStatus("Loading failed: " + t);
+            throw t;
+        } finally {
+            loadSymbols.setEnabled(true);
+        }
+    }
+
+    public void saveSymbols(File file) throws IOException {
+        log.info("Saving symbols to file " + file + "...");
+        setStatus("Saving symbols to file " + file + "...");
+        saveSymbols.setEnabled(false);
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file)))) {
+            Set<ComputedSymbol> symbols = trc.getSubroutines();
+            symbols.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(sym -> {
+                if (sym.prototype != null) {
+                    out.printf("%x=%s;%s;(%s)\n", sym.address, sym.name, sym.prototype.returnType, sym.prototype.args.stream().map(Object::toString).collect(Collectors.joining(", ")));
+                } else {
+                    out.printf("%x=%s\n", sym.address, sym.name);
+                }
+            });
+            log.info("Symbol file " + file);
+            setStatus("Symbols save to file " + file);
+        } catch (Throwable t) {
+            log.log(Level.WARNING, "Saving failed: " + t, t);
+            setStatus("Saving failed: " + t);
+            throw t;
+        } finally {
+            saveSymbols.setEnabled(true);
+        }
     }
 
     private void exit() {

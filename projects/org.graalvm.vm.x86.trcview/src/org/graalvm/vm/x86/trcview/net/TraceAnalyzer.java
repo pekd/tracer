@@ -35,6 +35,10 @@ public interface TraceAnalyzer {
 
     void addSymbolRenameListener(SymbolRenameListener listener);
 
+    void addSubroutine(long pc, String name, Prototype prototype);
+
+    void reanalyze();
+
     // node
     BlockNode getRoot();
 

@@ -73,6 +73,7 @@ public class SymbolView extends JPanel {
     private List<ComputedSymbol> symbols;
     private List<JumpListener> jumpListeners;
     private List<ChangeListener> changeListeners;
+    private List<ChangeListener> clickListeners;
     private TraceAnalyzer trc;
     private int width;
 
@@ -80,12 +81,14 @@ public class SymbolView extends JPanel {
         super(new BorderLayout());
         jumpListeners = new ArrayList<>();
         changeListeners = new ArrayList<>();
+        clickListeners = new ArrayList<>();
         symbols = Collections.emptyList();
         syms = new JList<>(new DefaultListModel<>());
         syms.setFont(MainWindow.FONT);
         syms.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                fireClickEvent();
                 if (e.getClickCount() == 2) {
                     int i = syms.getSelectedIndex();
                     if (i == -1) {
@@ -190,6 +193,24 @@ public class SymbolView extends JPanel {
 
     protected void fireChangeEvent() {
         for (ChangeListener l : changeListeners) {
+            try {
+                l.valueChanged();
+            } catch (Throwable t) {
+                log.log(Level.WARNING, "Error while running listener: " + t, t);
+            }
+        }
+    }
+
+    public void addClickListener(ChangeListener listener) {
+        clickListeners.add(listener);
+    }
+
+    public void removeClickListener(ChangeListener listener) {
+        clickListeners.remove(listener);
+    }
+
+    protected void fireClickEvent() {
+        for (ChangeListener l : clickListeners) {
             try {
                 l.valueChanged();
             } catch (Throwable t) {

@@ -306,6 +306,12 @@ public class TextDump {
         public void addSymbolRenameListener(SymbolRenameListener listener) {
         }
 
+        public void addSubroutine(long pc, String name, Prototype prototype) {
+        }
+
+        public void reanalyze() {
+        }
+
         public BlockNode getRoot() {
             return null;
         }

@@ -442,57 +442,27 @@ public class InstructionView extends JPanel {
                 if (mnemonic == null) {
                     c.setForeground(ERROR_FG);
                 } else {
-                    switch (mnemonic) {
-                        case "ret":
+                    switch (AMD64InstructionQuickInfo.getType(step.getMachinecode())) {
+                        case RET:
                             c.setForeground(RET_FG);
                             break;
-                        case "syscall":
+                        case SYSCALL:
                             c.setForeground(SYSCALL_FG);
                             break;
-                        case "jmp":
+                        case JMP:
                             if (step.getInstruction() instanceof JmpIndirect) {
                                 c.setForeground(INDIRECTJMP_FG);
                             } else {
                                 c.setForeground(JMP_FG);
                             }
                             break;
-                        case "ja":
-                        case "jae":
-                        case "jb":
-                        case "jbe":
-                        case "jc":
-                        case "jcxz":
-                        case "jecxz":
-                        case "je":
-                        case "jg":
-                        case "jge":
-                        case "jl":
-                        case "jle":
-                        case "jna":
-                        case "jnae":
-                        case "jnb":
-                        case "jnbe":
-                        case "jnc":
-                        case "jne":
-                        case "jng":
-                        case "jnge":
-                        case "jnl":
-                        case "jnle":
-                        case "jno":
-                        case "jnp":
-                        case "jns":
-                        case "jnz":
-                        case "jo":
-                        case "jp":
-                        case "jpe":
-                        case "jpo":
-                        case "js":
-                        case "jz":
+                        case JCC:
                             c.setForeground(JCC_FG);
                             break;
-                        case "endbr32":
-                        case "endbr64":
-                            c.setForeground(ENDBR_FG);
+                        case OTHER:
+                            if (mnemonic.equals("endbr32") || mnemonic.equals("endbr64")) {
+                                c.setForeground(ENDBR_FG);
+                            }
                             break;
                     }
                 }

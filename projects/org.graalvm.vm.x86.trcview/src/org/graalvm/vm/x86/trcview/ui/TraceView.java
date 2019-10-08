@@ -96,6 +96,9 @@ public class TraceView extends JPanel {
         symbols.addChangeListener(() -> {
             selectedSymbol = symbols.getSelectedSymbol();
         });
+        symbols.addClickListener(() -> {
+            selectedSymbol = symbols.getSelectedSymbol();
+        });
 
         insns.addChangeListener(() -> {
             selectedSymbol = null;

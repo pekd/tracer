@@ -83,6 +83,28 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
+    public void addSubroutine(long pc, String name, Prototype prototype) {
+        symbols.addSubroutine(pc, name);
+        ComputedSymbol sym = symbols.get(pc);
+        sym.prototype = prototype;
+    }
+
+    private void analyzeBlock(BlockNode block) {
+        for (Node node : block.getNodes()) {
+            symbols.visit(node);
+            if (node instanceof BlockNode) {
+                analyzeBlock((BlockNode) node);
+            }
+        }
+    }
+
+    @Override
+    public void reanalyze() {
+        getSymbols().forEach(ComputedSymbol::resetVisits);
+        analyzeBlock(root);
+    }
+
+    @Override
     public BlockNode getRoot() {
         return root;
     }

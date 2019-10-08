@@ -75,6 +75,10 @@ public class ComputedSymbol {
         visits.add(node);
     }
 
+    public void resetVisits() {
+        visits.clear();
+    }
+
     @Override
     public int hashCode() {
         return (int) address;
