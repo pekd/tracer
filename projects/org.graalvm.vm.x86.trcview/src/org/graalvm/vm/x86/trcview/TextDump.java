@@ -82,6 +82,7 @@ import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.Location;
+import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 
 public class TextDump {
     public static void main(String[] args) throws IOException {
@@ -304,6 +305,9 @@ public class TextDump {
         }
 
         public void addSymbolRenameListener(SymbolRenameListener listener) {
+        }
+
+        public void addSymbolChangeListener(ChangeListener listener) {
         }
 
         public void addSubroutine(long pc, String name, Prototype prototype) {

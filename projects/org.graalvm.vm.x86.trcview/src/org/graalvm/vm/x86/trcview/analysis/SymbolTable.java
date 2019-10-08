@@ -199,4 +199,12 @@ public class SymbolTable {
         }
         return map;
     }
+
+    public void cleanup() {
+        List<ComputedSymbol> unused = symbols.values().stream().filter(s -> s.type == ComputedSymbol.Type.SUBROUTINE).filter(s -> s.visits.size() == 0).collect(Collectors.toList());
+        unused.forEach(s -> {
+            log.info("Removing unused symbol " + s.name + " @ " + HexFormatter.tohex(s.address));
+            symbols.remove(s.address);
+        });
+    }
 }

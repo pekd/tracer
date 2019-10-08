@@ -145,6 +145,7 @@ public class SymbolView extends JPanel {
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
         trc.addSymbolRenameListener(this::symbolRenamed);
+        trc.addSymbolChangeListener(this::update);
         update();
     }
 

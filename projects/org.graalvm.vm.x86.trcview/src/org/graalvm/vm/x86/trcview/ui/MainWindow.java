@@ -579,18 +579,25 @@ public class MainWindow extends JFrame {
                     ok = false;
                 }
             }
+            if (reanalyze) {
+                reanalyze = false;
+                log.info("Reanalyzing visits...");
+                setStatus("Reanalyzing visits...");
+                trc.reanalyze();
+            }
             log.info("Symbol file " + file + " loaded successfully");
             if (ok) {
                 setStatus("Symbol file " + file + " loaded successfully");
             }
         } catch (Throwable t) {
-            if (reanalyze) {
-                trc.reanalyze();
-            }
             log.log(Level.WARNING, "Loading failed: " + t, t);
             setStatus("Loading failed: " + t);
             throw t;
         } finally {
+            if (reanalyze) {
+                log.info("Reanalyzing symbol visits...");
+                trc.reanalyze();
+            }
             loadSymbols.setEnabled(true);
         }
     }

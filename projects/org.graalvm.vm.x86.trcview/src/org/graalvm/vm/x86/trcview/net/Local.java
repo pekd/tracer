@@ -1,12 +1,15 @@
 package org.graalvm.vm.x86.trcview.net;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.MappedFiles;
@@ -20,13 +23,17 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 
 public class Local implements TraceAnalyzer {
+    private static final Logger log = Trace.create(TraceAnalyzer.class);
+
     private SymbolResolver resolver;
     private SymbolTable symbols;
     private BlockNode root;
     private MemoryTrace memory;
     private MappedFiles files;
+    private List<ChangeListener> symbolChangeListeners;
 
     public Local(BlockNode root, Analysis analysis) {
         this.root = root;
@@ -34,6 +41,7 @@ public class Local implements TraceAnalyzer {
         symbols = analysis.getComputedSymbolTable();
         memory = analysis.getMemoryTrace();
         files = analysis.getMappedFiles();
+        symbolChangeListeners = new ArrayList<>();
     }
 
     @Override
@@ -83,6 +91,11 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
+    public void addSymbolChangeListener(ChangeListener listener) {
+        symbolChangeListeners.add(listener);
+    }
+
+    @Override
     public void addSubroutine(long pc, String name, Prototype prototype) {
         symbols.addSubroutine(pc, name);
         ComputedSymbol sym = symbols.get(pc);
@@ -102,6 +115,14 @@ public class Local implements TraceAnalyzer {
     public void reanalyze() {
         getSymbols().forEach(ComputedSymbol::resetVisits);
         analyzeBlock(root);
+        symbols.cleanup();
+        for (ChangeListener l : symbolChangeListeners) {
+            try {
+                l.valueChanged();
+            } catch (Throwable t) {
+                log.warning("Error while executing listener: " + l);
+            }
+        }
     }
 
     @Override

@@ -14,6 +14,7 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 
 public interface TraceAnalyzer {
     // symbol
@@ -34,6 +35,8 @@ public interface TraceAnalyzer {
     Map<String, List<ComputedSymbol>> getNamedSymbols();
 
     void addSymbolRenameListener(SymbolRenameListener listener);
+
+    void addSymbolChangeListener(ChangeListener listener);
 
     void addSubroutine(long pc, String name, Prototype prototype);
 
