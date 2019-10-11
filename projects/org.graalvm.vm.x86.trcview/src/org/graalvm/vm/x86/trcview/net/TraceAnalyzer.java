@@ -52,8 +52,6 @@ public interface TraceAnalyzer {
     // search
     Node getInstruction(long insn);
 
-    Node getNext(Node node);
-
     Node getNextStep(Node node);
 
     Node getPreviousStep(Node node);

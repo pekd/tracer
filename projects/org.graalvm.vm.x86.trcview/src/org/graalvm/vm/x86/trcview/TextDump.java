@@ -274,120 +274,146 @@ public class TextDump {
             this.files = files;
         }
 
+        @Override
         public Symbol getSymbol(long pc) {
             return resolver.getSymbol(pc);
         }
 
+        @Override
         public ComputedSymbol getComputedSymbol(long pc) {
             return null;
         }
 
+        @Override
         public void renameSymbol(ComputedSymbol sym, String name) {
         }
 
+        @Override
         public void setPrototype(ComputedSymbol sym, Prototype prototype) {
         }
 
+        @Override
         public Set<ComputedSymbol> getSubroutines() {
             return null;
         }
 
+        @Override
         public Set<ComputedSymbol> getLocations() {
             return null;
         }
 
+        @Override
         public Collection<ComputedSymbol> getSymbols() {
             return null;
         }
 
+        @Override
         public Map<String, List<ComputedSymbol>> getNamedSymbols() {
             return null;
         }
 
+        @Override
         public void addSymbolRenameListener(SymbolRenameListener listener) {
         }
 
+        @Override
         public void addSymbolChangeListener(ChangeListener listener) {
         }
 
+        @Override
         public void addSubroutine(long pc, String name, Prototype prototype) {
         }
 
+        @Override
         public void reanalyze() {
         }
 
+        @Override
         public BlockNode getRoot() {
             return null;
         }
 
+        @Override
         public BlockNode getParent(Node node) {
             return null;
         }
 
+        @Override
         public BlockNode getChildren(Node node) {
             return null;
         }
 
+        @Override
         public Node getInstruction(long insn) {
             return null;
         }
 
-        public Node getNext(Node node) {
-            return null;
-        }
-
+        @Override
         public Node getNextStep(Node node) {
             return null;
         }
 
+        @Override
         public Node getPreviousStep(Node node) {
             return null;
         }
 
+        @Override
         public Node getNextPC(Node node, long pc) {
             return null;
         }
 
+        @Override
         public byte getI8(long address, long insn) throws MemoryNotMappedException {
             return 0;
         }
 
+        @Override
         public long getI64(long address, long insn) throws MemoryNotMappedException {
             return 0;
         }
 
+        @Override
         public MemoryRead getLastRead(long address, long insn) throws MemoryNotMappedException {
             return null;
         }
 
+        @Override
         public MemoryRead getNextRead(long address, long insn) throws MemoryNotMappedException {
             return null;
         }
 
+        @Override
         public MemoryUpdate getLastWrite(long address, long insn) throws MemoryNotMappedException {
             return null;
         }
 
+        @Override
         public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
             return null;
         }
 
+        @Override
         public long getBase(long pc) {
             return files.getBase(pc);
         }
 
+        @Override
         public long getLoadBias(long pc) {
             return files.getLoadBias(pc);
         }
 
+        @Override
         public long getOffset(long pc) {
             return files.getOffset(pc);
         }
 
+        @Override
         public long getFileOffset(long pc) {
             return files.getFileOffset(pc);
         }
 
+        @Override
         public String getFilename(long pc) {
             return files.getFilename(pc);
         }

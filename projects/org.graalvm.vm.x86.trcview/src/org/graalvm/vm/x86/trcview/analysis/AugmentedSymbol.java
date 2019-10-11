@@ -3,7 +3,7 @@ package org.graalvm.vm.x86.trcview.analysis;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 
-public class AugmentedSymbol implements Symbol {
+public class AugmentedSymbol implements Symbol, Subroutine {
     private final Symbol symbol;
     private final String name;
     private final Prototype prototype;
@@ -14,6 +14,7 @@ public class AugmentedSymbol implements Symbol {
         this.prototype = prototype;
     }
 
+    @Override
     public Prototype getPrototype() {
         return prototype;
     }

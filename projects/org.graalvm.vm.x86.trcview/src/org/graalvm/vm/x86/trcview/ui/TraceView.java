@@ -141,6 +141,7 @@ public class TraceView extends JPanel {
                 BlockNode par = trc.getParent(ret);
                 BlockNode parent = trc.getParent(par);
                 if (parent != null) {
+                    parent = trc.getChildren(parent);
                     stack.set(parent);
                     insns.set(parent);
                     insns.select(par);
@@ -173,6 +174,7 @@ public class TraceView extends JPanel {
         if (block == null) {
             block = trc.getRoot();
         }
+        block = trc.getChildren(block);
         stack.set(block);
         insns.set(block);
         insns.select(node);
@@ -182,6 +184,7 @@ public class TraceView extends JPanel {
     private void up(BlockNode block) {
         BlockNode parent = trc.getParent(block);
         if (parent != null) {
+            parent = trc.getChildren(parent);
             stack.set(parent);
             insns.set(parent);
             insns.select(block);

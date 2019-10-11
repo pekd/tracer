@@ -150,11 +150,6 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
-    public Node getNext(Node node) {
-        return Search.next(node);
-    }
-
-    @Override
     public Node getNextStep(Node node) {
         return Search.nextStep(node);
     }

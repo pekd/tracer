@@ -72,7 +72,7 @@ import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
-import org.graalvm.vm.x86.trcview.analysis.AugmentedSymbol;
+import org.graalvm.vm.x86.trcview.analysis.Subroutine;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.decode.CallDecoder;
 import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
@@ -536,9 +536,9 @@ public class InstructionView extends JPanel {
                 }
 
                 Symbol sym = trc.getSymbol(loc.getPC());
-                if (sym != null && sym instanceof AugmentedSymbol && ((AugmentedSymbol) sym).getPrototype() != null) {
-                    AugmentedSymbol s = (AugmentedSymbol) sym;
-                    Function fun = new Function(s.getName(), s.getPrototype());
+                if (sym != null && sym instanceof Subroutine && ((Subroutine) sym).getPrototype() != null) {
+                    Subroutine sub = (Subroutine) sym;
+                    Function fun = new Function(sub.getName(), sub.getPrototype());
                     CpuState ns = next == null ? null : next.getState().getState();
                     String decoded = CallDecoder.decode(fun, step.getState().getState(), ns, trc);
                     if (decoded != null) {
