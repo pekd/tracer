@@ -18,6 +18,7 @@ public class FinePage implements Page {
     private final byte[] data = new byte[4096]; // initial data
 
     public FinePage(long address, long pc, long instructionCount, Node node) {
+        assert (address & 0xFFF) == 0;
         this.address = address;
         this.firstPC = pc;
         this.firstInstructionCount = instructionCount;
@@ -59,22 +60,14 @@ public class FinePage implements Page {
     public void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
-        int off = (int) (addr - address);
-        if (updates[off] == null) {
-            updates[off] = new ArrayList<>();
-        }
-        updates[off].add(new MemoryUpdate(addr, size, value, pc, instructionCount, node));
+        addUpdate(new MemoryUpdate(addr, size, value, pc, instructionCount, node));
     }
 
     @Override
     public void addRead(long addr, byte size, long pc, long instructionCount, Node node) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
-        int off = (int) (addr - address);
-        if (reads[off] == null) {
-            reads[off] = new ArrayList<>();
-        }
-        reads[off].add(new MemoryRead(addr, size, pc, instructionCount, node));
+        addRead(new MemoryRead(addr, size, pc, instructionCount, node));
     }
 
     public void addUpdate(MemoryUpdate update) {
@@ -82,10 +75,12 @@ public class FinePage implements Page {
         assert addr >= address && addr < (address + data.length);
         assert addr + update.size <= (address + data.length);
         int off = (int) (addr - address);
-        if (updates[off] == null) {
-            updates[off] = new ArrayList<>();
+        for (int i = 0; i < update.size && off + i < updates.length; i++) {
+            if (updates[off + i] == null) {
+                updates[off + i] = new ArrayList<>();
+            }
+            updates[off + i].add(update);
         }
-        updates[off].add(update);
     }
 
     public void addRead(MemoryRead read) {
@@ -93,10 +88,12 @@ public class FinePage implements Page {
         assert addr >= address && addr < (address + data.length);
         assert addr + read.size <= (address + data.length);
         int off = (int) (addr - address);
-        if (reads[off] == null) {
-            reads[off] = new ArrayList<>();
+        for (int i = 0; i < read.size && off + i < reads.length; i++) {
+            if (reads[off + i] == null) {
+                reads[off + i] = new ArrayList<>();
+            }
+            reads[off + i].add(read);
         }
-        reads[off].add(read);
     }
 
     @Override
@@ -139,7 +136,7 @@ public class FinePage implements Page {
             return null;
         }
 
-        if (updates[off].isEmpty() || instructionCount == firstInstructionCount) {
+        if (updates[off].isEmpty()) {
             // no update until now
             return null;
         } else if (updates[off].get(0).instructionCount > instructionCount) {
@@ -151,8 +148,7 @@ public class FinePage implements Page {
             for (MemoryUpdate update : updates[off]) {
                 if (update.instructionCount > instructionCount) {
                     return result;
-                }
-                if (update.contains(addr)) {
+                } else {
                     result = update;
                 }
             }
@@ -168,12 +164,14 @@ public class FinePage implements Page {
         });
 
         if (idx > 0) {
+            assert updates[off].get(idx).instructionCount <= instructionCount;
             return updates[off].get(idx);
         } else {
             idx = ~idx;
             if (idx == 0) {
                 return null;
             } else {
+                assert updates[off].get(idx - 1).instructionCount <= instructionCount;
                 return updates[off].get(idx - 1);
             }
         }
