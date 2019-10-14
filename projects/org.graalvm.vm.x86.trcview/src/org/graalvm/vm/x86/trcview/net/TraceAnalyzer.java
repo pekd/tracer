@@ -42,6 +42,9 @@ public interface TraceAnalyzer {
 
     void reanalyze();
 
+    // misc
+    long getInstructionCount();
+
     // node
     BlockNode getRoot();
 

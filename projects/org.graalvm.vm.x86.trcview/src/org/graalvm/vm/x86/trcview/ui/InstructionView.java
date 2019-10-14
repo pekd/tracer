@@ -115,7 +115,7 @@ public class InstructionView extends JPanel {
 
     private TraceAnalyzer trc;
 
-    public InstructionView(Consumer<String> status) {
+    public InstructionView(Consumer<String> status, Consumer<Long> position) {
         super(new BorderLayout());
         changeListeners = new ArrayList<>();
         callListeners = new ArrayList<>();
@@ -161,6 +161,7 @@ public class InstructionView extends JPanel {
                 buf.append("]");
             }
             status.accept(buf.toString());
+            position.accept(step.getInstructionCount());
             fireChangeEvent();
         });
 

@@ -33,6 +33,7 @@ public class Local implements TraceAnalyzer {
     private BlockNode root;
     private MemoryTrace memory;
     private MappedFiles files;
+    private long steps;
     private List<ChangeListener> symbolChangeListeners;
 
     public Local(BlockNode root, Analysis analysis) {
@@ -41,6 +42,7 @@ public class Local implements TraceAnalyzer {
         symbols = analysis.getComputedSymbolTable();
         memory = analysis.getMemoryTrace();
         files = analysis.getMappedFiles();
+        steps = analysis.getStepCount();
         symbolChangeListeners = new ArrayList<>();
     }
 
@@ -123,6 +125,11 @@ public class Local implements TraceAnalyzer {
                 log.warning("Error while executing listener: " + l);
             }
         }
+    }
+
+    @Override
+    public long getInstructionCount() {
+        return steps;
     }
 
     @Override

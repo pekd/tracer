@@ -241,4 +241,8 @@ public class Analysis {
     public MemoryTrace getMemoryTrace() {
         return memory;
     }
+
+    public long getStepCount() {
+        return steps;
+    }
 }

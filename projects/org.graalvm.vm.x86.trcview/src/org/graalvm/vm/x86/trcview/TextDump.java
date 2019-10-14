@@ -329,6 +329,11 @@ public class TextDump {
         }
 
         @Override
+        public long getInstructionCount() {
+            return 0;
+        }
+
+        @Override
         public BlockNode getRoot() {
             return null;
         }

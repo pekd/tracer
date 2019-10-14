@@ -71,6 +71,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -100,6 +101,7 @@ public class MainWindow extends JFrame {
     public static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
 
     private JLabel status;
+    private JLabel position;
     private TraceView view;
 
     private JMenuItem open;
@@ -125,8 +127,11 @@ public class MainWindow extends JFrame {
         ExportMemoryDialog exportMemoryDialog = new ExportMemoryDialog(this);
 
         setLayout(new BorderLayout());
-        add(BorderLayout.CENTER, view = new TraceView(this::setStatus));
-        add(BorderLayout.SOUTH, status = new JLabel(""));
+        add(BorderLayout.CENTER, view = new TraceView(this::setStatus, this::setPosition));
+        JPanel south = new JPanel(new BorderLayout());
+        south.add(BorderLayout.CENTER, status = new JLabel(""));
+        south.add(BorderLayout.EAST, position = new JLabel(""));
+        add(BorderLayout.SOUTH, south);
 
         JMenuBar menu = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
@@ -418,6 +423,15 @@ public class MainWindow extends JFrame {
         status.setText(text);
     }
 
+    public void setPosition(long pos) {
+        if (pos < 0) {
+            position.setText("--");
+        } else {
+            double ratio = (double) pos / (double) trc.getInstructionCount();
+            position.setText(Math.round(ratio * 100.0) + "%");
+        }
+    }
+
     public void load(File file) throws IOException {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
@@ -425,6 +439,7 @@ public class MainWindow extends JFrame {
             long size = file.length();
             String text = "Loading " + file;
             setStatus(text);
+            setPosition(-1);
             ExecutionTraceReader reader = new ExecutionTraceReader(in);
             Analysis analysis = new Analysis();
             analysis.start();
