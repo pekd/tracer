@@ -55,7 +55,7 @@ public class VariableNode extends Expression {
             case "ebp":
                 return ctx.step.getState().getState().rbp & 0xFFFFFFFFL;
             case "rbp":
-                return ctx.step.getState().getState().rsp;
+                return ctx.step.getState().getState().rbp;
             case "spl":
                 return ctx.step.getState().getState().rsp & 0xFF;
             case "sp":
