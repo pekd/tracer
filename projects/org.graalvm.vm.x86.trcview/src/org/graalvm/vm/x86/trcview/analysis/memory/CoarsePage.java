@@ -387,7 +387,7 @@ public class CoarsePage implements Page {
         }
 
         assert idx >= 0;
-        assert reads.get(idx).instructionCount > instructionCount : String.format("%d vs %d", reads.get(idx).instructionCount, instructionCount);
+        assert reads.get(idx).instructionCount >= instructionCount : String.format("%d vs %d", reads.get(idx).instructionCount, instructionCount);
 
         for (int i = idx; i < reads.size(); i++) {
             MemoryRead read = reads.get(i);
