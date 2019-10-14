@@ -41,6 +41,26 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
+            case "getI16":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    return (short) ctx.mem.getI64(tmp);
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
+            case "getI32":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    return (int) ctx.mem.getI64(tmp);
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
             case "getI64":
                 if (args.size() != 1) {
                     throw new ArityException(1, args.size());
