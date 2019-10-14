@@ -43,15 +43,13 @@ package org.graalvm.vm.x86.node.debug.trace;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.function.Supplier;
 
 import org.graalvm.vm.util.io.BEInputStream;
 import org.graalvm.vm.util.io.WordInputStream;
-import org.graalvm.vm.x86.isa.CpuState;
 
 public class ExecutionTraceReader implements Closeable {
     private WordInputStream in;
-    private Supplier<CpuState> lastState;
+    private CpuStateRecord lastState;
 
     public ExecutionTraceReader(InputStream in) {
         this.in = new BEInputStream(in);
@@ -70,9 +68,9 @@ public class ExecutionTraceReader implements Closeable {
         T record = Record.read(in, lastState);
         if (record != null) {
             if (record instanceof CpuStateRecord) {
-                lastState = () -> ((CpuStateRecord) record).getState();
+                lastState = (CpuStateRecord) record;
             } else if (record instanceof StepRecord) {
-                lastState = () -> ((StepRecord) record).getState().getState();
+                lastState = ((StepRecord) record).getState();
             }
         }
         return record;

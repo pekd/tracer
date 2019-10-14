@@ -42,7 +42,6 @@ package org.graalvm.vm.x86.node.debug.trace;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.util.HexFormatter;
@@ -57,7 +56,7 @@ public abstract class Record {
 
     private final int magic;
     private CpuState lastState;
-    private Supplier<CpuState> lastStateSupplier;
+    private CpuStateRecord lastStateSupplier;
     private int tid;
 
     protected Record(int magic) {
@@ -67,27 +66,19 @@ public abstract class Record {
 
     protected CpuState getLastState() {
         if (lastState == null) {
-            lastState = lastStateSupplier.get();
+            lastState = lastStateSupplier.getState();
             lastStateSupplier = null;
         }
         return lastState;
     }
 
-    protected Supplier<CpuState> getLastStateSupplier() {
-        if (lastState != null) {
-            lastStateSupplier = () -> lastState;
-        }
+    protected CpuStateRecord getLastStateSupplier() {
         return lastStateSupplier;
     }
 
     protected void setLastState(CpuState state) {
         lastState = state;
         lastStateSupplier = null;
-    }
-
-    protected void setLastState(Supplier<CpuState> state) {
-        lastState = null;
-        lastStateSupplier = state;
     }
 
     protected void clearLastState() {
@@ -100,7 +91,7 @@ public abstract class Record {
     }
 
     @SuppressWarnings("unchecked")
-    public static final <T extends Record> T read(WordInputStream in, Supplier<CpuState> lastState) throws IOException {
+    public static final <T extends Record> T read(WordInputStream in, CpuStateRecord lastState) throws IOException {
         int type;
         try {
             type = in.read32bit();

@@ -61,7 +61,7 @@ public class StepRecord extends Record {
         super(MAGIC);
     }
 
-    StepRecord(byte[] machinecode, CpuStateRecord cpuState) {
+    public StepRecord(byte[] machinecode, CpuStateRecord cpuState) {
         super(MAGIC);
         this.machinecode = machinecode;
         this.cpuState = cpuState;
