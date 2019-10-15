@@ -344,7 +344,7 @@ public class TextDump {
         }
 
         @Override
-        public BlockNode getChildren(Node node) {
+        public BlockNode getChildren(BlockNode node) {
             return null;
         }
 

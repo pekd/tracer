@@ -143,12 +143,8 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
-    public BlockNode getChildren(Node node) {
-        if (node instanceof BlockNode) {
-            return (BlockNode) node;
-        } else {
-            throw new IllegalArgumentException("not a call node");
-        }
+    public BlockNode getChildren(BlockNode node) {
+        return node;
     }
 
     @Override

@@ -50,7 +50,7 @@ public interface TraceAnalyzer {
 
     BlockNode getParent(Node node);
 
-    BlockNode getChildren(Node node);
+    BlockNode getChildren(BlockNode node);
 
     // search
     Node getInstruction(long insn);
