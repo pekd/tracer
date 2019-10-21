@@ -350,8 +350,7 @@ public class InstructionView extends JPanel {
 
     public void select(Node node) {
         for (int n = 0; n < instructions.size(); n++) {
-            // ref comparison!
-            if (instructions.get(n) == node) {
+            if (instructions.get(n).getId() == node.getId()) {
                 insns.setSelectedIndex(n);
                 insns.ensureIndexIsVisible(n);
                 return;

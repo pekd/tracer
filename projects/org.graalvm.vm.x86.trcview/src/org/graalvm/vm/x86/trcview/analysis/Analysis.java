@@ -40,7 +40,9 @@
  */
 package org.graalvm.vm.x86.trcview.analysis;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -78,8 +80,11 @@ public class Analysis {
     private SymbolResolver augmentedResolver;
 
     private long steps;
+    private long idcnt;
 
     private MemoryTrace memory;
+
+    private List<Node> nodes;
 
     public Analysis() {
         symbols = new SymbolTable();
@@ -88,14 +93,20 @@ public class Analysis {
         resolver = new DefaultSymbolResolver(symbolTable);
         augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
         memory = new MemoryTrace();
+        nodes = new ArrayList<>();
     }
 
     public void start() {
         lastStep = null;
         steps = 0;
+        idcnt = 0;
     }
 
     public void process(Record record, Node node) {
+        assert nodes.size() == idcnt;
+        node.setId(idcnt++);
+        nodes.add(node);
+
         if (record instanceof StepRecord) {
             steps++;
             StepRecord step = (StepRecord) record;
@@ -205,6 +216,10 @@ public class Analysis {
     }
 
     public void finish(BlockNode root) {
+        assert nodes.size() == idcnt;
+        root.setId(idcnt++);
+        nodes.add(root);
+
         StepRecord first = root.getFirstStep();
         if (symbols.get(first.getPC()) == null) {
             symbols.addSubroutine(first.getPC(), "_start");
@@ -244,5 +259,9 @@ public class Analysis {
 
     public long getStepCount() {
         return steps;
+    }
+
+    public List<Node> getNodes() {
+        return nodes;
     }
 }

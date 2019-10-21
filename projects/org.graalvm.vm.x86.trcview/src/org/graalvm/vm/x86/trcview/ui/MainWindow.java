@@ -83,12 +83,12 @@ import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
-import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.net.Client;
 import org.graalvm.vm.x86.trcview.net.Local;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
@@ -116,7 +116,6 @@ public class MainWindow extends JFrame {
     private JMenuItem exportMemory;
 
     private TraceAnalyzer trc;
-    private BlockNode trace;
 
     public MainWindow() {
         super(WINDOW_TITLE);
@@ -315,7 +314,7 @@ public class MainWindow extends JFrame {
                 if (input != null && input.trim().length() > 0) {
                     try {
                         long pc = Long.parseLong(input.trim(), 16);
-                        Node n = Search.nextPC(view.getSelectedNode(), pc);
+                        Node n = trc.getNextPC(view.getSelectedNode(), pc);
                         if (n != null) {
                             log.info("Jumping to next occurence of PC=0x" + HexFormatter.tohex(pc));
                             view.jump(n);
@@ -360,7 +359,7 @@ public class MainWindow extends JFrame {
             if (input != null && input.trim().length() > 0) {
                 try {
                     long insn = Long.parseLong(input.trim());
-                    Node n = Search.instruction(trace, insn);
+                    Node n = trc.getInstruction(insn);
                     if (n != null) {
                         log.info("Jumping to instruction " + insn);
                         view.jump(n);
@@ -381,7 +380,7 @@ public class MainWindow extends JFrame {
             StepRecord step = view.getSelectedInstruction();
             if (step != null) {
                 long pc = step.getPC();
-                Node n = Search.nextPC(view.getSelectedNode(), pc);
+                Node n = trc.getNextPC(view.getSelectedNode(), pc);
                 if (n != null) {
                     log.info("Jumping to next occurence of PC=0x" + HexFormatter.tohex(pc));
                     view.jump(n);
@@ -452,7 +451,6 @@ public class MainWindow extends JFrame {
             setStatus("Trace loaded");
             setTitle(file + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
-                trace = root;
                 trc = new Local(root, analysis);
                 view.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
@@ -641,6 +639,33 @@ public class MainWindow extends JFrame {
         }
     }
 
+    public void connect(String host, int port) throws IOException {
+        log.info("Connecting to " + host + " on port " + port + "...");
+        setStatus("Connecting to " + host + " on port " + port + "...");
+        try {
+            trc = new Client(host, port);
+            log.info("Connected to " + host + " on port " + port);
+            setStatus("Connected to " + host + " on port " + port);
+            setTitle(host + ":" + port + " - " + WINDOW_TITLE);
+            EventQueue.invokeLater(() -> {
+                view.setTraceAnalyzer(trc);
+                loadPrototypes.setEnabled(true);
+                loadSymbols.setEnabled(true);
+                saveSymbols.setEnabled(true);
+                renameSymbol.setEnabled(true);
+                setFunctionType.setEnabled(true);
+                gotoPC.setEnabled(true);
+                gotoInsn.setEnabled(true);
+                gotoNext.setEnabled(true);
+                exportMemory.setEnabled(true);
+            });
+        } catch (Throwable t) {
+            setStatus("Failed to connect to " + host + " on port " + port);
+            log.info("Failed to connect to " + host + " on port " + port);
+            throw t;
+        }
+    }
+
     private void exit() {
         dispose();
         System.exit(0);
@@ -655,6 +680,12 @@ public class MainWindow extends JFrame {
                 w.load(new File(args[0]));
             } catch (Throwable t) {
                 System.out.println("Failed to load the file specified by the argument");
+            }
+        } else if (args.length == 2) {
+            try {
+                w.connect(args[0], Integer.parseInt(args[1]));
+            } catch (Throwable t) {
+                System.out.println("Failed to connect to the specified server");
             }
         }
     }

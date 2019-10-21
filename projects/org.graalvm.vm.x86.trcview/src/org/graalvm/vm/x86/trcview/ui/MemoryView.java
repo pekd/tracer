@@ -19,7 +19,6 @@ import javax.swing.JTextPane;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
-import org.graalvm.vm.x86.trcview.analysis.Search;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
@@ -327,7 +326,7 @@ public class MemoryView extends JPanel {
                         StepRecord record = (StepRecord) ((RecordNode) node).getRecord();
                         content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
                     } else {
-                        Node lastStep = Search.previousStep(node);
+                        Node lastStep = trc.getPreviousStep(node);
                         lastUpdateNode = lastStep;
                         if (lastStep != null) {
                             StepRecord record = null;
@@ -357,7 +356,7 @@ public class MemoryView extends JPanel {
                         StepRecord record = (StepRecord) ((RecordNode) read.node).getRecord();
                         content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
                     } else {
-                        Node lastStep = Search.previousStep(read.node);
+                        Node lastStep = trc.getPreviousStep(read.node);
                         nextReadNode = lastStep;
                         if (lastStep != null) {
                             StepRecord record = null;

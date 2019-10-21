@@ -48,7 +48,6 @@ public class Local implements TraceAnalyzer {
 
     @Override
     public Symbol getSymbol(long pc) {
-        // TODO Auto-generated method stub
         return resolver.getSymbol(pc);
     }
 

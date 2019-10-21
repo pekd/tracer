@@ -42,12 +42,35 @@ package org.graalvm.vm.x86.trcview.io;
 
 public abstract class Node {
     protected BlockNode parent;
+    private long id;
 
-    protected void setParent(BlockNode parent) {
+    public void setParent(BlockNode parent) {
         this.parent = parent;
     }
 
     public BlockNode getParent() {
         return parent;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Node)) {
+            return false;
+        }
+        Node n = (Node) o;
+        return n.getId() == getId();
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (id ^ (id >> 32));
     }
 }
