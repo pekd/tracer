@@ -177,13 +177,19 @@ public class IO {
         ComputedSymbol sym = new ComputedSymbol(name, address, type);
         int visits = in.read32bit();
         for (int i = 0; i < visits; i++) {
-            sym.addVisit(readNode(in));
+            sym.addVisit(new FakeNode(in.read64bit()));
         }
         if (in.read() == 1) {
             Prototype proto = readPrototype(in);
             sym.prototype = proto;
         }
         return sym;
+    }
+
+    private static final class FakeNode extends Node {
+        private FakeNode(long id) {
+            setId(id);
+        }
     }
 
     public static final void writeComputedSymbol(WordOutputStream out, ComputedSymbol sym) throws IOException {
@@ -197,7 +203,7 @@ public class IO {
         out.write(sym.type == ComputedSymbol.Type.SUBROUTINE ? 1 : 0);
         out.write32bit(sym.visits.size());
         for (Node visit : sym.visits) {
-            writeNode(out, visit);
+            out.write64bit(visit.getId());
         }
         out.write(sym.prototype != null ? 1 : 0);
         if (sym.prototype != null) {

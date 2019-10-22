@@ -96,7 +96,7 @@ public class SymbolView extends JPanel {
                     }
                     ComputedSymbol sym = symbols.get(i);
                     log.info("jumping to first execution of " + sym.name);
-                    fireJumpEvent(sym.visits.get(0));
+                    fireJumpEvent(trc.getNode(sym.visits.get(0)));
                 }
             }
         });

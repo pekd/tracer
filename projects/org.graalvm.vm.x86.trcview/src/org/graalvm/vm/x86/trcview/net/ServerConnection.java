@@ -40,6 +40,7 @@ import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetMapNode;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextPC;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextRead;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextStep;
+import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNode;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetOffset;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetPreviousStep;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetSymbol;
@@ -62,6 +63,7 @@ import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetMapNodeResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNextPCResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNextReadResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNextStepResult;
+import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNodeResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetOffsetResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetPreviousStepResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetRootResult;
@@ -137,6 +139,9 @@ public class ServerConnection extends Thread implements AutoCloseable {
                         break;
                     case Command.GET_CHILDREN:
                         result = getChildren((GetChildren) cmd);
+                        break;
+                    case Command.GET_NODE:
+                        result = getNode((GetNode) cmd);
                         break;
                     case Command.GET_INSTRUCTION:
                         result = getInstruction((GetInstruction) cmd);
@@ -289,6 +294,11 @@ public class ServerConnection extends Thread implements AutoCloseable {
         } else {
             throw new IllegalArgumentException("not a block node: " + req.getInstructionCount() + " [" + node.getClass().getCanonicalName() + "]");
         }
+    }
+
+    private GetNodeResult getNode(GetNode req) {
+        Node node = get(req.getInstructionCount());
+        return new GetNodeResult(node);
     }
 
     private GetInstructionResult getInstruction(GetInstruction req) {

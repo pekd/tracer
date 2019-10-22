@@ -54,6 +54,7 @@ public class GetSymbolResult extends Result {
     public void write(WordOutputStream out) throws IOException {
         if (sym == null) {
             out.write(0);
+            return;
         }
         if (sym instanceof Subroutine) {
             out.write(2);

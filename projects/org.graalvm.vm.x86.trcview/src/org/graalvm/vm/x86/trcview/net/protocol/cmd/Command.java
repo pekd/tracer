@@ -23,25 +23,26 @@ public abstract class Command {
 
     public static final int GET_ROOT = 12;
     public static final int GET_CHILDREN = 13;
+    public static final int GET_NODE = 14;
 
-    public static final int GET_INSTRUCTION = 14;
-    public static final int GET_NEXT_STEP = 15;
-    public static final int GET_PREVIOUS_STEP = 16;
-    public static final int GET_NEXT_PC = 17;
+    public static final int GET_INSTRUCTION = 15;
+    public static final int GET_NEXT_STEP = 16;
+    public static final int GET_PREVIOUS_STEP = 17;
+    public static final int GET_NEXT_PC = 18;
 
-    public static final int GET_I8 = 18;
-    public static final int GET_I16 = 19;
-    public static final int GET_I64 = 20;
-    public static final int GET_LAST_READ = 21;
-    public static final int GET_NEXT_READ = 22;
-    public static final int GET_LAST_WRITE = 23;
-    public static final int GET_MAP_NODE = 24;
+    public static final int GET_I8 = 19;
+    public static final int GET_I16 = 20;
+    public static final int GET_I64 = 21;
+    public static final int GET_LAST_READ = 22;
+    public static final int GET_NEXT_READ = 23;
+    public static final int GET_LAST_WRITE = 24;
+    public static final int GET_MAP_NODE = 25;
 
-    public static final int GET_BASE = 25;
-    public static final int GET_LOAD_BIAS = 26;
-    public static final int GET_OFFSET = 27;
-    public static final int GET_FILE_OFFSET = 28;
-    public static final int GET_FILENAME = 29;
+    public static final int GET_BASE = 26;
+    public static final int GET_LOAD_BIAS = 27;
+    public static final int GET_OFFSET = 28;
+    public static final int GET_FILE_OFFSET = 29;
+    public static final int GET_FILENAME = 30;
 
     private final int type;
 

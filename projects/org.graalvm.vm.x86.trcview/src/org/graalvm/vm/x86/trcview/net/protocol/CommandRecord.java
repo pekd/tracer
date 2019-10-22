@@ -24,6 +24,7 @@ import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetMapNode;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextPC;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextRead;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextStep;
+import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNode;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetOffset;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetPreviousStep;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetRoot;
@@ -106,6 +107,9 @@ public class CommandRecord extends RpcRecord {
                 break;
             case Command.GET_CHILDREN:
                 cmd = new GetChildren();
+                break;
+            case Command.GET_NODE:
+                cmd = new GetNode();
                 break;
             case Command.GET_INSTRUCTION:
                 cmd = new GetInstruction();

@@ -127,6 +127,11 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
+    public void refresh() {
+        // nothing
+    }
+
+    @Override
     public long getInstructionCount() {
         return steps;
     }
@@ -143,6 +148,11 @@ public class Local implements TraceAnalyzer {
 
     @Override
     public BlockNode getChildren(BlockNode node) {
+        return node;
+    }
+
+    @Override
+    public Node getNode(Node node) {
         return node;
     }
 

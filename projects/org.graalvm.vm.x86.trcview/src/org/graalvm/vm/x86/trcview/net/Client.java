@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetMapNode;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextPC;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextRead;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNextStep;
+import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetNode;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetOffset;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetPreviousStep;
 import org.graalvm.vm.x86.trcview.net.protocol.cmd.GetRoot;
@@ -76,6 +78,7 @@ import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetMapNodeResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNextPCResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNextReadResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNextStepResult;
+import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetNodeResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetOffsetResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetPreviousStepResult;
 import org.graalvm.vm.x86.trcview.net.protocol.cmdresult.GetRootResult;
@@ -95,11 +98,16 @@ public class Client implements TraceAnalyzer, Closeable {
 
     private Map<Long, Node> nodeCache;
 
+    private List<SymbolRenameListener> symbolRenameListeners;
+    private List<ChangeListener> symbolChangeListeners;
+
     public Client(String hostname, int port) throws IOException {
         remote = new Socket(hostname, port);
         in = new BEInputStream(new BufferedInputStream(remote.getInputStream()));
         out = new BEOutputStream(new BufferedOutputStream(remote.getOutputStream()));
         nodeCache = new HashMap<>();
+        symbolRenameListeners = new ArrayList<>();
+        symbolChangeListeners = new ArrayList<>();
     }
 
     public void close() throws IOException {
@@ -144,11 +152,13 @@ public class Client implements TraceAnalyzer, Closeable {
     @Override
     public void renameSymbol(ComputedSymbol sym, String name) {
         execute(new RenameSymbol(sym.address, name));
+        fireSymbolRename(sym);
     }
 
     @Override
     public void setPrototype(ComputedSymbol sym, Prototype prototype) {
         execute(new SetPrototype(sym.address, prototype));
+        fireSymbolRename(sym);
     }
 
     @Override
@@ -180,18 +190,46 @@ public class Client implements TraceAnalyzer, Closeable {
 
     @Override
     public Map<String, List<ComputedSymbol>> getNamedSymbols() {
-        // TODO Auto-generated method stub
-        return null;
+        Map<String, List<ComputedSymbol>> map = new HashMap<>();
+        for (ComputedSymbol sym : getSymbols()) {
+            List<ComputedSymbol> entry = map.get(sym.name);
+            if (entry == null) {
+                entry = new ArrayList<>();
+                map.put(sym.name, entry);
+            }
+            entry.add(sym);
+        }
+        return map;
     }
 
     @Override
     public void addSymbolRenameListener(SymbolRenameListener listener) {
-        // TODO Auto-generated method stub
+        symbolRenameListeners.add(listener);
     }
 
     @Override
     public void addSymbolChangeListener(ChangeListener listener) {
-        // TODO Auto-generated method stub
+        symbolChangeListeners.add(listener);
+    }
+
+    protected void fireSymbolRename(ComputedSymbol sym) {
+        for (SymbolRenameListener l : symbolRenameListeners) {
+            try {
+                l.symbolRenamed(sym);
+            } catch (Throwable t) {
+                log.log(Levels.WARNING, "Error while executing listener: " + t, t);
+            }
+        }
+    }
+
+    protected void fireSymbolChange() {
+        for (ChangeListener l : symbolChangeListeners) {
+            try {
+                l.valueChanged();
+            } catch (Throwable t) {
+                log.log(Levels.WARNING, "Error while executing listener: " + t, t);
+            }
+        }
     }
 
     @Override
@@ -204,6 +242,12 @@ public class Client implements TraceAnalyzer, Closeable {
     @Override
     public void reanalyze() {
         execute(new Reanalyze());
+        fireSymbolChange();
+    }
+
+    @Override
+    public void refresh() {
+        fireSymbolChange();
     }
 
     @Override
@@ -253,6 +297,20 @@ public class Client implements TraceAnalyzer, Closeable {
         }
         nodeCache.put(id, children.getNode());
         return children.getNode();
+    }
+
+    @Override
+    public Node getNode(Node node) {
+        long id = getId(node);
+        if (nodeCache.containsKey(id)) {
+            return nodeCache.get(id);
+        }
+        GetNodeResult result = execute(new GetNode(getId(node)));
+        if (result == null) {
+            return null;
+        }
+        nodeCache.put(id, result.getNode());
+        return result.getNode();
     }
 
     @Override

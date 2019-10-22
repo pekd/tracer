@@ -108,6 +108,7 @@ public class MainWindow extends JFrame {
     private JMenuItem loadPrototypes;
     private JMenuItem loadSymbols;
     private JMenuItem saveSymbols;
+    private JMenuItem refresh;
     private JMenuItem renameSymbol;
     private JMenuItem setFunctionType;
     private JMenuItem gotoPC;
@@ -222,6 +223,23 @@ public class MainWindow extends JFrame {
             worker.execute();
         });
         saveSymbols.setEnabled(false);
+        refresh = new JMenuItem("Refresh");
+        refresh.setMnemonic('r');
+        refresh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
+        refresh.addActionListener(e -> {
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        trc.refresh();
+                    } catch (Throwable ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
@@ -231,6 +249,8 @@ public class MainWindow extends JFrame {
         fileMenu.add(loadSymbols);
         fileMenu.add(saveSymbols);
         fileMenu.add(loadPrototypes);
+        fileMenu.addSeparator();
+        fileMenu.add(refresh);
         fileMenu.addSeparator();
         fileMenu.add(exit);
         fileMenu.setMnemonic('F');
@@ -456,6 +476,7 @@ public class MainWindow extends JFrame {
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
+                refresh.setEnabled(false);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
                 gotoPC.setEnabled(true);
@@ -652,6 +673,7 @@ public class MainWindow extends JFrame {
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
+                refresh.setEnabled(true);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
                 gotoPC.setEnabled(true);

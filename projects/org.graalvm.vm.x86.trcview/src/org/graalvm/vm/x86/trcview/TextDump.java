@@ -329,6 +329,10 @@ public class TextDump {
         }
 
         @Override
+        public void refresh() {
+        }
+
+        @Override
         public long getInstructionCount() {
             return 0;
         }
@@ -345,6 +349,11 @@ public class TextDump {
 
         @Override
         public BlockNode getChildren(BlockNode node) {
+            return null;
+        }
+
+        @Override
+        public Node getNode(Node node) {
             return null;
         }
 

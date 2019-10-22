@@ -42,6 +42,8 @@ public interface TraceAnalyzer {
 
     void reanalyze();
 
+    void refresh();
+
     // misc
     long getInstructionCount();
 
@@ -51,6 +53,8 @@ public interface TraceAnalyzer {
     BlockNode getParent(Node node);
 
     BlockNode getChildren(BlockNode node);
+
+    Node getNode(Node node);
 
     // search
     Node getInstruction(long insn);
