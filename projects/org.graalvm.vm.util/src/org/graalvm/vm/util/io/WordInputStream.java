@@ -70,6 +70,9 @@ public abstract class WordInputStream extends InputStream {
 
     @Override
     public long skip(long n) throws IOException {
+        if (n < 0) {
+            throw new IllegalArgumentException("Cannot seek with negative offset");
+        }
         offset += n;
         return parent.skip(n);
     }
@@ -106,21 +109,7 @@ public abstract class WordInputStream extends InputStream {
         return result;
     }
 
-    @Override
-    public int read(byte[] buffer) throws IOException {
-        if (eof)
-            throw new EOFException();
-        int result = parent.read(buffer);
-        if (result == -1) {
-            eof = true;
-            throw new EOFException();
-        }
-        offset += result;
-        return result;
-    }
-
-    @Override
-    public int read(byte[] buffer, int off, int length) throws IOException {
+    private int doread(byte[] buffer, int off, int length) throws IOException {
         if (eof)
             throw new EOFException();
         int result = parent.read(buffer, off, length);
@@ -130,6 +119,34 @@ public abstract class WordInputStream extends InputStream {
         }
         offset += result;
         return result;
+    }
+
+    @Override
+    public int read(byte[] buffer) throws IOException {
+        if (eof)
+            throw new EOFException();
+        return read(buffer, 0, buffer.length);
+    }
+
+    // guarantee that read always reads as many bytes as requested
+    @Override
+    public int read(byte[] buffer, int off, int length) throws IOException {
+        if (eof)
+            throw new EOFException();
+        int bytes = 0;
+        try {
+            while (bytes < length) {
+                int remaining = length - bytes;
+                bytes += doread(buffer, off + bytes, remaining);
+            }
+            return bytes;
+        } catch (EOFException e) {
+            if (bytes > 0) {
+                return bytes;
+            } else {
+                throw e;
+            }
+        }
     }
 
     public long tell() {
