@@ -1,0 +1,31 @@
+package org.graalvm.vm.x86.el.ast;
+
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.frame.VirtualFrame;
+
+public class AddNode extends Expression {
+    @Child private Expression left;
+    @Child private Expression right;
+
+    public AddNode(Expression left, Expression right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    @Override
+    public long execute(VirtualFrame frame, long pc) {
+        return left.execute(frame, pc) + right.execute(frame, pc);
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return "(" + left + " + " + right + ")";
+    }
+
+    @Override
+    public AddNode clone() {
+        CompilerAsserts.neverPartOfCompilation();
+        return new AddNode(left.clone(), right.clone());
+    }
+}

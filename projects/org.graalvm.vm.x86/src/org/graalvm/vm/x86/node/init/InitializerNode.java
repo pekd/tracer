@@ -57,6 +57,7 @@ import org.graalvm.vm.x86.AMD64Context;
 import org.graalvm.vm.x86.AMD64Register;
 import org.graalvm.vm.x86.ArchitecturalState;
 import org.graalvm.vm.x86.Options;
+import org.graalvm.vm.x86.el.ast.BooleanExpression;
 import org.graalvm.vm.x86.isa.AVXRegister;
 import org.graalvm.vm.x86.isa.Register;
 import org.graalvm.vm.x86.node.AMD64Node;
@@ -70,6 +71,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 public class InitializerNode extends AMD64Node {
+    private static final boolean TRACE = Options.getBoolean(Options.EXEC_TRACE);
+
     private static final Logger log = Trace.create(LoaderNode.class);
     @CompilationFinal(dimensions = 1) public static final byte[] BINARY = loadBinary();
 
@@ -92,7 +95,10 @@ public class InitializerNode extends AMD64Node {
     @Child private WriteFlagNode writeAC;
     @Child private WriteFlagNode writeID;
 
-    @CompilationFinal private FrameSlot instructionCount;
+    @Child private BooleanExpression tron;
+
+    private final FrameSlot instructionCount;
+    private final FrameSlot trace;
 
     public InitializerNode(ArchitecturalState state, String programName) {
         this(state, programName, null);
@@ -125,6 +131,11 @@ public class InitializerNode extends AMD64Node {
         writeID = state.getRegisters().getID().createWrite();
 
         instructionCount = state.getInstructionCount();
+        trace = state.getTrace();
+        if (TRACE) {
+            BooleanExpression expr = getContextReference().get().getTron();
+            tron = expr != null ? expr.clone() : null;
+        }
     }
 
     private static byte[] loadBinary() {
@@ -151,6 +162,13 @@ public class InitializerNode extends AMD64Node {
         }
 
         AMD64Context ctx = getContextReference().get();
+
+        if (TRACE) {
+            boolean trc = tron != null ? tron.execute(frame, 0) : true;
+            frame.setBoolean(trace, trc);
+            ctx.setTraceStatus(trc);
+        }
+
         VirtualMemory memory = ctx.getMemory();
         long stackbase = memory.pageStart(AMD64.STACK_BASE);
         long stacksize = memory.roundToPageSize(AMD64.STACK_SIZE);
@@ -189,7 +207,6 @@ public class InitializerNode extends AMD64Node {
         writeID.execute(frame, false);
 
         frame.setLong(instructionCount, 0);
-
         String[] args = ctx.getArguments();
         if (arguments != null) {
             args = arguments;

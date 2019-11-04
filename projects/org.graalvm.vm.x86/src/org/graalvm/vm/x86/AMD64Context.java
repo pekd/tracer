@@ -49,10 +49,12 @@ import org.graalvm.vm.posix.api.Stack;
 import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.x86.el.ast.BooleanExpression;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceWriter;
 import org.graalvm.vm.x86.node.debug.trace.LogStreamHandler;
 import org.graalvm.vm.x86.node.debug.trace.MemoryAccessTracer;
+import org.graalvm.vm.x86.node.debug.trace.TraceStatus;
 import org.graalvm.vm.x86.node.flow.TraceRegistry;
 import org.graalvm.vm.x86.posix.PosixEnvironment;
 import org.graalvm.vm.x86.posix.SyscallException;
@@ -69,7 +71,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
-public class AMD64Context {
+public class AMD64Context implements TraceStatus {
     private static final String ARCH_NAME = "x86_64";
     private static final String[] REGISTER_NAMES = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
 
@@ -131,6 +133,12 @@ public class AMD64Context {
 
     private final Assumption singleThreadedAssumption;
 
+    private final FrameSlot trace;
+    @CompilationFinal private BooleanExpression tron;
+    @CompilationFinal private BooleanExpression troff;
+
+    private boolean traceStatus;
+
     public AMD64Context(TruffleLanguage<AMD64Context> language, Env env, FrameDescriptor fd) {
         this(language, env, fd, null, null);
     }
@@ -144,7 +152,7 @@ public class AMD64Context {
         memory = VirtualMemory.create();
 
         if (traceWriter != null) {
-            MemoryAccessTracer memoryTracer = new MemoryAccessTracer(traceWriter);
+            MemoryAccessTracer memoryTracer = new MemoryAccessTracer(traceWriter, Options.getString(Options.EXEC_TRON) != null ? this : null);
             memory.setAccessLogger(memoryTracer);
         }
 
@@ -184,6 +192,8 @@ public class AMD64Context {
         id = frameDescriptor.addFrameSlot("id", FrameSlotKind.Boolean);
         instructionCount = frameDescriptor.addFrameSlot("instructionCount", FrameSlotKind.Long);
 
+        trace = frameDescriptor.addFrameSlot("trace", FrameSlotKind.Boolean);
+
         cpuState = frameDescriptor.addFrameSlot("cpustate", FrameSlotKind.Object);
         dispatchCpuState = frameDescriptor.addFrameSlot("dispatchCpuState", FrameSlotKind.Object);
         dispatchTrace = frameDescriptor.addFrameSlot("dispatchTrace", FrameSlotKind.Object);
@@ -198,6 +208,7 @@ public class AMD64Context {
         symbols = Collections.emptyNavigableMap();
         symbolResolver = new DefaultSymbolResolver(symbols);
         scratchMemory = 0;
+        traceStatus = true;
     }
 
     public void initialize() {
@@ -458,5 +469,35 @@ public class AMD64Context {
 
     public Assumption getSingleThreadedAssumption() {
         return singleThreadedAssumption;
+    }
+
+    public void setTron(BooleanExpression tron) {
+        this.tron = tron;
+    }
+
+    public BooleanExpression getTron() {
+        return tron;
+    }
+
+    public void setTroff(BooleanExpression troff) {
+        this.troff = troff;
+    }
+
+    public BooleanExpression getTroff() {
+        return troff;
+    }
+
+    public FrameSlot getTrace() {
+        return trace;
+    }
+
+    @Override
+    public boolean getTraceStatus() {
+        return traceStatus;
+    }
+
+    @Override
+    public void setTraceStatus(boolean status) {
+        traceStatus = status;
     }
 }

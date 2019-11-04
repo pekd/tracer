@@ -95,6 +95,7 @@ public class InitializeFromCpuStateNode extends AMD64Node {
 
     private void createChildrenIfNecessary() {
         if (!initialized) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             synchronized (lock) {
                 if (!initialized) {
                     createChildren();
@@ -105,7 +106,6 @@ public class InitializeFromCpuStateNode extends AMD64Node {
     }
 
     private void createChildren() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         ArchitecturalState state = getContextReference().get().getState();
         RegisterAccessFactory regs = state.getRegisters();
         rax = regs.getRegister(Register.RAX).createWrite();

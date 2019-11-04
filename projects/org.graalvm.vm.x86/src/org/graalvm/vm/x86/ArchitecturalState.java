@@ -55,6 +55,7 @@ public class ArchitecturalState {
     private final FrameSlot instructionCount;
     private final FrameSlot cpuState;
     private final FrameSlot trace;
+    private final FrameSlot isTrace;
     private final TraceRegistry traces;
     private final SubstitutionRegistry substitutions;
     private final Assumption singleThreaded;
@@ -70,6 +71,7 @@ public class ArchitecturalState {
         traces = context.getTraceRegistry();
         substitutions = context.getSubstitutionRegistry();
         singleThreaded = context.getSingleThreadedAssumption();
+        isTrace = context.getTrace();
     }
 
     public RegisterAccessFactory getRegisters() {
@@ -98,6 +100,10 @@ public class ArchitecturalState {
 
     public FrameSlot getDispatchTrace() {
         return trace;
+    }
+
+    public FrameSlot getTrace() {
+        return isTrace;
     }
 
     public TraceRegistry getTraceRegistry() {

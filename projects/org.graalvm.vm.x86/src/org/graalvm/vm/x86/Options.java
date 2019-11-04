@@ -93,6 +93,8 @@ public class Options {
 
     // tracing
     public static final BooleanOption EXEC_TRACE = new BooleanOption("vmx86.exec.trace", false);
+    public static final StringOption EXEC_TRON = new StringOption("vmx86.exec.tron", null);
+    public static final StringOption EXEC_TROFF = new StringOption("vmx86.exec.troff", null);
 
     private static class BooleanOption {
         public final String name;

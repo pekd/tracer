@@ -44,11 +44,14 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.ParseException;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.MemoryOptions;
 import org.graalvm.vm.memory.hardware.MMU;
 import org.graalvm.vm.util.log.Trace;
+import org.graalvm.vm.x86.el.ElParser;
+import org.graalvm.vm.x86.el.ast.BooleanExpression;
 import org.graalvm.vm.x86.node.InterpreterThreadRootNode;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceWriter;
 import org.graalvm.vm.x86.node.debug.trace.LogStreamHandler;
@@ -65,6 +68,7 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
     private static final boolean DEBUG = Options.getBoolean(Options.DEBUG_EXEC);
     private static final boolean DEBUG_TRACE = Options.getBoolean(Options.DEBUG_EXEC_TRACE);
     private static final boolean EXEC_TRACE = Options.getBoolean(Options.EXEC_TRACE);
+    private static final int BUFSZ = 64 * 1024; // trace buffer size
 
     protected FrameDescriptor fd = new FrameDescriptor();
 
@@ -83,14 +87,33 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
             String traceFile = Options.getString(Options.DEBUG_EXEC_TRACEFILE);
             log.info("Opening trace file " + traceFile);
             try {
-                OutputStream out = new BufferedOutputStream(new FileOutputStream(traceFile));
+                OutputStream out = new BufferedOutputStream(new FileOutputStream(traceFile), BUFSZ);
                 ExecutionTraceWriter trace = new ExecutionTraceWriter(out);
                 LogStreamHandler handler = new LogStreamHandler(trace);
                 Logger.getLogger("").addHandler(handler);
-                return new AMD64Context(this, env, fd, trace, handler);
+
+                AMD64Context ctx = new AMD64Context(this, env, fd, trace, handler);
+                ArchitecturalState state = ctx.getState();
+
+                // parse TRON/TROFF expressions
+                String tronExpr = Options.getString(Options.EXEC_TRON);
+                String troffExpr = Options.getString(Options.EXEC_TROFF);
+                if (tronExpr != null) {
+                    BooleanExpression tron = new BooleanExpression(new ElParser(tronExpr, state).parse());
+                    ctx.setTron(tron);
+                }
+                if (troffExpr != null) {
+                    BooleanExpression troff = new BooleanExpression(new ElParser(troffExpr, state).parse());
+                    ctx.setTroff(troff);
+                }
+
+                return ctx;
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
             }
+
         } else {
             return new AMD64Context(this, env, fd);
         }

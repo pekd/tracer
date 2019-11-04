@@ -46,45 +46,65 @@ import org.graalvm.vm.memory.vector.Vector256;
 import org.graalvm.vm.memory.vector.Vector512;
 
 public class MemoryAccessTracer implements MemoryAccessListener {
-    private ExecutionTraceWriter out;
+    private final ExecutionTraceWriter out;
+    private final TraceStatus trc;
 
-    public MemoryAccessTracer(ExecutionTraceWriter out) {
+    public MemoryAccessTracer(ExecutionTraceWriter out, TraceStatus trc) {
         this.out = out;
+        this.trc = trc;
     }
 
     public void logMemoryRead(long address, int size) {
-        out.memoryAccess(address, false, size);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, false, size);
+        }
     }
 
     public void logMemoryRead(long address, int size, long value) {
-        out.memoryAccess(address, false, size, value);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, false, size, value);
+        }
     }
 
     public void logMemoryRead(long address, Vector128 value) {
-        out.memoryAccess(address, false, 16, value);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, false, 16, value);
+        }
     }
 
     public void logMemoryRead(long address, Vector256 value) {
-        out.memoryAccess(address, false, 32);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, false, 32);
+        }
     }
 
     public void logMemoryRead(long address, Vector512 value) {
-        out.memoryAccess(address, false, 64);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, false, 64);
+        }
     }
 
     public void logMemoryWrite(long address, int size, long value) {
-        out.memoryAccess(address, true, size, value);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, true, size, value);
+        }
     }
 
     public void logMemoryWrite(long address, Vector128 value) {
-        out.memoryAccess(address, true, 16, value);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, true, 16, value);
+        }
     }
 
     public void logMemoryWrite(long address, Vector256 value) {
-        out.memoryAccess(address, true, 32);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, true, 32);
+        }
     }
 
     public void logMemoryWrite(long address, Vector512 value) {
-        out.memoryAccess(address, true, 64);
+        if (trc == null || trc.getTraceStatus()) {
+            out.memoryAccess(address, true, 64);
+        }
     }
 }

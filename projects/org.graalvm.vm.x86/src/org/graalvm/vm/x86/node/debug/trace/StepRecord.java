@@ -42,6 +42,7 @@ package org.graalvm.vm.x86.node.debug.trace;
 
 import java.io.IOException;
 
+import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
@@ -75,20 +76,41 @@ public class StepRecord extends Record {
         return AMD64InstructionDecoder.decode(getPC(), new CodeArrayReader(machinecode, 0));
     }
 
+    private String code() {
+        StringBuilder buf = new StringBuilder(machinecode.length * 4);
+        for (byte b : machinecode) {
+            if (buf.length() > 0) {
+                buf.append(", ");
+            }
+            buf.append("0x" + HexFormatter.tohex(b & 0xFF, 2));
+        }
+        return buf.toString();
+    }
+
     public String getDisassembly() {
         if (disasm == null) {
-            AMD64Instruction insn = getInstruction();
-            disasm = insn.getDisassembly();
-            disasmParts = insn.getDisassemblyComponents();
+            try {
+                AMD64Instruction insn = getInstruction();
+                disasm = insn.getDisassembly();
+                disasmParts = insn.getDisassemblyComponents();
+            } catch (Throwable t) {
+                disasm = "db\t" + code();
+                disasmParts = new String[]{"db", code()};
+            }
         }
         return disasm;
     }
 
     public String[] getDisassemblyComponents() {
         if (disasmParts == null && machinecode != null) {
-            AMD64Instruction insn = getInstruction();
-            disasm = insn.getDisassembly();
-            disasmParts = insn.getDisassemblyComponents();
+            try {
+                AMD64Instruction insn = getInstruction();
+                disasm = insn.getDisassembly();
+                disasmParts = insn.getDisassemblyComponents();
+            } catch (Throwable t) {
+                disasm = "db\t" + code();
+                disasmParts = new String[]{"db", code()};
+            }
         }
         return disasmParts;
     }

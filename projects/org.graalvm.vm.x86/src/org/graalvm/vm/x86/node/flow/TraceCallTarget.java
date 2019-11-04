@@ -67,6 +67,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -75,6 +76,7 @@ public class TraceCallTarget extends AMD64RootNode {
     private static final Logger log = Trace.create(TraceCallTarget.class);
 
     public static final boolean TRUFFLE_CALLS = getBoolean(Options.TRUFFLE_CALLS);
+    public static final boolean TRACE = getBoolean(Options.EXEC_TRACE);
 
     @Child private InitializeFromCpuStateNode write = new InitializeFromCpuStateNode();
     @Child private CopyToCpuStateNode read = new CopyToCpuStateNode();
@@ -83,18 +85,23 @@ public class TraceCallTarget extends AMD64RootNode {
     private final FrameSlot cpuStateSlot;
     private final FrameSlot gprMaskSlot;
     private final FrameSlot avxMaskSlot;
+    private final FrameSlot trace;
 
     private static final boolean CHECK = getBoolean(Options.TRACE_STATE_CHECK);
 
     private final long startPC;
 
+    private final ContextReference<AMD64Context> ctxref;
+
     protected TraceCallTarget(TruffleLanguage<AMD64Context> language, FrameDescriptor fd, long pc) {
         super(language, fd);
         startPC = pc;
-        AMD64Context ctx = language.getContextReference().get();
+        ctxref = language.getContextReference();
+        AMD64Context ctx = ctxref.get();
         cpuStateSlot = ctx.getCpuState();
         gprMaskSlot = ctx.getGPRMask();
         avxMaskSlot = ctx.getAVXMask();
+        trace = ctx.getTrace();
         singleThreaded = ctx.getSingleThreadedAssumption();
         dispatch = new TraceDispatchNode(ctx.getState(), ctx.getPosixEnvironment(), startPC);
         try {
@@ -251,6 +258,10 @@ public class TraceCallTarget extends AMD64RootNode {
 
         frame.setObject(gprMaskSlot, gprWriteMask);
         frame.setObject(avxMaskSlot, avxWriteMask);
+
+        if (TRACE) {
+            frame.setBoolean(trace, ctxref.get().getTraceStatus());
+        }
 
         long pc;
         boolean ret = false;

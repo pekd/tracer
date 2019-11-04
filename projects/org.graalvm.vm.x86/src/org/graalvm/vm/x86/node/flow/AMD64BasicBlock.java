@@ -471,6 +471,12 @@ public class AMD64BasicBlock extends AMD64Node {
                 written.add(r);
             }
         }
+        if (EXEC_TRACE) {
+            Register[] read = traceState.getUsedGPRRead();
+            for (Register r : read) {
+                regs.add(r);
+            }
+        }
         return regs;
     }
 
