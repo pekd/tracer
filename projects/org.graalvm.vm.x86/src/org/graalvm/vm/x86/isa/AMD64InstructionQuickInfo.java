@@ -126,27 +126,35 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static boolean isCall(byte[] machinecode) {
-        int op = getOpcodeOffset(machinecode);
-        switch (machinecode[op]) {
-            case AMD64Opcode.CALL_REL:
-                return true;
-            case AMD64Opcode.CALL_RM:
-                return new ModRM(machinecode[op + 1]).getReg() == 2;
-            default:
-                return false;
+        try {
+            int op = getOpcodeOffset(machinecode);
+            switch (machinecode[op]) {
+                case AMD64Opcode.CALL_REL:
+                    return true;
+                case AMD64Opcode.CALL_RM:
+                    return new ModRM(machinecode[op + 1]).getReg() == 2;
+                default:
+                    return false;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return false;
         }
     }
 
     public static boolean isJmp(byte[] machinecode) {
-        int op = getOpcodeOffset(machinecode);
-        switch (machinecode[op]) {
-            case AMD64Opcode.JMP_REL8:
-            case AMD64Opcode.JMP_REL32:
-                return true;
-            case AMD64Opcode.JMP_R:
-                return new ModRM(machinecode[op + 1]).getReg() == 4;
-            default:
-                return false;
+        try {
+            int op = getOpcodeOffset(machinecode);
+            switch (machinecode[op]) {
+                case AMD64Opcode.JMP_REL8:
+                case AMD64Opcode.JMP_REL32:
+                    return true;
+                case AMD64Opcode.JMP_R:
+                    return new ModRM(machinecode[op + 1]).getReg() == 4;
+                default:
+                    return false;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return false;
         }
     }
 
@@ -162,68 +170,72 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static InstructionType getType(byte[] machinecode) {
-        int op = getOpcodeOffset(machinecode);
-        switch (machinecode[op]) {
-            case AMD64Opcode.RET_NEAR:
-            case AMD64Opcode.RET_FAR:
-                return InstructionType.RET;
-            case AMD64Opcode.JMP_REL8:
-            case AMD64Opcode.JMP_REL32:
-                return InstructionType.JMP;
-            case AMD64Opcode.JMP_R:
-                switch (new ModRM(machinecode[op + 1]).getReg()) {
-                    case 2:
-                        return InstructionType.CALL;
-                    case 4:
-                        return InstructionType.JMP;
-                    default:
-                        return InstructionType.OTHER;
-                }
-            case AMD64Opcode.CALL_REL:
-                return InstructionType.CALL;
-            case AMD64Opcode.JA:
-            case AMD64Opcode.JAE:
-            case AMD64Opcode.JB:
-            case AMD64Opcode.JBE:
-            case AMD64Opcode.JE:
-            case AMD64Opcode.JG:
-            case AMD64Opcode.JGE:
-            case AMD64Opcode.JL:
-            case AMD64Opcode.JLE:
-            case AMD64Opcode.JNE:
-            case AMD64Opcode.JNO:
-            case AMD64Opcode.JNP:
-            case AMD64Opcode.JNS:
-            case AMD64Opcode.JO:
-            case AMD64Opcode.JP:
-            case AMD64Opcode.JS:
-                return InstructionType.JCC;
-            case AMD64Opcode.ESCAPE:
-                switch (machinecode[op + 1]) {
-                    case AMD64Opcode.JA32:
-                    case AMD64Opcode.JAE32:
-                    case AMD64Opcode.JB32:
-                    case AMD64Opcode.JBE32:
-                    case AMD64Opcode.JE32:
-                    case AMD64Opcode.JG32:
-                    case AMD64Opcode.JGE32:
-                    case AMD64Opcode.JL32:
-                    case AMD64Opcode.JLE32:
-                    case AMD64Opcode.JNE32:
-                    case AMD64Opcode.JNO32:
-                    case AMD64Opcode.JNP32:
-                    case AMD64Opcode.JNS32:
-                    case AMD64Opcode.JO32:
-                    case AMD64Opcode.JP32:
-                    case AMD64Opcode.JS32:
-                        return InstructionType.JCC;
-                    case AMD64Opcode.SYSCALL:
-                        return InstructionType.SYSCALL;
-                    default:
-                        return InstructionType.OTHER;
-                }
-            default:
-                return InstructionType.OTHER;
+        try {
+            int op = getOpcodeOffset(machinecode);
+            switch (machinecode[op]) {
+                case AMD64Opcode.RET_NEAR:
+                case AMD64Opcode.RET_FAR:
+                    return InstructionType.RET;
+                case AMD64Opcode.JMP_REL8:
+                case AMD64Opcode.JMP_REL32:
+                    return InstructionType.JMP;
+                case AMD64Opcode.JMP_R:
+                    switch (new ModRM(machinecode[op + 1]).getReg()) {
+                        case 2:
+                            return InstructionType.CALL;
+                        case 4:
+                            return InstructionType.JMP;
+                        default:
+                            return InstructionType.OTHER;
+                    }
+                case AMD64Opcode.CALL_REL:
+                    return InstructionType.CALL;
+                case AMD64Opcode.JA:
+                case AMD64Opcode.JAE:
+                case AMD64Opcode.JB:
+                case AMD64Opcode.JBE:
+                case AMD64Opcode.JE:
+                case AMD64Opcode.JG:
+                case AMD64Opcode.JGE:
+                case AMD64Opcode.JL:
+                case AMD64Opcode.JLE:
+                case AMD64Opcode.JNE:
+                case AMD64Opcode.JNO:
+                case AMD64Opcode.JNP:
+                case AMD64Opcode.JNS:
+                case AMD64Opcode.JO:
+                case AMD64Opcode.JP:
+                case AMD64Opcode.JS:
+                    return InstructionType.JCC;
+                case AMD64Opcode.ESCAPE:
+                    switch (machinecode[op + 1]) {
+                        case AMD64Opcode.JA32:
+                        case AMD64Opcode.JAE32:
+                        case AMD64Opcode.JB32:
+                        case AMD64Opcode.JBE32:
+                        case AMD64Opcode.JE32:
+                        case AMD64Opcode.JG32:
+                        case AMD64Opcode.JGE32:
+                        case AMD64Opcode.JL32:
+                        case AMD64Opcode.JLE32:
+                        case AMD64Opcode.JNE32:
+                        case AMD64Opcode.JNO32:
+                        case AMD64Opcode.JNP32:
+                        case AMD64Opcode.JNS32:
+                        case AMD64Opcode.JO32:
+                        case AMD64Opcode.JP32:
+                        case AMD64Opcode.JS32:
+                            return InstructionType.JCC;
+                        case AMD64Opcode.SYSCALL:
+                            return InstructionType.SYSCALL;
+                        default:
+                            return InstructionType.OTHER;
+                    }
+                default:
+                    return InstructionType.OTHER;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return InstructionType.OTHER;
         }
     }
 }
