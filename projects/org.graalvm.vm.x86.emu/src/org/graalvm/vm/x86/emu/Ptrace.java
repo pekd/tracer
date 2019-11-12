@@ -43,8 +43,8 @@ package org.graalvm.vm.x86.emu;
 import java.io.Closeable;
 import java.io.IOException;
 
+import org.graalvm.vm.memory.MemorySegment;
 import org.graalvm.vm.memory.hardware.linux.MemoryMap;
-import org.graalvm.vm.memory.hardware.linux.MemorySegment;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.x86.posix.Syscalls;
 

@@ -169,6 +169,16 @@ public class ExecutionTraceWriter implements Closeable {
     }
 
     @TruffleBoundary
+    public synchronized void memoryDump(long address, byte[] data) {
+        MemoryDumpRecord record = new MemoryDumpRecord(address, data);
+        try {
+            record.write(out);
+        } catch (IOException e) {
+            log.log(Level.WARNING, "Error while writing memory dump: " + e.getMessage(), e);
+        }
+    }
+
+    @TruffleBoundary
     public synchronized void mmap(long addr, long len, int prot, int flags, int fildes, long off, long result, String filename, byte[] data) {
         MmapRecord record = new MmapRecord(addr, len, prot, flags, fildes, off, filename, result);
         record.setData(data);

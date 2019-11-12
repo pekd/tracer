@@ -48,9 +48,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.memory.MemorySegment;
 import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.memory.hardware.linux.MemoryMap;
-import org.graalvm.vm.memory.hardware.linux.MemorySegment;
 import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.ProcessExitException;

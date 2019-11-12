@@ -42,18 +42,20 @@ package org.graalvm.vm.x86.emu;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.ByteMemory;
 import org.graalvm.vm.memory.Memory;
 import org.graalvm.vm.memory.MemoryPage;
+import org.graalvm.vm.memory.MemorySegment;
 import org.graalvm.vm.memory.PosixMemory;
 import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.memory.exception.SegmentationViolation;
 import org.graalvm.vm.memory.hardware.NullMemory;
 import org.graalvm.vm.memory.hardware.linux.MemoryMap;
-import org.graalvm.vm.memory.hardware.linux.MemorySegment;
 import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.memory.vector.Vector256;
 import org.graalvm.vm.memory.vector.Vector512;
@@ -421,6 +423,17 @@ public class PtraceVirtualMemory extends VirtualMemory {
             }
         } catch (IOException e) {
             log.log(Level.WARNING, "Cannot retrieve memory region info", e);
+        }
+    }
+
+    @Override
+    public List<MemorySegment> getSegments() {
+        try {
+            MemoryMap map = new MemoryMap(ptrace.getPid());
+            return map.getSegments();
+        } catch (IOException e) {
+            log.log(Level.WARNING, "Cannot retrieve memory map", e);
+            return Collections.emptyList();
         }
     }
 }

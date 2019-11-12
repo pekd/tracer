@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.graalvm.vm.memory.exception.SegmentationViolation;
 import org.graalvm.vm.memory.vector.Vector128;
@@ -731,5 +732,25 @@ public class JavaVirtualMemory extends VirtualMemory {
     public void printAddressInfo(long addr, PrintStream out) {
         MemoryPage page = get(addr);
         out.printf("Memory region name: '%s', base = 0x%016x (offset = 0x%016x)\n", page.name, page.base, addr - page.base);
+    }
+
+    private static MemorySegment getSegment(MemoryPage page) {
+        StringBuilder permissions = new StringBuilder(4);
+        if (page.r) {
+            permissions.append('r');
+        }
+        if (page.w) {
+            permissions.append('r');
+        }
+        if (page.x) {
+            permissions.append('r');
+        }
+        return new MemorySegment(page.base, page.end, permissions.toString(), page.fileOffset, page.name);
+    }
+
+    @Override
+    public Collection<MemorySegment> getSegments() {
+        CompilerAsserts.neverPartOfCompilation();
+        return pages.entrySet().stream().map(x -> getSegment(x.getValue())).sorted((x, y) -> Long.compareUnsigned(x.start, y.start)).collect(Collectors.toList());
     }
 }

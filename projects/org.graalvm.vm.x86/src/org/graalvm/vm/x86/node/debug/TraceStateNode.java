@@ -43,6 +43,9 @@ package org.graalvm.vm.x86.node.debug;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.graalvm.vm.memory.MemorySegment;
+import org.graalvm.vm.memory.VirtualMemory;
+import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.x86.AMD64Context;
 import org.graalvm.vm.x86.el.ast.BooleanExpression;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
@@ -138,6 +141,24 @@ public class TraceStateNode extends AMD64Node {
         traceWriter.step(state, insn);
     }
 
+    private void dumpMemory() {
+        CompilerAsserts.neverPartOfCompilation();
+        AMD64Context ctx = ctxref.get();
+        VirtualMemory mem = ctx.getMemory();
+        ExecutionTraceWriter trc = ctx.getTraceWriter();
+        for (MemorySegment segment : mem.getSegments()) {
+            if (segment.permissions.isRead()) {
+                // dump complete segment
+                byte[] data = new byte[(int) segment.length];
+                for (long addr = segment.start, i = 0; Long.compareUnsigned(addr, segment.end) < 0; addr += 8, i += 8) {
+                    long value = mem.getI64(addr);
+                    Endianess.set64bitLE(data, (int) i, value);
+                }
+                trc.memoryDump(segment.start, data);
+            }
+        }
+    }
+
     public void execute(VirtualFrame frame, long pc, AMD64Instruction insn) {
         boolean record = true;
         if (tron != null) {
@@ -156,6 +177,7 @@ public class TraceStateNode extends AMD64Node {
                 }
                 if (record) {
                     CompilerDirectives.transferToInterpreter();
+                    dumpMemory();
                     frame.setBoolean(trace, true);
                     ctxref.get().setTraceStatus(true);
                 }

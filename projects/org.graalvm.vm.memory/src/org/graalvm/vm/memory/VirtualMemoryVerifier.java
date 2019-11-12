@@ -41,6 +41,7 @@
 package org.graalvm.vm.memory;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.hardware.HybridVirtualMemory;
@@ -340,5 +341,11 @@ public class VirtualMemoryVerifier extends VirtualMemory {
     public void printAddressInfo(long address, PrintStream out) {
         CompilerAsserts.neverPartOfCompilation();
         jmem.printAddressInfo(address, out);
+    }
+
+    @Override
+    public Collection<MemorySegment> getSegments() {
+        CompilerAsserts.neverPartOfCompilation();
+        return jmem.getSegments();
     }
 }

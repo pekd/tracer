@@ -52,10 +52,12 @@ import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
+import org.graalvm.vm.x86.node.debug.trace.MemoryDumpRecord;
 import org.graalvm.vm.x86.node.debug.trace.MemoryEventRecord;
 import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
@@ -201,6 +203,20 @@ public class Analysis {
                 } else {
                     throw new AssertionError("unknown size: " + event.getSize());
                 }
+            }
+        } else if (record instanceof MemoryDumpRecord) {
+            MemoryDumpRecord dump = (MemoryDumpRecord) record;
+            long pc = 0;
+            long insn = 0;
+            if (lastStep != null) {
+                pc = lastStep.getPC();
+                insn = lastStep.getInstructionCount();
+            }
+            long addr = dump.getAddress();
+            byte[] data = dump.getData();
+            for (int i = 0; i < data.length; i += 8) {
+                long value = Endianess.get64bitLE(data, i);
+                memory.write(addr + i, (byte) 8, value, pc, insn, node);
             }
         } else if (record instanceof BrkRecord) {
             BrkRecord brk = (BrkRecord) record;

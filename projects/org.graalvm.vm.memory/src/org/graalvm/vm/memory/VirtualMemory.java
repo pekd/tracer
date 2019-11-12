@@ -41,6 +41,7 @@
 package org.graalvm.vm.memory;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.hardware.HybridVirtualMemory;
@@ -440,4 +441,6 @@ public abstract class VirtualMemory {
     public abstract void printMaps(PrintStream out);
 
     public abstract void printAddressInfo(long address, PrintStream out);
+
+    public abstract Collection<MemorySegment> getSegments();
 }

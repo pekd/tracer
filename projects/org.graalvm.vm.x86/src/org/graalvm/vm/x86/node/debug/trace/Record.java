@@ -117,6 +117,9 @@ public abstract class Record {
             case MemoryEventRecord.MAGIC:
                 record = new MemoryEventRecord();
                 break;
+            case MemoryDumpRecord.MAGIC:
+                record = new MemoryDumpRecord();
+                break;
             case StepRecord.MAGIC:
                 record = new StepRecord();
                 record.lastStateSupplier = lastState;

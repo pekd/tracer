@@ -42,10 +42,13 @@ package org.graalvm.vm.memory.hardware;
 
 import java.io.PrintStream;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.graalvm.vm.memory.JavaVirtualMemory;
 import org.graalvm.vm.memory.Memory;
 import org.graalvm.vm.memory.MemoryPage;
+import org.graalvm.vm.memory.MemorySegment;
 import org.graalvm.vm.memory.PosixMemory;
 import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.memory.vector.Vector128;
@@ -461,5 +464,13 @@ public class HybridVirtualMemory extends VirtualMemory {
         } else {
             jmem.printAddressInfo(address, out);
         }
+    }
+
+    @Override
+    public List<MemorySegment> getSegments() {
+        List<MemorySegment> result = new ArrayList<>();
+        result.addAll(nmem.getSegments());
+        result.addAll(jmem.getSegments());
+        return result;
     }
 }

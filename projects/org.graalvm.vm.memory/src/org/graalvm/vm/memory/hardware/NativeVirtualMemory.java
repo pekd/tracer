@@ -46,16 +46,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.graalvm.vm.memory.ByteMemory;
 import org.graalvm.vm.memory.Memory;
 import org.graalvm.vm.memory.MemoryOptions;
 import org.graalvm.vm.memory.MemoryPage;
+import org.graalvm.vm.memory.MemorySegment;
 import org.graalvm.vm.memory.PosixMemory;
 import org.graalvm.vm.memory.VirtualMemory;
 import org.graalvm.vm.memory.exception.SegmentationViolation;
 import org.graalvm.vm.memory.hardware.linux.MemoryMap;
-import org.graalvm.vm.memory.hardware.linux.MemorySegment;
 import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.memory.vector.Vector256;
 import org.graalvm.vm.memory.vector.Vector512;
@@ -730,5 +731,10 @@ public class NativeVirtualMemory extends VirtualMemory {
                 out.printf("Memory region name: '%s', base = 0x%016x (offset = 0x%016x)\n", seg.name, seg.start, addr - seg.start);
             }
         }
+    }
+
+    @Override
+    public List<MemorySegment> getSegments() {
+        return map.stream().map(this::segment).collect(Collectors.toList());
     }
 }
