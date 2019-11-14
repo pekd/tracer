@@ -50,6 +50,7 @@ import org.graalvm.vm.memory.ByteMemory;
 import org.graalvm.vm.memory.Memory;
 import org.graalvm.vm.memory.MemoryPage;
 import org.graalvm.vm.memory.VirtualMemory;
+import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.AMD64;
@@ -65,6 +66,7 @@ import org.graalvm.vm.x86.node.AVXRegisterWriteNode;
 import org.graalvm.vm.x86.node.RegisterWriteNode;
 import org.graalvm.vm.x86.node.WriteFlagNode;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -212,10 +214,20 @@ public class InitializerNode extends AMD64Node {
             args = arguments;
         }
 
+        boolean execstack;
         if (BINARY != null) {
-            setup.executeELF(frame, programName, args, BINARY);
+            execstack = (boolean) setup.executeELF(frame, programName, args, BINARY);
         } else {
-            setup.execute(frame, programName, args);
+            execstack = (boolean) setup.execute(frame, programName, args);
+        }
+
+        if (execstack) {
+            try {
+                memory.mprotect(stack.base, stack.size, true, true, true);
+            } catch (PosixException e) {
+                CompilerDirectives.transferToInterpreter();
+                log.log(Level.WARNING, "Failed to make stack executable: " + e.getMessage());
+            }
         }
     }
 }

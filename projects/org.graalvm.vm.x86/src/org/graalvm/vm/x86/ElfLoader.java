@@ -182,6 +182,8 @@ public class ElfLoader {
 
     private final ExecutionTraceWriter traceWriter;
 
+    private boolean execstack = true;
+
     public ElfLoader(ExecutionTraceWriter traceWriter) {
         this.traceWriter = traceWriter;
         progname = "";
@@ -208,6 +210,10 @@ public class ElfLoader {
 
     public boolean isAMD64() {
         return amd64;
+    }
+
+    public boolean isExecStack() {
+        return execstack;
     }
 
     public void setPosixEnvironment(PosixEnvironment env) {
@@ -269,6 +275,13 @@ public class ElfLoader {
 
         symbols = new TreeMap<>();
 
+        // check if execstack/noexecstack
+        for (ProgramHeader hdr : elf.getProgramHeaders()) {
+            if (hdr.getType() == Elf.PT_GNU_STACK) {
+                execstack = hdr.getFlag(Elf.PF_X);
+            }
+        }
+
         for (ProgramHeader hdr : elf.getProgramHeaders()) {
             if (hdr.getType() == Elf.PT_LOAD || hdr.getType() == Elf.PT_PHDR) {
                 long size = hdr.getMemorySize();
@@ -295,7 +308,7 @@ public class ElfLoader {
                 MemoryPage p = new MemoryPage(new ByteMemory(load, false), start, load.length, filename, off);
                 p.r = hdr.getFlag(Elf.PF_R);
                 p.w = hdr.getFlag(Elf.PF_W);
-                p.x = hdr.getFlag(Elf.PF_X);
+                p.x = hdr.getFlag(Elf.PF_X) | execstack;
                 memory.add(p);
 
                 if (hdr.getType() == Elf.PT_PHDR) {

@@ -176,7 +176,7 @@ public class LoaderNode extends AMD64Node {
         writeSP.executeI64(frame, loader.getSP());
         ctx.setSymbols(loader.getSymbols());
 
-        return null;
+        return loader.isExecStack();
     }
 
     public Object executeELF(VirtualFrame frame, String execfn, String[] args, byte[] elf) {
@@ -208,6 +208,6 @@ public class LoaderNode extends AMD64Node {
         writeSP.executeI64(frame, loader.getSP());
         ctx.setSymbols(loader.getSymbols());
 
-        return null;
+        return loader.isExecStack();
     }
 }
