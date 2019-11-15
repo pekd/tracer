@@ -129,7 +129,7 @@ public class MainWindow extends JFrame {
         setLayout(new BorderLayout());
         add(BorderLayout.CENTER, view = new TraceView(this::setStatus, this::setPosition));
         JPanel south = new JPanel(new BorderLayout());
-        south.add(BorderLayout.CENTER, status = new JLabel(""));
+        south.add(BorderLayout.CENTER, status = new JLabel("Ready"));
         south.add(BorderLayout.EAST, position = new JLabel(""));
         add(BorderLayout.SOUTH, south);
 
