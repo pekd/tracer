@@ -51,7 +51,6 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 
-import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
@@ -68,6 +67,7 @@ public class TraceView extends JPanel {
     private StateView state;
     private InstructionView insns;
     private MemoryView mem;
+    private Watches watches;
 
     private ComputedSymbol selectedSymbol;
 
@@ -77,7 +77,11 @@ public class TraceView extends JPanel {
         super(new BorderLayout());
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
-        rightSplit.setBottomComponent(mem = new MemoryView(status, this::jump));
+        JSplitPane rightBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        rightBottomSplit.setTopComponent(mem = new MemoryView(status, this::jump));
+        rightBottomSplit.setBottomComponent(watches = new Watches(status));
+        rightBottomSplit.setResizeWeight(0.5);
+        rightSplit.setBottomComponent(rightBottomSplit);
         rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         content.setLeftComponent(insns = new InstructionView(status, position));
@@ -105,15 +109,14 @@ public class TraceView extends JPanel {
 
             StepRecord step = insns.getSelectedInstruction();
             StepRecord previous = insns.getPreviousInstruction();
-            CallArgsRecord args = insns.getSelectedInstructionCallArguments();
             if (step != null) {
                 if (previous != null) {
                     state.setState(previous, step);
                 } else {
                     state.setState(step);
                 }
-                state.setCallArguments(args);
                 mem.setStep(step);
+                watches.setStep(step);
             }
             if (insns.getSelectedNode() instanceof BlockNode) {
                 BlockNode block = (BlockNode) insns.getSelectedNode();
@@ -135,6 +138,7 @@ public class TraceView extends JPanel {
                 insns.set(node);
                 insns.select(node.getFirstNode());
                 mem.setStep(node.getFirstStep());
+                watches.setStep(node.getFirstStep());
             }
 
             public void ret(RecordNode ret) {
@@ -146,6 +150,7 @@ public class TraceView extends JPanel {
                     insns.set(parent);
                     insns.select(par);
                     mem.setStep(par.getHead());
+                    watches.setStep(par.getHead());
                 }
             }
         });
@@ -206,6 +211,7 @@ public class TraceView extends JPanel {
         insns.setTraceAnalyzer(trc);
         state.setTraceAnalyzer(trc);
         mem.setTraceAnalyzer(trc);
+        watches.setTraceAnalyzer(trc);
         symbols.setTraceAnalyzer(trc);
 
         trc.addSymbolRenameListener((sym) -> insns.repaint());
@@ -219,6 +225,7 @@ public class TraceView extends JPanel {
         insns.select(root.getFirstNode());
         state.setState(root.getFirstStep());
         mem.setStep(root.getFirstStep());
+        watches.setStep(root.getFirstStep());
     }
 
     public Node getSelectedNode() {

@@ -50,7 +50,6 @@ import java.util.logging.Logger;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
-import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
@@ -60,20 +59,14 @@ public class BlockNode extends Node {
     private static Logger log = Trace.create(BlockNode.class);
 
     private StepRecord head;
-    private CallArgsRecord callArgs;
     private List<Node> children;
 
     public BlockNode(StepRecord head) {
-        this(head, null, null);
+        this(head, null);
     }
 
     public BlockNode(StepRecord head, List<Node> children) {
-        this(head, children, null);
-    }
-
-    public BlockNode(StepRecord head, List<Node> children, CallArgsRecord args) {
         this.head = head;
-        this.callArgs = args;
         if (children != null) {
             setChildren(children);
         }
@@ -88,16 +81,8 @@ public class BlockNode extends Node {
         }
     }
 
-    public void setArguments(CallArgsRecord args) {
-        this.callArgs = args;
-    }
-
     public StepRecord getHead() {
         return head;
-    }
-
-    public CallArgsRecord getCallArguments() {
-        return callArgs;
     }
 
     public List<Node> getNodes() {
@@ -174,7 +159,6 @@ public class BlockNode extends Node {
                     progress.progressUpdate(in.tell());
                 }
                 List<Node> result = new ArrayList<>();
-                CallArgsRecord args = null;
                 int cnt = 0;
                 while (true) {
                     Node child = parseRecord(in, analysis, progress, tid);
@@ -188,9 +172,6 @@ public class BlockNode extends Node {
                     } else {
                         cnt++;
                     }
-                    if (args == null && child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof CallArgsRecord) {
-                        args = (CallArgsRecord) ((RecordNode) child).getRecord();
-                    }
                     if (child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof StepRecord) {
                         StepRecord s = (StepRecord) ((RecordNode) child).getRecord();
                         if (s.getMachinecode() == null || AMD64InstructionQuickInfo.isRet(s.getMachinecode())) {
@@ -202,7 +183,6 @@ public class BlockNode extends Node {
                     }
                 }
                 block.setChildren(result);
-                block.setArguments(args);
                 return block;
             } else {
                 RecordNode node = new RecordNode(record);

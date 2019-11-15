@@ -70,7 +70,6 @@ import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
 import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo.InstructionType;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
-import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Subroutine;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
@@ -398,20 +397,6 @@ public class InstructionView extends JPanel {
             return ((BlockNode) node).getHead();
         } else {
             return (StepRecord) ((RecordNode) node).getRecord();
-        }
-    }
-
-    public CallArgsRecord getSelectedInstructionCallArguments() {
-        int selected = insns.getSelectedIndex();
-        if (selected == -1) {
-            return null;
-        }
-
-        Node node = instructions.get(selected);
-        if (node instanceof BlockNode) {
-            return ((BlockNode) node).getCallArguments();
-        } else {
-            return null;
         }
     }
 

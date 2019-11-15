@@ -50,7 +50,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
-import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
@@ -82,7 +81,6 @@ public class StateView extends JPanel {
 
     private StepRecord step;
     private StepRecord previous;
-    private CallArgsRecord args;
 
     private TraceAnalyzer trc;
 
@@ -103,24 +101,13 @@ public class StateView extends JPanel {
     public void setState(StepRecord step) {
         this.previous = null;
         this.step = step;
-        this.args = null;
         update();
     }
 
     public void setState(StepRecord previous, StepRecord current) {
         this.previous = previous;
         this.step = current;
-        this.args = null;
         update();
-    }
-
-    public void setCallArguments(CallArgsRecord args) {
-        this.args = args;
-        update();
-    }
-
-    private static String encodeHTML(String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;");
     }
 
     private String get() {
@@ -134,11 +121,7 @@ public class StateView extends JPanel {
     private void update() {
         String content;
         if (step != null) {
-            if (args != null) {
-                content = get() + "\n\n" + encodeHTML(args.toString());
-            } else {
-                content = get();
-            }
+            content = get();
         } else {
             content = "";
         }
