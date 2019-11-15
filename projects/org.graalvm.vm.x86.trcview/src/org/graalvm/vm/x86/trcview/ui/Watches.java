@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
 import org.graalvm.vm.util.HexFormatter;
@@ -26,6 +28,8 @@ import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
 public class Watches extends JPanel {
+    private static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 11);
+
     private List<String> watches;
     private List<Expression> expressions;
     private Model model;
@@ -41,33 +45,62 @@ public class Watches extends JPanel {
         expressions = new ArrayList<>();
 
         JTable table = new JTable(model = new Model());
-        table.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        table.setFont(FONT);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         add(BorderLayout.CENTER, new JScrollPane(table));
 
         JPanel buttons = new JPanel(new FlowLayout());
+        JButton addend = new JButton("E");
         JButton add = new JButton("+");
         JButton remove = new JButton("-");
-        add.addActionListener(e -> {
+        addend.addActionListener(e -> {
+            int index = table.getSelectedRow();
             watches.add("0");
             expressions.add(new ValueNode(0));
             model.changed();
             remove.setEnabled(true);
+            if (index != -1) {
+                table.setRowSelectionInterval(index, index);
+            }
+        });
+        add.addActionListener(e -> {
+            int index = table.getSelectedRow();
+            if (index == -1) {
+                index = watches.size();
+            }
+            watches.add(index, "0");
+            expressions.add(index, new ValueNode(0));
+            model.changed();
+            remove.setEnabled(true);
+            table.setRowSelectionInterval(index, index);
         });
         remove.addActionListener(e -> {
             if (watches.size() > 0) {
-                int last = watches.size() - 1;
-                watches.remove(last);
-                expressions.remove(last);
+                int index = table.getSelectedRow();
+                if (index == -1) {
+                    index = watches.size() - 1;
+                }
+                watches.remove(index);
+                expressions.remove(index);
                 model.changed();
-                if (last == 0) {
+                if (watches.isEmpty()) {
                     remove.setEnabled(false);
+                } else {
+                    if (index >= watches.size()) {
+                        index--;
+                    }
+                    table.setRowSelectionInterval(index, index);
                 }
             }
         });
         remove.setEnabled(false);
         buttons.add(add);
+        buttons.add(addend);
         buttons.add(remove);
         add(BorderLayout.SOUTH, buttons);
+
+        DefaultCellEditor cellEditor = (DefaultCellEditor) table.getDefaultEditor(Object.class);
+        cellEditor.getComponent().setFont(FONT);
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
