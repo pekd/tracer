@@ -104,10 +104,14 @@ public class Analysis {
         idcnt = 0;
     }
 
-    public void process(Record record, Node node) {
+    private void add(Node node) {
         assert nodes.size() == idcnt;
         node.setId(idcnt++);
         nodes.add(node);
+    }
+
+    public void process(Record record, Node node) {
+        add(node);
 
         if (record instanceof StepRecord) {
             steps++;
@@ -232,9 +236,7 @@ public class Analysis {
     }
 
     public void finish(BlockNode root) {
-        assert nodes.size() == idcnt;
-        root.setId(idcnt++);
-        nodes.add(root);
+        add(root);
 
         StepRecord first = root.getFirstStep();
         if (symbols.get(first.getPC()) == null) {
@@ -242,6 +244,7 @@ public class Analysis {
             symbols.visit(root.getFirstNode());
         }
 
+        // set default signatures for well-known symbols
         for (ComputedSymbol sym : symbols.getSymbols()) {
             switch (sym.name) {
                 case "main":
