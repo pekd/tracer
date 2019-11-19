@@ -12,6 +12,7 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.arch.Architecture;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
@@ -88,4 +89,6 @@ public interface TraceAnalyzer {
     long getFileOffset(long pc);
 
     String getFilename(long pc);
+
+    Architecture getArchitecture();
 }

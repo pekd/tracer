@@ -90,6 +90,8 @@ public class ServerConnection extends Thread implements AutoCloseable {
         this.data = data;
         in = new BEInputStream(new BufferedInputStream(client.getInputStream()));
         out = new BEOutputStream(new BufferedOutputStream(client.getOutputStream()));
+        out.write16bit(data.arch.getId());
+        out.flush();
     }
 
     public void close() throws IOException {

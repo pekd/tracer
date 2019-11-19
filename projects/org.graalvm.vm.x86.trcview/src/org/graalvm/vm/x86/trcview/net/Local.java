@@ -21,6 +21,7 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.arch.Architecture;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
@@ -28,6 +29,7 @@ import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 public class Local implements TraceAnalyzer {
     private static final Logger log = Trace.create(TraceAnalyzer.class);
 
+    private Architecture arch;
     private SymbolResolver resolver;
     private SymbolTable symbols;
     private BlockNode root;
@@ -36,7 +38,8 @@ public class Local implements TraceAnalyzer {
     private long steps;
     private List<ChangeListener> symbolChangeListeners;
 
-    public Local(BlockNode root, Analysis analysis) {
+    public Local(Architecture arch, BlockNode root, Analysis analysis) {
+        this.arch = arch;
         this.root = root;
         resolver = analysis.getSymbolResolver();
         symbols = analysis.getComputedSymbolTable();
@@ -229,5 +232,10 @@ public class Local implements TraceAnalyzer {
     @Override
     public String getFilename(long pc) {
         return files.getFilename(pc);
+    }
+
+    @Override
+    public Architecture getArchitecture() {
+        return arch;
     }
 }

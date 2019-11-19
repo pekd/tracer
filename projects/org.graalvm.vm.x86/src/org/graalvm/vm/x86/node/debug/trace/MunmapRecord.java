@@ -71,6 +71,10 @@ public class MunmapRecord extends Record {
         return len;
     }
 
+    public int getResult() {
+        return result;
+    }
+
     @Override
     protected int getDataSize() {
         return 2 * 8 + 4;

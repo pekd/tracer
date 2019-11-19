@@ -79,8 +79,6 @@ import javax.swing.SwingWorker;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.util.ui.MessageBox;
-import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
@@ -88,6 +86,8 @@ import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.TraceReader;
 import org.graalvm.vm.x86.trcview.net.Client;
 import org.graalvm.vm.x86.trcview.net.Local;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
@@ -326,7 +326,7 @@ public class MainWindow extends JFrame {
         gotoPC.setMnemonic('g');
         gotoPC.setAccelerator(KeyStroke.getKeyStroke('g'));
         gotoPC.addActionListener(e -> {
-            StepRecord step = view.getSelectedInstruction();
+            StepEvent step = view.getSelectedInstruction();
             String input;
             if (step != null) {
                 long loc = step.getPC();
@@ -397,7 +397,7 @@ public class MainWindow extends JFrame {
         gotoNext.setMnemonic('n');
         gotoNext.setAccelerator(KeyStroke.getKeyStroke('c'));
         gotoNext.addActionListener(e -> {
-            StepRecord step = view.getSelectedInstruction();
+            StepEvent step = view.getSelectedInstruction();
             if (step != null) {
                 long pc = step.getPC();
                 Node n = trc.getNextPC(view.getSelectedNode(), pc);
@@ -459,7 +459,7 @@ public class MainWindow extends JFrame {
             String text = "Loading " + file;
             setStatus(text);
             setPosition(-1);
-            ExecutionTraceReader reader = new ExecutionTraceReader(in);
+            TraceReader reader = new TraceReader(in);
             Analysis analysis = new Analysis();
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
@@ -471,7 +471,7 @@ public class MainWindow extends JFrame {
             setStatus("Trace loaded");
             setTitle(file + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
-                trc = new Local(root, analysis);
+                trc = new Local(reader.getArchitecture(), root, analysis);
                 view.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);

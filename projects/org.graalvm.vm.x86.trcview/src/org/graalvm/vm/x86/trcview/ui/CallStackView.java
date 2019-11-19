@@ -57,8 +57,8 @@ import javax.swing.JScrollPane;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.LevelPeekListener;
 import org.graalvm.vm.x86.trcview.ui.event.LevelUpListener;
@@ -197,7 +197,7 @@ public class CallStackView extends JPanel {
         }
     }
 
-    private String format(StepRecord step) {
+    private String format(StepEvent step) {
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
         buf.append(HexFormatter.tohex(step.getPC(), 16));
@@ -221,7 +221,7 @@ public class CallStackView extends JPanel {
             block = trc.getParent(block);
         }
         if (block != null && block.getHead() == null) {
-            StepRecord first = block.getFirstStep();
+            StepEvent first = block.getFirstStep();
             callStack.add("0x" + HexFormatter.tohex(first.getPC(), 16) + " <_start>");
             callStackBlocks.add(block);
         }

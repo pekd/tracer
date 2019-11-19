@@ -43,6 +43,7 @@ package org.graalvm.vm.x86.isa;
 public class AMD64InstructionQuickInfo {
     public static enum InstructionType {
         JMP,
+        JMP_INDIRECT,
         CALL,
         RET,
         JCC,
@@ -184,7 +185,7 @@ public class AMD64InstructionQuickInfo {
                         case 2:
                             return InstructionType.CALL;
                         case 4:
-                            return InstructionType.JMP;
+                            return InstructionType.JMP_INDIRECT;
                         default:
                             return InstructionType.OTHER;
                     }

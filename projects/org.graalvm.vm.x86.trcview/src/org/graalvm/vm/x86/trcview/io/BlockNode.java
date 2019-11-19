@@ -49,23 +49,22 @@ import java.util.logging.Logger;
 
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
-import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
-import org.graalvm.vm.x86.node.debug.trace.Record;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
+import org.graalvm.vm.x86.trcview.io.data.Event;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.TraceReader;
 
 public class BlockNode extends Node {
     private static Logger log = Trace.create(BlockNode.class);
 
-    private StepRecord head;
+    private StepEvent head;
     private List<Node> children;
 
-    public BlockNode(StepRecord head) {
+    public BlockNode(StepEvent head) {
         this(head, null);
     }
 
-    public BlockNode(StepRecord head, List<Node> children) {
+    public BlockNode(StepEvent head, List<Node> children) {
         this.head = head;
         if (children != null) {
             setChildren(children);
@@ -81,7 +80,7 @@ public class BlockNode extends Node {
         }
     }
 
-    public StepRecord getHead() {
+    public StepEvent getHead() {
         return head;
     }
 
@@ -91,37 +90,38 @@ public class BlockNode extends Node {
 
     public Node getFirstNode() {
         for (Node n : children) {
-            if (n instanceof BlockNode || n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
+            if (n instanceof BlockNode || n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
                 return n;
             }
         }
         return null;
     }
 
-    public StepRecord getFirstStep() {
+    public StepEvent getFirstStep() {
         for (Node n : children) {
-            if (n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
-                return (StepRecord) ((RecordNode) n).getRecord();
+            if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
+                return (StepEvent) ((EventNode) n).getEvent();
             } else if (n instanceof BlockNode) {
                 return ((BlockNode) n).getFirstStep();
             }
         }
+        log.log(Levels.WARNING, "No step event found! " + children.size() + " children");
         return null;
     }
 
-    public static BlockNode read(ExecutionTraceReader in, Analysis analysis) throws IOException {
+    public static BlockNode read(TraceReader in, Analysis analysis) throws IOException {
         return read(in, analysis, null);
     }
 
-    public static BlockNode read(ExecutionTraceReader in, Analysis analysis, ProgressListener progress) throws IOException {
+    public static BlockNode read(TraceReader in, Analysis analysis, ProgressListener progress) throws IOException {
         List<Node> nodes = new ArrayList<>();
         Node node;
         int tid = 0;
         while ((node = parseRecord(in, analysis, progress, tid)) != null) {
             nodes.add(node);
             if (tid == 0) {
-                if (node instanceof RecordNode) {
-                    tid = ((RecordNode) node).getRecord().getTid();
+                if (node instanceof EventNode) {
+                    tid = ((EventNode) node).getEvent().getTid();
                 } else if (node instanceof BlockNode) {
                     tid = ((BlockNode) node).getFirstStep().getTid();
                 }
@@ -130,31 +130,31 @@ public class BlockNode extends Node {
         return new BlockNode(null, nodes);
     }
 
-    private static Node parseRecord(ExecutionTraceReader in, Analysis analysis, ProgressListener progress, int thread) throws IOException {
+    private static Node parseRecord(TraceReader in, Analysis analysis, ProgressListener progress, int thread) throws IOException {
         int tid = thread;
-        Record record = null;
+        Event event = null;
         try {
-            record = in.read();
+            event = in.read();
         } catch (EOFException e) {
             log.log(Levels.WARNING, "Unexpected EOF", e);
         }
-        if (record == null) {
+        if (event == null) {
             return null;
         }
-        while (tid != 0 && record.getTid() != tid) {
-            record = in.read();
-            if (record == null) {
+        while (tid != 0 && event.getTid() != tid) {
+            event = in.read();
+            if (event == null) {
                 return null;
             }
         }
         if (tid == 0) {
-            tid = record.getTid();
+            tid = event.getTid();
         }
-        if (record instanceof StepRecord) {
-            StepRecord step = (StepRecord) record;
-            if (step.getMachinecode() != null && AMD64InstructionQuickInfo.isCall(step.getMachinecode())) {
+        if (event instanceof StepEvent) {
+            StepEvent step = (StepEvent) event;
+            if (step.getMachinecode() != null && step.isCall()) {
                 BlockNode block = new BlockNode(step);
-                analysis.process(record, block);
+                analysis.process(event, block);
                 if (progress != null) {
                     progress.progressUpdate(in.tell());
                 }
@@ -172,9 +172,9 @@ public class BlockNode extends Node {
                     } else {
                         cnt++;
                     }
-                    if (child instanceof RecordNode && ((RecordNode) child).getRecord() instanceof StepRecord) {
-                        StepRecord s = (StepRecord) ((RecordNode) child).getRecord();
-                        if (s.getMachinecode() == null || AMD64InstructionQuickInfo.isRet(s.getMachinecode())) {
+                    if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
+                        StepEvent s = (StepEvent) ((EventNode) child).getEvent();
+                        if (s.getMachinecode() == null || s.isReturn()) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
                             }
@@ -185,13 +185,13 @@ public class BlockNode extends Node {
                 block.setChildren(result);
                 return block;
             } else {
-                RecordNode node = new RecordNode(record);
-                analysis.process(record, node);
+                EventNode node = new EventNode(event);
+                analysis.process(event, node);
                 return node;
             }
         } else {
-            RecordNode node = new RecordNode(record);
-            analysis.process(record, node);
+            EventNode node = new EventNode(event);
+            analysis.process(event, node);
             return node;
         }
     }

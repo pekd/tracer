@@ -7,17 +7,15 @@ import java.util.stream.Collectors;
 
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
-import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
-import org.graalvm.vm.x86.node.debug.trace.FullCpuStateRecord;
-import org.graalvm.vm.x86.node.debug.trace.Record;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.expression.TypeParser;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
-import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.io.data.Event;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 
 public class IO {
     public static final String readString(WordInputStream in) throws IOException {
@@ -211,16 +209,12 @@ public class IO {
         }
     }
 
-    private static final StepRecord readStep(WordInputStream in) throws IOException {
-        byte[] machinecode = readArray(in);
-        CpuStateRecord state = Record.read(in, null);
-        return new StepRecord(machinecode, state);
+    private static final StepEvent readStep(WordInputStream in) throws IOException {
+        return Event.read(in);
     }
 
-    private static final void writeStep(WordOutputStream out, StepRecord step) throws IOException {
-        writeArray(out, step.getMachinecode());
-        CpuStateRecord state = new FullCpuStateRecord(step.getState().getState());
-        state.write(out);
+    private static final void writeStep(WordOutputStream out, StepEvent step) throws IOException {
+        step.write(out);
     }
 
     public static final Node readNode(WordInputStream in) throws IOException {
@@ -242,25 +236,25 @@ public class IO {
         Node node;
         switch (type) {
             case 0:
-                node = new RecordNode(Record.read(in, null));
+                node = new EventNode(Event.read(in));
                 node.setParent(parentNode);
                 node.setId(id);
                 return node;
             case 1:
-                node = new RecordNode(readStep(in));
+                node = new EventNode(readStep(in));
                 node.setParent(parentNode);
                 node.setId(id);
                 return node;
             case 2: {
-                StepRecord head = null;
+                StepEvent head = null;
                 if (in.read() == 0) {
                     // no head
                 } else {
                     head = readStep(in);
                 }
                 in.read32bit(); // node count
-                StepRecord first = readStep(in);
-                node = new BlockNode(head, Arrays.asList(new RecordNode(first)));
+                StepEvent first = readStep(in);
+                node = new BlockNode(head, Arrays.asList(new EventNode(first)));
                 node.setParent(parentNode);
                 node.setId(id);
                 return node;
@@ -284,15 +278,15 @@ public class IO {
         } else if (parent.getHead() == null) {
             out.write64bit(-2);
         } else {
-            out.write64bit(parent.getHead().getInstructionCount());
+            out.write64bit(parent.getHead().getStep());
         }
 
-        if (node instanceof RecordNode) {
-            RecordNode n = (RecordNode) node;
-            Record r = n.getRecord();
-            if (r instanceof StepRecord) {
+        if (node instanceof EventNode) {
+            EventNode n = (EventNode) node;
+            Event r = n.getEvent();
+            if (r instanceof StepEvent) {
                 out.write(1);
-                writeStep(out, (StepRecord) r);
+                writeStep(out, (StepEvent) r);
             } else {
                 out.write(0);
                 r.write(out);

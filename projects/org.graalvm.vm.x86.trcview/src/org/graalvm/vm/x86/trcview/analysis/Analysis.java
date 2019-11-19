@@ -55,26 +55,25 @@ import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
-import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
-import org.graalvm.vm.x86.node.debug.trace.MemoryDumpRecord;
-import org.graalvm.vm.x86.node.debug.trace.MemoryEventRecord;
-import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
-import org.graalvm.vm.x86.node.debug.trace.Record;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
-import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.type.DataType;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.io.data.BrkEvent;
+import org.graalvm.vm.x86.trcview.io.data.Event;
+import org.graalvm.vm.x86.trcview.io.data.MemoryDumpEvent;
+import org.graalvm.vm.x86.trcview.io.data.MemoryEvent;
+import org.graalvm.vm.x86.trcview.io.data.MmapEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.SymbolTableEvent;
 
 public class Analysis {
     private static final Logger log = Trace.create(Analysis.class);
 
     private SymbolTable symbols;
-    private StepRecord lastStep;
+    private StepEvent lastStep;
 
     private NavigableMap<Long, Symbol> symbolTable;
     private NavigableMap<Long, MappedFile> mappedFiles;
@@ -110,16 +109,16 @@ public class Analysis {
         nodes.add(node);
     }
 
-    public void process(Record record, Node node) {
+    public void process(Event event, Node node) {
         add(node);
 
-        if (record instanceof StepRecord) {
+        if (event instanceof StepEvent) {
             steps++;
-            StepRecord step = (StepRecord) record;
+            StepEvent step = (StepEvent) event;
             if (lastStep != null) {
                 long pc = step.getPC();
                 Symbol sym;
-                switch (AMD64InstructionQuickInfo.getType(lastStep.getMachinecode())) {
+                switch (lastStep.getType()) {
                     case JMP:
                     case JCC:
                         sym = resolver.getSymbol(pc);
@@ -141,8 +140,8 @@ public class Analysis {
                 symbols.visit(node);
             }
             lastStep = step;
-        } else if (record instanceof SymbolTableRecord) {
-            SymbolTableRecord symtab = (SymbolTableRecord) record;
+        } else if (event instanceof SymbolTableEvent) {
+            SymbolTableEvent symtab = (SymbolTableEvent) event;
             symbolTable.putAll(symtab.getSymbols());
             long addr = symtab.getLoadBias();
             long end = addr + symtab.getSize();
@@ -155,14 +154,14 @@ public class Analysis {
                     break;
                 }
             }
-        } else if (record instanceof MmapRecord) {
-            MmapRecord mmap = (MmapRecord) record;
+        } else if (event instanceof MmapEvent) {
+            MmapEvent mmap = (MmapEvent) event;
             mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
             long pc = 0;
             long insn = 0;
             if (lastStep != null) {
                 pc = lastStep.getPC();
-                insn = lastStep.getInstructionCount();
+                insn = lastStep.getStep();
             }
             if (mmap.getResult() != -1) {
                 if (mmap.getData() != null) {
@@ -171,50 +170,50 @@ public class Analysis {
                     memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node);
                 }
             }
-        } else if (record instanceof MemoryEventRecord) {
-            MemoryEventRecord event = (MemoryEventRecord) record;
-            if (event.isWrite()) {
+        } else if (event instanceof MemoryEvent) {
+            MemoryEvent memevent = (MemoryEvent) event;
+            if (memevent.isWrite()) {
                 long pc = 0;
                 long insn = 0;
                 if (lastStep != null) {
                     pc = lastStep.getPC();
-                    insn = lastStep.getInstructionCount();
+                    insn = lastStep.getStep();
                 }
-                long addr = event.getAddress();
-                if (event.getSize() <= 8) {
-                    long value = event.getValue();
-                    memory.write(addr, (byte) event.getSize(), value, pc, insn, node);
-                } else if (event.getSize() == 16) {
-                    Vector128 value = event.getVector();
+                long addr = memevent.getAddress();
+                if (memevent.getSize() <= 8) {
+                    long value = memevent.getValue();
+                    memory.write(addr, (byte) memevent.getSize(), value, pc, insn, node);
+                } else if (memevent.getSize() == 16) {
+                    Vector128 value = memevent.getVector();
                     memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node);
                     memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node);
                 } else {
-                    throw new AssertionError("unknown size: " + event.getSize());
+                    throw new AssertionError("unknown size: " + memevent.getSize());
                 }
             } else { /* read */
                 long pc = 0;
                 long insn = 0;
                 if (lastStep != null) {
                     pc = lastStep.getPC();
-                    insn = lastStep.getInstructionCount();
+                    insn = lastStep.getStep();
                 }
-                long addr = event.getAddress();
-                if (event.getSize() <= 8) {
-                    memory.read(addr, (byte) event.getSize(), pc, insn, node);
-                } else if (event.getSize() == 16) {
+                long addr = memevent.getAddress();
+                if (memevent.getSize() <= 8) {
+                    memory.read(addr, (byte) memevent.getSize(), pc, insn, node);
+                } else if (memevent.getSize() == 16) {
                     memory.read(addr, (byte) 8, pc, insn, node);
                     memory.read(addr + 8, (byte) 8, pc, insn, node);
                 } else {
-                    throw new AssertionError("unknown size: " + event.getSize());
+                    throw new AssertionError("unknown size: " + memevent.getSize());
                 }
             }
-        } else if (record instanceof MemoryDumpRecord) {
-            MemoryDumpRecord dump = (MemoryDumpRecord) record;
+        } else if (event instanceof MemoryDumpEvent) {
+            MemoryDumpEvent dump = (MemoryDumpEvent) event;
             long pc = 0;
             long insn = 0;
             if (lastStep != null) {
                 pc = lastStep.getPC();
-                insn = lastStep.getInstructionCount();
+                insn = lastStep.getStep();
             }
             long addr = dump.getAddress();
             byte[] data = dump.getData();
@@ -222,14 +221,14 @@ public class Analysis {
                 long value = Endianess.get64bitLE(data, i);
                 memory.write(addr + i, (byte) 8, value, pc, insn, node);
             }
-        } else if (record instanceof BrkRecord) {
-            BrkRecord brk = (BrkRecord) record;
+        } else if (event instanceof BrkEvent) {
+            BrkEvent brk = (BrkEvent) event;
             long newbrk = brk.getResult();
             long pc = 0;
             long insn = 0;
             if (lastStep != null) {
                 pc = lastStep.getPC();
-                insn = lastStep.getInstructionCount();
+                insn = lastStep.getStep();
             }
             memory.brk(newbrk, pc, insn, node);
         }
@@ -238,7 +237,7 @@ public class Analysis {
     public void finish(BlockNode root) {
         add(root);
 
-        StepRecord first = root.getFirstStep();
+        StepEvent first = root.getFirstStep();
         if (symbols.get(first.getPC()) == null) {
             symbols.addSubroutine(first.getPC(), "_start");
             symbols.visit(root.getFirstNode());

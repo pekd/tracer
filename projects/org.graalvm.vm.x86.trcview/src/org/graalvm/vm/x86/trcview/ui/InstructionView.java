@@ -66,18 +66,14 @@ import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
-import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo.InstructionType;
-import org.graalvm.vm.x86.isa.CpuState;
-import org.graalvm.vm.x86.isa.instruction.Jmp.JmpIndirect;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.Subroutine;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
-import org.graalvm.vm.x86.trcview.decode.CallDecoder;
-import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
-import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.io.data.CpuState;
+import org.graalvm.vm.x86.trcview.io.data.InstructionType;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.CallListener;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
@@ -136,11 +132,11 @@ public class InstructionView extends JPanel {
             }
 
             Node node = instructions.get(selected);
-            StepRecord step;
+            StepEvent step;
             if (node instanceof BlockNode) {
                 step = ((BlockNode) node).getHead();
             } else {
-                step = (StepRecord) ((RecordNode) node).getRecord();
+                step = (StepEvent) ((EventNode) node).getEvent();
             }
             Location loc = Location.getLocation(trc, step);
             StringBuilder buf = new StringBuilder();
@@ -160,7 +156,7 @@ public class InstructionView extends JPanel {
                 buf.append("]");
             }
             status.accept(buf.toString());
-            position.accept(step.getInstructionCount());
+            position.accept(step.getStep());
             fireChangeEvent();
         });
 
@@ -222,7 +218,7 @@ public class InstructionView extends JPanel {
         }
     }
 
-    protected void fireRetEvent(RecordNode node) {
+    protected void fireRetEvent(EventNode node) {
         for (CallListener l : callListeners) {
             try {
                 l.ret(node);
@@ -242,9 +238,9 @@ public class InstructionView extends JPanel {
         if (node instanceof BlockNode) {
             fireCallEvent((BlockNode) node);
         } else {
-            StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
+            StepEvent step = (StepEvent) ((EventNode) node).getEvent();
             if (step.getMnemonic() != null && step.getMnemonic().equals("ret")) {
-                fireRetEvent((RecordNode) node);
+                fireRetEvent((EventNode) node);
             }
         }
     }
@@ -257,7 +253,7 @@ public class InstructionView extends JPanel {
         buf.append("</span></pre></body></html>");
     }
 
-    private String format(StepRecord step, StepRecord next) {
+    private String format(StepEvent step, StepEvent next) {
         Location loc = Location.getLocation(trc, step);
         StringBuilder buf = new StringBuilder();
         buf.append("0x");
@@ -266,8 +262,8 @@ public class InstructionView extends JPanel {
         buf.append(Utils.tab(loc.getAsm(), 12));
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.equals("syscall")) {
-            CpuState ns = next == null ? null : next.getState().getState();
-            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, trc);
+            CpuState ns = next == null ? null : next.getState();
+            String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
             if (decoded != null) {
                 comment(buf, loc.getAsm(), decoded);
             }
@@ -288,7 +284,7 @@ public class InstructionView extends JPanel {
         for (Node n : block.getNodes()) {
             if (n instanceof BlockNode) {
                 instructions.add(n);
-            } else if (n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
+            } else if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
                 instructions.add(n);
             }
         }
@@ -311,23 +307,23 @@ public class InstructionView extends JPanel {
                         len += loc.getFilename().length();
                     }
                     max = Math.max(max, 20 + 12 + 18 + len); // pc = 20, insn = 12, arg = 18
-                } else if (n instanceof RecordNode && ((RecordNode) n).getRecord() instanceof StepRecord) {
-                    StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
-                    InstructionType type = AMD64InstructionQuickInfo.getType(step.getMachinecode());
+                } else if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
+                    StepEvent step = (StepEvent) ((EventNode) n).getEvent();
+                    InstructionType type = step.getType();
                     switch (type) {
                         case SYSCALL: {
                             CpuState ns = null;
                             if (i + 1 < instructions.size()) {
-                                StepRecord next;
+                                StepEvent next;
                                 Node nn = instructions.get(i + 1);
                                 if (nn instanceof BlockNode) {
                                     next = ((BlockNode) nn).getHead();
                                 } else {
-                                    next = (StepRecord) ((RecordNode) nn).getRecord();
+                                    next = (StepEvent) ((EventNode) nn).getEvent();
                                 }
-                                ns = next == null ? null : next.getState().getState();
+                                ns = next == null ? null : next.getState();
                             }
-                            String decoded = SyscallDecoder.decode(step.getState().getState(), ns, trc);
+                            String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
                             max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
                             break;
                         }
@@ -366,7 +362,7 @@ public class InstructionView extends JPanel {
         return instructions.get(selected);
     }
 
-    public StepRecord getSelectedInstruction() {
+    public StepEvent getSelectedInstruction() {
         int selected = insns.getSelectedIndex();
         if (selected == -1) {
             return null;
@@ -376,11 +372,11 @@ public class InstructionView extends JPanel {
         if (node instanceof BlockNode) {
             return ((BlockNode) node).getHead();
         } else {
-            return (StepRecord) ((RecordNode) node).getRecord();
+            return (StepEvent) ((EventNode) node).getEvent();
         }
     }
 
-    public StepRecord getPreviousInstruction() {
+    public StepEvent getPreviousInstruction() {
         int selected = insns.getSelectedIndex();
         if (selected == -1) {
             return null;
@@ -396,7 +392,7 @@ public class InstructionView extends JPanel {
         if (node instanceof BlockNode) {
             return ((BlockNode) node).getHead();
         } else {
-            return (StepRecord) ((RecordNode) node).getRecord();
+            return (StepEvent) ((EventNode) node).getEvent();
         }
     }
 
@@ -409,11 +405,11 @@ public class InstructionView extends JPanel {
                 if (index > 0) {
                     BlockNode block = (BlockNode) node;
                     Node prev = instructions.get(index - 1);
-                    StepRecord head = block.getHead();
+                    StepEvent head = block.getHead();
                     long pc = head.getPC();
                     if (prev instanceof BlockNode) {
                         BlockNode b = (BlockNode) prev;
-                        StepRecord step = b.getHead();
+                        StepEvent step = b.getHead();
                         long npc = step.getPC() + (step.getMachinecode() != null ? step.getMachinecode().length : 0);
                         if (!isSelected && pc != npc) {
                             c.setBackground(ROP_BG);
@@ -421,13 +417,13 @@ public class InstructionView extends JPanel {
                     }
                 }
                 c.setForeground(CALL_FG);
-            } else if (node instanceof RecordNode) {
-                StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
+            } else if (node instanceof EventNode) {
+                StepEvent step = (StepEvent) ((EventNode) node).getEvent();
                 String mnemonic = step.getMnemonic();
                 if (mnemonic == null) {
                     c.setForeground(ERROR_FG);
                 } else {
-                    switch (AMD64InstructionQuickInfo.getType(step.getMachinecode())) {
+                    switch (step.getType()) {
                         case RET:
                             c.setForeground(RET_FG);
                             break;
@@ -435,11 +431,10 @@ public class InstructionView extends JPanel {
                             c.setForeground(SYSCALL_FG);
                             break;
                         case JMP:
-                            if (step.getInstruction() instanceof JmpIndirect) {
-                                c.setForeground(INDIRECTJMP_FG);
-                            } else {
-                                c.setForeground(JMP_FG);
-                            }
+                            c.setForeground(JMP_FG);
+                            break;
+                        case JMP_INDIRECT:
+                            c.setForeground(INDIRECTJMP_FG);
                             break;
                         case JCC:
                             c.setForeground(JCC_FG);
@@ -457,7 +452,7 @@ public class InstructionView extends JPanel {
                     long pc = step.getPC();
                     if (prev instanceof BlockNode) {
                         BlockNode b = (BlockNode) prev;
-                        StepRecord s = b.getHead();
+                        StepEvent s = b.getHead();
                         long npc = s.getPC() + (s.getMachinecode() != null ? s.getMachinecode().length : 0);
                         if (!isSelected && pc != npc) {
                             c.setBackground(ROP_BG);
@@ -473,31 +468,31 @@ public class InstructionView extends JPanel {
         @Override
         public String getElementAt(int i) {
             Node n = instructions.get(i);
-            if (n instanceof RecordNode) {
-                StepRecord step = (StepRecord) ((RecordNode) n).getRecord();
+            if (n instanceof EventNode) {
+                StepEvent step = (StepEvent) ((EventNode) n).getEvent();
                 if (i + 1 < instructions.size()) {
-                    StepRecord next;
+                    StepEvent next;
                     Node nn = instructions.get(i + 1);
                     if (nn instanceof BlockNode) {
                         next = ((BlockNode) nn).getHead();
                     } else {
-                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                        next = (StepEvent) ((EventNode) nn).getEvent();
                     }
                     return format(step, next);
                 } else {
                     return format(step, null);
                 }
             } else if (n instanceof BlockNode) {
-                StepRecord step = ((BlockNode) n).getHead();
+                StepEvent step = ((BlockNode) n).getHead();
                 Location loc = Location.getLocation(trc, ((BlockNode) n).getFirstStep());
                 StringBuilder buf = new StringBuilder();
-                StepRecord next = null;
+                StepEvent next = null;
                 if (i + 1 < instructions.size()) {
                     Node nn = instructions.get(i + 1);
                     if (nn instanceof BlockNode) {
                         next = ((BlockNode) nn).getHead();
                     } else {
-                        next = (StepRecord) ((RecordNode) nn).getRecord();
+                        next = (StepEvent) ((EventNode) nn).getEvent();
                     }
                     buf.append(format(step, next));
                 } else {
@@ -524,8 +519,8 @@ public class InstructionView extends JPanel {
                 if (sym != null && sym instanceof Subroutine && ((Subroutine) sym).getPrototype() != null) {
                     Subroutine sub = (Subroutine) sym;
                     Function fun = new Function(sub.getName(), sub.getPrototype());
-                    CpuState ns = next == null ? null : next.getState().getState();
-                    String decoded = CallDecoder.decode(fun, step.getState().getState(), ns, trc);
+                    CpuState ns = next == null ? null : next.getState();
+                    String decoded = trc.getArchitecture().getCallDecoder().decode(fun, step.getState(), ns, trc);
                     if (decoded != null) {
                         int length = buf.length();
                         String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");

@@ -78,8 +78,12 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.arch.AMD64;
+import org.graalvm.vm.x86.trcview.arch.Architecture;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.x86.AMD64StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.Location;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
@@ -214,6 +218,7 @@ public class TextDump {
                     files = new MappedFiles(filenames);
                 } else if (record instanceof StepRecord) {
                     StepRecord step = (StepRecord) record;
+                    StepEvent event = new AMD64StepEvent(step);
                     if (dumpState) {
                         out.println("----------------");
                         out.println("[tid=" + step.getTid() + "]");
@@ -222,7 +227,7 @@ public class TextDump {
                         if (!dumpState) {
                             out.print("[tid=" + step.getTid() + "] ");
                         }
-                        Location loc = Location.getLocation(new SimpleTraceAnalyzer(resolver, files), step);
+                        Location loc = Location.getLocation(new SimpleTraceAnalyzer(resolver, files), event);
                         out.println(encode(loc));
                     }
                     if (dumpState) {
@@ -268,6 +273,7 @@ public class TextDump {
     private static class SimpleTraceAnalyzer implements TraceAnalyzer {
         private SymbolResolver resolver;
         private MappedFiles files;
+        private Architecture arch = new AMD64();
 
         private SimpleTraceAnalyzer(SymbolResolver resolver, MappedFiles files) {
             this.resolver = resolver;
@@ -430,6 +436,10 @@ public class TextDump {
         @Override
         public String getFilename(long pc) {
             return files.getFilename(pc);
+        }
+
+        public Architecture getArchitecture() {
+            return arch;
         }
     }
 }

@@ -50,7 +50,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
@@ -79,8 +79,8 @@ public class StateView extends JPanel {
                     "</style>";
     private JTextPane text;
 
-    private StepRecord step;
-    private StepRecord previous;
+    private StepEvent step;
+    private StepEvent previous;
 
     private TraceAnalyzer trc;
 
@@ -98,13 +98,13 @@ public class StateView extends JPanel {
         update();
     }
 
-    public void setState(StepRecord step) {
+    public void setState(StepEvent step) {
         this.previous = null;
         this.step = step;
         update();
     }
 
-    public void setState(StepRecord previous, StepRecord current) {
+    public void setState(StepEvent previous, StepEvent current) {
         this.previous = previous;
         this.step = current;
         update();

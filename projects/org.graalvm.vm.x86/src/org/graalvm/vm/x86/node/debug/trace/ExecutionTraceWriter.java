@@ -51,6 +51,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.vector.Vector128;
+import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.io.BEOutputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
@@ -63,6 +64,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 public class ExecutionTraceWriter implements Closeable {
     private static final Logger log = Trace.create(ExecutionTraceWriter.class);
 
+    private static final int MAGIC = 0x58545243;
     private static final long STEP_THRESHOLD = 1000;
 
     private WordOutputStream out;
@@ -73,8 +75,10 @@ public class ExecutionTraceWriter implements Closeable {
         this(new BufferedOutputStream(new FileOutputStream(out)));
     }
 
-    public ExecutionTraceWriter(OutputStream out) {
+    public ExecutionTraceWriter(OutputStream out) throws IOException {
         this.out = new BEOutputStream(out);
+        this.out.write32bit(MAGIC);
+        this.out.write16bit(Elf.EM_X86_64);
         steps = 0;
     }
 

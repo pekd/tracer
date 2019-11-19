@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
-import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.io.data.CpuState;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class StateEncoder {
@@ -151,20 +151,20 @@ public class StateEncoder {
         return buf.toString();
     }
 
-    public static String encode(TraceAnalyzer trc, StepRecord step) {
+    public static String encode(TraceAnalyzer trc, StepEvent step) {
         Location location = Location.getLocation(trc, step);
-        CpuStateRecord state = step.getState();
+        CpuState state = step.getState();
         String loc = encode(location);
-        String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getInstructionCount();
+        String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getStep();
         return loc + "\n\n" + html(state.toString()) + "\n" + pos;
     }
 
-    public static String encode(TraceAnalyzer trc, StepRecord previous, StepRecord current) {
+    public static String encode(TraceAnalyzer trc, StepEvent previous, StepEvent current) {
         Location location = Location.getLocation(trc, current);
-        CpuStateRecord state1 = previous.getState();
-        CpuStateRecord state2 = current.getState();
+        CpuState state1 = previous.getState();
+        CpuState state2 = current.getState();
         String loc = encode(location);
-        String pos = "TID: " + state2.getTid() + "\ninstruction: " + state2.getInstructionCount();
+        String pos = "TID: " + state2.getTid() + "\ninstruction: " + state2.getStep();
         return loc + "\n\n" + diff(state1.toString(), state2.toString()) + "\n" + pos;
     }
 }

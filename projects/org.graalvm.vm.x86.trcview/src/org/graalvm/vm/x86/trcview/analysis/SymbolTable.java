@@ -53,12 +53,12 @@ import java.util.stream.Collectors;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.type.Function;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
-import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 
 public class SymbolTable {
     private static Logger log = Trace.create(SymbolTable.class);
@@ -118,8 +118,8 @@ public class SymbolTable {
     }
 
     public void visit(Node node) {
-        if (node instanceof RecordNode && ((RecordNode) node).getRecord() instanceof StepRecord) {
-            StepRecord step = (StepRecord) ((RecordNode) node).getRecord();
+        if (node instanceof EventNode && ((EventNode) node).getEvent() instanceof StepEvent) {
+            StepEvent step = (StepEvent) ((EventNode) node).getEvent();
             long pc = step.getPC();
             ComputedSymbol sym = symbols.get(pc);
             if (sym != null) {

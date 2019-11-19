@@ -17,13 +17,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
 import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
 import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.expression.Parser;
 import org.graalvm.vm.x86.trcview.expression.ast.Expression;
 import org.graalvm.vm.x86.trcview.expression.ast.ValueNode;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
@@ -34,7 +34,7 @@ public class Watches extends JPanel {
     private List<Expression> expressions;
     private Model model;
     private TraceAnalyzer trc;
-    private StepRecord step;
+    private StepEvent step;
     private long insn;
     private Consumer<String> status;
 
@@ -108,12 +108,12 @@ public class Watches extends JPanel {
         model.changed();
     }
 
-    public void setStep(StepRecord step) {
+    public void setStep(StepEvent step) {
         if (this.step == step) {
             return;
         }
         this.step = step;
-        this.insn = step.getInstructionCount();
+        this.insn = step.getStep();
         model.changed();
     }
 

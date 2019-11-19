@@ -51,12 +51,12 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
-import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.CallListener;
 
@@ -107,8 +107,8 @@ public class TraceView extends JPanel {
         insns.addChangeListener(() -> {
             selectedSymbol = null;
 
-            StepRecord step = insns.getSelectedInstruction();
-            StepRecord previous = insns.getPreviousInstruction();
+            StepEvent step = insns.getSelectedInstruction();
+            StepEvent previous = insns.getPreviousInstruction();
             if (step != null) {
                 if (previous != null) {
                     state.setState(previous, step);
@@ -120,7 +120,7 @@ public class TraceView extends JPanel {
             }
             if (insns.getSelectedNode() instanceof BlockNode) {
                 BlockNode block = (BlockNode) insns.getSelectedNode();
-                StepRecord first = block.getFirstStep();
+                StepEvent first = block.getFirstStep();
                 if (first != null) {
                     long pc = first.getPC();
                     ComputedSymbol sym = trc.getComputedSymbol(pc);
@@ -141,7 +141,7 @@ public class TraceView extends JPanel {
                 watches.setStep(node.getFirstStep());
             }
 
-            public void ret(RecordNode ret) {
+            public void ret(EventNode ret) {
                 BlockNode par = trc.getParent(ret);
                 BlockNode parent = trc.getParent(par);
                 if (parent != null) {
@@ -232,14 +232,14 @@ public class TraceView extends JPanel {
         return insns.getSelectedNode();
     }
 
-    public StepRecord getSelectedInstruction() {
+    public StepEvent getSelectedInstruction() {
         return insns.getSelectedInstruction();
     }
 
     public VirtualMemorySnapshot getMemorySnapshot() {
-        StepRecord selected = getSelectedInstruction();
+        StepEvent selected = getSelectedInstruction();
         if (selected != null && trc != null) {
-            return new VirtualMemorySnapshot(trc, selected.getInstructionCount());
+            return new VirtualMemorySnapshot(trc, selected.getStep());
         } else {
             return null;
         }

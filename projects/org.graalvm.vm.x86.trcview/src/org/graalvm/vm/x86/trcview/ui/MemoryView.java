@@ -18,7 +18,6 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 
 import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
@@ -28,8 +27,9 @@ import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.expression.Parser;
 import org.graalvm.vm.x86.trcview.expression.ast.Expression;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
+import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
-import org.graalvm.vm.x86.trcview.io.RecordNode;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
 
@@ -69,7 +69,7 @@ public class MemoryView extends JPanel {
     private long highlightStart;
     private long highlightEnd;
     private long insn;
-    private StepRecord step;
+    private StepEvent step;
     private Expression expr;
     private Node lastUpdateNode;
     private Node nextReadNode;
@@ -154,12 +154,12 @@ public class MemoryView extends JPanel {
         update();
     }
 
-    public void setStep(StepRecord step) {
+    public void setStep(StepEvent step) {
         if (this.step == step) {
             return;
         }
         this.step = step;
-        this.insn = step.getInstructionCount();
+        this.insn = step.getStep();
         update();
     }
 
@@ -321,22 +321,22 @@ public class MemoryView extends JPanel {
                 }
                 if (node != null) {
                     content += "Last write to this location:\n";
-                    if (node instanceof RecordNode && ((RecordNode) node).getRecord() instanceof StepRecord) {
+                    if (node instanceof EventNode && ((EventNode) node).getEvent() instanceof StepEvent) {
                         lastUpdateNode = node;
-                        StepRecord record = (StepRecord) ((RecordNode) node).getRecord();
-                        content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                        StepEvent event = (StepEvent) ((EventNode) node).getEvent();
+                        content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                     } else {
                         Node lastStep = trc.getPreviousStep(node);
                         lastUpdateNode = lastStep;
                         if (lastStep != null) {
-                            StepRecord record = null;
+                            StepEvent event = null;
                             if (lastStep instanceof BlockNode) {
-                                record = ((BlockNode) lastStep).getHead();
+                                event = ((BlockNode) lastStep).getHead();
                             } else {
-                                record = (StepRecord) ((RecordNode) lastStep).getRecord();
+                                event = (StepEvent) ((EventNode) lastStep).getEvent();
                             }
-                            if (record != null) {
-                                content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                            if (event != null) {
+                                content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                             } else {
                                 content += "Written by the kernel";
                             }
@@ -351,22 +351,22 @@ public class MemoryView extends JPanel {
                 MemoryRead read = trc.getNextRead(address, insn);
                 if (read != null) {
                     content += "\n\nNext read from this location:\n";
-                    if (read.node instanceof RecordNode && ((RecordNode) read.node).getRecord() instanceof StepRecord) {
+                    if (read.node instanceof EventNode && ((EventNode) read.node).getEvent() instanceof StepEvent) {
                         nextReadNode = read.node;
-                        StepRecord record = (StepRecord) ((RecordNode) read.node).getRecord();
-                        content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                        StepEvent event = (StepEvent) ((EventNode) read.node).getEvent();
+                        content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                     } else {
                         Node lastStep = trc.getPreviousStep(read.node);
                         nextReadNode = lastStep;
                         if (lastStep != null) {
-                            StepRecord record = null;
+                            StepEvent event = null;
                             if (lastStep instanceof BlockNode) {
-                                record = ((BlockNode) lastStep).getHead();
+                                event = ((BlockNode) lastStep).getHead();
                             } else {
-                                record = (StepRecord) ((RecordNode) lastStep).getRecord();
+                                event = (StepEvent) ((EventNode) lastStep).getEvent();
                             }
-                            if (record != null) {
-                                content += "0x" + HexFormatter.tohex(record.getPC(), 16) + ": " + record.getDisassembly() + " # instruction " + record.getInstructionCount();
+                            if (event != null) {
+                                content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                             } else {
                                 content += "Read by the kernel";
                             }

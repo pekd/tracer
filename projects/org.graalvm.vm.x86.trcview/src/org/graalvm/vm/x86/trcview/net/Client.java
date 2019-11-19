@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.io.BEInputStream;
 import org.graalvm.vm.util.io.BEOutputStream;
@@ -27,6 +28,7 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
+import org.graalvm.vm.x86.trcview.arch.Architecture;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.net.protocol.CommandRecord;
@@ -92,6 +94,7 @@ import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 public class Client implements TraceAnalyzer, Closeable {
     private static final Logger log = Trace.create(Client.class);
 
+    private Architecture arch;
     private Socket remote;
     private WordInputStream in;
     private WordOutputStream out;
@@ -108,6 +111,11 @@ public class Client implements TraceAnalyzer, Closeable {
         nodeCache = new HashMap<>();
         symbolRenameListeners = new ArrayList<>();
         symbolChangeListeners = new ArrayList<>();
+        short archid = in.read16bit();
+        arch = Architecture.getArchitecture(archid);
+        if (arch == null) {
+            throw new IOException("unknown architecture " + ElfStrings.getElfMachine(archid));
+        }
     }
 
     public void close() throws IOException {
@@ -278,7 +286,7 @@ public class Client implements TraceAnalyzer, Closeable {
         } else if (parent.getHead() == null) {
             return getRoot();
         }
-        return (BlockNode) getInstruction(parent.getHead().getInstructionCount());
+        return (BlockNode) getInstruction(parent.getHead().getStep());
     }
 
     private static long getId(Node node) {
@@ -428,5 +436,10 @@ public class Client implements TraceAnalyzer, Closeable {
     public String getFilename(long pc) {
         GetFilenameResult result = execute(new GetFilename(pc));
         return result.getFilename();
+    }
+
+    @Override
+    public Architecture getArchitecture() {
+        return arch;
     }
 }

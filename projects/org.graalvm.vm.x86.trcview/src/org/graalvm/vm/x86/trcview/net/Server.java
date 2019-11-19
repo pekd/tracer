@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
-import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.ProgressListener;
+import org.graalvm.vm.x86.trcview.io.data.TraceReader;
 
 public class Server {
     private static final Logger log = Trace.create(Server.class);
@@ -48,7 +48,7 @@ public class Server {
             long size = file.length();
             System.out.print("Loading " + file + " [" + size + " bytes] ");
             System.out.flush();
-            ExecutionTraceReader reader = new ExecutionTraceReader(in);
+            TraceReader reader = new TraceReader(in);
             Analysis analysis = new Analysis();
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, new ProgressInfo());
@@ -61,7 +61,7 @@ public class Server {
                 System.out.println(" OK");
                 log.info("Loading succeeded");
             }
-            data = new ServerData(root, analysis);
+            data = new ServerData(reader.getArchitecture(), root, analysis);
         } catch (Throwable t) {
             log.log(Levels.ERROR, "Loading failed: " + t, t);
             throw t;

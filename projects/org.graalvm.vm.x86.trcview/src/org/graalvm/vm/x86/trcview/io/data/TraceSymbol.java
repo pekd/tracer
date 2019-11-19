@@ -38,23 +38,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.trcview.io;
+package org.graalvm.vm.x86.trcview.io.data;
 
-import org.graalvm.vm.x86.node.debug.trace.Record;
+import org.graalvm.vm.posix.elf.Symbol;
 
-public class RecordNode extends Node {
-    private Record record;
+public class TraceSymbol implements Symbol {
+    private String name;
+    private long value;
+    private long size;
+    private int bind;
+    private int type;
+    private int visibility;
+    private short shndx;
 
-    public RecordNode(Record record) {
-        this.record = record;
+    TraceSymbol(String name, long value, long size, int bind, int type, int visibility, short shndx) {
+        this.name = name;
+        this.value = value;
+        this.size = size;
+        this.bind = bind;
+        this.type = type;
+        this.visibility = visibility;
+        this.shndx = shndx;
     }
 
-    public Record getRecord() {
-        return record;
+    public String getName() {
+        return name;
     }
 
-    @Override
-    public String toString() {
-        return record.toString();
+    public int getBind() {
+        return bind;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public int getVisibility() {
+        return visibility;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getValue() {
+        return value;
+    }
+
+    public short getSectionIndex() {
+        return shndx;
+    }
+
+    public Symbol offset(long off) {
+        return new TraceSymbol(name, value + off, size, bind, type, visibility, shndx);
     }
 }

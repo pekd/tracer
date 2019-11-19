@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class Location {
@@ -57,7 +57,7 @@ public class Location {
     private String[] disasm;
     private byte[] machinecode;
 
-    public static Location getLocation(TraceAnalyzer trc, StepRecord step) {
+    public static Location getLocation(TraceAnalyzer trc, StepEvent step) {
         long pc = step.getPC();
         Location loc = new Location();
         loc.pc = pc;
