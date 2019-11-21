@@ -89,9 +89,10 @@ public class TraceView extends JPanel {
         content.setResizeWeight(1.0);
         content.setDividerLocation(400);
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        leftSplit.setLeftComponent(symbols = new SymbolView());
-        leftSplit.setRightComponent(stack = new CallStackView());
+        JSplitPane leftSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        leftSplit.setTopComponent(symbols = new SymbolView());
+        leftSplit.setBottomComponent(stack = new CallStackView());
+        leftSplit.setResizeWeight(0.65);
         split.setLeftComponent(leftSplit);
         split.setRightComponent(content);
         add(BorderLayout.CENTER, split);
