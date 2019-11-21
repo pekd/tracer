@@ -217,6 +217,9 @@ public class MemoryView extends JPanel {
     private String dump(long p, int size) {
         StringBuilder buf = new StringBuilder();
         long ptr = p;
+        if (ptr < 0) {
+            ptr = 0;
+        }
         long ptr2 = ptr;
         boolean nl = true;
         byte[] line = new byte[LINESZ];
