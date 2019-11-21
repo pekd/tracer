@@ -93,6 +93,12 @@ public class Scanner {
                             error("unexpected char: '" + (char) c + "'");
                         }
                     }
+                } else if (tmp == 0) {
+                    while (c >= '0' && c <= '7') {
+                        tmp <<= 3L;
+                        tmp += c - '0';
+                        c = read();
+                    }
                 } else {
                     while (c >= '0' && c <= '9') {
                         tmp *= 10L;
