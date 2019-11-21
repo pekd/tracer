@@ -44,8 +44,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.vm.posix.elf.Symbol;
-import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class Location {
@@ -56,6 +57,7 @@ public class Location {
     private long offset;
     private String[] disasm;
     private byte[] machinecode;
+    private StepFormat format;
 
     public static Location getLocation(TraceAnalyzer trc, StepEvent step) {
         long pc = step.getPC();
@@ -67,6 +69,7 @@ public class Location {
         loc.offset = trc.getOffset(pc);
         loc.disasm = step.getDisassemblyComponents();
         loc.machinecode = step.getMachinecode();
+        loc.format = step.getFormat();
         return loc;
     }
 
@@ -109,6 +112,26 @@ public class Location {
         }
     }
 
+    private static String pad(String s, int cnt) {
+        int c = cnt - s.length();
+        if (c < 1) {
+            return s + " ";
+        }
+        return s + StringUtils.repeat(" ", c);
+    }
+
+    public String getAsm(int width) {
+        if (disasm == null) {
+            return "<unreadable>";
+        }
+        if (disasm.length == 1) {
+            return disasm[0];
+        } else {
+            String s = pad(disasm[0], width) + Stream.of(disasm).skip(1).map(x -> pad(x + ",", width)).collect(Collectors.joining()).trim();
+            return s.substring(0, s.length() - 1);
+        }
+    }
+
     public String getMnemonic() {
         if (disasm == null) {
             return "<unreadable>";
@@ -118,11 +141,10 @@ public class Location {
     }
 
     public String getPrintableBytes() {
-        StringBuilder buf = new StringBuilder();
-        for (int i = 0; i < machinecode.length; i++) {
-            buf.append(' ');
-            buf.append(HexFormatter.tohex(Byte.toUnsignedInt(machinecode[i]), 2));
-        }
-        return buf.toString().substring(1);
+        return format.formatCode(machinecode);
+    }
+
+    public StepFormat getFormat() {
+        return format;
     }
 }

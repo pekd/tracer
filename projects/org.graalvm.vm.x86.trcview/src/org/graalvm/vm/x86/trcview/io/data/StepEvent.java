@@ -24,4 +24,6 @@ public abstract class StepEvent extends Event {
     public abstract long getStep();
 
     public abstract CpuState getState();
+
+    public abstract StepFormat getFormat();
 }

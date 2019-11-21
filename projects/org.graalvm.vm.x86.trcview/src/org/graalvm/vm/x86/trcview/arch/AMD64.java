@@ -9,11 +9,13 @@ import org.graalvm.vm.x86.trcview.decode.x86.AMD64CallDecoder;
 import org.graalvm.vm.x86.trcview.decode.x86.AMD64SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.data.ArchTraceReader;
 import org.graalvm.vm.x86.trcview.io.data.EventParser;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.io.data.x86.AMD64EventParser;
 import org.graalvm.vm.x86.trcview.io.data.x86.AMD64TraceReader;
 
 public class AMD64 extends Architecture {
     public static final short ID = Elf.EM_X86_64;
+    public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, false);
 
     private static final SyscallDecoder syscallDecoder = new AMD64SyscallDecoder();
     private static final CallDecoder callDecoder = new AMD64CallDecoder();
@@ -47,5 +49,15 @@ public class AMD64 extends Architecture {
     @Override
     public CallDecoder getCallDecoder() {
         return callDecoder;
+    }
+
+    @Override
+    public int getTabSize() {
+        return 16;
+    }
+
+    @Override
+    public StepFormat getFormat() {
+        return FORMAT;
     }
 }

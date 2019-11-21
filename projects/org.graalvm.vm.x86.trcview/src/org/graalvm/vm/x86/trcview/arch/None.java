@@ -8,8 +8,11 @@ import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.data.ArchTraceReader;
 import org.graalvm.vm.x86.trcview.io.data.DefaultEventParser;
 import org.graalvm.vm.x86.trcview.io.data.EventParser;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 
 public class None extends Architecture {
+    public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, false);
+
     private static final EventParser DEFAULT_PARSER = new DefaultEventParser();
 
     @Override
@@ -42,4 +45,13 @@ public class None extends Architecture {
         return null;
     }
 
+    @Override
+    public int getTabSize() {
+        return 16;
+    }
+
+    @Override
+    public StepFormat getFormat() {
+        return FORMAT;
+    }
 }

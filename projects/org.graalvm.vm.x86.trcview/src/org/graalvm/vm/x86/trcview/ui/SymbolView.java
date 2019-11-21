@@ -56,11 +56,11 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.x86.trcview.io.Node;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
@@ -75,6 +75,7 @@ public class SymbolView extends JPanel {
     private List<ChangeListener> changeListeners;
     private List<ChangeListener> clickListeners;
     private TraceAnalyzer trc;
+    private StepFormat format;
     private int width;
 
     public SymbolView() {
@@ -124,13 +125,13 @@ public class SymbolView extends JPanel {
             ComputedSymbol s = symbols.get(i);
             if (s.address == sym.address) {
                 symbols.set(i, sym);
-                ((DefaultListModel<String>) syms.getModel()).set(i, format(s, width));
+                ((DefaultListModel<String>) syms.getModel()).set(i, format(s));
                 return;
             }
         }
     }
 
-    private static final String format(ComputedSymbol sym, int width) {
+    private final String format(ComputedSymbol sym) {
         int len = 32 - sym.name.length();
         if (len < 1) {
             len = 1;
@@ -139,11 +140,12 @@ public class SymbolView extends JPanel {
         if (cnt.length() < width) {
             cnt = StringUtils.repeat(" ", width - cnt.length()) + cnt;
         }
-        return "0x" + HexFormatter.tohex(sym.address, 12) + " [" + cnt + "] " + sym.name;
+        return format.formatAddress(sym.address) + " [" + cnt + "] " + sym.name;
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
+        format = trc.getArchitecture().getFormat();
         trc.addSymbolRenameListener(this::symbolRenamed);
         trc.addSymbolChangeListener(this::update);
         update();
@@ -158,7 +160,7 @@ public class SymbolView extends JPanel {
             int m = max.getAsInt();
             width = (m == 0 ? 0 : (int) Math.ceil(Math.log10(m)));
             subroutines.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
-                model.addElement(format(s, width));
+                model.addElement(format(s));
                 sym.add(s);
             });
         }

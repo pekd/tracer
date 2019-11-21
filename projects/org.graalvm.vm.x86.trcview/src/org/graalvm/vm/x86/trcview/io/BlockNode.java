@@ -51,11 +51,12 @@ import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.io.data.Event;
+import org.graalvm.vm.x86.trcview.io.data.IncompleteTraceStep;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.io.data.TraceReader;
 
 public class BlockNode extends Node {
-    private static Logger log = Trace.create(BlockNode.class);
+    private static final Logger log = Trace.create(BlockNode.class);
 
     private StepEvent head;
     private List<Node> children;
@@ -120,11 +121,7 @@ public class BlockNode extends Node {
         while ((node = parseRecord(in, analysis, progress, tid)) != null) {
             nodes.add(node);
             if (tid == 0) {
-                if (node instanceof EventNode) {
-                    tid = ((EventNode) node).getEvent().getTid();
-                } else if (node instanceof BlockNode) {
-                    tid = ((BlockNode) node).getFirstStep().getTid();
-                }
+                tid = node.getTid();
             }
         }
         return new BlockNode(null, nodes);
@@ -159,10 +156,14 @@ public class BlockNode extends Node {
                     progress.progressUpdate(in.tell());
                 }
                 List<Node> result = new ArrayList<>();
+                boolean hasSteps = false;
                 int cnt = 0;
                 while (true) {
                     Node child = parseRecord(in, analysis, progress, tid);
                     if (child == null) {
+                        if (!hasSteps) {
+                            result.add(new EventNode(new IncompleteTraceStep(tid)));
+                        }
                         break;
                     }
                     result.add(child);
@@ -173,6 +174,7 @@ public class BlockNode extends Node {
                         cnt++;
                     }
                     if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
+                        hasSteps = true;
                         StepEvent s = (StepEvent) ((EventNode) child).getEvent();
                         if (s.getMachinecode() == null || s.isReturn()) {
                             if (progress != null) {
@@ -193,6 +195,15 @@ public class BlockNode extends Node {
             EventNode node = new EventNode(event);
             analysis.process(event, node);
             return node;
+        }
+    }
+
+    @Override
+    public int getTid() {
+        if (head != null) {
+            return head.getTid();
+        } else {
+            return children.get(0).getTid();
         }
     }
 }

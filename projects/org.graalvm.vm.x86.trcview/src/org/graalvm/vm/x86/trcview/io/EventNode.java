@@ -54,6 +54,11 @@ public class EventNode extends Node {
     }
 
     @Override
+    public int getTid() {
+        return event.getTid();
+    }
+
+    @Override
     public String toString() {
         return event.toString();
     }

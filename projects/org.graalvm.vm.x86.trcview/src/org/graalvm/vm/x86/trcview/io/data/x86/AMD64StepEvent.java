@@ -11,6 +11,7 @@ import org.graalvm.vm.x86.trcview.io.data.CpuState;
 import org.graalvm.vm.x86.trcview.io.data.Event;
 import org.graalvm.vm.x86.trcview.io.data.InstructionType;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.protocol.IO;
 
 public class AMD64StepEvent extends StepEvent {
@@ -114,6 +115,11 @@ public class AMD64StepEvent extends StepEvent {
         } else {
             return new AMD64CpuState(record.getState());
         }
+    }
+
+    @Override
+    public StepFormat getFormat() {
+        return AMD64.FORMAT;
     }
 
     @Override

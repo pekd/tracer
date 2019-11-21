@@ -188,6 +188,11 @@ public class IO {
         private FakeNode(long id) {
             setId(id);
         }
+
+        @Override
+        public int getTid() {
+            return 0;
+        }
     }
 
     public static final void writeComputedSymbol(WordOutputStream out, ComputedSymbol sym) throws IOException {

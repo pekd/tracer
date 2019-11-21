@@ -181,6 +181,9 @@ public class AMD64CallDecoder extends CallDecoder {
 
     @Override
     public String decode(Function function, CpuState state, CpuState nextState, TraceAnalyzer trc) {
+        if (!(state instanceof AMD64CpuState) || !(nextState instanceof AMD64CpuState)) {
+            return null;
+        }
         return decode(function, (AMD64CpuState) state, (AMD64CpuState) nextState, trc);
     }
 }

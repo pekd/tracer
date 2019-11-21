@@ -217,9 +217,13 @@ public class Analysis {
             }
             long addr = dump.getAddress();
             byte[] data = dump.getData();
-            for (int i = 0; i < data.length; i += 8) {
+            int i;
+            for (i = 0; i < data.length - 7; i += 8) {
                 long value = Endianess.get64bitLE(data, i);
                 memory.write(addr + i, (byte) 8, value, pc, insn, node);
+            }
+            for (; i < data.length; i++) {
+                memory.write(addr + i, (byte) 1, data[i], pc, insn, node);
             }
         } else if (event instanceof BrkEvent) {
             BrkEvent brk = (BrkEvent) event;

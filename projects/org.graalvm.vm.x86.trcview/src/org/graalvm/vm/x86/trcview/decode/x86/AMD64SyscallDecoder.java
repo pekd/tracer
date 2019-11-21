@@ -296,16 +296,25 @@ public class AMD64SyscallDecoder extends SyscallDecoder {
 
     @Override
     public String decode(CpuState state, CpuState next, TraceAnalyzer trc) {
+        if (!(state instanceof AMD64CpuState) || !(next instanceof AMD64CpuState)) {
+            return null;
+        }
         return decode((AMD64CpuState) state, (AMD64CpuState) next, trc);
     }
 
     @Override
     public String decodeResult(int sc, CpuState state) {
+        if (!(state instanceof AMD64CpuState)) {
+            return null;
+        }
         return decodeResult(sc, (AMD64CpuState) state);
     }
 
     @Override
     public String decode(CpuState state, TraceAnalyzer trc) {
+        if (!(state instanceof AMD64CpuState)) {
+            return null;
+        }
         return decode((AMD64CpuState) state, trc);
     }
 }

@@ -47,6 +47,7 @@ import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.x86.trcview.io.data.CpuState;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 public class StateEncoder {
@@ -139,8 +140,13 @@ public class StateEncoder {
                 buf.append(HexFormatter.tohex(location.getOffset(), 8));
             }
         }
-        buf.append("\n0x");
-        buf.append(HexFormatter.tohex(location.getPC(), 8));
+        buf.append('\n');
+        if (location.getFormat().numberfmt == StepFormat.NUMBERFMT_HEX) {
+            buf.append("0x");
+            buf.append(HexFormatter.tohex(location.getPC(), 8));
+        } else {
+            buf.append(location.getFormat().formatAddress(location.getPC()));
+        }
         buf.append(":\t");
         if (location.getDisassembly() != null) {
             buf.append(getDisassembly(location));

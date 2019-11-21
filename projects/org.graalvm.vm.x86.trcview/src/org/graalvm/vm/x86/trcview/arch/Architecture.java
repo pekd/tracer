@@ -11,6 +11,7 @@ import org.graalvm.vm.x86.trcview.decode.CallDecoder;
 import org.graalvm.vm.x86.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.x86.trcview.io.data.ArchTraceReader;
 import org.graalvm.vm.x86.trcview.io.data.EventParser;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 
 public abstract class Architecture {
     private static final Logger log = Trace.create(Architecture.class);
@@ -32,6 +33,10 @@ public abstract class Architecture {
     public abstract SyscallDecoder getSyscallDecoder();
 
     public abstract CallDecoder getCallDecoder();
+
+    public abstract int getTabSize();
+
+    public abstract StepFormat getFormat();
 
     public static void register(Architecture arch) {
         log.info("Registering architecture support for " + ElfStrings.getElfMachine(arch.getId()) + " [" + arch.getName() + "]");

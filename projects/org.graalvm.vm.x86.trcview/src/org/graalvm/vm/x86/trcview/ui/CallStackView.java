@@ -59,6 +59,7 @@ import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.LevelPeekListener;
 import org.graalvm.vm.x86.trcview.ui.event.LevelUpListener;
@@ -80,6 +81,7 @@ public class CallStackView extends JPanel {
     private List<LevelPeekListener> peekListeners;
 
     private TraceAnalyzer trc;
+    private StepFormat format;
 
     public CallStackView() {
         super(new BorderLayout());
@@ -121,6 +123,7 @@ public class CallStackView extends JPanel {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
+        format = trc.getArchitecture().getFormat();
     }
 
     public void addLevelUpListener(LevelUpListener listener) {
@@ -199,8 +202,7 @@ public class CallStackView extends JPanel {
 
     private String format(StepEvent step) {
         StringBuilder buf = new StringBuilder();
-        buf.append("0x");
-        buf.append(HexFormatter.tohex(step.getPC(), 16));
+        buf.append(format.formatAddress(step.getPC()));
         if (trc.getSymbol(step.getPC()) != null && trc.getSymbol(step.getPC()).getName() != null) {
             buf.append(" <");
             buf.append(trc.getSymbol(step.getPC()).getName());
@@ -222,7 +224,7 @@ public class CallStackView extends JPanel {
         }
         if (block != null && block.getHead() == null) {
             StepEvent first = block.getFirstStep();
-            callStack.add("0x" + HexFormatter.tohex(first.getPC(), 16) + " <_start>");
+            callStack.add(format.formatAddress(first.getPC()) + " <_start>");
             callStackBlocks.add(block);
         }
         Collections.reverse(callStack);

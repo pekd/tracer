@@ -39,8 +39,12 @@ public abstract class Event {
         return id;
     }
 
-    public final short getArchitecture() {
+    public final short getArchitectureId() {
         return arch;
+    }
+
+    public final Architecture getArchitecture() {
+        return Architecture.getArchitecture(arch);
     }
 
     protected abstract void writeRecord(WordOutputStream out) throws IOException;

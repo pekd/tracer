@@ -30,6 +30,7 @@ import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.JumpListener;
 
@@ -75,6 +76,7 @@ public class MemoryView extends JPanel {
     private Node nextReadNode;
     private JButton gotoLastUpdate;
     private JButton gotoNextRead;
+    private StepFormat format = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, false);
 
     private Consumer<String> status;
 
@@ -165,6 +167,7 @@ public class MemoryView extends JPanel {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
+        format = trc.getArchitecture().getFormat();
         update();
     }
 
@@ -223,7 +226,7 @@ public class MemoryView extends JPanel {
             byte u8;
             nl = true;
             if (i % LINESZ == 0) {
-                buf.append(HexFormatter.tohex(ptr, 16)).append(':');
+                buf.append(format.formatAddress(ptr)).append(':');
             }
             buf.append(' ');
             if (isHighlight(ptr)) {

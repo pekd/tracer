@@ -74,6 +74,7 @@ import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.data.CpuState;
 import org.graalvm.vm.x86.trcview.io.data.InstructionType;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.x86.trcview.ui.event.CallListener;
 import org.graalvm.vm.x86.trcview.ui.event.ChangeListener;
@@ -100,6 +101,8 @@ public class InstructionView extends JPanel {
     public static final String COMMENT_STYLE = Utils.style(Color.LIGHT_GRAY);
 
     public static final int COMMENT_COLUMN = 48;
+
+    private int tabSize = 16;
 
     private List<Node> instructions;
     private InstructionViewModel model;
@@ -141,7 +144,7 @@ public class InstructionView extends JPanel {
             Location loc = Location.getLocation(trc, step);
             StringBuilder buf = new StringBuilder();
             buf.append("PC=0x");
-            buf.append(HexFormatter.tohex(loc.getPC(), 16));
+            buf.append(HexFormatter.tohex(loc.getPC(), trc.getArchitecture().getTabSize()));
             if (loc.getSymbol() != null) {
                 buf.append(" ");
                 buf.append(loc.getSymbol());
@@ -180,6 +183,7 @@ public class InstructionView extends JPanel {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
+        tabSize = trc.getArchitecture().getTabSize();
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -254,18 +258,18 @@ public class InstructionView extends JPanel {
     }
 
     private String format(StepEvent step, StepEvent next) {
+        StepFormat fmt = step.getFormat();
         Location loc = Location.getLocation(trc, step);
         StringBuilder buf = new StringBuilder();
-        buf.append("0x");
-        buf.append(HexFormatter.tohex(loc.getPC(), 16));
-        buf.append(": ");
-        buf.append(Utils.tab(loc.getAsm(), 12));
+        buf.append(fmt.formatAddress(loc.getPC()));
+        buf.append(":  ");
+        buf.append(loc.getAsm(tabSize));
         String mnemonic = loc.getMnemonic();
         if (mnemonic != null && mnemonic.equals("syscall")) {
             CpuState ns = next == null ? null : next.getState();
             String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
             if (decoded != null) {
-                comment(buf, loc.getAsm(), decoded);
+                comment(buf, loc.getAsm(tabSize), decoded);
             }
         }
         return buf.toString();
@@ -291,7 +295,7 @@ public class InstructionView extends JPanel {
         int max = 0;
         if (instructions.size() > 10000) {
             // compute max size
-            max = 20 + 12;
+            max = 20 + tabSize;
             for (int i = 0; i < instructions.size(); i++) {
                 Node n = instructions.get(i);
                 if (n instanceof BlockNode) {
@@ -306,7 +310,7 @@ public class InstructionView extends JPanel {
                         len += 8 + HexFormatter.tohex(loc.getPC(), 8).length();
                         len += loc.getFilename().length();
                     }
-                    max = Math.max(max, 20 + 12 + 18 + len); // pc = 20, insn = 12, arg = 18
+                    max = Math.max(max, 20 + tabSize + 18 + len); // pc = 20, insn = tabsz, arg = 18
                 } else if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
                     StepEvent step = (StepEvent) ((EventNode) n).getEvent();
                     InstructionType type = step.getType();
@@ -324,7 +328,11 @@ public class InstructionView extends JPanel {
                                 ns = next == null ? null : next.getState();
                             }
                             String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
-                            max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
+                            if (decoded == null) {
+                                max = Math.max(max, 20 + COMMENT_COLUMN);
+                            } else {
+                                max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
+                            }
                             break;
                         }
                     }

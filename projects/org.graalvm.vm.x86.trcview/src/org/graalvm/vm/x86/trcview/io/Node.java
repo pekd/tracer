@@ -60,6 +60,8 @@ public abstract class Node {
         return id;
     }
 
+    public abstract int getTid();
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Node)) {
