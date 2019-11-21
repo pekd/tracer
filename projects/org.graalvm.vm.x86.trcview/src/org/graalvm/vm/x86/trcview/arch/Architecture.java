@@ -20,6 +20,7 @@ public abstract class Architecture {
     static {
         register(new None());
         register(new AMD64());
+        register(new PDP11());
     }
 
     public abstract short getId();
