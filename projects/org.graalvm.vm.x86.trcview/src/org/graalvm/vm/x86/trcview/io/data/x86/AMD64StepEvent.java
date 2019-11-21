@@ -65,6 +65,16 @@ public class AMD64StepEvent extends StepEvent {
     }
 
     @Override
+    public boolean isSyscall() {
+        return AMD64InstructionQuickInfo.isSyscall(getMachinecode());
+    }
+
+    @Override
+    public boolean isReturnFromSyscall() {
+        return false;
+    }
+
+    @Override
     public InstructionType getType() {
         switch (AMD64InstructionQuickInfo.getType(getMachinecode())) {
             case CALL:

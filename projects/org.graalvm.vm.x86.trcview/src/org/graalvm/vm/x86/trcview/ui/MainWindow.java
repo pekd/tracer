@@ -460,7 +460,7 @@ public class MainWindow extends JFrame {
             setStatus(text);
             setPosition(-1);
             TraceReader reader = new TraceReader(in);
-            Analysis analysis = new Analysis();
+            Analysis analysis = new Analysis(reader.getArchitecture());
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
             analysis.finish(root);

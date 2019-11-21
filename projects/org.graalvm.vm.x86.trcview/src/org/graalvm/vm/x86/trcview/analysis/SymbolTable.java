@@ -70,8 +70,16 @@ public class SymbolTable {
         return "sub_" + HexFormatter.tohex(pc, 1);
     }
 
+    public static String scname(long pc) {
+        return "sc_" + HexFormatter.tohex(pc, 1);
+    }
+
     private static ComputedSymbol sub(long pc) {
         return new ComputedSymbol(subname(pc), pc, ComputedSymbol.Type.SUBROUTINE);
+    }
+
+    private static ComputedSymbol sc(long pc) {
+        return new ComputedSymbol(scname(pc), pc, ComputedSymbol.Type.SUBROUTINE);
     }
 
     public static String locname(long pc) {
@@ -97,6 +105,34 @@ public class SymbolTable {
     }
 
     public void addSubroutine(long pc, String name) {
+        ComputedSymbol sym = symbols.get(pc);
+        if (sym == null) {
+            symbols.put(pc, new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE));
+        } else {
+            if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
+                sym.type = ComputedSymbol.Type.SUBROUTINE;
+            }
+            if (sym.name.equals(locname(pc)) || sym.name.equals(subname(pc))) {
+                sym.name = name;
+            }
+        }
+    }
+
+    public void addSyscall(long pc) {
+        ComputedSymbol sym = symbols.get(pc);
+        if (sym == null) {
+            symbols.put(pc, sc(pc));
+        } else {
+            if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
+                sym.type = ComputedSymbol.Type.SUBROUTINE;
+            }
+            if (sym.name.equals(locname(pc))) {
+                sym.name = scname(pc);
+            }
+        }
+    }
+
+    public void addSyscall(long pc, String name) {
         ComputedSymbol sym = symbols.get(pc);
         if (sym == null) {
             symbols.put(pc, new ComputedSymbol(name, pc, ComputedSymbol.Type.SUBROUTINE));

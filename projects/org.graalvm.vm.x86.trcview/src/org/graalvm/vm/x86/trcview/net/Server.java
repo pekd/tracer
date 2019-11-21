@@ -49,7 +49,7 @@ public class Server {
             System.out.print("Loading " + file + " [" + size + " bytes] ");
             System.out.flush();
             TraceReader reader = new TraceReader(in);
-            Analysis analysis = new Analysis();
+            Analysis analysis = new Analysis(reader.getArchitecture());
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, new ProgressInfo());
             analysis.finish(root);

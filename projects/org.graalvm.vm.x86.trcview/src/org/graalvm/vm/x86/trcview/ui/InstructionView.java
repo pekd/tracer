@@ -143,8 +143,13 @@ public class InstructionView extends JPanel {
             }
             Location loc = Location.getLocation(trc, step);
             StringBuilder buf = new StringBuilder();
-            buf.append("PC=0x");
-            buf.append(HexFormatter.tohex(loc.getPC(), trc.getArchitecture().getTabSize()));
+            StepFormat fmt = trc.getArchitecture().getFormat();
+            if (fmt.numberfmt == StepFormat.NUMBERFMT_HEX) {
+                buf.append("PC=0x");
+            } else {
+                buf.append("PC=");
+            }
+            buf.append(fmt.formatAddress(loc.getPC()));
             if (loc.getSymbol() != null) {
                 buf.append(" ");
                 buf.append(loc.getSymbol());
@@ -410,6 +415,7 @@ public class InstructionView extends JPanel {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             Node node = instructions.get(index);
             if (node instanceof BlockNode) {
+                c.setForeground(CALL_FG);
                 if (index > 0) {
                     BlockNode block = (BlockNode) node;
                     Node prev = instructions.get(index - 1);
@@ -423,8 +429,10 @@ public class InstructionView extends JPanel {
                             c.setBackground(ROP_BG);
                         }
                     }
+                    if (head != null && head.isSyscall()) {
+                        c.setForeground(SYSCALL_FG);
+                    }
                 }
-                c.setForeground(CALL_FG);
             } else if (node instanceof EventNode) {
                 StepEvent step = (StepEvent) ((EventNode) node).getEvent();
                 String mnemonic = step.getMnemonic();
@@ -433,6 +441,9 @@ public class InstructionView extends JPanel {
                 } else {
                     switch (step.getType()) {
                         case RET:
+                            c.setForeground(RET_FG);
+                            break;
+                        case RTI:
                             c.setForeground(RET_FG);
                             break;
                         case SYSCALL:

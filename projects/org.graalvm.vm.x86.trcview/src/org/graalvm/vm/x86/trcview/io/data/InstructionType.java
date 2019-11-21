@@ -7,5 +7,6 @@ public enum InstructionType {
     CALL,
     RET,
     SYSCALL,
+    RTI,
     OTHER
 }

@@ -38,6 +38,8 @@ public abstract class Architecture {
 
     public abstract StepFormat getFormat();
 
+    public abstract boolean isSystemLevel();
+
     public static void register(Architecture arch) {
         log.info("Registering architecture support for " + ElfStrings.getElfMachine(arch.getId()) + " [" + arch.getName() + "]");
         architectures.put(arch.getId(), arch);

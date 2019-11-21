@@ -128,6 +128,7 @@ public class BlockNode extends Node {
     }
 
     private static Node parseRecord(TraceReader in, Analysis analysis, ProgressListener progress, int thread) throws IOException {
+        boolean system = in.getArchitecture().isSystemLevel();
         int tid = thread;
         Event event = null;
         try {
@@ -149,7 +150,7 @@ public class BlockNode extends Node {
         }
         if (event instanceof StepEvent) {
             StepEvent step = (StepEvent) event;
-            if (step.getMachinecode() != null && step.isCall()) {
+            if (step.getMachinecode() != null && (step.isCall() || (system && step.isSyscall()))) {
                 BlockNode block = new BlockNode(step);
                 analysis.process(event, block);
                 if (progress != null) {
@@ -176,7 +177,7 @@ public class BlockNode extends Node {
                     if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
                         hasSteps = true;
                         StepEvent s = (StepEvent) ((EventNode) child).getEvent();
-                        if (s.getMachinecode() == null || s.isReturn()) {
+                        if (s.getMachinecode() == null || (s.isReturn() || (system && step.isReturnFromSyscall()))) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
                             }

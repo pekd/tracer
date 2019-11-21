@@ -47,6 +47,16 @@ public class IncompleteTraceStep extends StepEvent {
     }
 
     @Override
+    public boolean isSyscall() {
+        return false;
+    }
+
+    @Override
+    public boolean isReturnFromSyscall() {
+        return false;
+    }
+
+    @Override
     public InstructionType getType() {
         return InstructionType.OTHER;
     }

@@ -59,6 +59,7 @@ import org.graalvm.vm.x86.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.x86.trcview.analysis.type.DataType;
 import org.graalvm.vm.x86.trcview.analysis.type.Prototype;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
+import org.graalvm.vm.x86.trcview.arch.Architecture;
 import org.graalvm.vm.x86.trcview.io.BlockNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.data.BrkEvent;
@@ -86,8 +87,9 @@ public class Analysis {
     private MemoryTrace memory;
 
     private List<Node> nodes;
+    private boolean system;
 
-    public Analysis() {
+    public Analysis(Architecture arch) {
         symbols = new SymbolTable();
         symbolTable = new TreeMap<>();
         mappedFiles = new TreeMap<>();
@@ -95,6 +97,7 @@ public class Analysis {
         augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
         memory = new MemoryTrace();
         nodes = new ArrayList<>();
+        system = arch.isSystemLevel();
     }
 
     public void start() {
@@ -134,6 +137,16 @@ public class Analysis {
                             symbols.addSubroutine(pc, sym.getName());
                         } else {
                             symbols.addSubroutine(pc);
+                        }
+                        break;
+                    case SYSCALL:
+                        if (system) {
+                            sym = resolver.getSymbol(pc);
+                            if (sym != null && sym.getName() != null) {
+                                symbols.addSyscall(pc, sym.getName());
+                            } else {
+                                symbols.addSyscall(pc);
+                            }
                         }
                         break;
                 }

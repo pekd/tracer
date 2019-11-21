@@ -19,6 +19,10 @@ public abstract class StepEvent extends Event {
 
     public abstract boolean isReturn();
 
+    public abstract boolean isSyscall();
+
+    public abstract boolean isReturnFromSyscall();
+
     public abstract InstructionType getType();
 
     public abstract long getStep();

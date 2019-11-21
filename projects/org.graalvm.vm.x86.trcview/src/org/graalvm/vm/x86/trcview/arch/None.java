@@ -54,4 +54,9 @@ public class None extends Architecture {
     public StepFormat getFormat() {
         return FORMAT;
     }
+
+    @Override
+    public boolean isSystemLevel() {
+        return false;
+    }
 }

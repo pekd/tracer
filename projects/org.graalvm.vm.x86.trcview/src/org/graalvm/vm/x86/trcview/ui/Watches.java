@@ -17,6 +17,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
 import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.util.OctFormatter;
 import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
 import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
@@ -24,6 +25,7 @@ import org.graalvm.vm.x86.trcview.expression.Parser;
 import org.graalvm.vm.x86.trcview.expression.ast.Expression;
 import org.graalvm.vm.x86.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
+import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
@@ -37,6 +39,7 @@ public class Watches extends JPanel {
     private StepEvent step;
     private long insn;
     private Consumer<String> status;
+    private StepFormat format;
 
     public Watches(Consumer<String> status) {
         super(new BorderLayout());
@@ -105,6 +108,7 @@ public class Watches extends JPanel {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
+        format = trc.getArchitecture().getFormat();
         model.changed();
     }
 
@@ -153,7 +157,13 @@ public class Watches extends JPanel {
             } else {
                 Expression expr = expressions.get(row);
                 long value = eval(expr);
-                return "0x" + HexFormatter.tohex(value) + " [" + value + "]";
+                if (format.numberfmt == StepFormat.NUMBERFMT_HEX) {
+                    return "0x" + HexFormatter.tohex(value) + " [" + value + "]";
+                } else if (format.numberfmt == StepFormat.NUMBERFMT_OCT) {
+                    return OctFormatter.tooct(value) + " [" + value + "]";
+                } else {
+                    return format.formatWord(value) + " [" + value + "]";
+                }
             }
         }
 

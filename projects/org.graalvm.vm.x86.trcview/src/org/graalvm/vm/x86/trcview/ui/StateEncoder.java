@@ -124,7 +124,7 @@ public class StateEncoder {
         if (assembly.length == 1) {
             return str(assembly[0], "mnemonic");
         } else {
-            return str(assembly[0], "mnemonic") + pad(assembly[0], 8) + html(Stream.of(assembly).skip(1).collect(Collectors.joining(",")));
+            return str(assembly[0], "mnemonic") + pad(assembly[0], 8) + html(Stream.of(assembly).skip(1).collect(Collectors.joining(", ")));
         }
     }
 

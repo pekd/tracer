@@ -170,6 +170,11 @@ public class AMD64InstructionQuickInfo {
         }
     }
 
+    public static boolean isSyscall(byte[] machinecode) {
+        int op = getOpcodeOffset(machinecode);
+        return (machinecode[op] == AMD64Opcode.ESCAPE) && (machinecode[op + 1] == AMD64Opcode.SYSCALL);
+    }
+
     public static InstructionType getType(byte[] machinecode) {
         try {
             int op = getOpcodeOffset(machinecode);
