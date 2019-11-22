@@ -314,7 +314,7 @@ public class IO {
         private final long insn;
 
         public FakeBlockNode(long insn) {
-            super(null);
+            super((StepEvent) null);
             this.insn = insn;
         }
 

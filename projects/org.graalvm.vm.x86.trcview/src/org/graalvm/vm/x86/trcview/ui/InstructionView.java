@@ -73,6 +73,7 @@ import org.graalvm.vm.x86.trcview.io.EventNode;
 import org.graalvm.vm.x86.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.io.data.CpuState;
 import org.graalvm.vm.x86.trcview.io.data.InstructionType;
+import org.graalvm.vm.x86.trcview.io.data.InterruptEvent;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.io.data.StepFormat;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
@@ -89,6 +90,7 @@ public class InstructionView extends JPanel {
     public static final Color JMP_FG = Color.LIGHT_GRAY;
     public static final Color INDIRECTJMP_FG = new Color(0xAA, 0x55, 0x00);
     public static final Color JCC_FG = new Color(0xFF, 0x80, 0x00);
+    public static final Color IRQ_FG = new Color(0x80, 0x40, 0x00);
     public static final Color ENDBR_FG = Color.GRAY;
     public static final Color ERROR_FG = Color.RED;
 
@@ -280,6 +282,17 @@ public class InstructionView extends JPanel {
         return buf.toString();
     }
 
+    private String format(InterruptEvent irq) {
+        StepEvent step = irq.getStep();
+        StepFormat fmt = step.getFormat();
+        Location loc = Location.getLocation(trc, step);
+        StringBuilder buf = new StringBuilder();
+        buf.append(fmt.formatAddress(loc.getPC()));
+        buf.append(":  ");
+        buf.append(irq.toString());
+        return buf.toString();
+    }
+
     private static String stripHTML(String s) {
         String result = s.replaceAll("<style>.*</style>", "");
         result = result.replaceAll("&gt;", ">");
@@ -415,9 +428,9 @@ public class InstructionView extends JPanel {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             Node node = instructions.get(index);
             if (node instanceof BlockNode) {
+                BlockNode block = (BlockNode) node;
                 c.setForeground(CALL_FG);
                 if (index > 0) {
-                    BlockNode block = (BlockNode) node;
                     Node prev = instructions.get(index - 1);
                     StepEvent head = block.getHead();
                     long pc = head.getPC();
@@ -432,6 +445,9 @@ public class InstructionView extends JPanel {
                     if (head != null && head.isSyscall()) {
                         c.setForeground(SYSCALL_FG);
                     }
+                }
+                if (block.isInterrupt()) {
+                    c.setForeground(IRQ_FG);
                 }
             } else if (node instanceof EventNode) {
                 StepEvent step = (StepEvent) ((EventNode) node).getEvent();
@@ -506,16 +522,20 @@ public class InstructionView extends JPanel {
                 Location loc = Location.getLocation(trc, ((BlockNode) n).getFirstStep());
                 StringBuilder buf = new StringBuilder();
                 StepEvent next = null;
-                if (i + 1 < instructions.size()) {
-                    Node nn = instructions.get(i + 1);
-                    if (nn instanceof BlockNode) {
-                        next = ((BlockNode) nn).getHead();
-                    } else {
-                        next = (StepEvent) ((EventNode) nn).getEvent();
-                    }
-                    buf.append(format(step, next));
+                if (((BlockNode) n).isInterrupt()) {
+                    buf.append(format(((BlockNode) n).getInterrupt()));
                 } else {
-                    buf.append(format(step, null));
+                    if (i + 1 < instructions.size()) {
+                        Node nn = instructions.get(i + 1);
+                        if (nn instanceof BlockNode) {
+                            next = ((BlockNode) nn).getHead();
+                        } else {
+                            next = (StepEvent) ((EventNode) nn).getEvent();
+                        }
+                        buf.append(format(step, next));
+                    } else {
+                        buf.append(format(step, null));
+                    }
                 }
                 if (loc.getSymbol() != null) {
                     buf.append(" # <");

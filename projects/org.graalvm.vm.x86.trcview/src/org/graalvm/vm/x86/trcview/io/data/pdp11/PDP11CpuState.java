@@ -33,7 +33,7 @@ public class PDP11CpuState extends CpuState {
 
     @Override
     public long getPC() {
-        return registers[7];
+        return Short.toUnsignedLong(registers[7]);
     }
 
     @Override

@@ -12,14 +12,15 @@ public abstract class Event {
     public static final byte CPU_STATE = 1;
     public static final byte STEP = 2;
     public static final byte DEVICE = 3;
-    public static final byte MEMORY_DUMP = 4;
-    public static final byte MEMORY = 5;
-    public static final byte MMAP = 6;
-    public static final byte MUNMAP = 7;
-    public static final byte MPROTECT = 8;
-    public static final byte BRK = 9;
-    public static final byte SYMBOL_TABLE = 10;
-    public static final byte SYSTEM_LOG = 11;
+    public static final byte INTERRUPT = 4;
+    public static final byte MEMORY_DUMP = 5;
+    public static final byte MEMORY = 6;
+    public static final byte MMAP = 7;
+    public static final byte MUNMAP = 8;
+    public static final byte MPROTECT = 9;
+    public static final byte BRK = 10;
+    public static final byte SYMBOL_TABLE = 11;
+    public static final byte SYSTEM_LOG = 12;
 
     private final int tid;
     private byte id;

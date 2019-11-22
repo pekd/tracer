@@ -8,6 +8,14 @@ import org.graalvm.vm.x86.trcview.arch.PDP11;
 import org.graalvm.vm.x86.trcview.io.data.DeviceEvent;
 
 public class PDP11CpuEvent extends DeviceEvent {
+    public static final short CPU_TRAP = 0;
+    public static final short CPU_HALT = 1;
+    public static final short CPU_WAIT = 2;
+    public static final short CPU_RUN = 3;
+    public static final short CPU_DBLBUS = 4;
+    public static final short CPU_ODT_P = 5;
+    public static final short CPU_ODT_G = 5;
+
     private final short type;
     private final short value;
 
@@ -29,5 +37,9 @@ public class PDP11CpuEvent extends DeviceEvent {
 
     public short getValue() {
         return value;
+    }
+
+    public PDP11CpuTrapEvent getTrapEvent(PDP11StepEvent lastStep) {
+        return new PDP11CpuTrapEvent(getTid(), value, lastStep);
     }
 }

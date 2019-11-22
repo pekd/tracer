@@ -52,6 +52,7 @@ import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.trcview.analysis.Analysis;
 import org.graalvm.vm.x86.trcview.io.data.Event;
 import org.graalvm.vm.x86.trcview.io.data.IncompleteTraceStep;
+import org.graalvm.vm.x86.trcview.io.data.InterruptEvent;
 import org.graalvm.vm.x86.trcview.io.data.StepEvent;
 import org.graalvm.vm.x86.trcview.io.data.TraceReader;
 
@@ -60,9 +61,15 @@ public class BlockNode extends Node {
 
     private StepEvent head;
     private List<Node> children;
+    private InterruptEvent interrupt;
 
     public BlockNode(StepEvent head) {
         this(head, null);
+    }
+
+    public BlockNode(InterruptEvent head) {
+        this(head.getStep(), null);
+        this.interrupt = head;
     }
 
     public BlockNode(StepEvent head, List<Node> children) {
@@ -79,6 +86,14 @@ public class BlockNode extends Node {
                 n.setParent(this);
             }
         }
+    }
+
+    public boolean isInterrupt() {
+        return interrupt != null;
+    }
+
+    public InterruptEvent getInterrupt() {
+        return interrupt;
     }
 
     public StepEvent getHead() {
@@ -177,12 +192,14 @@ public class BlockNode extends Node {
                     if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
                         hasSteps = true;
                         StepEvent s = (StepEvent) ((EventNode) child).getEvent();
-                        if (s.getMachinecode() == null || (s.isReturn() || (system && step.isReturnFromSyscall()))) {
+                        if (s.getMachinecode() == null || (s.isReturn() || (system && s.isReturnFromSyscall()))) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
                             }
                             break;
                         }
+                    } else if (child instanceof BlockNode) {
+                        hasSteps = true;
                     }
                 }
                 block.setChildren(result);
@@ -192,6 +209,46 @@ public class BlockNode extends Node {
                 analysis.process(event, node);
                 return node;
             }
+        } else if (system && event instanceof InterruptEvent) {
+            InterruptEvent interrupt = (InterruptEvent) event;
+            BlockNode block = new BlockNode(interrupt);
+            analysis.process(event, block);
+            if (progress != null) {
+                progress.progressUpdate(in.tell());
+            }
+            List<Node> result = new ArrayList<>();
+            boolean hasSteps = false;
+            int cnt = 0;
+            while (true) {
+                Node child = parseRecord(in, analysis, progress, tid);
+                if (child == null) {
+                    if (!hasSteps) {
+                        result.add(new EventNode(new IncompleteTraceStep(tid)));
+                    }
+                    break;
+                }
+                result.add(child);
+                if (progress != null && cnt > 10_000) {
+                    cnt = 0;
+                    progress.progressUpdate(in.tell());
+                } else {
+                    cnt++;
+                }
+                if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
+                    hasSteps = true;
+                    StepEvent s = (StepEvent) ((EventNode) child).getEvent();
+                    if (s.getMachinecode() == null || s.isReturnFromSyscall()) {
+                        if (progress != null) {
+                            progress.progressUpdate(in.tell());
+                        }
+                        break;
+                    }
+                } else if (child instanceof BlockNode) {
+                    hasSteps = true;
+                }
+            }
+            block.setChildren(result);
+            return block;
         } else {
             EventNode node = new EventNode(event);
             analysis.process(event, node);

@@ -626,7 +626,7 @@ public class PDP11Disassembler {
                 return InstructionType.SYSCALL;
             case 0000002: /* RTI */
             case 0000006: /* RTT */
-                return InstructionType.RET;
+                return InstructionType.RTI;
         }
         return InstructionType.OTHER;
     }
