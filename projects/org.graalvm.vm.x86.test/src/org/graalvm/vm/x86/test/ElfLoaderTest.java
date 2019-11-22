@@ -160,7 +160,7 @@ public class ElfLoaderTest {
         assertNotNull(data);
         assertTrue(data.r);
         assertTrue(data.w);
-        assertFalse(data.x);
+        assertTrue(data.x);
     }
 
     @Test
