@@ -133,7 +133,7 @@ public class BlockNode extends Node {
         List<Node> nodes = new ArrayList<>();
         Node node;
         int tid = 0;
-        while ((node = parseRecord(in, analysis, progress, tid)) != null) {
+        while ((node = parseRecord(in, analysis, progress, tid, false)) != null) {
             nodes.add(node);
             if (tid == 0) {
                 tid = node.getTid();
@@ -142,7 +142,7 @@ public class BlockNode extends Node {
         return new BlockNode(null, nodes);
     }
 
-    private static Node parseRecord(TraceReader in, Analysis analysis, ProgressListener progress, int thread) throws IOException {
+    private static Node parseRecord(TraceReader in, Analysis analysis, ProgressListener progress, int thread, boolean ignoreTrap) throws IOException {
         boolean system = in.getArchitecture().isSystemLevel();
         int tid = thread;
         Event event = null;
@@ -174,8 +174,9 @@ public class BlockNode extends Node {
                 List<Node> result = new ArrayList<>();
                 boolean hasSteps = false;
                 int cnt = 0;
+                boolean ignore = true;
                 while (true) {
-                    Node child = parseRecord(in, analysis, progress, tid);
+                    Node child = parseRecord(in, analysis, progress, tid, ignore);
                     if (child == null) {
                         if (!hasSteps) {
                             result.add(new EventNode(new IncompleteTraceStep(tid)));
@@ -191,6 +192,7 @@ public class BlockNode extends Node {
                     }
                     if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
                         hasSteps = true;
+                        ignore = false;
                         StepEvent s = (StepEvent) ((EventNode) child).getEvent();
                         if (s.getMachinecode() == null || (s.isReturn() || (system && s.isReturnFromSyscall()))) {
                             if (progress != null) {
@@ -200,6 +202,7 @@ public class BlockNode extends Node {
                         }
                     } else if (child instanceof BlockNode) {
                         hasSteps = true;
+                        ignore = false;
                     }
                 }
                 block.setChildren(result);
@@ -209,7 +212,7 @@ public class BlockNode extends Node {
                 analysis.process(event, node);
                 return node;
             }
-        } else if (system && event instanceof InterruptEvent) {
+        } else if (!ignoreTrap && system && event instanceof InterruptEvent) {
             InterruptEvent interrupt = (InterruptEvent) event;
             BlockNode block = new BlockNode(interrupt);
             analysis.process(event, block);
@@ -220,7 +223,7 @@ public class BlockNode extends Node {
             boolean hasSteps = false;
             int cnt = 0;
             while (true) {
-                Node child = parseRecord(in, analysis, progress, tid);
+                Node child = parseRecord(in, analysis, progress, tid, false);
                 if (child == null) {
                     if (!hasSteps) {
                         result.add(new EventNode(new IncompleteTraceStep(tid)));
