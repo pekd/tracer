@@ -38,39 +38,69 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.test;
+package org.graalvm.vm.x86.isa.instruction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
+import org.graalvm.vm.memory.vector.Vector128;
+import org.graalvm.vm.x86.ArchitecturalState;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
-import org.graalvm.vm.x86.isa.AMD64InstructionDecoder;
-import org.graalvm.vm.x86.isa.CodeArrayReader;
-import org.graalvm.vm.x86.isa.CodeReader;
+import org.graalvm.vm.x86.isa.Operand;
+import org.graalvm.vm.x86.isa.OperandDecoder;
+import org.graalvm.vm.x86.node.ReadNode;
+import org.graalvm.vm.x86.node.WriteNode;
 
-public class InstructionTest {
-    protected AMD64Instruction decode(byte[] code) {
-        return decode(0, code);
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+
+public class Pshufb extends AMD64Instruction {
+    private final Operand operand1;
+    private final Operand operand2;
+
+    @Child private ReadNode readSrc;
+    @Child private ReadNode readDst;
+    @Child private WriteNode writeDst;
+
+    protected Pshufb(long pc, byte[] instruction, Operand operand1, Operand operand2) {
+        super(pc, instruction);
+        this.operand1 = operand1;
+        this.operand2 = operand2;
+
+        setGPRReadOperands(operand2);
+        setGPRWriteOperands(operand1);
     }
 
-    protected AMD64Instruction decode(long pc, byte[] code) {
-        CodeReader reader = new CodeArrayReader(code, 0);
-        AMD64Instruction insn = AMD64InstructionDecoder.decode(pc, reader);
-        assertNotNull(insn);
-        assertEquals(code.length, reader.getPC());
-        return insn;
+    public Pshufb(long pc, byte[] instruction, OperandDecoder operands) {
+        this(pc, instruction, operands.getAVXOperand2(128), operands.getAVXOperand1(128));
     }
 
-    protected void check(byte[] code, String asm, Class<? extends AMD64Instruction> clazz) {
-        AMD64Instruction insn = decode(code);
-        assertTrue("wrong class: " + insn.getClass().getCanonicalName() + ", expected: " + clazz.getCanonicalName(), clazz.isInstance(insn));
-        assertEquals(asm, insn.getDisassembly());
+    @Override
+    protected void createChildNodes() {
+        ArchitecturalState state = getState();
+        readSrc = operand2.createRead(state, next());
+        readDst = operand1.createRead(state, next());
+        writeDst = operand1.createWrite(state, next());
     }
 
-    protected void check(long pc, byte[] code, String asm, Class<? extends AMD64Instruction> clazz) {
-        AMD64Instruction insn = decode(pc, code);
-        assertTrue("wrong class: " + insn.getClass().getCanonicalName() + ", expected: " + clazz.getCanonicalName(), clazz.isInstance(insn));
-        assertEquals(asm, insn.getDisassembly());
+    @ExplodeLoop
+    @Override
+    public long executeInstruction(VirtualFrame frame) {
+        Vector128 src = readSrc.executeI128(frame);
+        Vector128 dst = readDst.executeI128(frame);
+        byte[] bytes = new byte[16];
+        for (int i = 0; i < 16; i++) {
+            byte order = src.getI8(i);
+            if (order < 0) {
+                bytes[i] = 0;
+            } else {
+                bytes[i] = dst.getI8(15 - (order & 0x0F));
+            }
+        }
+        Vector128 result = new Vector128(bytes);
+        writeDst.executeI128(frame, result);
+        return next();
+    }
+
+    @Override
+    protected String[] disassemble() {
+        return new String[]{"pshufb", operand1.toString(), operand2.toString()};
     }
 }

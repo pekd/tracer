@@ -38,53 +38,61 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.x86.isa.test;
+package org.graalvm.vm.x86.isa.instruction;
 
-import org.graalvm.vm.x86.isa.instruction.Pshufb;
-import org.graalvm.vm.x86.isa.instruction.Pshufd;
-import org.graalvm.vm.x86.isa.instruction.Pshufhw;
-import org.graalvm.vm.x86.isa.instruction.Pshuflw;
-import org.graalvm.vm.x86.test.InstructionTest;
-import org.junit.Test;
+import org.graalvm.vm.x86.RegisterAccessFactory;
+import org.graalvm.vm.x86.isa.AMD64Instruction;
+import org.graalvm.vm.x86.isa.Register;
+import org.graalvm.vm.x86.isa.RegisterOperand;
+import org.graalvm.vm.x86.node.ReadFlagNode;
+import org.graalvm.vm.x86.node.ReadNode;
+import org.graalvm.vm.x86.node.WriteNode;
 
-public class PshufTest extends InstructionTest {
-    private static final byte[] MACHINECODE1 = {(byte) 0xf2, 0x0f, 0x70, (byte) 0xac, (byte) 0x8c, 0x10, 0x04, 0x00, 0x00, (byte) 0xe8};
-    private static final String ASSEMBLY1 = "pshuflw\txmm5,[rsp+rcx*4+0x410],0xe8";
+import com.oracle.truffle.api.frame.VirtualFrame;
 
-    private static final byte[] MACHINECODE2 = {0x66, 0x0f, 0x70, (byte) 0xf6, (byte) 0xe8};
-    private static final String ASSEMBLY2 = "pshufd\txmm6,xmm6,0xe8";
+public class Loopne extends AMD64Instruction {
+    protected final long bta;
 
-    private static final byte[] MACHINECODE3 = {(byte) 0xf3, 0x0f, 0x70, (byte) 0xed, (byte) 0xe8};
-    private static final String ASSEMBLY3 = "pshufhw\txmm5,xmm5,0xe8";
+    @Child private ReadFlagNode readZF;
+    @Child private ReadNode readRCX;
+    @Child private WriteNode writeRCX;
 
-    private static final byte[] MACHINECODE4 = {0x66, 0x0f, 0x38, 0x00, (byte) 0xc3};
-    private static final String ASSEMBLY4 = "pshufb\txmm0,xmm3";
-
-    private static final byte[] MACHINECODE5 = {0x66, 0x0f, 0x38, 0x00, (byte) 0xf9};
-    private static final String ASSEMBLY5 = "pshufb\txmm7,xmm1";
-
-    @Test
-    public void test1() {
-        check(MACHINECODE1, ASSEMBLY1, Pshuflw.class);
+    public Loopne(long pc, byte[] instruction, int offset) {
+        super(pc, instruction);
+        this.bta = getPC() + getSize() + offset;
+        setGPRReadOperands(new RegisterOperand(Register.RCX));
+        setGPRWriteOperands(new RegisterOperand(Register.RCX));
     }
 
-    @Test
-    public void test2() {
-        check(MACHINECODE2, ASSEMBLY2, Pshufd.class);
+    @Override
+    protected void createChildNodes() {
+        RegisterAccessFactory regs = getState().getRegisters();
+        readRCX = regs.getRegister(Register.RCX).createRead();
+        writeRCX = regs.getRegister(Register.RCX).createWrite();
+        readZF = regs.getZF().createRead();
     }
 
-    @Test
-    public void test3() {
-        check(MACHINECODE3, ASSEMBLY3, Pshufhw.class);
+    @Override
+    public long executeInstruction(VirtualFrame frame) {
+        boolean zf = readZF.execute(frame);
+        long rcx = readRCX.executeI64(frame);
+        rcx--;
+        writeRCX.executeI64(frame, rcx);
+        return (rcx != 0 && !zf) ? bta : next();
     }
 
-    @Test
-    public void test4() {
-        check(MACHINECODE4, ASSEMBLY4, Pshufb.class);
+    @Override
+    public boolean isControlFlow() {
+        return true;
     }
 
-    @Test
-    public void test5() {
-        check(MACHINECODE5, ASSEMBLY5, Pshufb.class);
+    @Override
+    public long[] getBTA() {
+        return new long[]{bta, next()};
+    }
+
+    @Override
+    protected String[] disassemble() {
+        return new String[]{"loopne", String.format("0x%x", bta)};
     }
 }

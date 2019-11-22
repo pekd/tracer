@@ -215,6 +215,10 @@ public class AMD64Opcode {
     public static final byte LODSB = (byte) 0xAC;
     public static final byte LODSD = (byte) 0xAD;
 
+    public static final byte LOOP = (byte) 0xE2;
+    public static final byte LOOPE = (byte) 0xE1;
+    public static final byte LOOPNE = (byte) 0xE0;
+
     public static final byte MAXSD_X_XM = 0x5F;
 
     public static final byte MINSD_X_XM = 0x5D;
@@ -339,6 +343,7 @@ public class AMD64Opcode {
 
     public static final byte PREFETCH = 0x18;
 
+    public static final byte PSHUFB_OP = 0x00;
     public static final byte PSHUFD = 0x70;
 
     public static final byte PSLLW_XM_I = 0x71;

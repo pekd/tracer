@@ -254,6 +254,12 @@ import org.graalvm.vm.x86.isa.instruction.LockXchg.LockXchgl;
 import org.graalvm.vm.x86.isa.instruction.LockXchg.LockXchgq;
 import org.graalvm.vm.x86.isa.instruction.LockXchg.LockXchgw;
 import org.graalvm.vm.x86.isa.instruction.Lods.Lodsb;
+import org.graalvm.vm.x86.isa.instruction.Lods.Lodsd;
+import org.graalvm.vm.x86.isa.instruction.Lods.Lodsq;
+import org.graalvm.vm.x86.isa.instruction.Lods.Lodsw;
+import org.graalvm.vm.x86.isa.instruction.Loop;
+import org.graalvm.vm.x86.isa.instruction.Loope;
+import org.graalvm.vm.x86.isa.instruction.Loopne;
 import org.graalvm.vm.x86.isa.instruction.Maxps;
 import org.graalvm.vm.x86.isa.instruction.Maxsd;
 import org.graalvm.vm.x86.isa.instruction.Maxss;
@@ -363,6 +369,7 @@ import org.graalvm.vm.x86.isa.instruction.Popf.Popfq;
 import org.graalvm.vm.x86.isa.instruction.Popf.Popfw;
 import org.graalvm.vm.x86.isa.instruction.Por;
 import org.graalvm.vm.x86.isa.instruction.Prefetch;
+import org.graalvm.vm.x86.isa.instruction.Pshufb;
 import org.graalvm.vm.x86.isa.instruction.Pshufd;
 import org.graalvm.vm.x86.isa.instruction.Pshufhw;
 import org.graalvm.vm.x86.isa.instruction.Pshuflw;
@@ -1115,6 +1122,33 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.LODSB:
                 assert segment == null;
                 return new Lodsb(pc, Arrays.copyOf(instruction, instructionLength));
+            case AMD64Opcode.LODSD:
+                assert segment == null;
+                if (rex != null && rex.w) {
+                    return new Lodsq(pc, Arrays.copyOf(instruction, instructionLength));
+                } else if (sizeOverride) {
+                    return new Lodsw(pc, Arrays.copyOf(instruction, instructionLength));
+                } else {
+                    return new Lodsd(pc, Arrays.copyOf(instruction, instructionLength));
+                }
+            case AMD64Opcode.LOOP: {
+                assert !addressOverride;
+                byte offset = code.read8();
+                instruction[instructionLength++] = offset;
+                return new Loop(pc, Arrays.copyOf(instruction, instructionLength), offset);
+            }
+            case AMD64Opcode.LOOPE: {
+                assert !addressOverride;
+                byte offset = code.read8();
+                instruction[instructionLength++] = offset;
+                return new Loope(pc, Arrays.copyOf(instruction, instructionLength), offset);
+            }
+            case AMD64Opcode.LOOPNE: {
+                assert !addressOverride;
+                byte offset = code.read8();
+                instruction[instructionLength++] = offset;
+                return new Loopne(pc, Arrays.copyOf(instruction, instructionLength), offset);
+            }
             case AMD64Opcode.MOV_RM_R: {
                 Args args = new Args(code, rex, segment, addressOverride);
                 if (rex != null && rex.w) {
@@ -3267,8 +3301,15 @@ public class AMD64InstructionDecoder {
                     }
                     case AMD64Opcode.PMULLD_X_XM: {
                         byte subOp = code.read8();
+                        instruction[instructionLength++] = subOp;
                         Args args = new Args(code, rex, segment, addressOverride);
                         switch (subOp) {
+                            case AMD64Opcode.PSHUFB_OP:
+                                if (sizeOverride) {
+                                    return new Pshufb(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                } else {
+                                    return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
+                                }
                             case AMD64Opcode.PMULDQ_OP:
                                 if (sizeOverride) {
                                     return new Pmuldq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
