@@ -155,8 +155,20 @@ public class VFS {
                     return (T) link;
                 }
                 // resolve link
-                while (entry instanceof VFSSymlink) {
-                    entry = link.getTarget();
+                String linkpath = link.readlink();
+                if (linkpath.startsWith("/")) {
+                    return find(linkpath, resolve, root);
+                } else {
+                    while (entry instanceof VFSSymlink && !linkpath.contains("/")) {
+                        entry = entry.getParent().get(linkpath);
+                        if (entry instanceof VFSSymlink) {
+                            linkpath = ((VFSSymlink) entry).readlink();
+                        }
+                    }
+                    // TODO: use VFS to resolve symlinks
+                    while (entry instanceof VFSSymlink) {
+                        entry = link.getTarget();
+                    }
                 }
                 if (entry instanceof VFSDirectory) {
                     dir = (VFSDirectory) entry;
