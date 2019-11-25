@@ -239,6 +239,10 @@ public class TypeParser {
                     scan();
                     type.setRepresentation(Representation.DEC);
                     break;
+                case "$oct":
+                    scan();
+                    type.setRepresentation(Representation.OCT);
+                    break;
                 case "$hex":
                     scan();
                     type.setRepresentation(Representation.HEX);

@@ -130,6 +130,9 @@ public class Type {
                 case DEC:
                     reprstr = " $dec";
                     break;
+                case OCT:
+                    reprstr = " $oct";
+                    break;
                 case HEX:
                     reprstr = " $hex";
                     break;

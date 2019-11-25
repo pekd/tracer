@@ -55,6 +55,8 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Integer.toString(Byte.toUnsignedInt((byte) val));
+                    case OCT:
+                        return Integer.toOctalString(Byte.toUnsignedInt((byte) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Byte.toUnsignedInt((byte) val));
                 }
@@ -65,8 +67,10 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Byte.toString((byte) val);
+                    case OCT:
+                        return Integer.toOctalString(Byte.toUnsignedInt((byte) val));
                     case HEX:
-                        return Integer.toHexString(Byte.toUnsignedInt((byte) val));
+                        return "0x" + Integer.toHexString(Byte.toUnsignedInt((byte) val));
                 }
             case U16:
                 switch (repr) {
@@ -79,6 +83,8 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Integer.toString(Short.toUnsignedInt((short) val));
+                    case OCT:
+                        return Integer.toOctalString(Short.toUnsignedInt((short) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                 }
@@ -93,6 +99,8 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Short.toString((short) val);
+                    case OCT:
+                        return Integer.toOctalString(Short.toUnsignedInt((short) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                 }
@@ -107,6 +115,8 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Integer.toUnsignedString((int) val);
+                    case OCT:
+                        return Integer.toUnsignedString((int) val, 8);
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
                 }
@@ -121,8 +131,10 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Integer.toString((int) val);
+                    case OCT:
+                        return "0x" + Integer.toOctalString((int) val);
                     case HEX:
-                        return "0x" + Integer.toUnsignedString((int) val, 16);
+                        return "0x" + Integer.toString((int) val, 16);
                 }
             case U64:
                 switch (repr) {
@@ -135,6 +147,8 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Long.toUnsignedString(val);
+                    case OCT:
+                        return Long.toUnsignedString(val, 8);
                     case HEX:
                         return "0x" + Long.toUnsignedString(val, 16);
                 }
@@ -149,8 +163,10 @@ public class AMD64CallDecoder extends CallDecoder {
                     default:
                     case DEC:
                         return Long.toString(val);
+                    case OCT:
+                        return Long.toString(val, 8);
                     case HEX:
-                        return "0x" + Long.toUnsignedString(val, 16);
+                        return "0x" + Long.toString(val, 16);
                 }
             case STRUCT:
                 return "/* struct */";
