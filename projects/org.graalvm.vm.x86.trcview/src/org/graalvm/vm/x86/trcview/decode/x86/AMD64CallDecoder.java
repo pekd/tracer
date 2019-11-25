@@ -9,6 +9,8 @@ import org.graalvm.vm.x86.trcview.analysis.type.Representation;
 import org.graalvm.vm.x86.trcview.analysis.type.Type;
 import org.graalvm.vm.x86.trcview.decode.CallDecoder;
 import org.graalvm.vm.x86.trcview.decode.DecoderUtils;
+import org.graalvm.vm.x86.trcview.expression.EvaluationException;
+import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.io.data.CpuState;
 import org.graalvm.vm.x86.trcview.io.data.x86.AMD64CpuState;
 import org.graalvm.vm.x86.trcview.net.TraceAnalyzer;
@@ -160,9 +162,19 @@ public class AMD64CallDecoder extends CallDecoder {
         StringBuilder buf = new StringBuilder(function.getName());
         buf.append('(');
         Prototype prototype = function.getPrototype();
-        for (int i = 0; i < prototype.args.size(); i++) {
+        for (int i = 0, arg = 0; i < prototype.args.size(); i++) {
             Type type = prototype.args.get(i);
-            long val = getRegister(state, i);
+            long val;
+            if (type.getExpression() != null) {
+                try {
+                    ExpressionContext ctx = new ExpressionContext(state, trc);
+                    val = type.getExpression().evaluate(ctx);
+                } catch (EvaluationException e) {
+                    val = 0;
+                }
+            } else {
+                val = getRegister(state, arg++);
+            }
             if (i > 0) {
                 buf.append(", ");
             }
@@ -170,7 +182,18 @@ public class AMD64CallDecoder extends CallDecoder {
         }
         buf.append(')');
         if (nextState != null) {
-            String s = str(prototype.returnType, nextState.rax, nextState, trc);
+            long retval;
+            if (prototype.expr != null) {
+                try {
+                    ExpressionContext ctx = new ExpressionContext(nextState, trc);
+                    retval = prototype.expr.evaluate(ctx);
+                } catch (EvaluationException e) {
+                    retval = 0;
+                }
+            } else {
+                retval = nextState.rax;
+            }
+            String s = str(prototype.returnType, retval, nextState, trc);
             if (s.length() > 0) {
                 buf.append(" = ");
                 buf.append(s);

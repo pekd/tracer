@@ -1,11 +1,14 @@
 package org.graalvm.vm.x86.trcview.analysis.type;
 
+import org.graalvm.vm.x86.trcview.expression.ast.Expression;
+
 public class Type {
     private final boolean isConst;
     private final DataType type;
     private final Type pointee;
     private final Struct struct;
     private Representation representation;
+    private Expression expr;
 
     public Type(DataType type) {
         this(type, false);
@@ -109,10 +112,19 @@ public class Type {
         return representation;
     }
 
+    public void setExpression(Expression expr) {
+        this.expr = expr;
+    }
+
+    public Expression getExpression() {
+        return expr;
+    }
+
     @Override
     public String toString() {
         String conststr = isConst ? "const " : "";
         String reprstr = "";
+        String exprstr = expr == null ? "" : ("<" + expr + ">");
         if (representation != getDefaultRepresentation()) {
             switch (representation) {
                 case DEC:
@@ -125,33 +137,36 @@ public class Type {
                     reprstr = " $char";
                     break;
             }
+        } else if (type == DataType.PTR && pointee.getType() == DataType.S8 && representation == Representation.HEX) {
+            // special handling for strings (char*) which were declared as $out
+            reprstr = " $out";
         }
         switch (type) {
             case VOID:
                 return "void";
             case STRING:
-                return "char*";
+                return "char*" + exprstr;
             case U8:
-                return conststr + "u8" + reprstr;
+                return conststr + "u8" + exprstr + reprstr;
             case S8:
-                return conststr + "s8" + reprstr;
+                return conststr + "s8" + exprstr + reprstr;
             case U16:
-                return conststr + "u16" + reprstr;
+                return conststr + "u16" + exprstr + reprstr;
             case S16:
-                return conststr + "s16" + reprstr;
+                return conststr + "s16" + exprstr + reprstr;
             case U32:
-                return conststr + "u32" + reprstr;
+                return conststr + "u32" + exprstr + reprstr;
             case S32:
-                return conststr + "s32" + reprstr;
+                return conststr + "s32" + exprstr + reprstr;
             case U64:
-                return conststr + "u64" + reprstr;
+                return conststr + "u64" + exprstr + reprstr;
             case S64:
-                return conststr + "s64" + reprstr;
+                return conststr + "s64" + exprstr + reprstr;
             case PTR:
                 if (isConst) {
-                    return pointee.toString() + "* const" + reprstr;
+                    return pointee.toString() + "* const" + exprstr + reprstr;
                 } else {
-                    return pointee.toString() + "*" + reprstr;
+                    return pointee.toString() + "*" + exprstr + reprstr;
                 }
             default:
                 return "/* unknown */";

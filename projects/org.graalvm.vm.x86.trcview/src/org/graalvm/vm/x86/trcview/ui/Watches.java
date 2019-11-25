@@ -18,7 +18,6 @@ import javax.swing.table.AbstractTableModel;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.OctFormatter;
-import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
 import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.expression.Parser;
@@ -37,7 +36,6 @@ public class Watches extends JPanel {
     private Model model;
     private TraceAnalyzer trc;
     private StepEvent step;
-    private long insn;
     private Consumer<String> status;
     private StepFormat format;
 
@@ -117,7 +115,6 @@ public class Watches extends JPanel {
             return;
         }
         this.step = step;
-        this.insn = step.getStep();
         model.changed();
     }
 
@@ -127,8 +124,7 @@ public class Watches extends JPanel {
         } else if (step == null) {
             return 0;
         } else {
-            VirtualMemorySnapshot mem = new VirtualMemorySnapshot(trc, insn);
-            ExpressionContext ctx = new ExpressionContext(step, mem);
+            ExpressionContext ctx = new ExpressionContext(step.getState(), trc);
             try {
                 return expr.evaluate(ctx);
             } catch (EvaluationException e) {

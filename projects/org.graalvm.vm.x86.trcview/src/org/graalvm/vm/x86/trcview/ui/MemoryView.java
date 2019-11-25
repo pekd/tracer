@@ -21,7 +21,6 @@ import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.x86.trcview.analysis.memory.MemoryUpdate;
-import org.graalvm.vm.x86.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.x86.trcview.expression.EvaluationException;
 import org.graalvm.vm.x86.trcview.expression.ExpressionContext;
 import org.graalvm.vm.x86.trcview.expression.Parser;
@@ -203,8 +202,7 @@ public class MemoryView extends JPanel {
         } else if (step == null) {
             return 0;
         } else {
-            VirtualMemorySnapshot mem = new VirtualMemorySnapshot(trc, insn);
-            ExpressionContext ctx = new ExpressionContext(step, mem);
+            ExpressionContext ctx = new ExpressionContext(step.getState(), trc);
             try {
                 return expr.evaluate(ctx);
             } catch (EvaluationException e) {

@@ -37,7 +37,7 @@ public class CallNode extends Expression {
                 }
                 tmp = args.get(0).evaluate(ctx);
                 try {
-                    return ctx.mem.getI8(tmp);
+                    return ctx.getI8(tmp);
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
@@ -47,7 +47,7 @@ public class CallNode extends Expression {
                 }
                 tmp = args.get(0).evaluate(ctx);
                 try {
-                    return (short) ctx.mem.getI64(tmp);
+                    return ctx.getI16(tmp);
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
@@ -57,7 +57,7 @@ public class CallNode extends Expression {
                 }
                 tmp = args.get(0).evaluate(ctx);
                 try {
-                    return (int) ctx.mem.getI64(tmp);
+                    return ctx.getI32(tmp);
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
@@ -67,7 +67,7 @@ public class CallNode extends Expression {
                 }
                 tmp = args.get(0).evaluate(ctx);
                 try {
-                    return ctx.mem.getI64(tmp);
+                    return ctx.getI64(tmp);
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }

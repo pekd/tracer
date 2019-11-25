@@ -314,6 +314,8 @@ public class MainWindow extends JFrame {
                     JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set function type...", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
+            } else if (input != null) {
+                trc.setPrototype(selected, null);
             }
         });
         setFunctionType.setEnabled(false);

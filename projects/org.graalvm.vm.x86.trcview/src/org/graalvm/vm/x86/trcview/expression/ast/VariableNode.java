@@ -14,7 +14,7 @@ public class VariableNode extends Expression {
     @Override
     public long evaluate(ExpressionContext ctx) throws EvaluationException {
         try {
-            return ctx.step.getState().get(name);
+            return ctx.state.get(name);
         } catch (IllegalArgumentException e) {
             throw new UnknownVariableException(name);
         }
