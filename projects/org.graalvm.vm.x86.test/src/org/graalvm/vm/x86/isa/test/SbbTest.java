@@ -59,6 +59,9 @@ public class SbbTest extends InstructionTest {
     private static final byte[] MACHINECODE4 = {0x41, (byte) 0x80, (byte) 0xd8, 0x00};
     private static final String ASSEMBLY4 = "sbb\tr8b,0x0";
 
+    private static final byte[] MACHINECODE5 = {0x18, (byte) 0xca};
+    private static final String ASSEMBLY5 = "sbb\tdl,cl";
+
     @Test
     public void test1() {
         check(MACHINECODE1, ASSEMBLY1, Sbbl.class);
@@ -77,5 +80,10 @@ public class SbbTest extends InstructionTest {
     @Test
     public void test4() {
         check(MACHINECODE4, ASSEMBLY4, Sbbb.class);
+    }
+
+    @Test
+    public void test5() {
+        check(MACHINECODE5, ASSEMBLY5, Sbbb.class);
     }
 }

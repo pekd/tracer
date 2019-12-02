@@ -407,6 +407,7 @@ public class AMD64Opcode {
     public static final byte SBB_A_I8 = 0x1C;
     public static final byte SBB_A_I = 0x1D;
     public static final byte SBB_RM_R = 0x19;
+    public static final byte SBB_RM8_R8 = 0x18;
     public static final byte SBB_R_RM = 0x1B;
 
     public static final byte SCASB = (byte) 0xAE;

@@ -1596,6 +1596,10 @@ public class AMD64InstructionDecoder {
                     return new Sbbl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder(), true);
                 }
             }
+            case AMD64Opcode.SBB_RM8_R8: {
+                Args args = new Args(code, rex, segment, addressOverride);
+                return new Sbbb(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+            }
             case AMD64Opcode.SCASB: {
                 AMD64Instruction scas = new Scasb(pc, Arrays.copyOf(instruction, instructionLength));
                 if (isREPNZ) {
