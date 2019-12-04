@@ -60,7 +60,7 @@ public class PDP11CallDecoder extends CallDecoder {
 
     @Override
     public String decode(Function function, CpuState state, CpuState nextState, TraceAnalyzer trc) {
-        if (!(state instanceof PDP11CpuState) || !(nextState instanceof PDP11CpuState)) {
+        if (!(state instanceof PDP11CpuState) || (nextState != null && !(nextState instanceof PDP11CpuState))) {
             return null;
         }
         return decode(function, (PDP11CpuState) state, (PDP11CpuState) nextState, trc);
