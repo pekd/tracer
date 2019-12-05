@@ -14,6 +14,7 @@ import org.graalvm.vm.trcview.arch.io.MprotectEvent;
 import org.graalvm.vm.trcview.arch.io.MunmapEvent;
 import org.graalvm.vm.trcview.arch.io.SymbolTableEvent;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
+import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
 import org.graalvm.vm.x86.node.debug.trace.EofRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.MemoryDumpRecord;
@@ -77,6 +78,8 @@ public class AMD64TraceReader extends ArchTraceReader {
             return new AMD64SystemLogEvent(log);
         } else if (record instanceof EofRecord) {
             return new EofEvent();
+        } else if (record instanceof CallArgsRecord) {
+            return read();
         } else if (record == null) {
             return null;
         } else {
