@@ -1,9 +1,10 @@
-package org.graalvm.vm.trcview.disasm;
+package org.graalvm.vm.trcview.arch.pdp11.disasm;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.disasm.Field;
 
 public class PDP11Disassembler {
     private static final Field RN = Field.getLE(2, 0);

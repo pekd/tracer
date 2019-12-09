@@ -9,7 +9,7 @@ import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
-import org.graalvm.vm.trcview.disasm.PDP11Disassembler;
+import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Disassembler;
 import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
