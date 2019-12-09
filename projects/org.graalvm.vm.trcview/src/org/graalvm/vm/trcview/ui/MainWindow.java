@@ -76,10 +76,12 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.Analysis;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
 import org.graalvm.vm.trcview.expression.TypeParser;
@@ -95,6 +97,10 @@ import org.graalvm.vm.util.ui.MessageBox;
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame {
     private static final String WINDOW_TITLE = "TRCView";
+    private static final String ABOUT_TEXT = "<html><body><i>TRCView - Interactive Execution Trace Analyzer</i><br/><br/>" +
+                    "Supported architectures:<br/>" +
+                    "<ul>%s</ul>" +
+                    "Architecture support can be extended with plugins.</body></html>";
 
     private static final Logger log = Trace.create(MainWindow.class);
 
@@ -166,6 +172,7 @@ public class MainWindow extends JFrame {
             }
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -186,6 +193,7 @@ public class MainWindow extends JFrame {
             if (loadSyms.getFile() == null) {
                 return;
             }
+
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
@@ -433,6 +441,25 @@ public class MainWindow extends JFrame {
         exportMemory.setEnabled(false);
         toolsMenu.add(exportMemory);
         menu.add(toolsMenu);
+
+        JMenu helpMenu = new JMenu("Help");
+        JMenuItem about = new JMenuItem("About...");
+        about.setMnemonic('A');
+        about.addActionListener(e -> {
+            List<Architecture> archs = Architecture.getArchitectures();
+            StringBuilder list = new StringBuilder();
+            for (Architecture arch : archs) {
+                String shortName = arch.getName();
+                String longName = ElfStrings.getElfMachine(arch.getId());
+                String name = longName + " [" + shortName + "]";
+                list.append("<li>" + name.replaceAll("&", "&amp;").replaceAll("<", "&lt;") + "</li>");
+            }
+            String aboutText = String.format(ABOUT_TEXT, list);
+            JOptionPane.showMessageDialog(this, aboutText, "About...", JOptionPane.INFORMATION_MESSAGE);
+        });
+        helpMenu.add(about);
+        helpMenu.setMnemonic('H');
+        menu.add(helpMenu);
 
         setJMenuBar(menu);
 

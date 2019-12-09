@@ -2,9 +2,11 @@ package org.graalvm.vm.trcview.arch;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
@@ -51,5 +53,9 @@ public abstract class Architecture {
 
     public static Architecture getArchitecture(short arch) {
         return architectures.get(arch);
+    }
+
+    public static List<Architecture> getArchitectures() {
+        return architectures.values().stream().collect(Collectors.toList());
     }
 }
