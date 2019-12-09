@@ -15,13 +15,21 @@ public abstract class StepEvent extends Event {
 
     public abstract long getPC();
 
-    public abstract boolean isCall();
+    public boolean isCall() {
+        return getType() == InstructionType.CALL;
+    }
 
-    public abstract boolean isReturn();
+    public boolean isReturn() {
+        return getType() == InstructionType.RET;
+    }
 
-    public abstract boolean isSyscall();
+    public boolean isSyscall() {
+        return getType() == InstructionType.SYSCALL;
+    }
 
-    public abstract boolean isReturnFromSyscall();
+    public boolean isReturnFromSyscall() {
+        return getType() == InstructionType.RTI;
+    }
 
     public abstract InstructionType getType();
 
