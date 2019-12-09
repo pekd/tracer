@@ -111,7 +111,7 @@ public abstract class CallDecoder {
                     case OCT:
                         return "0x" + Integer.toOctalString((int) val);
                     case HEX:
-                        return "0x" + Integer.toString((int) val, 16);
+                        return "0x" + Integer.toUnsignedString((int) val, 16);
                 }
             case U64:
                 switch (repr) {
@@ -143,7 +143,7 @@ public abstract class CallDecoder {
                     case OCT:
                         return Long.toString(val, 8);
                     case HEX:
-                        return "0x" + Long.toString(val, 16);
+                        return "0x" + Long.toUnsignedString(val, 16);
                 }
             case STRUCT:
                 return "/* struct */";
