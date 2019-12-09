@@ -58,6 +58,7 @@ import org.graalvm.vm.util.log.Trace;
 
 public class BlockNode extends Node {
     private static final Logger log = Trace.create(BlockNode.class);
+    private static final int PROGRESS_UPDATE = 10_000;
 
     private StepEvent head;
     private List<Node> children;
@@ -133,10 +134,17 @@ public class BlockNode extends Node {
         List<Node> nodes = new ArrayList<>();
         Node node;
         int tid = 0;
+        int cnt = 0;
         while ((node = parseRecord(in, analysis, progress, tid, false)) != null) {
             nodes.add(node);
             if (tid == 0) {
                 tid = node.getTid();
+            }
+            if (progress != null && cnt > PROGRESS_UPDATE) {
+                cnt = 0;
+                progress.progressUpdate(in.tell());
+            } else {
+                cnt++;
             }
         }
         return new BlockNode(null, nodes);
@@ -184,7 +192,7 @@ public class BlockNode extends Node {
                         break;
                     }
                     result.add(child);
-                    if (progress != null && cnt > 10_000) {
+                    if (progress != null && cnt > PROGRESS_UPDATE) {
                         cnt = 0;
                         progress.progressUpdate(in.tell());
                     } else {
