@@ -32,6 +32,10 @@ public abstract class Architecture {
 
     public abstract String getName();
 
+    public String getDescription() {
+        return null;
+    }
+
     public abstract ArchTraceReader getTraceReader(InputStream in);
 
     public abstract EventParser getEventParser();

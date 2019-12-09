@@ -33,6 +33,11 @@ public class AMD64 extends Architecture {
     }
 
     @Override
+    public String getDescription() {
+        return "Generic x86_64 processor with Linux userspace";
+    }
+
+    @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return new AMD64TraceReader(in);
     }

@@ -33,6 +33,11 @@ public class PDP11 extends Architecture {
     }
 
     @Override
+    public String getDescription() {
+        return "PDP-11/03-L with RX02 and DLV11-J";
+    }
+
+    @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return new PDP11TraceReader(in);
     }

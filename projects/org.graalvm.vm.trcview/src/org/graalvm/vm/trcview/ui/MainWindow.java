@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -447,11 +448,16 @@ public class MainWindow extends JFrame {
         about.setMnemonic('A');
         about.addActionListener(e -> {
             List<Architecture> archs = Architecture.getArchitectures();
+            Collections.sort(archs, (a, b) -> ElfStrings.getElfMachine(a.getId()).compareTo(ElfStrings.getElfMachine(b.getId())));
             StringBuilder list = new StringBuilder();
             for (Architecture arch : archs) {
                 String shortName = arch.getName();
                 String longName = ElfStrings.getElfMachine(arch.getId());
+                String description = arch.getDescription();
                 String name = longName + " [" + shortName + "]";
+                if (description != null) {
+                    name += ": " + description;
+                }
                 list.append("<li>" + name.replaceAll("&", "&amp;").replaceAll("<", "&lt;") + "</li>");
             }
             String aboutText = String.format(ABOUT_TEXT, list);
