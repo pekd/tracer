@@ -9,11 +9,13 @@ public class Field {
     public final int imask;
     public final boolean signed;
 
-    public Field(int from, int to) {
-        this(from, to, false);
+    private final Value value;
+
+    public Field(Value value, int from, int to) {
+        this(value, from, to, false);
     }
 
-    public Field(int from, int to, boolean signed) {
+    public Field(Value value, int from, int to, boolean signed) {
         if (from > to) {
             throw new IllegalArgumentException("from > to");
         }
@@ -24,6 +26,15 @@ public class Field {
         this.signed = signed;
         this.mask = mask();
         this.imask = ~mask;
+        this.value = value;
+    }
+
+    public Field(int from, int to) {
+        this(null, from, to, false);
+    }
+
+    public Field(int from, int to, boolean signed) {
+        this(null, from, to, signed);
     }
 
     public static Field getLE(int from, int to) {
@@ -58,11 +69,25 @@ public class Field {
         return (insn & imask) | ((value << lo) & mask);
     }
 
-    public boolean getBit(int value) {
+    public int get() {
+        if (value == null) {
+            throw new IllegalStateException("no value set");
+        }
+        return get(value.get());
+    }
+
+    public void set(int val) {
+        if (value == null) {
+            throw new IllegalStateException("no value set");
+        }
+        value.set(set(value.get(), val));
+    }
+
+    public boolean getBit(int val) {
         if (from != to) {
             throw new IllegalStateException("not a single bit");
         }
-        return get(value) != 0;
+        return get(val) != 0;
     }
 
     public int setBit(int insn, boolean value) {
@@ -70,6 +95,26 @@ public class Field {
             throw new IllegalStateException("not a single bit");
         }
         return set(insn, value ? 1 : 0);
+    }
+
+    public boolean getBit() {
+        if (value == null) {
+            throw new IllegalStateException("no value set");
+        }
+        if (from != to) {
+            throw new IllegalStateException("not a single bit");
+        }
+        return get() != 0;
+    }
+
+    public void getBit(boolean val) {
+        if (value == null) {
+            throw new IllegalStateException("no value set");
+        }
+        if (from != to) {
+            throw new IllegalStateException("not a single bit");
+        }
+        set(val ? 1 : 0);
     }
 
     public int size() {
