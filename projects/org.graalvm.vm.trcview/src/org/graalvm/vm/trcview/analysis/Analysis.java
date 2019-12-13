@@ -278,7 +278,7 @@ public class Analysis {
             }
         }
 
-        log.log(Levels.INFO, "The trace contains " + steps + " steps");
+        log.log(Levels.INFO, "The trace contains " + steps + " step events");
         memory.printStats();
     }
 
@@ -299,7 +299,13 @@ public class Analysis {
     }
 
     public long getStepCount() {
-        return steps;
+        if (lastStep != null) {
+            // there might be StepEvents which contain multiple steps,
+            // e.g. REP prefixed string instructions on x86
+            return lastStep.getStep();
+        } else {
+            return steps;
+        }
     }
 
     public List<Node> getNodes() {
