@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -85,12 +86,16 @@ import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
+import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.TypeParser;
+import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
+import org.graalvm.vm.trcview.io.TextSerializer;
 import org.graalvm.vm.trcview.net.Client;
 import org.graalvm.vm.trcview.net.Local;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.util.ui.MessageBox;
@@ -115,6 +120,8 @@ public class MainWindow extends JFrame {
     private JMenuItem loadPrototypes;
     private JMenuItem loadSymbols;
     private JMenuItem saveSymbols;
+    private JMenuItem loadSession;
+    private JMenuItem saveSession;
     private JMenuItem refresh;
     private JMenuItem renameSymbol;
     private JMenuItem setFunctionType;
@@ -129,8 +136,10 @@ public class MainWindow extends JFrame {
         super(WINDOW_TITLE);
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
-        FileDialog loadSyms = new FileDialog(this, "Open...", FileDialog.LOAD);
-        FileDialog saveSyms = new FileDialog(this, "Save...", FileDialog.SAVE);
+        FileDialog loadSyms = new FileDialog(this, "Load symbols...", FileDialog.LOAD);
+        FileDialog saveSyms = new FileDialog(this, "Save symbols...", FileDialog.SAVE);
+        FileDialog loadSess = new FileDialog(this, "Load session...", FileDialog.LOAD);
+        FileDialog saveSess = new FileDialog(this, "Save session...", FileDialog.SAVE);
         ExportMemoryDialog exportMemoryDialog = new ExportMemoryDialog(this);
 
         setLayout(new BorderLayout());
@@ -164,6 +173,52 @@ public class MainWindow extends JFrame {
             };
             worker.execute();
         });
+        loadSession = new JMenuItem("Load session...");
+        loadSession.setMnemonic('l');
+        loadSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        loadSession.addActionListener(e -> {
+            loadSess.setVisible(true);
+            if (loadSess.getFile() == null) {
+                return;
+            }
+            String filename = loadSess.getDirectory() + loadSess.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        loadSession(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        loadSession.setEnabled(false);
+        saveSession = new JMenuItem("Save session...");
+        saveSession.setMnemonic('s');
+        saveSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        saveSession.addActionListener(e -> {
+            saveSess.setVisible(true);
+            if (saveSess.getFile() == null) {
+                return;
+            }
+            String filename = saveSess.getDirectory() + saveSess.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        saveSession(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        saveSession.setEnabled(false);
         loadPrototypes = new JMenuItem("Load prototypes...");
         loadPrototypes.setMnemonic('p');
         loadPrototypes.addActionListener(e -> {
@@ -188,7 +243,7 @@ public class MainWindow extends JFrame {
         });
         loadPrototypes.setEnabled(false);
         loadSymbols = new JMenuItem("Load symbols...");
-        loadSymbols.setMnemonic('l');
+        loadSymbols.setMnemonic('m');
         loadSymbols.addActionListener(e -> {
             loadSyms.setVisible(true);
             if (loadSyms.getFile() == null) {
@@ -211,7 +266,7 @@ public class MainWindow extends JFrame {
         });
         loadSymbols.setEnabled(false);
         saveSymbols = new JMenuItem("Save symbols...");
-        saveSymbols.setMnemonic('s');
+        saveSymbols.setMnemonic('y');
         saveSymbols.addActionListener(e -> {
             saveSyms.setVisible(true);
             if (saveSyms.getFile() == null) {
@@ -249,11 +304,15 @@ public class MainWindow extends JFrame {
             };
             worker.execute();
         });
+        refresh.setEnabled(false);
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
         exit.addActionListener(e -> exit());
         fileMenu.add(open);
+        fileMenu.addSeparator();
+        fileMenu.add(loadSession);
+        fileMenu.add(saveSession);
         fileMenu.addSeparator();
         fileMenu.add(loadSymbols);
         fileMenu.add(saveSymbols);
@@ -385,11 +444,15 @@ public class MainWindow extends JFrame {
         gotoInsn.setMnemonic('i');
         gotoInsn.setAccelerator(KeyStroke.getKeyStroke('i'));
         gotoInsn.addActionListener(e -> {
-            String input;
-            input = JOptionPane.showInputDialog("Enter instruction number:", "0");
+            StepEvent step = view.getSelectedInstruction();
+            long start = 0;
+            if (step != null) {
+                start = step.getStep();
+            }
+            String input = JOptionPane.showInputDialog("Enter instruction number:", Long.toUnsignedString(start));
             if (input != null && input.trim().length() > 0) {
                 try {
-                    long insn = Long.parseLong(input.trim());
+                    long insn = Long.parseUnsignedLong(input.trim());
                     Node n = trc.getInstruction(insn);
                     if (n != null) {
                         log.info("Jumping to instruction " + insn);
@@ -511,6 +574,8 @@ public class MainWindow extends JFrame {
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
+                loadSession.setEnabled(true);
+                saveSession.setEnabled(true);
                 refresh.setEnabled(false);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
@@ -582,8 +647,29 @@ public class MainWindow extends JFrame {
         log.info("Loading symbol file " + file + "...");
         setStatus("Loading symbol file " + file + "...");
         loadSymbols.setEnabled(false);
+        try {
+            loadSession(file, false);
+        } finally {
+            loadSymbols.setEnabled(true);
+        }
+    }
+
+    public void saveSymbols(File file) throws IOException {
+        log.info("Saving symbols to file " + file + "...");
+        setStatus("Saving symbols to file " + file + "...");
+        saveSymbols.setEnabled(false);
+        try {
+            saveSession(file, false);
+        } finally {
+            saveSymbols.setEnabled(true);
+        }
+    }
+
+    private boolean loadSession(File file, boolean everything) throws IOException {
         boolean reanalyze = false;
         boolean ok = true;
+        List<Watch> watches = new ArrayList<>();
+        long insn = -1;
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -600,47 +686,87 @@ public class MainWindow extends JFrame {
                 int idx = line.indexOf('=');
                 if (idx > 0) {
                     String address = line.substring(0, idx);
-                    String[] name = line.substring(idx + 1).split(";");
-                    long pc;
-                    try {
-                        pc = Long.parseUnsignedLong(address, 16);
-                    } catch (NumberFormatException e) {
-                        log.info("Syntax error in line " + lineno + ": invalid address");
-                        setStatus("Syntax error in line " + lineno + ": invalid address");
-                        ok = false;
-                        continue;
-                    }
-                    if (name.length == 1) {
-                        ComputedSymbol sym = trc.getComputedSymbol(pc);
-                        if (sym == null) {
-                            trc.addSubroutine(pc, name[0], null);
-                            reanalyze = true;
-                        } else {
-                            trc.renameSymbol(sym, name[0]);
+                    String[] data = TextSerializer.tokenize(line.substring(idx + 1));
+                    if (everything && address.equals("WATCH")) {
+                        // watch point
+                        if (data.length != 3) {
+                            log.info("Syntax error in line " + lineno + ": invalid watch point");
+                            setStatus("Syntax error in line " + lineno + ": invalid watch point");
+                            ok = false;
+                            continue;
                         }
-                    } else if (name.length == 3) {
-                        String proto = name[1] + " f" + name[2];
-                        Function fun;
+                        String name = data[0];
+                        String format = data[1];
+                        String str = data[2];
+                        Expression expr = null;
                         try {
-                            fun = new TypeParser(proto).parse();
+                            expr = new Parser(str).parse();
                         } catch (ParseException e) {
                             log.info("Syntax error in line " + lineno + ": " + e.getMessage());
                             setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
                             ok = false;
                             continue;
                         }
-                        ComputedSymbol sym = trc.getComputedSymbol(pc);
-                        if (sym == null) {
-                            trc.addSubroutine(pc, name[0], fun.getPrototype());
-                            reanalyze = true;
-                        } else {
-                            trc.renameSymbol(sym, name[0]);
-                            trc.setPrototype(sym, fun.getPrototype());
+                        watches.add(new Watch(name, format, str, expr));
+                    } else if (everything && address.equals("INSN")) {
+                        // watch point
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid location");
+                            setStatus("Syntax error in line " + lineno + ": invalid location");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            insn = Long.parseUnsignedLong(data[0]);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid instruction");
+                            setStatus("Syntax error in line " + lineno + ": invalid instruction");
+                            ok = false;
+                            continue;
                         }
                     } else {
-                        log.info("Syntax error in line " + lineno + ": invalid name");
-                        setStatus("Syntax error in line " + lineno + ": invalid name");
-                        ok = false;
+                        // symbol
+                        long pc;
+                        try {
+                            pc = Long.parseUnsignedLong(address, 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid address");
+                            setStatus("Syntax error in line " + lineno + ": invalid address");
+                            ok = false;
+                            continue;
+                        }
+                        if (data.length == 1) {
+                            ComputedSymbol sym = trc.getComputedSymbol(pc);
+                            if (sym == null) {
+                                trc.addSubroutine(pc, data[0], null);
+                                reanalyze = true;
+                            } else {
+                                trc.renameSymbol(sym, data[0]);
+                            }
+                        } else if (data.length == 3) {
+                            String proto = data[1] + " f(" + data[2] + ")";
+                            Function fun;
+                            try {
+                                fun = new TypeParser(proto).parse();
+                            } catch (ParseException e) {
+                                log.info("Syntax error in line " + lineno + ": " + e.getMessage());
+                                setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
+                                ok = false;
+                                continue;
+                            }
+                            ComputedSymbol sym = trc.getComputedSymbol(pc);
+                            if (sym == null) {
+                                trc.addSubroutine(pc, data[0], fun.getPrototype());
+                                reanalyze = true;
+                            } else {
+                                trc.renameSymbol(sym, data[0]);
+                                trc.setPrototype(sym, fun.getPrototype());
+                            }
+                        } else {
+                            log.info("Syntax error in line " + lineno + ": invalid name");
+                            setStatus("Syntax error in line " + lineno + ": invalid name");
+                            ok = false;
+                        }
                     }
                 } else {
                     log.info("Syntax error in line " + lineno + ": missing '='");
@@ -654,10 +780,17 @@ public class MainWindow extends JFrame {
                 setStatus("Reanalyzing visits...");
                 trc.reanalyze();
             }
-            log.info("Symbol file " + file + " loaded successfully");
-            if (ok) {
-                setStatus("Symbol file " + file + " loaded successfully");
+            String filetype = "Session file";
+            if (!everything) {
+                filetype = "Symbol file";
+            } else {
+                SwingUtilities.invokeLater(() -> view.setWatches(watches));
             }
+            log.info(filetype + " " + file + " loaded successfully");
+            if (ok) {
+                setStatus(filetype + " " + file + " loaded successfully");
+            }
+            return ok;
         } catch (Throwable t) {
             log.log(Level.WARNING, "Loading failed: " + t, t);
             setStatus("Loading failed: " + t);
@@ -667,31 +800,69 @@ public class MainWindow extends JFrame {
                 log.info("Reanalyzing symbol visits...");
                 trc.reanalyze();
             }
-            loadSymbols.setEnabled(true);
+
+            if (insn != -1) {
+                Node n = trc.getInstruction(insn);
+                if (n != null) {
+                    log.info("Jumping to instruction " + insn);
+                    SwingUtilities.invokeLater(() -> view.jump(n));
+                } else {
+                    log.info("Cannot find instruction");
+                    setStatus("Cannot find instruction");
+                }
+            }
         }
     }
 
-    public void saveSymbols(File file) throws IOException {
-        log.info("Saving symbols to file " + file + "...");
-        setStatus("Saving symbols to file " + file + "...");
-        saveSymbols.setEnabled(false);
+    public void loadSession(File file) throws IOException {
+        log.info("Loading session file " + file + "...");
+        setStatus("Loading session file " + file + "...");
+        loadSession.setEnabled(false);
+        try {
+            loadSession(file, true);
+        } finally {
+            loadSession.setEnabled(true);
+        }
+    }
+
+    public void saveSession(File file) throws IOException {
+        log.info("Saving session to file " + file + "...");
+        setStatus("Saving session to file " + file + "...");
+        saveSession.setEnabled(false);
+        try {
+            saveSession(file, true);
+        } finally {
+            saveSession.setEnabled(true);
+        }
+    }
+
+    public void saveSession(File file, boolean everything) throws IOException {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file)))) {
             Set<ComputedSymbol> symbols = trc.getSubroutines();
             symbols.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(sym -> {
                 if (sym.prototype != null) {
-                    out.printf("%x=%s;%s;(%s)\n", sym.address, sym.name, sym.prototype.returnType, sym.prototype.args.stream().map(Object::toString).collect(Collectors.joining(", ")));
+                    out.printf("%x=%s\n", sym.address,
+                                    TextSerializer.encode(sym.name, sym.prototype.returnType.toString(), sym.prototype.args.stream().map(Object::toString).collect(Collectors.joining(", "))));
                 } else {
-                    out.printf("%x=%s\n", sym.address, sym.name);
+                    out.printf("%x=%s\n", sym.address, TextSerializer.encode(sym.name));
                 }
             });
-            log.info("Symbol file " + file);
-            setStatus("Symbols save to file " + file);
+            if (everything) {
+                List<Watch> watches = view.getWatches();
+                for (Watch watch : watches) {
+                    out.printf("WATCH=%s\n", TextSerializer.encode(watch.name, watch.type, watch.str));
+                }
+                StepEvent step = view.getSelectedInstruction();
+                if (step != null) {
+                    out.printf("INSN=%d\n", step.getStep());
+                }
+            }
+            log.info("Session file " + file);
+            setStatus("Session saved to file " + file);
         } catch (Throwable t) {
             log.log(Level.WARNING, "Saving failed: " + t, t);
             setStatus("Saving failed: " + t);
             throw t;
-        } finally {
-            saveSymbols.setEnabled(true);
         }
     }
 

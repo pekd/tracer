@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.ui;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
@@ -58,6 +59,7 @@ import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.event.CallListener;
 
 @SuppressWarnings("serial")
@@ -244,5 +246,13 @@ public class TraceView extends JPanel {
         } else {
             return null;
         }
+    }
+
+    public List<Watch> getWatches() {
+        return watches.getWatches();
+    }
+
+    public void setWatches(List<Watch> watches) {
+        this.watches.setWatches(watches);
     }
 }

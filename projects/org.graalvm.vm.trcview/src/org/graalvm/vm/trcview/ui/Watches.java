@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -286,13 +287,29 @@ public class Watches extends JPanel {
         }
     }
 
-    private static class Watch {
+    public List<Watch> getWatches() {
+        return Collections.unmodifiableList(watches);
+    }
+
+    public void setWatches(List<Watch> watches) {
+        this.watches = new ArrayList<>(watches);
+        model.changed();
+    }
+
+    public static class Watch {
         public String name;
         public String str;
         public Expression expr;
         public String type;
 
-        Watch(String str, Expression expr) {
+        public Watch(String name, String type, String str, Expression expr) {
+            this.name = name;
+            this.type = type;
+            this.str = str;
+            this.expr = expr;
+        }
+
+        public Watch(String str, Expression expr) {
             this.str = str;
             this.expr = expr;
         }
