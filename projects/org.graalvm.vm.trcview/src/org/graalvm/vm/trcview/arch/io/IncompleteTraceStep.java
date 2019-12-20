@@ -3,7 +3,7 @@ package org.graalvm.vm.trcview.arch.io;
 import java.io.IOException;
 
 import org.graalvm.vm.posix.elf.Elf;
-import org.graalvm.vm.trcview.arch.None;
+import org.graalvm.vm.trcview.arch.none.None;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class IncompleteTraceStep extends StepEvent {

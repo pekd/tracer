@@ -1,5 +1,8 @@
 package org.graalvm.vm.trcview.arch.io;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public abstract class StepEvent extends Event {
     protected StepEvent(short arch, int tid) {
         super(arch, STEP, tid);
@@ -7,7 +10,14 @@ public abstract class StepEvent extends Event {
 
     public abstract byte[] getMachinecode();
 
-    public abstract String getDisassembly();
+    public String getDisassembly() {
+        String[] code = getDisassemblyComponents();
+        if (code.length == 1) {
+            return code[0];
+        } else {
+            return code[0] + "\t" + Stream.of(code).skip(1).collect(Collectors.joining(",\t"));
+        }
+    }
 
     public abstract String[] getDisassemblyComponents();
 
