@@ -6,6 +6,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.trcview.net.protocol.cmd.Command;
+import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
@@ -36,7 +37,7 @@ public class GetLastWriteResult extends Result {
         long value = in.read64bit();
         int size = in.read();
         Node node = IO.readNode(in);
-        write = new MemoryUpdate(addr, (byte) size, value, pc, insn, node);
+        write = new MemoryUpdate(BitTest.test(size, 0x80), addr, (byte) (size & 0x7F), value, pc, insn, node);
     }
 
     @Override
@@ -51,7 +52,7 @@ public class GetLastWriteResult extends Result {
         out.write64bit(write.address);
         out.write64bit(write.pc);
         out.write64bit(write.value);
-        out.write(write.size);
+        out.write(write.size | (write.be ? 0x80 : 0));
         IO.writeNode(out, write.node);
     }
 }

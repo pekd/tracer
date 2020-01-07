@@ -7,7 +7,7 @@ public interface Page {
 
     byte[] getData();
 
-    void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node);
+    void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node, boolean be);
 
     void addRead(long addr, byte size, long pc, long instructionCount, Node node);
 

@@ -3,6 +3,7 @@ package org.graalvm.vm.trcview.analysis.memory;
 import org.graalvm.vm.trcview.io.Node;
 
 public class MemoryUpdate {
+    public final boolean be;
     public final long address;
     public final byte size;
     public final long value;
@@ -10,7 +11,8 @@ public class MemoryUpdate {
     public final long instructionCount;
     public final Node node;
 
-    public MemoryUpdate(long address, byte size, long value, long pc, long instructionCount, Node node) {
+    public MemoryUpdate(boolean be, long address, byte size, long value, long pc, long instructionCount, Node node) {
+        this.be = be;
         this.address = address;
         this.size = size;
         this.value = value;
@@ -22,7 +24,13 @@ public class MemoryUpdate {
     public byte getByte(long addr) {
         assert addr >= address && addr < address + size;
         int off = (int) (addr - address);
-        return (byte) (value >> (off * 8));
+        if (size == 1) {
+            return (byte) value;
+        } else if (be) {
+            return (byte) (value >> ((size - 1 - off) * 8));
+        } else {
+            return (byte) (value >> (off * 8));
+        }
     }
 
     public boolean contains(long addr) {

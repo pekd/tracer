@@ -126,7 +126,7 @@ public class MemoryTrace {
         }
     }
 
-    public void write(long addr, byte size, long value, long pc, long instructionCount, Node node) {
+    public void write(long addr, byte size, long value, long pc, long instructionCount, Node node, boolean be) {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
             // segfault
@@ -142,7 +142,7 @@ public class MemoryTrace {
                         page = ((CoarsePage) page).transformToFine();
                         pages.put(page.getAddress(), page);
                     }
-                    page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node);
+                    page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node, be);
                 } else {
                     long oldaddr = page.getAddress();
                     page = pages.get(page.getAddress() + 4096);
@@ -153,7 +153,7 @@ public class MemoryTrace {
                         page = ((CoarsePage) page).transformToFine();
                         pages.put(page.getAddress(), page);
                     }
-                    page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node);
+                    page.addUpdate(a, (byte) 1, (byte) val, pc, instructionCount, node, be);
                 }
                 val >>= 8;
             }
@@ -162,7 +162,7 @@ public class MemoryTrace {
                 page = ((CoarsePage) page).transformToFine();
                 pages.put(page.getAddress(), page);
             }
-            page.addUpdate(addr, size, value, pc, instructionCount, node);
+            page.addUpdate(addr, size, value, pc, instructionCount, node, be);
         }
     }
 

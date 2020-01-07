@@ -41,10 +41,10 @@ public class CoarsePage implements Page {
     }
 
     @Override
-    public void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node) {
+    public void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node, boolean be) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
-        updates.add(new MemoryUpdate(addr, size, value, pc, instructionCount, node));
+        updates.add(new MemoryUpdate(be, addr, size, value, pc, instructionCount, node));
     }
 
     @Override
@@ -57,7 +57,7 @@ public class CoarsePage implements Page {
     @Override
     public void clear(long pc, long instructionCount, Node node) {
         for (int i = 0; i < 4096; i += 8) {
-            addUpdate(address + i, (byte) 8, 0, pc, instructionCount, node);
+            addUpdate(address + i, (byte) 8, 0, pc, instructionCount, node, false);
         }
     }
 
@@ -65,7 +65,7 @@ public class CoarsePage implements Page {
     public void overwrite(byte[] update, long pc, long instructionCount, Node node) {
         for (int i = 0; i < 4096; i += 8) {
             long value = Endianess.get64bitLE(update, i);
-            addUpdate(address + i, (byte) 8, value, pc, instructionCount, node);
+            addUpdate(address + i, (byte) 8, value, pc, instructionCount, node, false);
         }
     }
 
@@ -111,7 +111,7 @@ public class CoarsePage implements Page {
         }
 
         // find update timestamp
-        MemoryUpdate target = new MemoryUpdate(addr, (byte) 1, 0, 0, instructionCount, null);
+        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, 0, instructionCount, null);
         int idx = Collections.binarySearch(updates, target, (a, b) -> {
             return Long.compareUnsigned(a.instructionCount, b.instructionCount);
         });
@@ -195,7 +195,7 @@ public class CoarsePage implements Page {
         }
 
         // find update timestamp
-        MemoryUpdate target = new MemoryUpdate(addr, (byte) 1, 0, 0, instructionCount, null);
+        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, 0, instructionCount, null);
         int idx = Collections.binarySearch(updates, target, (a, b) -> {
             return Long.compareUnsigned(a.instructionCount, b.instructionCount);
         });

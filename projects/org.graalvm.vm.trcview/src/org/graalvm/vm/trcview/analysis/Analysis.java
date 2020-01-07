@@ -199,13 +199,19 @@ public class Analysis {
                     insn = lastStep.getStep();
                 }
                 long addr = memevent.getAddress();
+                boolean be = memevent.isBigEndian();
                 if (memevent.getSize() <= 8) {
                     long value = memevent.getValue();
-                    memory.write(addr, (byte) memevent.getSize(), value, pc, insn, node);
+                    memory.write(addr, (byte) memevent.getSize(), value, pc, insn, node, be);
                 } else if (memevent.getSize() == 16) {
                     Vector128 value = memevent.getVector();
-                    memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node);
-                    memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node);
+                    if (be) {
+                        memory.write(addr, (byte) 8, value.getI64(0), pc, insn, node, true);
+                        memory.write(addr + 8, (byte) 8, value.getI64(1), pc, insn, node, true);
+                    } else {
+                        memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node, false);
+                        memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node, false);
+                    }
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
                 }
@@ -239,10 +245,10 @@ public class Analysis {
             int i;
             for (i = 0; i < data.length - 7; i += 8) {
                 long value = Endianess.get64bitLE(data, i);
-                memory.write(addr + i, (byte) 8, value, pc, insn, node);
+                memory.write(addr + i, (byte) 8, value, pc, insn, node, false);
             }
             for (; i < data.length; i++) {
-                memory.write(addr + i, (byte) 1, data[i], pc, insn, node);
+                memory.write(addr + i, (byte) 1, data[i], pc, insn, node, false);
             }
         } else if (event instanceof BrkEvent) {
             BrkEvent brk = (BrkEvent) event;
