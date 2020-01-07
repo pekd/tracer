@@ -68,6 +68,11 @@ public class StringifyTest {
     }
 
     @Test
+    public void testI8_5() {
+        assertEquals("\\0", Stringify.i8((byte) 0));
+    }
+
+    @Test
     public void testI16_1() {
         assertEquals("A\\n", Stringify.i16((short) 0x410A));
     }

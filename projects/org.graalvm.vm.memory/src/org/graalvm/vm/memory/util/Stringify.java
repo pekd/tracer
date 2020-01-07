@@ -49,6 +49,8 @@ public class Stringify {
 
     public static String i8(byte value) {
         switch ((char) value) {
+            case 0:
+                return "\\0";
             case '\\':
                 return "\\\\";
             case '\'':
@@ -116,6 +118,37 @@ public class Stringify {
         if (printable < 4) {
             return null;
         }
+        StringBuilder buf = new StringBuilder(8);
+        tmp = Long.reverseBytes(value);
+        for (int i = 0; i < 8; i++, tmp >>= 8) {
+            byte v = (byte) tmp;
+            buf.append(i8(v));
+        }
+        return buf.toString();
+    }
+
+    public static String i16force(short value) {
+        byte high = (byte) (value >>> 8);
+        byte low = (byte) value;
+        StringBuilder buf = new StringBuilder(2);
+        buf.append(i8(high));
+        buf.append(i8(low));
+        return buf.toString();
+    }
+
+    public static String i32force(int value) {
+        int tmp = value;
+        StringBuilder buf = new StringBuilder(4);
+        tmp = Integer.reverseBytes(value);
+        for (int i = 0; i < 4; i++, tmp >>>= 8) {
+            byte v = (byte) tmp;
+            buf.append(i8(v));
+        }
+        return buf.toString();
+    }
+
+    public static String i64force(long value) {
+        long tmp = value;
         StringBuilder buf = new StringBuilder(8);
         tmp = Long.reverseBytes(value);
         for (int i = 0; i < 8; i++, tmp >>= 8) {
