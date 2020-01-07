@@ -114,7 +114,7 @@ public class MemoryView extends JPanel {
 
         add(BorderLayout.NORTH, addrinput);
 
-        gotoLastUpdate = new JButton("Goto last update");
+        gotoLastUpdate = new JButton("Goto last write");
         gotoLastUpdate.setEnabled(lastUpdateNode != null);
         gotoLastUpdate.addActionListener(e -> {
             if (lastUpdateNode != null) {
