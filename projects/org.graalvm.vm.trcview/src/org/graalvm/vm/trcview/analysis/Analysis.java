@@ -175,7 +175,6 @@ public class Analysis {
             }
         } else if (event instanceof MmapEvent) {
             MmapEvent mmap = (MmapEvent) event;
-            mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
             long pc = 0;
             long insn = 0;
             if (lastStep != null) {
@@ -183,6 +182,7 @@ public class Analysis {
                 insn = lastStep.getStep();
             }
             if (mmap.getResult() != -1) {
+                mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
                 if (mmap.getData() != null) {
                     memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node);
                 } else {
@@ -261,6 +261,11 @@ public class Analysis {
         add(root);
 
         StepEvent first = root.getFirstStep();
+        if (first == null) {
+            log.log(Levels.INFO, "The trace contains no steps");
+            return;
+        }
+
         if (symbols.get(first.getPC()) == null) {
             symbols.addSubroutine(first.getPC(), "_start");
             symbols.visit(root.getFirstNode());
