@@ -17,6 +17,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
+import org.graalvm.vm.memory.util.Stringify;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -224,6 +225,9 @@ public class Watches extends JPanel {
                                         break;
                                     case 'm':
                                         buf.append(bytes(value));
+                                        break;
+                                    case 'r':
+                                        buf.append(Stringify.i64force(value));
                                         break;
                                     default:
                                         buf.append(c);
