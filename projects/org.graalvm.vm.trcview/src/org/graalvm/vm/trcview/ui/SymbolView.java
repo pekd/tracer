@@ -159,7 +159,7 @@ public class SymbolView extends JPanel {
         if (max.isPresent()) {
             int m = max.getAsInt();
             width = (m == 0 ? 0 : (int) Math.ceil(Math.log10(m)));
-            subroutines.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
+            subroutines.stream().filter(x -> !x.visits.isEmpty()).sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
                 model.addElement(format(s));
                 sym.add(s);
             });
