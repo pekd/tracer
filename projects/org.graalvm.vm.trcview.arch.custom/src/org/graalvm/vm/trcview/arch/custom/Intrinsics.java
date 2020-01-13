@@ -225,6 +225,41 @@ public class Intrinsics {
         }
     }
 
+    public static class SetContext extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public SetContext(CustomAnalyzer analyzer) {
+            super("set_context", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.VOID))));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            Pointer data = (Pointer) args[0];
+            analyzer.setGlobals(data);
+            return 0;
+        }
+    }
+
+    public static class GetContext extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public GetContext(CustomAnalyzer analyzer) {
+            super("get_context", new PointerType(new PrimitiveType(BasicType.VOID)), list());
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            throw new UnsupportedOperationException("invalid integer call to alloca");
+        }
+
+        @Override
+        public Pointer executePointer(Context ctx, Object... args) {
+            return analyzer.getGlobals();
+        }
+    }
+
     public static void register(SymbolTable symtab, CustomArchitecture arch) {
         symtab.define(new Alloca());
         symtab.define(new Strlen());
@@ -240,6 +275,8 @@ public class Intrinsics {
     public static List<Intrinsic> getAnalyzerIntrinsics(CustomAnalyzer analyzer) {
         List<Intrinsic> result = new ArrayList<>();
         result.add(new CreateStep(analyzer));
+        result.add(new SetContext(analyzer));
+        result.add(new GetContext(analyzer));
         return result;
     }
 }

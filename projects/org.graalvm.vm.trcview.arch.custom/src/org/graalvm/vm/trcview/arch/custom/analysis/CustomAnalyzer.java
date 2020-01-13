@@ -13,26 +13,44 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.script.ast.Function;
 import org.graalvm.vm.trcview.script.rt.Context;
 import org.graalvm.vm.trcview.script.rt.JavaPointer;
+import org.graalvm.vm.trcview.script.rt.Pointer;
 
 public class CustomAnalyzer implements Analyzer {
     private final CustomArchitecture arch;
+    private final Function start;
+    private final Function finish;
     private final Function process;
 
     private Context ctx;
+    private Pointer globals;
 
     private List<Event> events;
 
     public CustomAnalyzer(String script) {
         arch = new CustomArchitecture(script, Intrinsics.getAnalyzerIntrinsics(this));
+        start = arch.symbols.getFunction("start");
+        finish = arch.symbols.getFunction("finish");
         process = arch.symbols.getFunction("process");
         if (process == null) {
             throw new IllegalArgumentException("no process function");
         }
+        globals = null;
+    }
+
+    public void setGlobals(Pointer globals) {
+        this.globals = globals;
+    }
+
+    public Pointer getGlobals() {
+        return globals;
     }
 
     public void start(TraceAnalyzer trc) {
         ctx = new Context(arch.context);
         events = new ArrayList<>();
+        if (start != null) {
+            start.execute(ctx);
+        }
     }
 
     public void process(Event event, Node node) {
@@ -40,7 +58,9 @@ public class CustomAnalyzer implements Analyzer {
     }
 
     public void finish() {
-        // TODO Auto-generated method stub
+        if (finish != null) {
+            finish.execute(ctx);
+        }
     }
 
     public CustomArchitecture getArchitecture() {

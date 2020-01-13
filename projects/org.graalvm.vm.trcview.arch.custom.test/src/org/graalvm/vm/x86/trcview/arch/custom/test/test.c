@@ -5,7 +5,7 @@ typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint64_t u64;
 
-typedef struct state {
+typedef struct {
 	u64		step;
 	u16		pc;
 	u8		a;
@@ -13,7 +13,7 @@ typedef struct state {
 	u8		y;
 } STATE;
 
-typedef struct step {
+typedef struct {
 	STATE	state;
 	u8		insn_len;
 	u8		insn[1];
@@ -28,18 +28,31 @@ short init()
 	return 0xFF00;
 }
 
+typedef struct {
+	u64		step;
+} CTX;
+
+void start()
+{
+	CTX ctx;
+	ctx.step = 0;
+	set_context(ctx);
+}
+
 void process(EVENT* event, NODE* node)
 {
 	if(is_step_event(event)) {
 		u64 pc = get_field(event, "pc");
 		if(pc == 0xBEEF) {
 			STEP step;
-			step.state.step = 0;
+			CTX* ctx = get_context();
+			step.state.step = ctx->step;
 			step.state.pc = pc;
 			step.state.a = get_field(event, "temp");
 			step.insn[0] = 21;
 			step.insn_len = 1;
 			create_step(step);
+			ctx->step = ctx->step + 1;
 		}
 	}
 }

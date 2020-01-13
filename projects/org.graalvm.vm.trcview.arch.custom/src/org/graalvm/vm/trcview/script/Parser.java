@@ -503,6 +503,36 @@ public class Parser {
                 Expression expr = expr();
                 return new PointerValueAssignment(deref, expr);
             }
+        } else if (sym == arrow) {
+            // struct member access
+            String typename = t.str;
+            Type type = op.getType();
+            if (!(type instanceof PointerType)) {
+                error(Message.NOT_A_POINTER, typename);
+                type = new PointerType(new PrimitiveType(BasicType.VOID));
+            }
+            type = ((PointerType) type).getType();
+            if (!(type instanceof Struct)) {
+                error(Message.NOT_A_STRUCT, typename);
+                type = new Struct();
+            }
+            scan();
+            check(ident);
+            String membername = t.str;
+            Struct struct = (Struct) type;
+            Member member = struct.getMember(membername);
+            if (member == null) {
+                error(Message.UNKNOWN_MEMBER, membername);
+                member = Struct.DUMMY_MEMBER;
+            }
+            PointerOperation deref = new GetStructMember(op, member);
+            if (sym == lbrack || sym == period) {
+                return assignment(deref, membername);
+            } else {
+                check(assign);
+                Expression expr = expr();
+                return new PointerValueAssignment(deref, expr);
+            }
         }
         return null;
     }
@@ -530,6 +560,10 @@ public class Parser {
             check(ident);
             String field = t.str;
             Member member = struct.getMember(field);
+            if (member == null) {
+                error(Message.UNKNOWN_MEMBER, field);
+                member = Struct.DUMMY_MEMBER;
+            }
             PointerOperation deref = new GetStructMember(op, member);
             if (sym == lbrack || sym == period || sym == arrow) {
                 return designator(deref, member.name);
@@ -575,7 +609,30 @@ public class Parser {
         if (sym == ident) {
             // check if it's a variable declaration
             scan();
-            if (sym == ident) {
+            if (sym == times) {
+                // pointer variable declaration
+                String typename = t.str;
+                scan();
+                check(ident);
+                String name = t.str;
+                Type type = new PointerType(types.get(typename));
+                Variable var = symtab.define(name, type);
+                if (type instanceof ArrayType) {
+                    stmt = new ArrayDeclaration(var);
+                } else if (type instanceof Struct) {
+                    stmt = new StructDeclaration(var);
+                } else if (sym == assign) {
+                    scan();
+                    Expression expr = expr();
+                    if (type instanceof PointerType) {
+                        stmt = new PointerAssignment(var, expr);
+                    } else {
+                        stmt = new Assignment(var, expr);
+                    }
+                } else {
+                    stmt = null;
+                }
+            } else if (sym == ident) {
                 // variable declaration
                 String typename = t.str;
                 scan();
