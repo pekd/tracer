@@ -44,30 +44,60 @@ public class GenericCpuState extends CpuState {
                 if (member.type instanceof PrimitiveType) {
                     PrimitiveType type = (PrimitiveType) member.type;
                     if (desc.bigEndian) {
-                        switch (type.getBasicType()) {
-                            case CHAR:
-                                return data[member.offset];
-                            case SHORT:
-                                return Endianess.get16bitBE(data, member.offset);
-                            case INT:
-                                return Endianess.get32bitBE(data, member.offset);
-                            case LONG:
-                                return Endianess.get64bitBE(data, member.offset);
-                            default:
-                                throw new IllegalStateException("invalid member type " + type.getBasicType());
+                        if (type.isUnsigned()) {
+                            switch (type.getBasicType()) {
+                                case CHAR:
+                                    return Byte.toUnsignedLong(data[member.offset]);
+                                case SHORT:
+                                    return Short.toUnsignedLong(Endianess.get16bitBE(data, member.offset));
+                                case INT:
+                                    return Integer.toUnsignedLong(Endianess.get32bitBE(data, member.offset));
+                                case LONG:
+                                    return Endianess.get64bitBE(data, member.offset);
+                                default:
+                                    throw new IllegalStateException("invalid member type " + type.getBasicType());
+                            }
+                        } else {
+                            switch (type.getBasicType()) {
+                                case CHAR:
+                                    return data[member.offset];
+                                case SHORT:
+                                    return Endianess.get16bitBE(data, member.offset);
+                                case INT:
+                                    return Endianess.get32bitBE(data, member.offset);
+                                case LONG:
+                                    return Endianess.get64bitBE(data, member.offset);
+                                default:
+                                    throw new IllegalStateException("invalid member type " + type.getBasicType());
+                            }
                         }
                     } else {
-                        switch (type.getBasicType()) {
-                            case CHAR:
-                                return data[member.offset];
-                            case SHORT:
-                                return Endianess.get16bitLE(data, member.offset);
-                            case INT:
-                                return Endianess.get32bitLE(data, member.offset);
-                            case LONG:
-                                return Endianess.get64bitLE(data, member.offset);
-                            default:
-                                throw new IllegalStateException("invalid member type " + type.getBasicType());
+                        if (type.isUnsigned()) {
+                            switch (type.getBasicType()) {
+                                case CHAR:
+                                    return Byte.toUnsignedLong(data[member.offset]);
+                                case SHORT:
+                                    return Short.toUnsignedLong(Endianess.get16bitLE(data, member.offset));
+                                case INT:
+                                    return Integer.toUnsignedLong(Endianess.get32bitLE(data, member.offset));
+                                case LONG:
+                                    return Endianess.get64bitLE(data, member.offset);
+                                default:
+                                    throw new IllegalStateException("invalid member type " + type.getBasicType());
+                            }
+                        } else {
+                            switch (type.getBasicType()) {
+                                case CHAR:
+                                    return data[member.offset];
+                                case SHORT:
+                                    return Endianess.get16bitLE(data, member.offset);
+                                case INT:
+                                    return Endianess.get32bitLE(data, member.offset);
+                                case LONG:
+                                    return Endianess.get64bitLE(data, member.offset);
+                                default:
+                                    throw new IllegalStateException("invalid member type " + type.getBasicType());
+                            }
                         }
                     }
                 } else {
