@@ -113,7 +113,9 @@ public class AMD64CpuState extends CpuState {
     @Override
     public long get(String name) {
         switch (name) {
-            case "$":
+            case "step":
+                return getStep();
+            case "pc":
                 return getPC();
             case "al":
                 return rax & 0xFF;
