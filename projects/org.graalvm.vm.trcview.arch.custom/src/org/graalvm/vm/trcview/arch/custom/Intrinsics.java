@@ -19,6 +19,7 @@ import org.graalvm.vm.trcview.script.type.BasicType;
 import org.graalvm.vm.trcview.script.type.PointerType;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
 import org.graalvm.vm.trcview.script.type.Struct;
+import org.graalvm.vm.trcview.script.type.Struct.Member;
 import org.graalvm.vm.trcview.script.type.Type;
 
 public class Intrinsics {
@@ -112,17 +113,23 @@ public class Intrinsics {
         private final CustomArchitecture arch;
 
         public SetStepType(CustomArchitecture arch) {
-            super("set_step_type", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("set_step_type", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR)),
+                            new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR))));
             this.arch = arch;
         }
 
         @Override
         public long execute(Context ctx, Object... args) {
-            Pointer ptr = (Pointer) args[0];
-            String name = ptr.cstr();
+            String name = ((Pointer) args[0]).cstr();
+            String stateName = ((Pointer) args[1]).cstr();
+            String insnName = ((Pointer) args[2]).cstr();
+            String insnLength = ((Pointer) args[3]).cstr();
             if (arch.types.hasType(name)) {
                 Type type = arch.types.get(name);
                 arch.setStepType(type);
+                arch.setStateName(stateName);
+                arch.setInsnName(insnName);
+                arch.setInsnLength(insnLength);
                 return 0;
             } else {
                 return 1;
@@ -134,17 +141,21 @@ public class Intrinsics {
         private final CustomArchitecture arch;
 
         public SetStateType(CustomArchitecture arch) {
-            super("set_state_type", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("set_state_type", new PrimitiveType(BasicType.VOID),
+                            list(new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR))));
             this.arch = arch;
         }
 
         @Override
         public long execute(Context ctx, Object... args) {
-            Pointer ptr = (Pointer) args[0];
-            String name = ptr.cstr();
+            String name = ((Pointer) args[0]).cstr();
+            String pcName = ((Pointer) args[1]).cstr();
+            String stepName = ((Pointer) args[2]).cstr();
             if (arch.types.hasType(name)) {
                 Type type = arch.types.get(name);
                 arch.setStateType(type);
+                arch.setPCName(pcName);
+                arch.setStepName(stepName);
                 return 0;
             } else {
                 return 1;
@@ -201,8 +212,14 @@ public class Intrinsics {
             if (!(type instanceof Struct)) {
                 throw new IllegalArgumentException("not a struct");
             }
-            CustomCpuState state = null;
-            Event evt = new CustomStepEvent(analyzer.getArchitecture().getId(), 0, state);
+            CustomArchitecture arch = analyzer.getArchitecture();
+            String pcName = arch.getPCName();
+            String stateName = arch.getStateName();
+            short id = arch.getId();
+            Member statemember = ((Struct) type).getMember(stateName);
+            Pointer state = data.add(statemember.type, statemember.offset);
+            CustomCpuState cpustate = new CustomCpuState(id, 0, pcName, state);
+            Event evt = new CustomStepEvent(id, 0, cpustate);
             analyzer.createEvent(evt);
             return 0;
         }

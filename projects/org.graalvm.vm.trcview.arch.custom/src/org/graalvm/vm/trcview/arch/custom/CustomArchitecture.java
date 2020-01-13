@@ -29,6 +29,11 @@ public class CustomArchitecture extends Architecture {
 
     private Type stepType;
     private Type stateType;
+    private String stateName;
+    private String insnName;
+    private String insnLength;
+    private String pcName;
+    private String stepName;
 
     public CustomArchitecture(String script) {
         this(script, Collections.emptyList());
@@ -92,6 +97,46 @@ public class CustomArchitecture extends Architecture {
 
     void setStateType(Type stateType) {
         this.stateType = stateType;
+    }
+
+    void setPCName(String pcName) {
+        this.pcName = pcName;
+    }
+
+    public String getPCName() {
+        return pcName;
+    }
+
+    void setStateName(String stateName) {
+        this.stateName = stateName;
+    }
+
+    public String getStateName() {
+        return stateName;
+    }
+
+    void setInsnName(String insnName) {
+        this.insnName = insnName;
+    }
+
+    public String getInsnName() {
+        return insnName;
+    }
+
+    void setInsnLength(String insnLength) {
+        this.insnLength = insnLength;
+    }
+
+    public String getInsnLength() {
+        return insnLength;
+    }
+
+    void setStepName(String stepName) {
+        this.stepName = stepName;
+    }
+
+    public String getStepName() {
+        return stepName;
     }
 
     @Override
