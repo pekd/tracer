@@ -1,0 +1,38 @@
+package org.graalvm.vm.trcview.ui.plugin;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
+
+import javax.swing.JMenu;
+
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.ui.MainWindow;
+import org.graalvm.vm.trcview.ui.TraceView;
+
+public class UIPluginLoader {
+    private static final ServiceLoader<UIPlugin> loader = ServiceLoader.load(UIPlugin.class);
+
+    private final List<UIPlugin> plugins = new ArrayList<>();
+
+    public UIPluginLoader(MainWindow main, JMenu menu, TraceView view) {
+        load(main, menu, view);
+    }
+
+    private void load(MainWindow main, JMenu menu, TraceView view) {
+        for (UIPlugin plugin : loader) {
+            plugins.add(plugin);
+            plugin.init(main, menu, view);
+        }
+    }
+
+    public void setTraceAnalyzer(TraceAnalyzer analyzer) {
+        for (UIPlugin plugin : plugins) {
+            plugin.setTraceAnalyzer(analyzer);
+        }
+    }
+
+    public int count() {
+        return plugins.size();
+    }
+}

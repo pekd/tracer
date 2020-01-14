@@ -96,6 +96,7 @@ import org.graalvm.vm.trcview.net.Client;
 import org.graalvm.vm.trcview.net.Local;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
+import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.util.ui.MessageBox;
@@ -131,6 +132,8 @@ public class MainWindow extends JFrame {
     private JMenuItem exportMemory;
 
     private TraceAnalyzer trc;
+
+    private UIPluginLoader pluginLoader;
 
     public MainWindow() {
         super(WINDOW_TITLE);
@@ -506,6 +509,13 @@ public class MainWindow extends JFrame {
         toolsMenu.add(exportMemory);
         menu.add(toolsMenu);
 
+        JMenu pluginMenu = new JMenu("Plugins");
+        pluginLoader = new UIPluginLoader(this, pluginMenu, view);
+
+        if (pluginMenu.getItemCount() > 0) {
+            menu.add(pluginMenu);
+        }
+
         JMenu helpMenu = new JMenu("Help");
         JMenuItem about = new JMenuItem("About...");
         about.setMnemonic('A');
@@ -571,6 +581,7 @@ public class MainWindow extends JFrame {
             EventQueue.invokeLater(() -> {
                 trc = new Local(reader.getArchitecture(), root, analysis);
                 view.setTraceAnalyzer(trc);
+                pluginLoader.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
@@ -876,6 +887,7 @@ public class MainWindow extends JFrame {
             setTitle(host + ":" + port + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
                 view.setTraceAnalyzer(trc);
+                pluginLoader.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
