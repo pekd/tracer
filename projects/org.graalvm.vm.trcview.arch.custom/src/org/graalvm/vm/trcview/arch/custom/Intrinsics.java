@@ -8,6 +8,7 @@ import org.graalvm.vm.trcview.arch.custom.io.CustomCpuState;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.script.SymbolTable;
 import org.graalvm.vm.trcview.script.ast.Intrinsic;
 import org.graalvm.vm.trcview.script.rt.Context;
@@ -34,7 +35,7 @@ public class Intrinsics {
 
     public static class Alloca extends Intrinsic {
         public Alloca() {
-            super("alloca", new PointerType(new PrimitiveType(BasicType.VOID)), list(new PrimitiveType(BasicType.LONG, true)));
+            super("alloca", PointerType.VOIDPTR, list(PrimitiveType.ULONG));
         }
 
         @Override
@@ -52,7 +53,7 @@ public class Intrinsics {
 
     public static class Strlen extends Intrinsic {
         public Strlen() {
-            super("strlen", new PrimitiveType(BasicType.LONG, true), list(new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("strlen", PrimitiveType.ULONG, list(PointerType.CHARPTR));
         }
 
         @Override
@@ -64,7 +65,7 @@ public class Intrinsics {
 
     public static class Strcmp extends Intrinsic {
         public Strcmp() {
-            super("strcmp", new PrimitiveType(BasicType.INT), list(new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("strcmp", PrimitiveType.INT, list(PointerType.CHARPTR, PointerType.CHARPTR));
         }
 
         @Override
@@ -77,11 +78,57 @@ public class Intrinsics {
         }
     }
 
+    public static class Strcpy extends Intrinsic {
+        public Strcpy() {
+            super("strcpy", PrimitiveType.INT, list(PointerType.CHARPTR, PointerType.CHARPTR));
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            PrimitiveType chr = new PrimitiveType(BasicType.CHAR);
+            Pointer dst = (Pointer) args[0];
+            Pointer src = (Pointer) args[1];
+            while (src.getI8() != 0) {
+                dst.setI8(src.getI8());
+                src = src.add(chr, 1);
+                dst = dst.add(chr, 1);
+            }
+            dst.setI8((byte) 0);
+            return 0;
+        }
+    }
+
+    public static class Strcat extends Intrinsic {
+        public Strcat() {
+            super("strcat", PrimitiveType.INT, list(PointerType.CHARPTR, PointerType.CHARPTR));
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            PrimitiveType chr = new PrimitiveType(BasicType.CHAR);
+            Pointer dst = (Pointer) args[0];
+            Pointer src = (Pointer) args[1];
+
+            while (dst.getI8() != 0) {
+                dst = dst.add(chr, 1);
+            }
+
+            while (src.getI8() != 0) {
+                dst.setI8(src.getI8());
+                src = src.add(chr, 1);
+                dst = dst.add(chr, 1);
+            }
+            dst.setI8((byte) 0);
+
+            return 0;
+        }
+    }
+
     public static class SetName extends Intrinsic {
         private final CustomArchitecture arch;
 
         public SetName(CustomArchitecture arch) {
-            super("set_name", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("set_name", PrimitiveType.VOID, list(PointerType.CHARPTR));
             this.arch = arch;
         }
 
@@ -97,7 +144,7 @@ public class Intrinsics {
         private final CustomArchitecture arch;
 
         public SetDescription(CustomArchitecture arch) {
-            super("set_description", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("set_description", PrimitiveType.VOID, list(PointerType.CHARPTR));
             this.arch = arch;
         }
 
@@ -113,8 +160,7 @@ public class Intrinsics {
         private final CustomArchitecture arch;
 
         public SetStepType(CustomArchitecture arch) {
-            super("set_step_type", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR)),
-                            new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("set_step_type", PrimitiveType.VOID, list(PointerType.CHARPTR, PointerType.CHARPTR, PointerType.CHARPTR, PointerType.CHARPTR));
             this.arch = arch;
         }
 
@@ -141,8 +187,7 @@ public class Intrinsics {
         private final CustomArchitecture arch;
 
         public SetStateType(CustomArchitecture arch) {
-            super("set_state_type", new PrimitiveType(BasicType.VOID),
-                            list(new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR)), new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("set_state_type", PrimitiveType.VOID, list(PointerType.CHARPTR, PointerType.CHARPTR, PointerType.CHARPTR));
             this.arch = arch;
         }
 
@@ -163,9 +208,30 @@ public class Intrinsics {
         }
     }
 
+    public static class SetFormat extends Intrinsic {
+        private final CustomArchitecture arch;
+
+        public SetFormat(CustomArchitecture arch) {
+            super("set_format", PrimitiveType.VOID, list(PrimitiveType.INT, PrimitiveType.INT, PrimitiveType.INT, PrimitiveType.INT, PrimitiveType.INT));
+            this.arch = arch;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            int numberfmt = (int) (long) args[0];
+            int addrwidth = (int) (long) args[1];
+            int wordwidth = (int) (long) args[2];
+            int machinecodesz = (int) (long) args[3];
+            boolean be = (long) args[4] != 0;
+            StepFormat fmt = new StepFormat(numberfmt, addrwidth, wordwidth, machinecodesz, be);
+            arch.setFormat(fmt);
+            return 0;
+        }
+    }
+
     public static class IsStepEvent extends Intrinsic {
         public IsStepEvent() {
-            super("is_step_event", new PrimitiveType(BasicType.INT), list(new PointerType(new PrimitiveType(BasicType.VOID))));
+            super("is_step_event", PrimitiveType.INT, list(PointerType.VOIDPTR));
         }
 
         @Override
@@ -177,7 +243,7 @@ public class Intrinsics {
 
     public static class GetField extends Intrinsic {
         public GetField() {
-            super("get_field", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.VOID)), new PointerType(new PrimitiveType(BasicType.CHAR))));
+            super("get_field", PrimitiveType.VOID, list(PointerType.VOIDPTR, PointerType.CHARPTR));
         }
 
         @Override
@@ -201,7 +267,7 @@ public class Intrinsics {
         private final CustomAnalyzer analyzer;
 
         public CreateStep(CustomAnalyzer analyzer) {
-            super("create_step", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.VOID))));
+            super("create_step", PrimitiveType.VOID, list(PointerType.VOIDPTR));
             this.analyzer = analyzer;
         }
 
@@ -219,7 +285,7 @@ public class Intrinsics {
             Member statemember = ((Struct) type).getMember(stateName);
             Pointer state = data.add(statemember.type, statemember.offset);
             CustomCpuState cpustate = new CustomCpuState(id, 0, pcName, state);
-            Event evt = new CustomStepEvent(id, 0, cpustate);
+            Event evt = new CustomStepEvent(analyzer, id, 0, data, cpustate);
             analyzer.createEvent(evt);
             return 0;
         }
@@ -229,7 +295,7 @@ public class Intrinsics {
         private final CustomAnalyzer analyzer;
 
         public SetContext(CustomAnalyzer analyzer) {
-            super("set_context", new PrimitiveType(BasicType.VOID), list(new PointerType(new PrimitiveType(BasicType.VOID))));
+            super("set_context", PrimitiveType.VOID, list(PointerType.VOIDPTR));
             this.analyzer = analyzer;
         }
 
@@ -245,7 +311,7 @@ public class Intrinsics {
         private final CustomAnalyzer analyzer;
 
         public GetContext(CustomAnalyzer analyzer) {
-            super("get_context", new PointerType(new PrimitiveType(BasicType.VOID)), list());
+            super("get_context", PointerType.VOIDPTR, list());
             this.analyzer = analyzer;
         }
 
@@ -264,10 +330,13 @@ public class Intrinsics {
         symtab.define(new Alloca());
         symtab.define(new Strlen());
         symtab.define(new Strcmp());
+        symtab.define(new Strcpy());
+        symtab.define(new Strcat());
         symtab.define(new SetName(arch));
         symtab.define(new SetDescription(arch));
         symtab.define(new SetStepType(arch));
         symtab.define(new SetStateType(arch));
+        symtab.define(new SetFormat(arch));
         symtab.define(new IsStepEvent());
         symtab.define(new GetField());
     }

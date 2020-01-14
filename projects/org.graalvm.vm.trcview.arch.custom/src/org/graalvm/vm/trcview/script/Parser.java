@@ -45,7 +45,9 @@ import static org.graalvm.vm.trcview.script.TokenType.unsigned_;
 import static org.graalvm.vm.trcview.script.TokenType.void_;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.graalvm.vm.trcview.script.ast.ArrayAssignment;
@@ -136,6 +138,7 @@ public class Parser {
 
     public final TypeTable types;
     public final SymbolTable symtab;
+    public final Map<String, Long> constants;
 
     public Parser(String s) {
         this(new Scanner(s));
@@ -149,6 +152,7 @@ public class Parser {
         errdst = MIN_ERROR_DISTANCE;
         types = new TypeTable(this::error);
         symtab = new SymbolTable(this::error);
+        constants = new HashMap<>();
     }
 
     public void error(Message msg, Object... msgParams) {
@@ -866,6 +870,9 @@ public class Parser {
         } else if (sym == ident) {
             scan();
             String name = t.str;
+            if (constants.containsKey(name)) {
+                return new ConstantNode(constants.get(name));
+            }
             if (sym == lpar) {
                 scan();
                 List<Expression> args = new ArrayList<>();

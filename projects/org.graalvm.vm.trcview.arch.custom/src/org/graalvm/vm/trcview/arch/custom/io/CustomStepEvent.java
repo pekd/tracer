@@ -2,43 +2,57 @@ package org.graalvm.vm.trcview.arch.custom.io;
 
 import java.io.IOException;
 
-import org.graalvm.vm.trcview.arch.custom.GenericArchitecture;
+import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.script.rt.Pointer;
+import org.graalvm.vm.trcview.script.type.PrimitiveType;
+import org.graalvm.vm.trcview.script.type.Struct;
+import org.graalvm.vm.trcview.script.type.Struct.Member;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class CustomStepEvent extends StepEvent {
     private final CustomCpuState state;
+    private final CustomAnalyzer analyzer;
+    private final Pointer data;
 
-    public CustomStepEvent(short arch, int tid, CustomCpuState state) {
+    public CustomStepEvent(CustomAnalyzer analyzer, short arch, int tid, Pointer data, CustomCpuState state) {
         super(arch, tid);
+        this.data = data;
         this.state = state;
+        this.analyzer = analyzer;
     }
 
     @Override
     public byte[] getMachinecode() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getDisassembly() {
-        // TODO Auto-generated method stub
-        return null;
+        Struct struct = (Struct) data.getType();
+        Member insn = struct.getMember(analyzer.getArchitecture().getInsnName());
+        if (insn == null) {
+            throw new IllegalStateException("cannot find insn field \"" + analyzer.getArchitecture().getInsnName() + "\"");
+        }
+        Member insnLen = struct.getMember(analyzer.getArchitecture().getInsnLength());
+        if (insnLen == null) {
+            throw new IllegalStateException("cannot find insnLen field \"" + analyzer.getArchitecture().getInsnLength() + "\"");
+        }
+        int insnLength = Byte.toUnsignedInt(data.add(PrimitiveType.UCHAR, insnLen.offset).getI8());
+        byte[] result = new byte[insnLength];
+        Pointer ptr = data.add(PrimitiveType.UCHAR, insn.offset);
+        for (int i = 0; i < result.length; i++) {
+            result[i] = ptr.getI8(i);
+        }
+        return result;
     }
 
     @Override
     public String[] getDisassemblyComponents() {
-        // TODO Auto-generated method stub
-        return null;
+        return analyzer.disassemble(data).split("\t");
     }
 
     @Override
     public String getMnemonic() {
-        // TODO Auto-generated method stub
-        return null;
+        return getDisassemblyComponents()[0];
     }
 
     @Override
@@ -68,7 +82,7 @@ public class CustomStepEvent extends StepEvent {
 
     @Override
     public InstructionType getType() {
-        return InstructionType.OTHER;
+        return analyzer.getType(data);
     }
 
     @Override
@@ -83,7 +97,7 @@ public class CustomStepEvent extends StepEvent {
 
     @Override
     public StepFormat getFormat() {
-        return GenericArchitecture.FORMAT;
+        return analyzer.getArchitecture().getFormat();
     }
 
     @Override

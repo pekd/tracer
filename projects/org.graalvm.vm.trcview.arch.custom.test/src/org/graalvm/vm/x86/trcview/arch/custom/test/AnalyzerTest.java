@@ -1,5 +1,6 @@
 package org.graalvm.vm.x86.trcview.arch.custom.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -84,5 +85,9 @@ public class AnalyzerTest {
         assertNotNull(evt);
         assertEquals(0xBEEF, evt.getPC());
         assertEquals(42, evt.getState().get("a"));
+        assertEquals("nop", evt.getDisassembly());
+
+        byte[] machinecoderef = new byte[]{21};
+        assertArrayEquals(machinecoderef, evt.getMachinecode());
     }
 }

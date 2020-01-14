@@ -25,6 +25,7 @@ short init()
 	set_description("Custom Test Architecture");
 	set_step_type("STEP", "state", "insn", "insn_len");
 	set_state_type("STATE", "pc", "step");
+	set_format(0, 8, 8, 1, 0);
 	return 0xFF00;
 }
 
@@ -55,4 +56,20 @@ void process(EVENT* event, NODE* node)
 			ctx->step = ctx->step + 1;
 		}
 	}
+}
+
+void disasm(STEP* step, char* out)
+{
+	if(step->insn_len == 1) {
+		if(step->insn[0] == 21) {
+			strcpy(out, "nop");
+			return;
+		}
+	}
+	strcpy(out, "; unknown");
+}
+
+int get_type(STEP* step)
+{
+	return TYPE_OTHER;
 }

@@ -1,6 +1,9 @@
 package org.graalvm.vm.trcview.script.type;
 
 public class PointerType extends Type {
+    public static final PointerType VOIDPTR = new PointerType(PrimitiveType.VOID);
+    public static final PointerType CHARPTR = new PointerType(PrimitiveType.CHAR);
+
     private Type pointee;
 
     public PointerType(Type pointee) {

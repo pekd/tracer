@@ -3,6 +3,16 @@ package org.graalvm.vm.trcview.script.type;
 import java.util.Objects;
 
 public class PrimitiveType extends Type {
+    public static final PrimitiveType VOID = new PrimitiveType(BasicType.VOID);
+    public static final PrimitiveType CHAR = new PrimitiveType(BasicType.CHAR);
+    public static final PrimitiveType SHORT = new PrimitiveType(BasicType.SHORT);
+    public static final PrimitiveType INT = new PrimitiveType(BasicType.INT);
+    public static final PrimitiveType LONG = new PrimitiveType(BasicType.LONG);
+    public static final PrimitiveType UCHAR = new PrimitiveType(BasicType.CHAR, true);
+    public static final PrimitiveType USHORT = new PrimitiveType(BasicType.SHORT, true);
+    public static final PrimitiveType UINT = new PrimitiveType(BasicType.INT, true);
+    public static final PrimitiveType ULONG = new PrimitiveType(BasicType.LONG, true);
+
     private BasicType type;
     private boolean unsigned;
 

@@ -31,6 +31,10 @@ public class CustomCpuState extends CpuState {
         return get(pcName);
     }
 
+    public Pointer getPointer() {
+        return data;
+    }
+
     @Override
     public long get(String name) {
         Member member = struct.getMember(name);

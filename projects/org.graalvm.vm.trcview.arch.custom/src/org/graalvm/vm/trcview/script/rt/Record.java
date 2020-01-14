@@ -11,7 +11,7 @@ public class Record {
         data = new byte[type.size()];
     }
 
-    Record(Type type, byte[] data) {
+    public Record(Type type, byte[] data) {
         this.type = type;
         this.data = data;
     }

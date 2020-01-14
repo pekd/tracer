@@ -34,6 +34,7 @@ public class CustomArchitecture extends Architecture {
     private String insnLength;
     private String pcName;
     private String stepName;
+    private StepFormat format;
 
     public CustomArchitecture(String script) {
         this(script, Collections.emptyList());
@@ -45,6 +46,14 @@ public class CustomArchitecture extends Architecture {
         for (Intrinsic intrinsic : intrinsics) {
             parser.symtab.define(intrinsic);
         }
+        parser.constants.put("TYPE_OTHER", 0L);
+        parser.constants.put("TYPE_JCC", 1L);
+        parser.constants.put("TYPE_JMP", 2L);
+        parser.constants.put("TYPE_JMP_INDIRECT", 3L);
+        parser.constants.put("TYPE_CALL", 4L);
+        parser.constants.put("TYPE_RET", 5L);
+        parser.constants.put("TYPE_SYSCALL", 6L);
+        parser.constants.put("TYPE_RTI", 7L);
         parser.parse();
         if (parser.errors.numErrors() > 0) {
             throw new IllegalArgumentException(parser.errors.dump());
@@ -166,9 +175,13 @@ public class CustomArchitecture extends Architecture {
         return 8;
     }
 
+    void setFormat(StepFormat format) {
+        this.format = format;
+    }
+
     @Override
     public StepFormat getFormat() {
-        return null;
+        return format;
     }
 
     @Override

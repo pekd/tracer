@@ -39,48 +39,96 @@ public class Pointer {
         return data.getData()[offset];
     }
 
+    public byte getI8(int off) {
+        return data.getData()[offset + off];
+    }
+
     public short getI16() {
         return Endianess.get16bitBE(data.getData(), offset);
+    }
+
+    public short getI16(int off) {
+        return Endianess.get16bitBE(data.getData(), offset + off);
     }
 
     public int getI32() {
         return Endianess.get32bitBE(data.getData(), offset);
     }
 
+    public int getI32(int off) {
+        return Endianess.get32bitBE(data.getData(), offset + off);
+    }
+
     public long getI64() {
         return Endianess.get64bitBE(data.getData(), offset);
+    }
+
+    public long getI64(int off) {
+        return Endianess.get64bitBE(data.getData(), offset + off);
     }
 
     public int getU8() {
         return Byte.toUnsignedInt(data.getData()[offset]);
     }
 
+    public int getU8(int off) {
+        return Byte.toUnsignedInt(data.getData()[offset + off]);
+    }
+
     public int getU16() {
         return Short.toUnsignedInt(Endianess.get16bitBE(data.getData(), offset));
+    }
+
+    public int getU16(int off) {
+        return Short.toUnsignedInt(Endianess.get16bitBE(data.getData(), offset + off));
     }
 
     public long getU32() {
         return Integer.toUnsignedLong(Endianess.get32bitBE(data.getData(), offset));
     }
 
+    public long getU32(int off) {
+        return Integer.toUnsignedLong(Endianess.get32bitBE(data.getData(), offset + off));
+    }
+
     public long getU64() {
         return Endianess.get64bitBE(data.getData(), offset);
+    }
+
+    public long getU64(int off) {
+        return Endianess.get64bitBE(data.getData(), offset + off);
     }
 
     public void setI8(byte value) {
         data.getData()[offset] = value;
     }
 
+    public void setI8(int off, byte value) {
+        data.getData()[offset + off] = value;
+    }
+
     public void setI16(short value) {
         Endianess.set16bitBE(data.getData(), offset, value);
+    }
+
+    public void setI16(int off, short value) {
+        Endianess.set16bitBE(data.getData(), offset + off, value);
     }
 
     public void setI32(int value) {
         Endianess.set32bitBE(data.getData(), offset, value);
     }
 
+    public void setI32(int off, int value) {
+        Endianess.set32bitBE(data.getData(), offset + off, value);
+    }
+
     public void setI64(long value) {
         Endianess.set64bitBE(data.getData(), offset, value);
+    }
+
+    public void setI64(int off, long value) {
+        Endianess.set64bitBE(data.getData(), offset + off, value);
     }
 
     public long dereferenceScalar() {
