@@ -7,6 +7,10 @@ import static org.junit.Assert.fail;
 import org.graalvm.vm.trcview.script.Parser;
 import org.graalvm.vm.trcview.script.ast.Function;
 import org.graalvm.vm.trcview.script.rt.Context;
+import org.graalvm.vm.trcview.script.rt.Pointer;
+import org.graalvm.vm.trcview.script.rt.Record;
+import org.graalvm.vm.trcview.script.type.PointerType;
+import org.graalvm.vm.trcview.script.type.PrimitiveType;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -196,7 +200,7 @@ public class EvalTest extends TestSupport {
     @Test(timeout = DEFAULT_TIMEOUT)
     public void pointer1() {
         String code = "int main() {\n" +
-                        "    char* str = malloc(10);\n" +
+                        "    char* str = alloca(10);\n" +
                         "    str[0] = 1;\n" +
                         "    str[1] = 2;\n" +
                         "    str[2] = 3;\n" +
@@ -249,5 +253,60 @@ public class EvalTest extends TestSupport {
         assertNotNull(main);
         long value = main.execute(ctx);
         assertEquals(42, value);
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void sprintf1() {
+        String code = "void main(char* out) {\n" +
+                        "    sprintf(out, \"Hello world\");\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        byte[] buf = new byte[64];
+        Pointer ptr = new Pointer(PointerType.CHARPTR, 0, new Record(PrimitiveType.CHAR, buf));
+        main.execute(ctx, ptr);
+        assertEquals("Hello world", ptr.cstr());
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void sprintf2() {
+        String code = "void main(char* out) {\n" +
+                        "    sprintf(out, \"number: %d\", 42);\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        byte[] buf = new byte[64];
+        Pointer ptr = new Pointer(PointerType.CHARPTR, 0, new Record(PrimitiveType.CHAR, buf));
+        main.execute(ctx, ptr);
+        assertEquals("number: 42", ptr.cstr());
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void unsigned1() {
+        String code = "void main(char* out) {\n" +
+                        "    uint32_t value = 0x12345678;\n" +
+                        "    out[0] = value >> 24;\n" +
+                        "    out[1] = value >> 16;\n" +
+                        "    out[2] = value >> 8;\n" +
+                        "    out[3] = value;\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        byte[] buf = new byte[4];
+        Pointer ptr = new Pointer(PointerType.CHARPTR, 0, new Record(PrimitiveType.CHAR, buf));
+        main.execute(ctx, ptr);
+        assertEquals(0x12, buf[0]);
+        assertEquals(0x34, buf[1]);
+        assertEquals(0x56, buf[2]);
+        assertEquals(0x78, buf[3]);
     }
 }

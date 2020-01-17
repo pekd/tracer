@@ -6,21 +6,13 @@ import static org.junit.Assert.assertSame;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graalvm.vm.trcview.arch.custom.Intrinsics;
 import org.graalvm.vm.trcview.script.Errors;
 import org.graalvm.vm.trcview.script.Message;
 import org.graalvm.vm.trcview.script.Parser;
 import org.graalvm.vm.trcview.script.Scanner;
 import org.graalvm.vm.trcview.script.Token;
 import org.graalvm.vm.trcview.script.TokenType;
-import org.graalvm.vm.trcview.script.ast.Intrinsic;
-import org.graalvm.vm.trcview.script.rt.Context;
-import org.graalvm.vm.trcview.script.rt.Pointer;
-import org.graalvm.vm.trcview.script.rt.Record;
-import org.graalvm.vm.trcview.script.type.ArrayType;
-import org.graalvm.vm.trcview.script.type.BasicType;
-import org.graalvm.vm.trcview.script.type.PointerType;
-import org.graalvm.vm.trcview.script.type.PrimitiveType;
-import org.graalvm.vm.trcview.script.type.Type;
 import org.junit.After;
 import org.junit.Before;
 
@@ -75,29 +67,10 @@ public class TestSupport {
         checkErrors(s.errors);
     }
 
-    private static List<Type> list(Type t) {
-        List<Type> list = new ArrayList<>();
-        list.add(t);
-        return list;
-    }
-
     // parser specific
     protected Parser parse(String s) {
         Parser p = new Parser(s);
-        Intrinsic malloc = new Intrinsic("malloc", new PointerType(new PrimitiveType(BasicType.VOID)), list(new PrimitiveType(BasicType.LONG))) {
-            @Override
-            public long execute(Context ctx, Object... args) {
-                throw new UnsupportedOperationException("invalid scalar call to malloc");
-            }
-
-            @Override
-            public Pointer executePointer(Context ctx, Object... args) {
-                Type pointee = new PrimitiveType(BasicType.CHAR);
-                Record data = new Record(new ArrayType(pointee, (long) args[0]));
-                return new Pointer(pointee, 0, data);
-            }
-        };
-        p.symtab.define(malloc);
+        Intrinsics.register(p.symtab);
         p.parse();
         if (p.errors.numErrors() > 0) {
             System.out.println(p.errors.dump());

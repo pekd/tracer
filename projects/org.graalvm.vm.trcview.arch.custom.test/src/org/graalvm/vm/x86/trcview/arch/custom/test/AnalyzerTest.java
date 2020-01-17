@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 
+import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.arch.custom.CustomArchitecture;
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
@@ -18,13 +19,12 @@ import org.graalvm.vm.trcview.arch.none.None;
 import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.arch.custom.test.impl.MockStepEvent;
-import org.graalvm.vm.x86.trcview.arch.custom.test.impl.MockTraceAnalyzer;
 import org.junit.Before;
 import org.junit.Test;
 
 public class AnalyzerTest {
     public static final String SCRIPT;
-    private MockTraceAnalyzer trc;
+    private MemoryTrace mem;
 
     static {
         try {
@@ -53,7 +53,7 @@ public class AnalyzerTest {
 
     @Before
     public void setup() {
-        trc = new MockTraceAnalyzer();
+        mem = new MemoryTrace();
     }
 
     @Test
@@ -68,7 +68,7 @@ public class AnalyzerTest {
     @Test
     public void analyzer2() {
         CustomAnalyzer analyzer = new CustomAnalyzer(SCRIPT);
-        analyzer.start(trc);
+        analyzer.start(mem);
         Event evt0 = new MockStepEvent(None.ID, 0, 0, 0xBEEE, new String[]{"salad"}, new byte[]{0x41});
         Event evt1 = new MockStepEvent(None.ID, 0, 1, 0xBEEF, new String[]{"noodle"}, new byte[]{0x42}, "temp", 42L);
         Event evt2 = new MockStepEvent(None.ID, 0, 2, 0xBEF0, new String[]{"tomatoe"}, new byte[]{0x43});
