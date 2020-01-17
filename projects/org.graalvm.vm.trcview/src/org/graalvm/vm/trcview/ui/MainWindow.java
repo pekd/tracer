@@ -80,11 +80,13 @@ import javax.swing.SwingWorker;
 
 import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.Analysis;
+import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.TypeParser;
@@ -136,6 +138,10 @@ public class MainWindow extends JFrame {
     private UIPluginLoader pluginLoader;
 
     public MainWindow() {
+        this(true);
+    }
+
+    public MainWindow(boolean master) {
         super(WINDOW_TITLE);
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
@@ -231,7 +237,6 @@ public class MainWindow extends JFrame {
             }
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -312,19 +317,28 @@ public class MainWindow extends JFrame {
         exit.setMnemonic('x');
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
         exit.addActionListener(e -> exit());
-        fileMenu.add(open);
-        fileMenu.addSeparator();
-        fileMenu.add(loadSession);
-        fileMenu.add(saveSession);
-        fileMenu.addSeparator();
-        fileMenu.add(loadSymbols);
-        fileMenu.add(saveSymbols);
-        fileMenu.add(loadPrototypes);
-        fileMenu.addSeparator();
-        fileMenu.add(refresh);
-        fileMenu.addSeparator();
-        fileMenu.add(exit);
-        fileMenu.setMnemonic('F');
+
+        if (master) {
+            fileMenu.add(open);
+            fileMenu.addSeparator();
+            fileMenu.add(loadSession);
+            fileMenu.add(saveSession);
+            fileMenu.addSeparator();
+            fileMenu.add(loadSymbols);
+            fileMenu.add(saveSymbols);
+            fileMenu.add(loadPrototypes);
+            fileMenu.addSeparator();
+            fileMenu.add(refresh);
+            fileMenu.addSeparator();
+            fileMenu.add(exit);
+            fileMenu.setMnemonic('F');
+        } else {
+            JMenuItem close = new JMenuItem("Close");
+            close.addActionListener(e -> this.dispose());
+            close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK));
+            fileMenu.add(close);
+        }
+
         menu.add(fileMenu);
 
         JMenu editMenu = new JMenu("Edit");
@@ -564,11 +578,26 @@ public class MainWindow extends JFrame {
         open.setEnabled(false);
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
             long size = file.length();
+            load(new TraceFileReader(in), size, file.toString());
+        } catch (Throwable t) {
+            log.log(Level.INFO, "Loading failed: " + t, t);
+            setStatus("Loading failed: " + t);
+            throw t;
+        } finally {
+            open.setEnabled(true);
+        }
+        log.info("File loaded");
+    }
+
+    public void load(TraceReader reader, long size, String file) throws IOException {
+        log.info("Loading file " + file + "...");
+        open.setEnabled(false);
+        try {
             String text = "Loading " + file;
             setStatus(text);
             setPosition(-1);
-            TraceReader reader = new TraceReader(in);
-            Analysis analysis = new Analysis(reader.getArchitecture());
+            List<Analyzer> analyzers = pluginLoader.getAnalyzers(reader.getArchitecture());
+            Analysis analysis = new Analysis(reader.getArchitecture(), analyzers);
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
             analysis.finish(root);
@@ -581,7 +610,6 @@ public class MainWindow extends JFrame {
             EventQueue.invokeLater(() -> {
                 trc = new Local(reader.getArchitecture(), root, analysis);
                 view.setTraceAnalyzer(trc);
-                pluginLoader.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
@@ -594,6 +622,7 @@ public class MainWindow extends JFrame {
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
                 exportMemory.setEnabled(true);
+                pluginLoader.traceLoaded(trc);
             });
         } catch (Throwable t) {
             log.log(Level.INFO, "Loading failed: " + t, t);
@@ -602,7 +631,6 @@ public class MainWindow extends JFrame {
         } finally {
             open.setEnabled(true);
         }
-        log.info("File loaded");
     }
 
     public void loadPrototypes(File file) throws IOException {
@@ -887,7 +915,6 @@ public class MainWindow extends JFrame {
             setTitle(host + ":" + port + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
                 view.setTraceAnalyzer(trc);
-                pluginLoader.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
@@ -898,6 +925,7 @@ public class MainWindow extends JFrame {
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
                 exportMemory.setEnabled(true);
+                pluginLoader.traceLoaded(trc);
             });
         } catch (Throwable t) {
             setStatus("Failed to connect to " + host + " on port " + port);

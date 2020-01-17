@@ -2,6 +2,7 @@ package org.graalvm.vm.trcview.arch.custom.io;
 
 import java.io.IOException;
 
+import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.script.rt.Pointer;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
@@ -10,12 +11,14 @@ import org.graalvm.vm.trcview.script.type.Struct.Member;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class CustomCpuState extends CpuState {
+    private final CustomAnalyzer analyzer;
     private final Pointer data;
     private final Struct struct;
     private final String pcName;
 
-    public CustomCpuState(short arch, int tid, String pcName, Pointer data) {
+    public CustomCpuState(short arch, int tid, String pcName, Pointer data, CustomAnalyzer analyzer) {
         super(arch, tid);
+        this.analyzer = analyzer;
         this.pcName = pcName;
         this.data = data;
         this.struct = (Struct) data.getType();
@@ -79,5 +82,10 @@ public class CustomCpuState extends CpuState {
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public String toString() {
+        return analyzer.printState(this);
     }
 }

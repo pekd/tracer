@@ -54,6 +54,15 @@ public class CustomArchitecture extends Architecture {
         parser.constants.put("TYPE_RET", 5L);
         parser.constants.put("TYPE_SYSCALL", 6L);
         parser.constants.put("TYPE_RTI", 7L);
+        parser.constants.put("PROT_READ", 1L);
+        parser.constants.put("PROT_WRITE", 2L);
+        parser.constants.put("PROT_EXEC", 4L);
+        parser.constants.put("PROT_NONE", 0L);
+        parser.constants.put("MAP_SHARED", 0x01L);
+        parser.constants.put("MAP_PRIVATE", 0x02L);
+        parser.constants.put("MAP_TYPE", 0x0FL);
+        parser.constants.put("MAP_FIXED", 0x10L);
+        parser.constants.put("MAP_ANONYMOUS", 0x20L);
         parser.parse();
         if (parser.errors.numErrors() > 0) {
             throw new IllegalArgumentException(parser.errors.dump());

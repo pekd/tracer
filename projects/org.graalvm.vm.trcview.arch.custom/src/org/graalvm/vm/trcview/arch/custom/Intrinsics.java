@@ -3,10 +3,13 @@ package org.graalvm.vm.trcview.arch.custom;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.custom.io.CustomCpuState;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.MemoryEvent;
+import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.script.SymbolTable;
@@ -119,6 +122,33 @@ public class Intrinsics {
                 dst = dst.add(chr, 1);
             }
             dst.setI8((byte) 0);
+
+            return 0;
+        }
+    }
+
+    public static class Sprintf extends Intrinsic {
+        public Sprintf() {
+            super("sprintf", PrimitiveType.VOID, list(PointerType.CHARPTR, PointerType.CHARPTR));
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            Pointer dst = (Pointer) args[0];
+            Pointer src = (Pointer) args[1];
+
+            Object[] vararg = new Object[args.length - 2];
+            for (int i = 0; i < vararg.length; i++) {
+                vararg[i] = args[i + 2];
+            }
+
+            String result = String.format(src.cstr(), vararg);
+
+            int i;
+            for (i = 0; i < result.length(); i++) {
+                dst.setI8(i, (byte) result.charAt(i));
+            }
+            dst.setI8(i++, (byte) 0);
 
             return 0;
         }
@@ -263,6 +293,86 @@ public class Intrinsics {
         }
     }
 
+    public static class GetI8 extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public GetI8(CustomAnalyzer analyzer) {
+            super("getI8", PrimitiveType.CHAR, list(PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            long addr = (long) args[0];
+            long step = analyzer.getCurrentStep();
+            try {
+                return analyzer.getMemoryTrace().getByte(addr, step);
+            } catch (MemoryNotMappedException e) {
+                return 0;
+            }
+        }
+    }
+
+    public static class GetI16 extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public GetI16(CustomAnalyzer analyzer) {
+            super("getI16", PrimitiveType.SHORT, list(PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            long addr = (long) args[0];
+            long step = analyzer.getCurrentStep();
+            try {
+                return analyzer.getMemoryTrace().getShort(addr, step);
+            } catch (MemoryNotMappedException e) {
+                return 0;
+            }
+        }
+    }
+
+    public static class GetI32 extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public GetI32(CustomAnalyzer analyzer) {
+            super("getI32", PrimitiveType.INT, list(PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            long addr = (long) args[0];
+            long step = analyzer.getCurrentStep();
+            try {
+                return analyzer.getMemoryTrace().getInt(addr, step);
+            } catch (MemoryNotMappedException e) {
+                return 0;
+            }
+        }
+    }
+
+    public static class GetI64 extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public GetI64(CustomAnalyzer analyzer) {
+            super("getI64", PrimitiveType.LONG, list(PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            long addr = (long) args[0];
+            long step = analyzer.getCurrentStep();
+            try {
+                return analyzer.getMemoryTrace().getWord(addr, step);
+            } catch (MemoryNotMappedException e) {
+                return 0;
+            }
+        }
+    }
+
     public static class CreateStep extends Intrinsic {
         private final CustomAnalyzer analyzer;
 
@@ -284,8 +394,72 @@ public class Intrinsics {
             short id = arch.getId();
             Member statemember = ((Struct) type).getMember(stateName);
             Pointer state = data.add(statemember.type, statemember.offset);
-            CustomCpuState cpustate = new CustomCpuState(id, 0, pcName, state);
-            Event evt = new CustomStepEvent(analyzer, id, 0, data, cpustate);
+            CustomCpuState cpustate = new CustomCpuState(id, 0, pcName, state, analyzer);
+            long parentStep = analyzer.getCurrentStep();
+            Event evt = new CustomStepEvent(analyzer, id, 0, data, cpustate, parentStep);
+            analyzer.createEvent(evt);
+            return 0;
+        }
+    }
+
+    public static class CreateMmap extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public CreateMmap(CustomAnalyzer analyzer) {
+            super("create_mmap", PrimitiveType.VOID, list(PrimitiveType.ULONG, PrimitiveType.ULONG, PrimitiveType.INT, PrimitiveType.INT, PrimitiveType.INT, PrimitiveType.ULONG, PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            long addr = (long) args[0];
+            long len = (long) args[1];
+            int prot = (int) (long) args[2];
+            int flags = (int) (long) args[3];
+            int fd = (int) (long) args[4];
+            long off = (long) args[5];
+            long result = (long) args[6];
+            MmapEvent evt = new MmapEvent(0, addr, len, prot, flags, fd, off, null, result, null);
+            analyzer.createEvent(evt);
+            return 0;
+        }
+    }
+
+    public static class CreateWrite extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public CreateWrite(CustomAnalyzer analyzer) {
+            super("create_write", PrimitiveType.VOID, list(PrimitiveType.UCHAR, PrimitiveType.ULONG, PrimitiveType.UCHAR, PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            boolean be = (long) args[0] != 0;
+            long addr = (long) args[1];
+            byte len = (byte) (long) args[2];
+            long value = (long) args[3];
+            MemoryEvent evt = new MemoryEvent(be, 0, addr, len, true, value);
+            analyzer.createEvent(evt);
+            return 0;
+        }
+    }
+
+    public static class CreateRead extends Intrinsic {
+        private final CustomAnalyzer analyzer;
+
+        public CreateRead(CustomAnalyzer analyzer) {
+            super("create_read", PrimitiveType.VOID, list(PrimitiveType.UCHAR, PrimitiveType.ULONG, PrimitiveType.UCHAR, PrimitiveType.ULONG));
+            this.analyzer = analyzer;
+        }
+
+        @Override
+        public long execute(Context ctx, Object... args) {
+            boolean be = (long) args[0] != 0;
+            long addr = (long) args[1];
+            byte len = (byte) (long) args[2];
+            long value = (long) args[3];
+            MemoryEvent evt = new MemoryEvent(be, 0, addr, len, false, value);
             analyzer.createEvent(evt);
             return 0;
         }
@@ -326,12 +500,17 @@ public class Intrinsics {
         }
     }
 
-    public static void register(SymbolTable symtab, CustomArchitecture arch) {
+    public static void register(SymbolTable symtab) {
         symtab.define(new Alloca());
         symtab.define(new Strlen());
         symtab.define(new Strcmp());
         symtab.define(new Strcpy());
         symtab.define(new Strcat());
+        symtab.define(new Sprintf());
+    }
+
+    public static void register(SymbolTable symtab, CustomArchitecture arch) {
+        register(symtab);
         symtab.define(new SetName(arch));
         symtab.define(new SetDescription(arch));
         symtab.define(new SetStepType(arch));
@@ -344,8 +523,15 @@ public class Intrinsics {
     public static List<Intrinsic> getAnalyzerIntrinsics(CustomAnalyzer analyzer) {
         List<Intrinsic> result = new ArrayList<>();
         result.add(new CreateStep(analyzer));
+        result.add(new CreateMmap(analyzer));
+        result.add(new CreateRead(analyzer));
+        result.add(new CreateWrite(analyzer));
         result.add(new SetContext(analyzer));
         result.add(new GetContext(analyzer));
+        result.add(new GetI8(analyzer));
+        result.add(new GetI16(analyzer));
+        result.add(new GetI32(analyzer));
+        result.add(new GetI64(analyzer));
         return result;
     }
 }

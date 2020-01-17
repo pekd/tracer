@@ -56,6 +56,11 @@ public abstract class Architecture {
         architectures.put(arch.getId(), arch);
     }
 
+    public static void unregister(Architecture arch) {
+        log.info("Removing architecture support for " + ElfStrings.getElfMachine(arch.getId()) + " [" + arch.getName() + "]");
+        architectures.remove(arch.getId(), arch);
+    }
+
     public static Architecture getArchitecture(short arch) {
         return architectures.get(arch);
     }

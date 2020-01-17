@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.Analysis;
+import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.ProgressListener;
@@ -48,7 +49,7 @@ public class Server {
             long size = file.length();
             System.out.print("Loading " + file + " [" + size + " bytes] ");
             System.out.flush();
-            TraceReader reader = new TraceReader(in);
+            TraceReader reader = new TraceFileReader(in);
             Analysis analysis = new Analysis(reader.getArchitecture());
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, new ProgressInfo());

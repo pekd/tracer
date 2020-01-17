@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.DerivedStepEvent;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
-import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.script.rt.Pointer;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
@@ -13,16 +13,18 @@ import org.graalvm.vm.trcview.script.type.Struct;
 import org.graalvm.vm.trcview.script.type.Struct.Member;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class CustomStepEvent extends StepEvent {
+public class CustomStepEvent extends DerivedStepEvent {
     private final CustomCpuState state;
     private final CustomAnalyzer analyzer;
     private final Pointer data;
+    private final long parentStep;
 
-    public CustomStepEvent(CustomAnalyzer analyzer, short arch, int tid, Pointer data, CustomCpuState state) {
+    public CustomStepEvent(CustomAnalyzer analyzer, short arch, int tid, Pointer data, CustomCpuState state, long parentStep) {
         super(arch, tid);
         this.data = data;
         this.state = state;
         this.analyzer = analyzer;
+        this.parentStep = parentStep;
     }
 
     @Override
@@ -103,5 +105,10 @@ public class CustomStepEvent extends StepEvent {
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public long getParentStep() {
+        return parentStep;
     }
 }

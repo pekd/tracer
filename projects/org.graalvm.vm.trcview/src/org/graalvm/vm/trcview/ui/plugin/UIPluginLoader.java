@@ -6,6 +6,8 @@ import java.util.ServiceLoader;
 
 import javax.swing.JMenu;
 
+import org.graalvm.vm.trcview.analysis.Analyzer;
+import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.MainWindow;
 import org.graalvm.vm.trcview.ui.TraceView;
@@ -26,10 +28,18 @@ public class UIPluginLoader {
         }
     }
 
-    public void setTraceAnalyzer(TraceAnalyzer analyzer) {
+    public void traceLoaded(TraceAnalyzer analyzer) {
         for (UIPlugin plugin : plugins) {
-            plugin.setTraceAnalyzer(analyzer);
+            plugin.traceLoaded(analyzer);
         }
+    }
+
+    public List<Analyzer> getAnalyzers(Architecture arch) {
+        List<Analyzer> analyzers = new ArrayList<>();
+        for (UIPlugin plugin : plugins) {
+            analyzers.addAll(plugin.getAnalyzers(arch));
+        }
+        return analyzers;
     }
 
     public int count() {

@@ -212,6 +212,19 @@ public class MemoryTrace {
         return page.getByte(addr, instructionCount);
     }
 
+    public long getShort(long addr, long instructionCount) throws MemoryNotMappedException {
+        return (short) (Byte.toUnsignedInt(getByte(addr, instructionCount)) | (Byte.toUnsignedInt(getByte(addr + 1, instructionCount)) << 8));
+    }
+
+    public int getInt(long addr, long instructionCount) throws MemoryNotMappedException {
+        long value = 0;
+        for (int i = 0; i < 4; i++) {
+            value >>>= 8;
+            value |= Byte.toUnsignedLong(getByte(addr + i, instructionCount)) << 24;
+        }
+        return (int) value;
+    }
+
     public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
@@ -221,16 +234,8 @@ public class MemoryTrace {
             // write across page boundary
             long value = 0;
             for (int i = 0; i < 8; i++) {
-                long a = addr + i;
-                value <<= 8;
-                if (a < page.getAddress() + 4096) {
-                    long oldaddr = page.getAddress();
-                    page = pages.get(page.getAddress() + 4096);
-                    if (page == null) {
-                        throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x", oldaddr + 4096));
-                    }
-                }
-                value |= page.getByte(addr, instructionCount);
+                value >>>= 8;
+                value |= Byte.toUnsignedLong(getByte(addr + i, instructionCount)) << 56;
             }
             return value;
         } else {

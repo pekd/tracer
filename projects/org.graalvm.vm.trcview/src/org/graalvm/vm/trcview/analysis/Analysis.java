@@ -42,6 +42,7 @@ package org.graalvm.vm.trcview.analysis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -91,7 +92,14 @@ public class Analysis {
 
     private boolean leightweight = false;
 
+    private List<Analyzer> analyzers;
+
     public Analysis(Architecture arch) {
+        this(arch, Collections.emptyList());
+    }
+
+    public Analysis(Architecture arch, List<Analyzer> analyzers) {
+        this.analyzers = analyzers;
         symbols = new SymbolTable();
         symbolTable = new TreeMap<>();
         mappedFiles = new TreeMap<>();
@@ -106,6 +114,9 @@ public class Analysis {
         lastStep = null;
         steps = 0;
         idcnt = 0;
+        for (Analyzer analyzer : analyzers) {
+            analyzer.start(memory);
+        }
     }
 
     private void add(Node node) {
@@ -120,6 +131,10 @@ public class Analysis {
 
     public void process(Event event, Node node) {
         add(node);
+
+        for (Analyzer analyzer : analyzers) {
+            analyzer.process(event, node);
+        }
 
         if (event instanceof StepEvent) {
             steps++;
@@ -265,6 +280,10 @@ public class Analysis {
 
     public void finish(BlockNode root) {
         add(root);
+
+        for (Analyzer analyzer : analyzers) {
+            analyzer.finish();
+        }
 
         StepEvent first = root.getFirstStep();
         if (first == null) {
