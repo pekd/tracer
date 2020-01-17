@@ -33,7 +33,9 @@ import static org.graalvm.vm.trcview.script.TokenType.rem;
 import static org.graalvm.vm.trcview.script.TokenType.return_;
 import static org.graalvm.vm.trcview.script.TokenType.rpar;
 import static org.graalvm.vm.trcview.script.TokenType.semicolon;
+import static org.graalvm.vm.trcview.script.TokenType.shl;
 import static org.graalvm.vm.trcview.script.TokenType.short_;
+import static org.graalvm.vm.trcview.script.TokenType.shr;
 import static org.graalvm.vm.trcview.script.TokenType.signed_;
 import static org.graalvm.vm.trcview.script.TokenType.slash;
 import static org.graalvm.vm.trcview.script.TokenType.stringConst;
@@ -92,6 +94,8 @@ import org.graalvm.vm.trcview.script.ast.expr.NotNode;
 import org.graalvm.vm.trcview.script.ast.expr.OrNode;
 import org.graalvm.vm.trcview.script.ast.expr.PointerValueLoad;
 import org.graalvm.vm.trcview.script.ast.expr.RemNode;
+import org.graalvm.vm.trcview.script.ast.expr.ShlNode;
+import org.graalvm.vm.trcview.script.ast.expr.ShrNode;
 import org.graalvm.vm.trcview.script.ast.expr.SubNode;
 import org.graalvm.vm.trcview.script.ast.expr.VariableNode;
 import org.graalvm.vm.trcview.script.type.ArrayType;
@@ -835,15 +839,28 @@ public class Parser {
     }
 
     private Expression sum() {
-        Expression result = factor();
+        Expression result = shift();
         while (sym == times || sym == slash || sym == rem) {
             scan();
             if (t.type == times) {
-                result = new MulNode(result, factor());
+                result = new MulNode(result, shift());
             } else if (t.type == slash) {
-                result = new DivNode(result, factor());
+                result = new DivNode(result, shift());
             } else {
-                result = new RemNode(result, factor());
+                result = new RemNode(result, shift());
+            }
+        }
+        return result;
+    }
+
+    private Expression shift() {
+        Expression result = factor();
+        while (sym == shl || sym == shr) {
+            scan();
+            if (t.type == shl) {
+                result = new ShlNode(result, factor());
+            } else {
+                result = new ShrNode(result, factor());
             }
         }
         return result;
@@ -866,7 +883,16 @@ public class Parser {
             return new ConstantNode(t.val);
         } else if (sym == stringConst) {
             scan();
-            return new ConstantStringNode(t.str);
+            String s = t.str;
+            if (sym == stringConst) {
+                StringBuilder buf = new StringBuilder(s);
+                while (sym == stringConst) {
+                    scan();
+                    buf.append(t.str);
+                }
+                s = buf.toString();
+            }
+            return new ConstantStringNode(s);
         } else if (sym == ident) {
             scan();
             String name = t.str;

@@ -40,11 +40,23 @@ public class ArrayRead extends Expression {
         ptr = ptr.add(type, (int) (type.size() * idx));
         switch (type.getBasicType()) {
             case CHAR:
-                return ptr.getI8();
+                if (type.isUnsigned()) {
+                    return Byte.toUnsignedLong(ptr.getI8());
+                } else {
+                    return ptr.getI8();
+                }
             case SHORT:
-                return ptr.getI16();
+                if (type.isUnsigned()) {
+                    return Short.toUnsignedLong(ptr.getI16());
+                } else {
+                    return ptr.getI16();
+                }
             case INT:
-                return ptr.getI32();
+                if (type.isUnsigned()) {
+                    return Integer.toUnsignedLong(ptr.getI32());
+                } else {
+                    return ptr.getI32();
+                }
             case LONG:
                 return ptr.getI64();
             default:

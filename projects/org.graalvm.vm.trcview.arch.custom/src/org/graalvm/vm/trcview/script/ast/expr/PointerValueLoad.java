@@ -20,11 +20,23 @@ public class PointerValueLoad extends Expression {
         Pointer ptr = op.execute(ctx);
         switch (type.getBasicType()) {
             case CHAR:
-                return ptr.getI8();
+                if (type.isUnsigned()) {
+                    return Byte.toUnsignedLong(ptr.getI8());
+                } else {
+                    return ptr.getI8();
+                }
             case SHORT:
-                return ptr.getI16();
+                if (type.isUnsigned()) {
+                    return Short.toUnsignedLong(ptr.getI16());
+                } else {
+                    return ptr.getI16();
+                }
             case INT:
-                return ptr.getI32();
+                if (type.isUnsigned()) {
+                    return Integer.toUnsignedLong(ptr.getI32());
+                } else {
+                    return ptr.getI32();
+                }
             case LONG:
                 return ptr.getI64();
             default:

@@ -18,9 +18,9 @@ public class CallStatement extends Statement {
     @Override
     public long execute(Context ctx) {
         Object[] values = new Object[args.size()];
+        List<Type> argtypes = func.getArgumentTypes();
         for (int i = 0; i < values.length; i++) {
-            Type type = func.getArgumentTypes().get(i);
-            if (type instanceof PointerType) {
+            if (i < argtypes.size() && argtypes.get(i) instanceof PointerType) {
                 values[i] = args.get(i).executePointer(ctx);
             } else {
                 values[i] = args.get(i).execute(ctx);

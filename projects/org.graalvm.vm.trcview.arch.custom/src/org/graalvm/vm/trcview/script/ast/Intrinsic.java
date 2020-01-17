@@ -12,6 +12,11 @@ public abstract class Intrinsic extends Function {
         super(name, returnType, argTypes, createArgs(argTypes), Collections.emptyList());
     }
 
+    // varargs
+    public Intrinsic(String name, Type returnType, List<Type> argTypes, boolean vararg) {
+        super(name, returnType, argTypes, createArgs(argTypes), vararg);
+    }
+
     private static List<Variable> createArgs(List<Type> argTypes) {
         List<Variable> vars = new ArrayList<>();
         int i = 1;

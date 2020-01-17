@@ -15,6 +15,7 @@ public class Function {
     private List<Statement> body;
     private final Type returnType;
     private final List<Type> argTypes;
+    private final boolean vararg;
 
     public Function(String name, Type returnType, List<Type> argTypes, List<Variable> args, List<Statement> body) {
         this.name = name;
@@ -22,14 +23,21 @@ public class Function {
         this.argTypes = argTypes;
         this.args = args;
         this.body = body;
+        this.vararg = false;
     }
 
     public Function(String name, Type returnType, List<Type> argTypes, List<Variable> args) {
+        this(name, returnType, argTypes, args, false);
+    }
+
+    // varargs
+    protected Function(String name, Type returnType, List<Type> argTypes, List<Variable> args, boolean vararg) {
         this.name = name;
         this.returnType = returnType;
         this.argTypes = argTypes;
         this.args = args;
         this.body = Collections.emptyList();
+        this.vararg = vararg;
     }
 
     public String getName() {
@@ -49,7 +57,7 @@ public class Function {
     }
 
     public void setArguments(List<Variable> args) {
-        if (args.size() != this.args.size()) {
+        if (args.size() != this.args.size() && !(vararg && args.size() >= this.args.size())) {
             throw new IllegalArgumentException(name + ": invalid number of arguments");
         }
         // TODO: check types
