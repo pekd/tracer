@@ -103,6 +103,7 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.util.ui.MessageBox;
 
@@ -586,7 +587,7 @@ public class MainWindow extends JFrame {
         }
         Node n = trc.getInstruction(insn);
         if (n != null) {
-            log.info("Jumping to instruction " + insn);
+            log.log(Levels.DEBUG, "Jumping to instruction " + insn);
             view.jump(n);
             return true;
         } else {
