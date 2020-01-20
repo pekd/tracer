@@ -230,6 +230,7 @@ public class TraceView extends JPanel {
         symbols.setTraceAnalyzer(trc);
 
         trc.addSymbolRenameListener((sym) -> insns.repaint());
+        trc.addCommentChangeListener(() -> insns.repaint());
 
         showRoot(trc.getRoot());
     }

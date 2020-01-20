@@ -91,4 +91,14 @@ public interface TraceAnalyzer {
     String getFilename(long pc);
 
     Architecture getArchitecture();
+
+    void addCommentChangeListener(ChangeListener l);
+
+    void setCommentForPC(long pc, String comment);
+
+    String getCommentForPC(long pc);
+
+    void setCommentForInsn(long insn, String comment);
+
+    String getCommentForInsn(long insn);
 }

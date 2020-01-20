@@ -250,7 +250,7 @@ public class InstructionView extends JPanel {
             fireCallEvent((BlockNode) node);
         } else {
             StepEvent step = (StepEvent) ((EventNode) node).getEvent();
-            if (step.getMnemonic() != null && step.getMnemonic().equals("ret")) {
+            if (step.getType() == InstructionType.RET || step.getType() == InstructionType.RTI) {
                 fireRetEvent((EventNode) node);
             }
         }
@@ -271,12 +271,25 @@ public class InstructionView extends JPanel {
         buf.append(fmt.formatAddress(loc.getPC()));
         buf.append(":  ");
         buf.append(loc.getAsm(tabSize));
-        String mnemonic = loc.getMnemonic();
-        if (mnemonic != null && mnemonic.equals("syscall")) {
+        if (step.getType() == InstructionType.SYSCALL) {
             CpuState ns = next == null ? null : next.getState();
             String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
             if (decoded != null) {
                 comment(buf, loc.getAsm(tabSize), decoded);
+            }
+        } else if (step.getType() != InstructionType.CALL) {
+            String comment1 = trc.getCommentForPC(step.getPC());
+            String comment2 = trc.getCommentForInsn(step.getStep());
+            String comment;
+            if (comment1 == null) {
+                comment = comment2;
+            } else if (comment2 == null) {
+                comment = comment1;
+            } else {
+                comment = comment1 + "; " + comment2;
+            }
+            if (comment != null) {
+                comment(buf, loc.getAsm(tabSize), comment);
             }
         }
         return buf.toString();

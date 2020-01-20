@@ -442,4 +442,32 @@ public class Client implements TraceAnalyzer, Closeable {
     public Architecture getArchitecture() {
         return arch;
     }
+
+    // TODO: implement the annotation related features
+    @Override
+    public void addCommentChangeListener(ChangeListener l) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setCommentForPC(long pc, String comment) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public String getCommentForPC(long pc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setCommentForInsn(long insn, String comment) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public String getCommentForInsn(long insn) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

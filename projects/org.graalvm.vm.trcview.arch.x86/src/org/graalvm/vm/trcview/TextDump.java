@@ -441,5 +441,27 @@ public class TextDump {
         public Architecture getArchitecture() {
             return arch;
         }
+
+        @Override
+        public void addCommentChangeListener(ChangeListener l) {
+        }
+
+        @Override
+        public void setCommentForPC(long pc, String comment) {
+        }
+
+        @Override
+        public String getCommentForPC(long pc) {
+            return null;
+        }
+
+        @Override
+        public void setCommentForInsn(long insn, String comment) {
+        }
+
+        @Override
+        public String getCommentForInsn(long insn) {
+            return null;
+        }
     }
 }

@@ -21,6 +21,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.info.Comments;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
@@ -37,6 +38,8 @@ public class Local implements TraceAnalyzer {
     private MappedFiles files;
     private long steps;
     private List<ChangeListener> symbolChangeListeners;
+    private List<ChangeListener> commentChangeListeners;
+    private Comments comments;
 
     public Local(Architecture arch, BlockNode root, Analysis analysis) {
         this.arch = arch;
@@ -47,6 +50,8 @@ public class Local implements TraceAnalyzer {
         files = analysis.getMappedFiles();
         steps = analysis.getStepCount();
         symbolChangeListeners = new ArrayList<>();
+        commentChangeListeners = new ArrayList<>();
+        comments = new Comments();
     }
 
     @Override
@@ -237,5 +242,42 @@ public class Local implements TraceAnalyzer {
     @Override
     public Architecture getArchitecture() {
         return arch;
+    }
+
+    @Override
+    public void addCommentChangeListener(ChangeListener l) {
+        commentChangeListeners.add(l);
+    }
+
+    protected void fireCommentChanged() {
+        for (ChangeListener l : commentChangeListeners) {
+            try {
+                l.valueChanged();
+            } catch (Throwable t) {
+                log.warning("Error while executing listener: " + l);
+            }
+        }
+    }
+
+    @Override
+    public void setCommentForPC(long pc, String comment) {
+        comments.setCommentForPC(pc, comment);
+        fireCommentChanged();
+    }
+
+    @Override
+    public String getCommentForPC(long pc) {
+        return comments.getCommentForPC(pc);
+    }
+
+    @Override
+    public void setCommentForInsn(long insn, String comment) {
+        comments.setCommentForInsn(insn, comment);
+        fireCommentChanged();
+    }
+
+    @Override
+    public String getCommentForInsn(long insn) {
+        return comments.getCommentForInsn(insn);
     }
 }

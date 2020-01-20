@@ -132,6 +132,8 @@ public class MainWindow extends JFrame {
     private JMenuItem refresh;
     private JMenuItem renameSymbol;
     private JMenuItem setFunctionType;
+    private JMenuItem setCommentInsn;
+    private JMenuItem setCommentPC;
     private JMenuItem gotoPC;
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
@@ -429,6 +431,56 @@ public class MainWindow extends JFrame {
         });
         setFunctionType.setEnabled(false);
         editMenu.add(setFunctionType);
+        setCommentInsn = new JMenuItem("Set comment (instruction)...");
+        setCommentInsn.setMnemonic('i');
+        setCommentInsn.setAccelerator(KeyStroke.getKeyStroke('/'));
+        setCommentInsn.addActionListener(e -> {
+            StepEvent insn = view.getSelectedInstruction();
+            if (insn == null) {
+                return;
+            }
+            String comment = trc.getCommentForInsn(insn.getStep());
+            if (comment != null) {
+                String input = JOptionPane.showInputDialog("Enter comment:", comment);
+                if (input != null && input.trim().length() > 0) {
+                    trc.setCommentForInsn(insn.getStep(), input.trim());
+                } else if (input != null) {
+                    trc.setCommentForInsn(insn.getStep(), null);
+                }
+            } else {
+                String input = JOptionPane.showInputDialog("Enter comment:");
+                if (input != null && input.trim().length() > 0) {
+                    trc.setCommentForInsn(insn.getStep(), input.trim());
+                }
+            }
+        });
+        setCommentInsn.setEnabled(false);
+        editMenu.add(setCommentInsn);
+        setCommentPC = new JMenuItem("Set comment (PC)...");
+        setCommentPC.setMnemonic('p');
+        setCommentPC.setAccelerator(KeyStroke.getKeyStroke(';'));
+        setCommentPC.addActionListener(e -> {
+            StepEvent insn = view.getSelectedInstruction();
+            if (insn == null) {
+                return;
+            }
+            String comment = trc.getCommentForPC(insn.getPC());
+            if (comment != null) {
+                String input = JOptionPane.showInputDialog("Enter comment:", comment);
+                if (input != null && input.trim().length() > 0) {
+                    trc.setCommentForPC(insn.getPC(), input.trim());
+                } else if (input != null) {
+                    trc.setCommentForPC(insn.getPC(), null);
+                }
+            } else {
+                String input = JOptionPane.showInputDialog("Enter comment:");
+                if (input != null && input.trim().length() > 0) {
+                    trc.setCommentForPC(insn.getPC(), input.trim());
+                }
+            }
+        });
+        setCommentPC.setEnabled(false);
+        editMenu.add(setCommentPC);
         menu.add(editMenu);
 
         JMenu viewMenu = new JMenu("View");
@@ -653,6 +705,8 @@ public class MainWindow extends JFrame {
                 refresh.setEnabled(false);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
+                setCommentInsn.setEnabled(true);
+                setCommentPC.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
@@ -956,6 +1010,8 @@ public class MainWindow extends JFrame {
                 refresh.setEnabled(true);
                 renameSymbol.setEnabled(true);
                 setFunctionType.setEnabled(true);
+                setCommentInsn.setEnabled(true);
+                setCommentPC.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
