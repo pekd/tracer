@@ -97,7 +97,7 @@ public class CustomUI extends UIPlugin {
 
     @Override
     public List<Analyzer> getAnalyzers(Architecture arch) {
-        if (arch == analyzer.getArchitecture()) {
+        if (analyzer == null || arch == analyzer.getArchitecture()) {
             return Collections.emptyList();
         }
 
