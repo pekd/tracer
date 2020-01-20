@@ -14,6 +14,6 @@ public class LogicAndNode extends Expression {
 
     @Override
     public long execute(Context ctx) {
-        return (left.execute(ctx) != 0) || (right.execute(ctx) != 0) ? 1 : 0;
+        return (left.execute(ctx) != 0) && (right.execute(ctx) != 0) ? 1 : 0;
     }
 }

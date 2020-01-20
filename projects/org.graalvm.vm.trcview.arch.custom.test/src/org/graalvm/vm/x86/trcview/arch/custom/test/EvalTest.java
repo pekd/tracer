@@ -309,4 +309,86 @@ public class EvalTest extends TestSupport {
         assertEquals(0x56, buf[2]);
         assertEquals(0x78, buf[3]);
     }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void div1() {
+        String code = "void main(char* out) {\n" +
+                        "    uint32_t value = 24;\n" +
+                        "    uint32_t val = value / 8;\n" +
+                        "    sprintf(out, \"%d\", val);\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        byte[] buf = new byte[4];
+        Pointer ptr = new Pointer(PointerType.CHARPTR, 0, new Record(PrimitiveType.CHAR, buf));
+        main.execute(ctx, ptr);
+        assertEquals("3", ptr.cstr());
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void logicor1() {
+        String code = "int main() {\n" +
+                        "    uint32_t val1 = 0;\n" +
+                        "    uint32_t val2 = 0;\n" +
+                        "    return val1 || val2;\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        long result = main.execute(ctx);
+        assertEquals(0, result);
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void logicor2() {
+        String code = "int main() {\n" +
+                        "    uint32_t val1 = 1;\n" +
+                        "    uint32_t val2 = 0;\n" +
+                        "    return val1 || val2;\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        long result = main.execute(ctx);
+        assertEquals(1, result);
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void logicor3() {
+        String code = "int main() {\n" +
+                        "    uint32_t val1 = 42;\n" +
+                        "    uint32_t val2 = 0;\n" +
+                        "    return val1 || val2;\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        long result = main.execute(ctx);
+        assertEquals(1, result);
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void logicor4() {
+        String code = "int main() {\n" +
+                        "    uint32_t val1 = 42;\n" +
+                        "    uint32_t val2 = 7;\n" +
+                        "    return val1 || val2;\n" +
+                        "}\n";
+        Parser p = parse(code);
+
+        Context ctx = new Context();
+        Function main = p.symtab.getFunction("main");
+        assertNotNull(main);
+        long result = main.execute(ctx);
+        assertEquals(1, result);
+    }
 }
