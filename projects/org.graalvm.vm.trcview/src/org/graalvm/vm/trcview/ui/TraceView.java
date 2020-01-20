@@ -43,8 +43,10 @@ package org.graalvm.vm.trcview.ui;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -61,9 +63,14 @@ import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.event.CallListener;
+import org.graalvm.vm.trcview.ui.event.ChangeListener;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 
 @SuppressWarnings("serial")
 public class TraceView extends JPanel {
+    private static final Logger log = Trace.create(TraceView.class);
+
     private SymbolView symbols;
     private CallStackView stack;
     private StateView state;
@@ -75,8 +82,12 @@ public class TraceView extends JPanel {
 
     private TraceAnalyzer trc;
 
+    private final List<ChangeListener> changeListeners;
+
     public TraceView(Consumer<String> status, Consumer<Long> position) {
         super(new BorderLayout());
+        changeListeners = new ArrayList<>();
+
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
         JSplitPane rightBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -132,6 +143,7 @@ public class TraceView extends JPanel {
                     }
                 }
             }
+            fireChangeEvent();
         });
 
         insns.addCallListener(new CallListener() {
@@ -254,5 +266,23 @@ public class TraceView extends JPanel {
 
     public void setWatches(List<Watch> watches) {
         this.watches.setWatches(watches);
+    }
+
+    public void addChangeListener(ChangeListener l) {
+        changeListeners.add(l);
+    }
+
+    public void removeChangeListener(ChangeListener l) {
+        changeListeners.remove(l);
+    }
+
+    protected void fireChangeEvent() {
+        for (ChangeListener l : changeListeners) {
+            try {
+                l.valueChanged();
+            } catch (Throwable t) {
+                log.log(Levels.WARNING, "Failed to run change listener: " + t, t);
+            }
+        }
     }
 }

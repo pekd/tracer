@@ -32,8 +32,11 @@ public class CustomUI extends UIPlugin {
     private CustomAnalyzer analyzer;
     private boolean transform;
 
+    private MainWindow master;
+
     @Override
     public void init(MainWindow main, JMenu pluginMenu, TraceView view) {
+        master = main;
         transform = false;
 
         FileDialog load = new FileDialog(main, "Load...", FileDialog.LOAD);
@@ -119,7 +122,7 @@ public class CustomUI extends UIPlugin {
             return;
         }
 
-        MainWindow window = new MainWindow(false);
+        MainWindow window = new MainWindow(master);
         window.setVisible(true);
         window.setStatus("Loading...");
         TraceReader reader = new CustomTraceReader(analyzer);

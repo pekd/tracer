@@ -85,6 +85,8 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.io.DerivedStepEvent;
+import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
@@ -92,6 +94,7 @@ import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.TypeParser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.io.BlockNode;
+import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.io.TextSerializer;
 import org.graalvm.vm.trcview.net.Client;
@@ -138,10 +141,10 @@ public class MainWindow extends JFrame {
     private UIPluginLoader pluginLoader;
 
     public MainWindow() {
-        this(true);
+        this(null);
     }
 
-    public MainWindow(boolean master) {
+    public MainWindow(MainWindow master) {
         super(WINDOW_TITLE);
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
@@ -318,7 +321,7 @@ public class MainWindow extends JFrame {
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
         exit.addActionListener(e -> exit());
 
-        if (master) {
+        if (master == null) {
             fileMenu.add(open);
             fileMenu.addSeparator();
             fileMenu.add(loadSession);
@@ -337,6 +340,26 @@ public class MainWindow extends JFrame {
             close.addActionListener(e -> this.dispose());
             close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK));
             fileMenu.add(close);
+
+            // synchronize master view to slave view
+            view.addChangeListener(() -> {
+                Node node = view.getSelectedNode();
+                if (node instanceof EventNode) {
+                    Event event = ((EventNode) node).getEvent();
+                    if (event instanceof DerivedStepEvent) {
+                        DerivedStepEvent step = (DerivedStepEvent) event;
+                        long id = step.getParentStep();
+                        master.jump(id);
+                    }
+                } else if (node instanceof BlockNode) {
+                    StepEvent event = ((BlockNode) node).getHead();
+                    if (event != null && event instanceof DerivedStepEvent) {
+                        DerivedStepEvent step = (DerivedStepEvent) event;
+                        long id = step.getParentStep();
+                        master.jump(id);
+                    }
+                }
+            });
         }
 
         menu.add(fileMenu);
@@ -470,11 +493,7 @@ public class MainWindow extends JFrame {
             if (input != null && input.trim().length() > 0) {
                 try {
                     long insn = Long.parseUnsignedLong(input.trim());
-                    Node n = trc.getInstruction(insn);
-                    if (n != null) {
-                        log.info("Jumping to instruction " + insn);
-                        view.jump(n);
-                    } else {
+                    if (!jump(insn)) {
                         JOptionPane.showMessageDialog(this, "Error: cannot find instruction " + insn, "Goto...", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (NumberFormatException ex) {
@@ -558,6 +577,21 @@ public class MainWindow extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 600);
+    }
+
+    public boolean jump(long insn) {
+        StepEvent selected = view.getSelectedInstruction();
+        if (selected != null && selected.getStep() == insn) {
+            return true;
+        }
+        Node n = trc.getInstruction(insn);
+        if (n != null) {
+            log.info("Jumping to instruction " + insn);
+            view.jump(n);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void setStatus(String text) {
