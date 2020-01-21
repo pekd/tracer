@@ -280,4 +280,14 @@ public class Local implements TraceAnalyzer {
     public String getCommentForInsn(long insn) {
         return comments.getCommentForInsn(insn);
     }
+
+    @Override
+    public Map<Long, String> getCommentsForInsns() {
+        return comments.getCommentsForInsns();
+    }
+
+    @Override
+    public Map<Long, String> getCommentsForPCs() {
+        return comments.getCommentsForPCs();
+    }
 }

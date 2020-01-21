@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.info;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,5 +35,13 @@ public class Comments {
         } else {
             commentsPC.put(pc, comment);
         }
+    }
+
+    public Map<Long, String> getCommentsForInsns() {
+        return Collections.unmodifiableMap(commentsInsn);
+    }
+
+    public Map<Long, String> getCommentsForPCs() {
+        return Collections.unmodifiableMap(commentsPC);
     }
 }

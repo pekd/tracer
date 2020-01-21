@@ -470,4 +470,16 @@ public class Client implements TraceAnalyzer, Closeable {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public Map<Long, String> getCommentsForInsns() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<Long, String> getCommentsForPCs() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

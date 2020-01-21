@@ -101,4 +101,8 @@ public interface TraceAnalyzer {
     void setCommentForInsn(long insn, String comment);
 
     String getCommentForInsn(long insn);
+
+    Map<Long, String> getCommentsForInsns();
+
+    Map<Long, String> getCommentsForPCs();
 }

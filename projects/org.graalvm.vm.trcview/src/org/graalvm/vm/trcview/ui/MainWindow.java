@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -852,6 +853,40 @@ public class MainWindow extends JFrame {
                             ok = false;
                             continue;
                         }
+                    } else if (everything && address.startsWith("COMMENTINSN:")) {
+                        // comment for insn#
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid comment");
+                            setStatus("Syntax error in line " + lineno + ": invalid comment");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            insn = Long.parseUnsignedLong(address.substring(12), 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid instruction");
+                            setStatus("Syntax error in line " + lineno + ": invalid instruction");
+                            ok = false;
+                            continue;
+                        }
+                        trc.setCommentForInsn(insn, data[0]);
+                    } else if (everything && address.startsWith("COMMENTPC:")) {
+                        // comment for insn#
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid comment");
+                            setStatus("Syntax error in line " + lineno + ": invalid comment");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            insn = Long.parseUnsignedLong(address.substring(10), 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid instruction");
+                            setStatus("Syntax error in line " + lineno + ": invalid instruction");
+                            ok = false;
+                            continue;
+                        }
+                        trc.setCommentForPC(insn, data[0]);
                     } else {
                         // symbol
                         long pc;
@@ -979,6 +1014,14 @@ public class MainWindow extends JFrame {
                 List<Watch> watches = view.getWatches();
                 for (Watch watch : watches) {
                     out.printf("WATCH=%s\n", TextSerializer.encode(watch.name, watch.type, watch.str));
+                }
+                Map<Long, String> commentsInsn = trc.getCommentsForInsns();
+                for (Entry<Long, String> comment : commentsInsn.entrySet()) {
+                    out.printf("COMMENTINSN:%x=%s\n", comment.getKey(), TextSerializer.encode(comment.getValue()));
+                }
+                Map<Long, String> commentsPC = trc.getCommentsForPCs();
+                for (Entry<Long, String> comment : commentsPC.entrySet()) {
+                    out.printf("COMMENTPC:%x=%s\n", comment.getKey(), TextSerializer.encode(comment.getValue()));
                 }
                 StepEvent step = view.getSelectedInstruction();
                 if (step != null) {

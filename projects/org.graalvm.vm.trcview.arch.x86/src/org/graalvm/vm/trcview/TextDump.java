@@ -463,5 +463,15 @@ public class TextDump {
         public String getCommentForInsn(long insn) {
             return null;
         }
+
+        @Override
+        public Map<Long, String> getCommentsForInsns() {
+            return null;
+        }
+
+        @Override
+        public Map<Long, String> getCommentsForPCs() {
+            return null;
+        }
     }
 }
