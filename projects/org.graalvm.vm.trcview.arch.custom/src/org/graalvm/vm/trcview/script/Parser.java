@@ -45,6 +45,7 @@ import static org.graalvm.vm.trcview.script.TokenType.true_;
 import static org.graalvm.vm.trcview.script.TokenType.typedef_;
 import static org.graalvm.vm.trcview.script.TokenType.unsigned_;
 import static org.graalvm.vm.trcview.script.TokenType.void_;
+import static org.graalvm.vm.trcview.script.TokenType.xor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,6 +99,7 @@ import org.graalvm.vm.trcview.script.ast.expr.ShlNode;
 import org.graalvm.vm.trcview.script.ast.expr.ShrNode;
 import org.graalvm.vm.trcview.script.ast.expr.SubNode;
 import org.graalvm.vm.trcview.script.ast.expr.VariableNode;
+import org.graalvm.vm.trcview.script.ast.expr.XorNode;
 import org.graalvm.vm.trcview.script.type.ArrayType;
 import org.graalvm.vm.trcview.script.type.BasicType;
 import org.graalvm.vm.trcview.script.type.PointerType;
@@ -817,6 +819,15 @@ public class Parser {
     }
 
     private Expression or() {
+        Expression result = xor();
+        while (sym == xor) {
+            scan();
+            result = new XorNode(result, xor());
+        }
+        return result;
+    }
+
+    private Expression xor() {
         Expression result = and();
         while (sym == bitand) {
             scan();
