@@ -844,6 +844,7 @@ public class MainWindow extends JFrame {
         boolean ok = true;
         List<Watch> watches = new ArrayList<>();
         long insn = -1;
+        String memory = null;
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -882,8 +883,17 @@ public class MainWindow extends JFrame {
                             continue;
                         }
                         watches.add(new Watch(name, format, str, expr));
+                    } else if (everything && address.equals("MEMORY")) {
+                        // memory expression
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid memory address");
+                            setStatus("Syntax error in line " + lineno + ": invalid memory address");
+                            ok = false;
+                            continue;
+                        }
+                        memory = data[0];
                     } else if (everything && address.equals("INSN")) {
-                        // watch point
+                        // selected instruction
                         if (data.length != 1) {
                             log.info("Syntax error in line " + lineno + ": invalid location");
                             setStatus("Syntax error in line " + lineno + ": invalid location");
@@ -1019,7 +1029,13 @@ public class MainWindow extends JFrame {
             if (!everything) {
                 filetype = "Symbol file";
             } else {
-                SwingUtilities.invokeLater(() -> view.setWatches(watches));
+                final String memexpr = memory;
+                SwingUtilities.invokeLater(() -> {
+                    view.setWatches(watches);
+                    if (memexpr != null) {
+                        view.setMemoryExpression(memexpr);
+                    }
+                });
             }
             log.info(filetype + " " + file + " loaded successfully");
             if (ok) {
@@ -1099,6 +1115,8 @@ public class MainWindow extends JFrame {
                 for (Entry<Long, String> expr : expressions.entrySet()) {
                     out.printf("EXPR:%x=%s\n", expr.getKey(), TextSerializer.encode(expr.getValue()));
                 }
+                String memexpr = view.getMemoryExpression();
+                out.printf("MEMORY=%s\n", TextSerializer.encode(memexpr));
                 StepEvent step = view.getSelectedInstruction();
                 if (step != null) {
                     out.printf("INSN=%d\n", step.getStep());

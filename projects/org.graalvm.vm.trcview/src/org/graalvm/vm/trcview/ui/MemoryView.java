@@ -136,6 +136,26 @@ public class MemoryView extends JPanel {
         add(BorderLayout.SOUTH, gotoButtons);
     }
 
+    public String getExpression() {
+        return addrinput.getText().trim();
+    }
+
+    public void setExpression(String expression) {
+        addrinput.setText(expression.trim());
+        Parser parser = new Parser(expression.trim());
+        try {
+            expr = parser.parse();
+            addrinput.setForeground(Color.BLACK);
+            status.accept("Expression parsed successfully");
+            if (eval() != address) {
+                update();
+            }
+        } catch (ParseException ex) {
+            addrinput.setForeground(Color.RED);
+            status.accept("Parse error: " + ex.getMessage());
+        }
+    }
+
     private static String html(char c) {
         switch (c) {
             case '&':

@@ -261,6 +261,14 @@ public class TraceView extends JPanel {
         }
     }
 
+    public String getMemoryExpression() {
+        return mem.getExpression();
+    }
+
+    public void setMemoryExpression(String expr) {
+        mem.setExpression(expr);
+    }
+
     public List<Watch> getWatches() {
         return watches.getWatches();
     }
