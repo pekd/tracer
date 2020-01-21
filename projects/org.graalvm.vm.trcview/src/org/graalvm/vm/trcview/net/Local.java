@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.net;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -21,7 +22,11 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
+import org.graalvm.vm.trcview.info.Expressions;
+import org.graalvm.vm.trcview.info.FormattedExpression;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
@@ -40,6 +45,7 @@ public class Local implements TraceAnalyzer {
     private List<ChangeListener> symbolChangeListeners;
     private List<ChangeListener> commentChangeListeners;
     private Comments comments;
+    private Expressions expressions;
 
     public Local(Architecture arch, BlockNode root, Analysis analysis) {
         this.arch = arch;
@@ -52,6 +58,7 @@ public class Local implements TraceAnalyzer {
         symbolChangeListeners = new ArrayList<>();
         commentChangeListeners = new ArrayList<>();
         comments = new Comments();
+        expressions = new Expressions();
     }
 
     @Override
@@ -289,5 +296,31 @@ public class Local implements TraceAnalyzer {
     @Override
     public Map<Long, String> getCommentsForPCs() {
         return comments.getCommentsForPCs();
+    }
+
+    @Override
+    public void setExpression(long pc, String expression) throws ParseException {
+        expressions.setExpression(pc, arch.getFormat(), expression);
+        fireCommentChanged();
+    }
+
+    @Override
+    public String getExpression(long pc) {
+        FormattedExpression expr = expressions.getExpression(pc);
+        if (expr == null) {
+            return null;
+        } else {
+            return expr.getExpression();
+        }
+    }
+
+    @Override
+    public String evaluateExpression(CpuState state) throws EvaluationException {
+        return expressions.evaluate(state, this);
+    }
+
+    @Override
+    public Map<Long, String> getExpressions() {
+        return expressions.getExpressions();
     }
 }

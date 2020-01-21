@@ -47,6 +47,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -67,9 +68,11 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64StepEvent;
+import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -471,6 +474,25 @@ public class TextDump {
 
         @Override
         public Map<Long, String> getCommentsForPCs() {
+            return null;
+        }
+
+        @Override
+        public void setExpression(long pc, String expression) throws ParseException {
+        }
+
+        @Override
+        public String getExpression(long pc) {
+            return null;
+        }
+
+        @Override
+        public String evaluateExpression(CpuState state) throws EvaluationException {
+            return null;
+        }
+
+        @Override
+        public Map<Long, String> getExpressions() {
             return null;
         }
     }

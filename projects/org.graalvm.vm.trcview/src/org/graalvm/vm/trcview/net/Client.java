@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,12 +24,14 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.protocol.CommandRecord;
 import org.graalvm.vm.trcview.net.protocol.CommandResponseRecord;
-import org.graalvm.vm.trcview.net.protocol.RpcRecord;
 import org.graalvm.vm.trcview.net.protocol.IO.FakeBlockNode;
+import org.graalvm.vm.trcview.net.protocol.RpcRecord;
 import org.graalvm.vm.trcview.net.protocol.cmd.AddSubroutine;
 import org.graalvm.vm.trcview.net.protocol.cmd.Command;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetBase;
@@ -479,6 +482,29 @@ public class Client implements TraceAnalyzer, Closeable {
 
     @Override
     public Map<Long, String> getCommentsForPCs() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setExpression(long pc, String expression) throws ParseException {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public String getExpression(long pc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String evaluateExpression(CpuState state) throws EvaluationException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<Long, String> getExpressions() {
         // TODO Auto-generated method stub
         return null;
     }

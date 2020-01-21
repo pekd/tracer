@@ -17,19 +17,15 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
-import org.graalvm.vm.memory.util.Stringify;
-import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
+import org.graalvm.vm.trcview.info.Formatter;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
-import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.util.OctFormatter;
 
 @SuppressWarnings("serial")
 public class Watches extends JPanel {
@@ -135,24 +131,6 @@ public class Watches extends JPanel {
         }
     }
 
-    private String bytes(long addr) {
-        if (addr == 0) {
-            return "NULL";
-        }
-        try {
-            StringBuilder buf = new StringBuilder();
-            long ptr = addr;
-            for (int i = 0; i < 32; i++) {
-                int b = Byte.toUnsignedInt(trc.getI8(ptr++, step.getStep()));
-                buf.append(HexFormatter.tohex(b, 2));
-                buf.append(' ');
-            }
-            return buf.toString().trim();
-        } catch (MemoryNotMappedException e) {
-            return "0x" + HexFormatter.tohex(addr);
-        }
-    }
-
     @SuppressWarnings("serial")
     private class Model extends AbstractTableModel {
         @Override
@@ -181,69 +159,7 @@ public class Watches extends JPanel {
                     if (format == null) {
                         return null;
                     }
-                    if (watch.type == null) {
-                        if (format.numberfmt == StepFormat.NUMBERFMT_HEX) {
-                            return "0x" + HexFormatter.tohex(value) + " [" + value + "]";
-                        } else if (format.numberfmt == StepFormat.NUMBERFMT_OCT) {
-                            return OctFormatter.tooct(value) + " [" + value + "]";
-                        } else {
-                            return format.formatWord(value) + " [" + value + "]";
-                        }
-                    } else {
-                        StringBuilder buf = new StringBuilder();
-                        boolean dec = false;
-                        for (char c : watch.type.toCharArray()) {
-                            if (dec) {
-                                switch (c) {
-                                    case 'i':
-                                    case 'n':
-                                        buf.append(format.formatWord(value));
-                                        break;
-                                    case 'd':
-                                        buf.append(value);
-                                        break;
-                                    case 'u':
-                                        buf.append(Long.toUnsignedString(value));
-                                        break;
-                                    case 'x':
-                                        buf.append(HexFormatter.tohex(value).toLowerCase());
-                                        break;
-                                    case 'X':
-                                        buf.append(HexFormatter.tohex(value).toUpperCase());
-                                        break;
-                                    case 'o':
-                                        buf.append(OctFormatter.tooct(value));
-                                        break;
-                                    case 'c':
-                                        buf.append((char) value);
-                                        break;
-                                    case 'C':
-                                        buf.append(DecoderUtils.encode((int) value & 0xFFFF));
-                                        break;
-                                    case 's':
-                                        buf.append(DecoderUtils.cstr(value, step.getStep(), trc));
-                                        break;
-                                    case 'm':
-                                        buf.append(bytes(value));
-                                        break;
-                                    case 'r':
-                                        buf.append(Stringify.i64force(value));
-                                        break;
-                                    default:
-                                        buf.append(c);
-                                        break;
-                                }
-                                dec = false;
-                            } else {
-                                if (c == '%') {
-                                    dec = true;
-                                } else {
-                                    buf.append(c);
-                                }
-                            }
-                        }
-                        return buf.toString();
-                    }
+                    return Formatter.format(watch.type, format, step.getStep(), trc, value);
                 default:
                     return null;
             }

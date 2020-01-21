@@ -135,6 +135,7 @@ public class MainWindow extends JFrame {
     private JMenuItem setFunctionType;
     private JMenuItem setCommentInsn;
     private JMenuItem setCommentPC;
+    private JMenuItem setExpression;
     private JMenuItem gotoPC;
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
@@ -199,6 +200,7 @@ public class MainWindow extends JFrame {
             }
             String filename = loadSess.getDirectory() + loadSess.getFile();
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -220,6 +222,7 @@ public class MainWindow extends JFrame {
             if (saveSess.getFile() == null) {
                 return;
             }
+
             String filename = saveSess.getDirectory() + saveSess.getFile();
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
@@ -323,7 +326,9 @@ public class MainWindow extends JFrame {
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
-        exit.addActionListener(e -> exit());
+        exit.addActionListener(e ->
+
+        exit());
 
         if (master == null) {
             fileMenu.add(open);
@@ -482,6 +487,45 @@ public class MainWindow extends JFrame {
         });
         setCommentPC.setEnabled(false);
         editMenu.add(setCommentPC);
+        setExpression = new JMenuItem("Set expression...");
+        setExpression.setAccelerator(KeyStroke.getKeyStroke('@'));
+        setExpression.addActionListener(e -> {
+            StepEvent insn = view.getSelectedInstruction();
+            if (insn == null) {
+                return;
+            }
+            String expr = trc.getExpression(insn.getPC());
+            if (expr != null) {
+                String input = JOptionPane.showInputDialog("Enter expression:", expr);
+                if (input != null && input.trim().length() > 0) {
+                    try {
+                        trc.setExpression(insn.getPC(), input.trim());
+                    } catch (ParseException ex) {
+                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set expression...", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } else if (input != null) {
+                    try {
+                        trc.setExpression(insn.getPC(), null);
+                    } catch (ParseException ex) {
+                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set expression...", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+            } else {
+                String input = JOptionPane.showInputDialog("Enter expression:");
+                if (input != null && input.trim().length() > 0) {
+                    try {
+                        trc.setExpression(insn.getPC(), input.trim());
+                    } catch (ParseException ex) {
+                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set expression...", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+            }
+        });
+        setExpression.setEnabled(false);
+        editMenu.add(setExpression);
         menu.add(editMenu);
 
         JMenu viewMenu = new JMenu("View");
@@ -708,6 +752,7 @@ public class MainWindow extends JFrame {
                 setFunctionType.setEnabled(true);
                 setCommentInsn.setEnabled(true);
                 setCommentPC.setEnabled(true);
+                setExpression.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
@@ -855,6 +900,7 @@ public class MainWindow extends JFrame {
                         }
                     } else if (everything && address.startsWith("COMMENTINSN:")) {
                         // comment for insn#
+                        long step;
                         if (data.length != 1) {
                             log.info("Syntax error in line " + lineno + ": invalid comment");
                             setStatus("Syntax error in line " + lineno + ": invalid comment");
@@ -862,16 +908,17 @@ public class MainWindow extends JFrame {
                             continue;
                         }
                         try {
-                            insn = Long.parseUnsignedLong(address.substring(12), 16);
+                            step = Long.parseUnsignedLong(address.substring(12), 16);
                         } catch (NumberFormatException e) {
                             log.info("Syntax error in line " + lineno + ": invalid instruction");
                             setStatus("Syntax error in line " + lineno + ": invalid instruction");
                             ok = false;
                             continue;
                         }
-                        trc.setCommentForInsn(insn, data[0]);
+                        trc.setCommentForInsn(step, data[0]);
                     } else if (everything && address.startsWith("COMMENTPC:")) {
-                        // comment for insn#
+                        // comment for PC
+                        long pc;
                         if (data.length != 1) {
                             log.info("Syntax error in line " + lineno + ": invalid comment");
                             setStatus("Syntax error in line " + lineno + ": invalid comment");
@@ -879,14 +926,39 @@ public class MainWindow extends JFrame {
                             continue;
                         }
                         try {
-                            insn = Long.parseUnsignedLong(address.substring(10), 16);
+                            pc = Long.parseUnsignedLong(address.substring(10), 16);
                         } catch (NumberFormatException e) {
-                            log.info("Syntax error in line " + lineno + ": invalid instruction");
-                            setStatus("Syntax error in line " + lineno + ": invalid instruction");
+                            log.info("Syntax error in line " + lineno + ": invalid program counter");
+                            setStatus("Syntax error in line " + lineno + ": invalid program counter");
                             ok = false;
                             continue;
                         }
-                        trc.setCommentForPC(insn, data[0]);
+                        trc.setCommentForPC(pc, data[0]);
+                    } else if (everything && address.startsWith("EXPR:")) {
+                        // expression
+                        long pc;
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid expression");
+                            setStatus("Syntax error in line " + lineno + ": invalid expression");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            pc = Long.parseUnsignedLong(address.substring(5), 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid program counter");
+                            setStatus("Syntax error in line " + lineno + ": invalid program counter");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            trc.setExpression(pc, data[0]);
+                        } catch (ParseException e) {
+                            log.info("Syntax error in line " + lineno + ": " + e.getMessage());
+                            setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
+                            ok = false;
+                            continue;
+                        }
                     } else {
                         // symbol
                         long pc;
@@ -1023,6 +1095,10 @@ public class MainWindow extends JFrame {
                 for (Entry<Long, String> comment : commentsPC.entrySet()) {
                     out.printf("COMMENTPC:%x=%s\n", comment.getKey(), TextSerializer.encode(comment.getValue()));
                 }
+                Map<Long, String> expressions = trc.getExpressions();
+                for (Entry<Long, String> expr : expressions.entrySet()) {
+                    out.printf("EXPR:%x=%s\n", expr.getKey(), TextSerializer.encode(expr.getValue()));
+                }
                 StepEvent step = view.getSelectedInstruction();
                 if (step != null) {
                     out.printf("INSN=%d\n", step.getStep());
@@ -1055,6 +1131,7 @@ public class MainWindow extends JFrame {
                 setFunctionType.setEnabled(true);
                 setCommentInsn.setEnabled(true);
                 setCommentPC.setEnabled(true);
+                setExpression.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);

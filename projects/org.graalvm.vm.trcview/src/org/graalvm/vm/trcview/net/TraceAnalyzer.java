@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.net;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,8 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
@@ -105,4 +108,12 @@ public interface TraceAnalyzer {
     Map<Long, String> getCommentsForInsns();
 
     Map<Long, String> getCommentsForPCs();
+
+    void setExpression(long pc, String expression) throws ParseException;
+
+    String getExpression(long pc);
+
+    String evaluateExpression(CpuState state) throws EvaluationException;
+
+    Map<Long, String> getExpressions();
 }

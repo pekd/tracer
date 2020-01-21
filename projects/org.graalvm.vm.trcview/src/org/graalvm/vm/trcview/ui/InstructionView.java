@@ -70,6 +70,7 @@ import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.InterruptEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -115,8 +116,11 @@ public class InstructionView extends JPanel {
 
     private TraceAnalyzer trc;
 
+    private Consumer<String> status;
+
     public InstructionView(Consumer<String> status, Consumer<Long> position) {
         super(new BorderLayout());
+        this.status = status;
         changeListeners = new ArrayList<>();
         callListeners = new ArrayList<>();
 
@@ -278,16 +282,25 @@ public class InstructionView extends JPanel {
                 comment(buf, loc.getAsm(tabSize), decoded);
             }
         } else if (step.getType() != InstructionType.CALL) {
+            String expr = null;
+            try {
+                expr = trc.evaluateExpression(step.getState());
+            } catch (EvaluationException e) {
+                status.accept(e.getMessage());
+            }
             String comment1 = trc.getCommentForPC(step.getPC());
             String comment2 = trc.getCommentForInsn(step.getStep());
-            String comment;
-            if (comment1 == null) {
-                comment = comment2;
-            } else if (comment2 == null) {
-                comment = comment1;
-            } else {
-                comment = comment1 + "; " + comment2;
+            List<String> parts = new ArrayList<>();
+            if (expr != null) {
+                parts.add(expr);
             }
+            if (comment1 != null) {
+                parts.add(comment1);
+            }
+            if (comment2 != null) {
+                parts.add(comment2);
+            }
+            String comment = parts.isEmpty() ? null : String.join("; ", parts);
             if (comment != null) {
                 comment(buf, loc.getAsm(tabSize), comment);
             }
