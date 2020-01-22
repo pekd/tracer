@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.arch.io;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -38,7 +39,11 @@ public class TraceFileReader extends TraceReader {
 
     @Override
     public Event read() throws IOException {
-        return reader.read();
+        try {
+            return reader.read();
+        } catch (EOFException e) {
+            return null;
+        }
     }
 
     @Override
