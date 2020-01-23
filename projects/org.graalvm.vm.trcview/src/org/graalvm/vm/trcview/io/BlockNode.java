@@ -211,6 +211,34 @@ public class BlockNode extends Node {
                     } else if (child instanceof BlockNode) {
                         hasSteps = true;
                         ignore = false;
+                        BlockNode n = (BlockNode) child;
+                        int size = n.getNodes().size();
+                        if (system && n.getHead() != null && !n.isInterrupt() && !n.getHead().isSyscall() && size > 0) {
+                            Node last = n.getNodes().get(size - 1);
+                            while (last instanceof BlockNode) {
+                                BlockNode b = (BlockNode) last;
+                                if (b.isInterrupt() || b.getHead().isSyscall()) {
+                                    break;
+                                } else {
+                                    size = b.getNodes().size();
+                                    if (size > 0) {
+                                        last = b.getNodes().get(size - 1);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            }
+                            if (last instanceof EventNode) {
+                                Event evt = ((EventNode) last).getEvent();
+                                if (evt instanceof StepEvent) {
+                                    StepEvent s = (StepEvent) evt;
+                                    if (s.isReturnFromSyscall()) {
+                                        log.log(Levels.DEBUG, () -> String.format("break: %d [%x] in %d [%x]\n", s.getStep(), s.getPC(), step.getStep(), step.getPC()));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 block.setChildren(result);
@@ -256,6 +284,34 @@ public class BlockNode extends Node {
                     }
                 } else if (child instanceof BlockNode) {
                     hasSteps = true;
+                    BlockNode n = (BlockNode) child;
+                    int size = n.getNodes().size();
+                    if (system && n.getHead() != null && !n.isInterrupt() && !n.getHead().isSyscall() && size > 0) {
+                        Node last = n.getNodes().get(size - 1);
+                        while (last instanceof BlockNode) {
+                            BlockNode b = (BlockNode) last;
+                            if (b.isInterrupt() || b.getHead().isSyscall()) {
+                                break;
+                            } else {
+                                size = b.getNodes().size();
+                                if (size > 0) {
+                                    last = b.getNodes().get(size - 1);
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                        if (last instanceof EventNode) {
+                            Event evt = ((EventNode) last).getEvent();
+                            if (evt instanceof StepEvent) {
+                                StepEvent s = (StepEvent) evt;
+                                if (s.isReturnFromSyscall()) {
+                                    log.log(Levels.DEBUG, () -> String.format("break trap: %d [%x]\n", s.getStep(), s.getPC()));
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             block.setChildren(result);
