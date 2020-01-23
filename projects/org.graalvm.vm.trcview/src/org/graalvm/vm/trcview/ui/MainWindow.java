@@ -1176,7 +1176,7 @@ public class MainWindow extends JFrame {
             try {
                 w.load(new File(args[0]));
             } catch (Throwable t) {
-                System.out.println("Failed to load the file specified by the argument");
+                System.out.println("Failed to load the file specified by the argument \"" + args[0] + "\"");
             }
         } else if (args.length == 2) {
             try {
