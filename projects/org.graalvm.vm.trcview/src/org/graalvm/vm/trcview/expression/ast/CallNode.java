@@ -51,7 +51,6 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
-            case "getI16":
             case "getI16L":
             case "getI16LE":
                 if (args.size() != 1) {
@@ -63,7 +62,6 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
-            case "getU16":
             case "getU16L":
             case "getU16LE":
                 if (args.size() != 1) {
@@ -75,7 +73,6 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
-            case "getI32":
             case "getI32L":
             case "getI32LE":
                 if (args.size() != 1) {
@@ -87,7 +84,7 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
-            case "getU32":
+            case "getU32L":
             case "getU32LE":
                 if (args.size() != 1) {
                     throw new ArityException(1, args.size());
@@ -98,8 +95,6 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
-            case "getI64":
-            case "getU64":
             case "getI64L":
             case "getU64L":
             case "getI64LE":
@@ -188,6 +183,77 @@ public class CallNode extends Expression {
                 }
                 tmp = args.get(0).evaluate(ctx);
                 return Long.reverseBytes(tmp);
+            case "getI16":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    if (ctx.trc.getArchitecture().getFormat().be) {
+                        return Short.reverseBytes(ctx.getI16(tmp));
+                    } else {
+                        return ctx.getI16(tmp);
+                    }
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
+            case "getI32":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    if (ctx.trc.getArchitecture().getFormat().be) {
+                        return Integer.reverseBytes(ctx.getI32(tmp));
+                    } else {
+                        return ctx.getI32(tmp);
+                    }
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
+            case "getU16":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    if (ctx.trc.getArchitecture().getFormat().be) {
+                        return Short.toUnsignedLong(Short.reverseBytes(ctx.getI16(tmp)));
+                    } else {
+                        return Short.toUnsignedLong(ctx.getI16(tmp));
+                    }
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
+            case "getU32":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    if (ctx.trc.getArchitecture().getFormat().be) {
+                        return Integer.toUnsignedLong(Integer.reverseBytes(ctx.getI32(tmp)));
+                    } else {
+                        return Integer.toUnsignedLong(ctx.getI32(tmp));
+                    }
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
+            case "getI64":
+            case "getU64":
+                if (args.size() != 1) {
+                    throw new ArityException(1, args.size());
+                }
+                tmp = args.get(0).evaluate(ctx);
+                try {
+                    if (ctx.trc.getArchitecture().getFormat().be) {
+                        return Long.reverseBytes(ctx.getI64(tmp));
+                    } else {
+                        return ctx.getI64(tmp);
+                    }
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
+                }
             default:
                 throw new EvaluationException("not implemented: " + name);
         }
