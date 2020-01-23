@@ -262,7 +262,11 @@ public class InstructionView extends JPanel {
 
     private static void comment(StringBuilder buf, String disassembly, String comment) {
         buf.insert(0, "<html><head><style>" + STYLE + "</style></head><body><pre>");
-        buf.append(StringUtils.repeat(" ", COMMENT_COLUMN - disassembly.length()));
+        if (disassembly.length() < COMMENT_COLUMN) {
+            buf.append(StringUtils.repeat(" ", COMMENT_COLUMN - disassembly.length()));
+        } else {
+            buf.append(' ');
+        }
         buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
         buf.append(comment);
         buf.append("</span></pre></body></html>");
