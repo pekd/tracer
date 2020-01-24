@@ -76,6 +76,9 @@ public class AMD64StepEvent extends StepEvent {
 
     @Override
     public InstructionType getType() {
+        if (getMachinecode() == null) {
+            return InstructionType.OTHER;
+        }
         switch (AMD64InstructionQuickInfo.getType(getMachinecode())) {
             case CALL:
                 return InstructionType.CALL;
