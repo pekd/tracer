@@ -96,6 +96,7 @@ public class InstructionView extends JPanel {
     public static final Color ERROR_FG = Color.RED;
 
     public static final Color ROP_BG = new Color(0xFF, 0xE0, 0xE0);
+    public static final Color RETRY_BG = new Color(0xE0, 0xFF, 0xE0);
 
     public static final String STYLE = "html, body, pre {" +
                     "    padding: 0;" +
@@ -469,7 +470,11 @@ public class InstructionView extends JPanel {
                         StepEvent step = b.getHead();
                         long npc = step.getPC() + (step.getMachinecode() != null ? step.getMachinecode().length : 0);
                         if (!isSelected && pc != npc) {
-                            c.setBackground(ROP_BG);
+                            if (b.isInterrupt() && pc == step.getPC()) {
+                                c.setBackground(RETRY_BG);
+                            } else {
+                                c.setBackground(ROP_BG);
+                            }
                         }
                     }
                     if (head != null && head.isSyscall()) {
@@ -520,7 +525,11 @@ public class InstructionView extends JPanel {
                         StepEvent s = b.getHead();
                         long npc = s.getPC() + (s.getMachinecode() != null ? s.getMachinecode().length : 0);
                         if (!isSelected && pc != npc) {
-                            c.setBackground(ROP_BG);
+                            if (b.isInterrupt() && pc == step.getPC()) {
+                                c.setBackground(RETRY_BG);
+                            } else {
+                                c.setBackground(ROP_BG);
+                            }
                         }
                     }
                 }
