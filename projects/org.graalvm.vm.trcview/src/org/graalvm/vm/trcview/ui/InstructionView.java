@@ -106,6 +106,8 @@ public class InstructionView extends JPanel {
 
     public static final int COMMENT_COLUMN = 48;
 
+    private boolean reduceIntensity = true;
+
     private int tabSize = 16;
 
     private List<Node> instructions;
@@ -453,6 +455,37 @@ public class InstructionView extends JPanel {
         }
     }
 
+    private void highlight(StepEvent current, Node prev, Component c) {
+        long pc = current.getPC();
+        if (prev instanceof BlockNode) {
+            BlockNode b = (BlockNode) prev;
+            StepEvent step = b.getHead();
+            long npc = step.getPC() + (step.getMachinecode() != null ? step.getMachinecode().length : 0);
+            if (pc != npc) {
+                if (b.isInterrupt() && pc == step.getPC()) {
+                    c.setBackground(RETRY_BG);
+                    return;
+                } else {
+                    c.setBackground(ROP_BG);
+                    return;
+                }
+            }
+        }
+        Color color = trc.getColor(current.getState());
+        if (color != null) {
+            if (reduceIntensity) {
+                int r = color.getRed();
+                int g = color.getGreen();
+                int b = color.getBlue();
+                int resultR = (r / 2) + 128;
+                int resultG = (g / 2) + 128;
+                int resultB = (b / 2) + 128;
+                color = new Color(resultR, resultG, resultB);
+            }
+            c.setBackground(color);
+        }
+    }
+
     protected class CellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -464,18 +497,8 @@ public class InstructionView extends JPanel {
                 if (index > 0) {
                     Node prev = instructions.get(index - 1);
                     StepEvent head = block.getHead();
-                    long pc = head.getPC();
-                    if (prev instanceof BlockNode) {
-                        BlockNode b = (BlockNode) prev;
-                        StepEvent step = b.getHead();
-                        long npc = step.getPC() + (step.getMachinecode() != null ? step.getMachinecode().length : 0);
-                        if (!isSelected && pc != npc) {
-                            if (b.isInterrupt() && pc == step.getPC()) {
-                                c.setBackground(RETRY_BG);
-                            } else {
-                                c.setBackground(ROP_BG);
-                            }
-                        }
+                    if (!isSelected) {
+                        highlight(head, prev, c);
                     }
                     if (head != null && head.isSyscall()) {
                         c.setForeground(SYSCALL_FG);
@@ -519,18 +542,8 @@ public class InstructionView extends JPanel {
 
                 if (index > 0) {
                     Node prev = instructions.get(index - 1);
-                    long pc = step.getPC();
-                    if (prev instanceof BlockNode) {
-                        BlockNode b = (BlockNode) prev;
-                        StepEvent s = b.getHead();
-                        long npc = s.getPC() + (s.getMachinecode() != null ? s.getMachinecode().length : 0);
-                        if (!isSelected && pc != npc) {
-                            if (b.isInterrupt() && pc == step.getPC()) {
-                                c.setBackground(RETRY_BG);
-                            } else {
-                                c.setBackground(ROP_BG);
-                            }
-                        }
+                    if (!isSelected) {
+                        highlight(step, prev, c);
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.net;
 
+import java.awt.Color;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
@@ -116,4 +117,10 @@ public interface TraceAnalyzer {
     String evaluateExpression(CpuState state) throws EvaluationException;
 
     Map<Long, String> getExpressions();
+
+    void setColor(long pc, Color color);
+
+    Color getColor(CpuState state);
+
+    Map<Long, Color> getColors();
 }

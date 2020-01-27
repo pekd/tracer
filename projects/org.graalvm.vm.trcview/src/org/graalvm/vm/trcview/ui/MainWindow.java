@@ -41,6 +41,7 @@
 package org.graalvm.vm.trcview.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.Font;
@@ -136,6 +137,7 @@ public class MainWindow extends JFrame {
     private JMenuItem setCommentInsn;
     private JMenuItem setCommentPC;
     private JMenuItem setExpression;
+    private JMenuItem setColor;
     private JMenuItem gotoPC;
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
@@ -488,6 +490,7 @@ public class MainWindow extends JFrame {
         setCommentPC.setEnabled(false);
         editMenu.add(setCommentPC);
         setExpression = new JMenuItem("Set expression...");
+        setExpression.setMnemonic('e');
         setExpression.setAccelerator(KeyStroke.getKeyStroke('@'));
         setExpression.addActionListener(e -> {
             StepEvent insn = view.getSelectedInstruction();
@@ -526,6 +529,20 @@ public class MainWindow extends JFrame {
         });
         setExpression.setEnabled(false);
         editMenu.add(setExpression);
+        setColor = new JMenuItem("Set color...");
+        setColor.setMnemonic('c');
+        setColor.setAccelerator(KeyStroke.getKeyStroke('h'));
+        setColor.addActionListener(e -> {
+            StepEvent insn = view.getSelectedInstruction();
+            if (insn == null) {
+                return;
+            }
+            ColorPicker picker = new ColorPicker(this);
+            picker.setVisible(true);
+            trc.setColor(insn.getPC(), picker.getColor());
+        });
+        setColor.setEnabled(false);
+        editMenu.add(setColor);
         menu.add(editMenu);
 
         JMenu viewMenu = new JMenu("View");
@@ -753,6 +770,7 @@ public class MainWindow extends JFrame {
                 setCommentInsn.setEnabled(true);
                 setCommentPC.setEnabled(true);
                 setExpression.setEnabled(true);
+                setColor.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
@@ -944,6 +962,35 @@ public class MainWindow extends JFrame {
                             continue;
                         }
                         trc.setCommentForPC(pc, data[0]);
+                    } else if (everything && address.startsWith("COLOR:")) {
+                        // color for PC
+                        long pc;
+                        if (data.length != 1 || data[0].length() != 6) {
+                            log.info("Syntax error in line " + lineno + ": invalid color");
+                            setStatus("Syntax error in line " + lineno + ": invalid color");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            pc = Long.parseUnsignedLong(address.substring(6), 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid program counter");
+                            setStatus("Syntax error in line " + lineno + ": invalid program counter");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            int r = Integer.parseInt(data[0].substring(0, 2), 16);
+                            int g = Integer.parseInt(data[0].substring(2, 4), 16);
+                            int b = Integer.parseInt(data[0].substring(4, 6), 16);
+                            Color color = new Color(r, g, b);
+                            trc.setColor(pc, color);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid color");
+                            setStatus("Syntax error in line " + lineno + ": invalid color");
+                            ok = false;
+                            continue;
+                        }
                     } else if (everything && address.startsWith("EXPR:")) {
                         // expression
                         long pc;
@@ -1115,6 +1162,11 @@ public class MainWindow extends JFrame {
                 for (Entry<Long, String> expr : expressions.entrySet()) {
                     out.printf("EXPR:%x=%s\n", expr.getKey(), TextSerializer.encode(expr.getValue()));
                 }
+                Map<Long, Color> colors = trc.getColors();
+                for (Entry<Long, Color> color : colors.entrySet()) {
+                    Color c = color.getValue();
+                    out.printf("COLOR:%x=\"%02x%02x%02x\"\n", color.getKey(), c.getRed(), c.getGreen(), c.getBlue());
+                }
                 String memexpr = view.getMemoryExpression();
                 out.printf("MEMORY=%s\n", TextSerializer.encode(memexpr));
                 StepEvent step = view.getSelectedInstruction();
@@ -1150,6 +1202,7 @@ public class MainWindow extends JFrame {
                 setCommentInsn.setEnabled(true);
                 setCommentPC.setEnabled(true);
                 setExpression.setEnabled(true);
+                setColor.setEnabled(true);
                 gotoPC.setEnabled(true);
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);

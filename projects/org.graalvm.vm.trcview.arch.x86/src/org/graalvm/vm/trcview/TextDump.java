@@ -40,6 +40,7 @@
  */
 package org.graalvm.vm.trcview;
 
+import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
@@ -493,6 +494,20 @@ public class TextDump {
 
         @Override
         public Map<Long, String> getExpressions() {
+            return null;
+        }
+
+        @Override
+        public void setColor(long pc, Color color) {
+        }
+
+        @Override
+        public Color getColor(CpuState state) {
+            return null;
+        }
+
+        @Override
+        public Map<Long, Color> getColors() {
             return null;
         }
     }

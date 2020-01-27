@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.net;
 
+import java.awt.Color;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +28,7 @@ import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
 import org.graalvm.vm.trcview.info.Expressions;
 import org.graalvm.vm.trcview.info.FormattedExpression;
+import org.graalvm.vm.trcview.info.Highlighter;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
@@ -46,6 +48,7 @@ public class Local implements TraceAnalyzer {
     private List<ChangeListener> commentChangeListeners;
     private Comments comments;
     private Expressions expressions;
+    private Highlighter highlighter;
 
     public Local(Architecture arch, BlockNode root, Analysis analysis) {
         this.arch = arch;
@@ -59,6 +62,7 @@ public class Local implements TraceAnalyzer {
         commentChangeListeners = new ArrayList<>();
         comments = new Comments();
         expressions = new Expressions();
+        highlighter = new Highlighter();
     }
 
     @Override
@@ -322,5 +326,21 @@ public class Local implements TraceAnalyzer {
     @Override
     public Map<Long, String> getExpressions() {
         return expressions.getExpressions();
+    }
+
+    @Override
+    public void setColor(long pc, Color color) {
+        highlighter.setColor(pc, color);
+        fireCommentChanged();
+    }
+
+    @Override
+    public Color getColor(CpuState state) {
+        return highlighter.getColor(state, this);
+    }
+
+    @Override
+    public Map<Long, Color> getColors() {
+        return highlighter.getColors();
     }
 }

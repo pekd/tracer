@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.net;
 
+import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -505,6 +506,23 @@ public class Client implements TraceAnalyzer, Closeable {
 
     @Override
     public Map<Long, String> getExpressions() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setColor(long pc, Color color) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public Color getColor(CpuState state) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<Long, Color> getColors() {
         // TODO Auto-generated method stub
         return null;
     }
