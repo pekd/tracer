@@ -46,7 +46,9 @@ public class GenericCpuState extends CpuState {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        // TODO Auto-generated method stub
+        out.write64bit(step);
+        out.write64bit(pc);
+        IO.writeString(out, data);
     }
 
     @Override

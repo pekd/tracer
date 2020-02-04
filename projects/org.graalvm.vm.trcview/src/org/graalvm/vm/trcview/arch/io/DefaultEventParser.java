@@ -30,4 +30,8 @@ public class DefaultEventParser extends EventParser {
         }
     }
 
+    @Override
+    public <T extends StepEvent> T parseStep(WordInputStream in, int tid, long step, long pc, InstructionType type, byte[] machinecode) throws IOException {
+        throw new IOException("step events are not supported by this architecture");
+    }
 }

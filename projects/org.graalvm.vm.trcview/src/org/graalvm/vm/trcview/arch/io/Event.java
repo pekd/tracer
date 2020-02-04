@@ -57,6 +57,10 @@ public abstract class Event {
         writeRecord(out);
     }
 
+    public final void writeRaw(WordOutputStream out) throws IOException {
+        writeRecord(out);
+    }
+
     public static final <T extends Event> T read(WordInputStream in) throws IOException {
         short archid = in.read16bit();
         short id = in.read16bit();

@@ -91,8 +91,33 @@ public class GenericStepEvent extends StepEvent {
         return None.FORMAT;
     }
 
+    private byte getTypeByte() {
+        switch (type) {
+            default:
+            case OTHER:
+                return 0;
+            case JCC:
+                return 1;
+            case JMP:
+                return 2;
+            case JMP_INDIRECT:
+                return 3;
+            case CALL:
+                return 4;
+            case RET:
+                return 5;
+            case SYSCALL:
+                return 6;
+            case RTI:
+                return 7;
+        }
+    }
+
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        // TODO Auto-generated method stub
+        state.writeRecord(out);
+        IO.writeArray(out, machinecode);
+        out.write8bit(getTypeByte());
+        IO.writeStringArray(out, disassembly);
     }
 }

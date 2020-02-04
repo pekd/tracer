@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.EventParser;
+import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.util.io.WordInputStream;
 
 public class AMD64EventParser extends EventParser {
@@ -20,5 +22,11 @@ public class AMD64EventParser extends EventParser {
             default:
                 throw new IOException("unknown record type " + id);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends StepEvent> T parseStep(WordInputStream in, int tid, long step, long pc, InstructionType type, byte[] machinecode) throws IOException {
+        return (T) AMD64StepEvent.create(in, tid, machinecode);
     }
 }

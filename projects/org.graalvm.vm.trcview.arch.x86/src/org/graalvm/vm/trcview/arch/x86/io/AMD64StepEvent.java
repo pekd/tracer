@@ -147,6 +147,11 @@ public class AMD64StepEvent extends StepEvent {
         return new AMD64StepEvent(tid, machinecode, state);
     }
 
+    public static AMD64StepEvent create(WordInputStream in, int tid, byte[] machinecode) throws IOException {
+        AMD64CpuState state = AMD64CpuState.readRecord(in, tid);
+        return new AMD64StepEvent(tid, machinecode, state);
+    }
+
     @Override
     public String toString() {
         return record.toString();

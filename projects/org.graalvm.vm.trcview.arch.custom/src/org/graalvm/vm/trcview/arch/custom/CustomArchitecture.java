@@ -159,13 +159,11 @@ public class CustomArchitecture extends Architecture {
 
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public EventParser getEventParser() {
-        // TODO Auto-generated method stub
         return null;
     }
 

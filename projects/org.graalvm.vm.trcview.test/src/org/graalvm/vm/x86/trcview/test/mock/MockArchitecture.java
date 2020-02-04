@@ -1,19 +1,26 @@
-package org.graalvm.vm.trcview.arch.custom;
+package org.graalvm.vm.x86.trcview.test.mock;
 
 import java.io.InputStream;
 
 import org.graalvm.vm.trcview.arch.Architecture;
-import org.graalvm.vm.trcview.arch.custom.decode.CustomCallDecoder;
-import org.graalvm.vm.trcview.arch.custom.io.GenericTraceReader;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
 
-public class GenericArchitecture extends Architecture {
-    public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_HEX, 8, 8, 1, true);
-    public static final short ID = -1;
+public class MockArchitecture extends Architecture {
+    public static final short ID = (short) 0xFFFE;
+
+    private static final MockEventParser eventParser = new MockEventParser();
+
+    private final StepFormat format;
+    private final boolean systemLevel;
+
+    public MockArchitecture(boolean be, boolean systemLevel) {
+        this.systemLevel = systemLevel;
+        format = new StepFormat(StepFormat.NUMBERFMT_HEX, 8, 8, 1, be);
+    }
 
     @Override
     public short getId() {
@@ -22,22 +29,22 @@ public class GenericArchitecture extends Architecture {
 
     @Override
     public String getName() {
-        return "generic";
+        return "mock";
     }
 
     @Override
     public String getDescription() {
-        return "Generic Architecture";
+        return "Mock architecture";
     }
 
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
-        return new GenericTraceReader(in);
+        return null;
     }
 
     @Override
     public EventParser getEventParser() {
-        return null;
+        return eventParser;
     }
 
     @Override
@@ -47,7 +54,7 @@ public class GenericArchitecture extends Architecture {
 
     @Override
     public CallDecoder getCallDecoder() {
-        return new CustomCallDecoder();
+        return null;
     }
 
     @Override
@@ -57,11 +64,11 @@ public class GenericArchitecture extends Architecture {
 
     @Override
     public StepFormat getFormat() {
-        return FORMAT;
+        return format;
     }
 
     @Override
     public boolean isSystemLevel() {
-        return false;
+        return systemLevel;
     }
 }
