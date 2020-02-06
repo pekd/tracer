@@ -24,4 +24,21 @@ public class VariableNode extends Expression {
     public String toString() {
         return name;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof VariableNode)) {
+            return false;
+        }
+        VariableNode n = (VariableNode) o;
+        return name.equals(n.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
 }

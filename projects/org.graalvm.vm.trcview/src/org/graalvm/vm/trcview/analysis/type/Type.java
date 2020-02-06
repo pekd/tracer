@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.analysis.type;
 
+import java.util.Objects;
+
 import org.graalvm.vm.trcview.expression.ast.Expression;
 
 public class Type {
@@ -174,5 +176,23 @@ public class Type {
             default:
                 return "/* unknown */";
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof Type)) {
+            return false;
+        }
+        Type t = (Type) o;
+
+        return t.isConst == isConst && t.representation == representation && Objects.equals(t.type, type) && Objects.equals(t.struct, struct) && Objects.equals(t.expr, expr);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isConst, representation, type, struct, expr);
     }
 }

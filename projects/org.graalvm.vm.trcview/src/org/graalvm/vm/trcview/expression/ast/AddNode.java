@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.expression.ast;
 
+import java.util.Objects;
+
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 
@@ -20,5 +22,22 @@ public class AddNode extends Expression {
     @Override
     public String toString() {
         return "(" + left + " + " + right + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof AddNode)) {
+            return false;
+        }
+        AddNode n = (AddNode) o;
+        return left.equals(n.left) && right.equals(n.right);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(left, right);
     }
 }

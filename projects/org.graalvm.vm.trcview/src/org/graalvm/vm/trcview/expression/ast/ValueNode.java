@@ -18,4 +18,21 @@ public class ValueNode extends Expression {
     public String toString() {
         return Long.toString(value);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof ValueNode)) {
+            return false;
+        }
+        ValueNode n = (ValueNode) o;
+        return value == n.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (value ^ (value >> 32));
+    }
 }

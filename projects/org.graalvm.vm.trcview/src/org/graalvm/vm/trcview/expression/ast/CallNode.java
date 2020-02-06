@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.expression.ast;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.expression.ArityException;
@@ -274,5 +275,22 @@ public class CallNode extends Expression {
         }
         buf.append(')');
         return buf.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof CallNode)) {
+            return false;
+        }
+        CallNode n = (CallNode) o;
+        return name.equals(n.name) && args.equals(n.args);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, args);
     }
 }

@@ -19,4 +19,21 @@ public class InvNode extends Expression {
     public String toString() {
         return "~" + child;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof InvNode)) {
+            return false;
+        }
+        InvNode n = (InvNode) o;
+        return child.equals(n.child);
+    }
+
+    @Override
+    public int hashCode() {
+        return child.hashCode();
+    }
 }
