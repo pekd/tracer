@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.graalvm.vm.trcview.storage.MemoryAccess;
 import org.graalvm.vm.trcview.storage.Step;
 import org.graalvm.vm.trcview.storage.StorageBackend;
 import org.graalvm.vm.trcview.storage.TraceMetadata;
@@ -32,6 +33,26 @@ public class MockStorageBackend extends StorageBackend {
     }
 
     @Override
+    public void createRead(int tid, long step, long address, int size, long value) {
+        // TODO
+    }
+
+    @Override
+    public void createRead(int tid, long step, long address, int size, long hi, long lo) {
+        // TODO
+    }
+
+    @Override
+    public void createWrite(int tid, long step, long address, int size, long value) {
+        // TODO
+    }
+
+    @Override
+    public void createWrite(int tid, long step, long address, int size, long hi, long lo) {
+        // TODO
+    }
+
+    @Override
     public void flush() {
     }
 
@@ -46,6 +67,18 @@ public class MockStorageBackend extends StorageBackend {
     @Override
     public List<Step> getSteps(long parent, long start, long count) {
         return steps.stream().filter(x -> x.parent == parent).filter(x -> x.step >= start).limit(count).collect(Collectors.toList());
+    }
+
+    @Override
+    public MemoryAccess getRead(long address, long step) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public MemoryAccess getWrite(long address, long step) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

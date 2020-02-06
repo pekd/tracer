@@ -4,9 +4,12 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.InterruptEvent;
+import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
+import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
 import org.graalvm.vm.trcview.io.ProgressListener;
@@ -73,6 +76,22 @@ public class TraceParser {
             machinecode = step.step.getMachinecode();
         }
         backend.createStep(steptid, id, parent, pc, StorageBackend.TYPE_TRAP, machinecode, cpustate);
+    }
+
+    private void createRead(Step last, int rdtid, long address, int size, long value) {
+        long id = -1;
+        if (last != null) {
+            id = last.step.getStep();
+        }
+        backend.createRead(rdtid, id, address, size, value);
+    }
+
+    private void createWrite(Step last, int wrtid, long address, int size, long value) {
+        long id = -1;
+        if (last != null) {
+            id = last.step.getStep();
+        }
+        backend.createWrite(wrtid, id, address, size, value);
     }
 
     private Event readEvent() throws IOException {
@@ -144,6 +163,42 @@ public class TraceParser {
                 } else if (lastStep == null) {
                     createTrap(lastStep, trap);
                     parent = new Step(parent, null, true);
+                }
+            } else if (event instanceof MemoryEvent) {
+                MemoryEvent evt = (MemoryEvent) event;
+                long addr = evt.getAddress();
+                if (evt.getSize() <= 8) {
+                    long val = evt.getValue();
+                    if (evt.isBigEndian()) {
+                        val = Long.reverseBytes(val);
+                    }
+                    if (evt.isWrite()) {
+                        createWrite(lastStep, evt.getTid(), addr, evt.getSize(), val);
+                    } else {
+                        createRead(lastStep, evt.getTid(), addr, evt.getSize(), val);
+                    }
+                } else {
+                    Vector128 val = evt.getVector();
+                    long hi = val.getI64(1);
+                    long lo = val.getI64(0);
+                    if (evt.isBigEndian()) {
+                        hi = Long.reverseBytes(val.getI64(0));
+                        lo = Long.reverseBytes(val.getI64(1));
+                    }
+                    if (evt.isWrite()) {
+                        createWrite(lastStep, evt.getTid(), addr, evt.getSize(), lo);
+                        createWrite(lastStep, evt.getTid(), addr + 8, evt.getSize(), hi);
+                    } else {
+                        createRead(lastStep, evt.getTid(), addr, evt.getSize(), lo);
+                        createRead(lastStep, evt.getTid(), addr + 8, evt.getSize(), hi);
+                    }
+                }
+            } else if (event instanceof MemoryDumpEvent) {
+                MemoryDumpEvent evt = (MemoryDumpEvent) event;
+                long addr = evt.getAddress();
+                byte[] data = evt.getData();
+                for (int i = 0; i < data.length; i++) {
+                    createWrite(lastStep, evt.getTid(), addr + i, 1, data[i]);
                 }
             }
         }

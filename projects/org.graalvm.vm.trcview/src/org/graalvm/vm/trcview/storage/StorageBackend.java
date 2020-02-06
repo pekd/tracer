@@ -106,9 +106,21 @@ public abstract class StorageBackend implements Closeable {
 
     public abstract void createStep(int tid, long step, long parent, long pc, int type, byte[] machinecode, byte[] cpustate);
 
+    public abstract void createRead(int tid, long step, long address, int size, long value);
+
+    public abstract void createRead(int tid, long step, long address, int size, long hi, long lo);
+
+    public abstract void createWrite(int tid, long step, long address, int size, long value);
+
+    public abstract void createWrite(int tid, long step, long address, int size, long hi, long lo);
+
     public abstract void flush();
 
     public abstract List<Step> getSteps(long parent, long start, long count);
+
+    public abstract MemoryAccess getRead(long address, long step);
+
+    public abstract MemoryAccess getWrite(long address, long step);
 
     public abstract short getArchitecture();
 
