@@ -379,20 +379,20 @@ public class MemoryView extends JPanel {
                         StepEvent event = (StepEvent) ((EventNode) read.step).getEvent();
                         content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                     } else if (read.step != null) {
-                            StepEvent event = null;
-                            if (read.step instanceof BlockNode) {
-                                event = ((BlockNode) read.step).getHead();
-                            } else {
-                                event = (StepEvent) ((EventNode) read.step).getEvent();
-                            }
-                            if (event != null) {
-                                content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
-                            } else {
-                                content += "Read by the kernel";
-                            }
+                        StepEvent event = null;
+                        if (read.step instanceof BlockNode) {
+                            event = ((BlockNode) read.step).getHead();
+                        } else {
+                            event = (StepEvent) ((EventNode) read.step).getEvent();
+                        }
+                        if (event != null) {
+                            content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                         } else {
                             content += "Read by the kernel";
                         }
+                    } else {
+                        content += "Read by the kernel";
+                    }
                     content += "\n" + read.node;
                 } else {
                     nextReadNode = null;
