@@ -157,6 +157,7 @@ public class TraceParser {
                 lastStep = current;
             } else if (event instanceof InterruptEvent) {
                 InterruptEvent trap = (InterruptEvent) event;
+                steps++;
                 if (lastStep != null && lastStep.step.getType() != InstructionType.SYSCALL) {
                     createTrap(lastStep, trap);
                     parent = new Step(parent, lastStep.step, true);
