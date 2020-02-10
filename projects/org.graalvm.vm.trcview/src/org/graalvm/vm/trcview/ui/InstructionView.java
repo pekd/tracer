@@ -113,6 +113,7 @@ public class InstructionView extends JPanel {
     private List<Node> instructions;
     private InstructionViewModel model;
     private JList<String> insns;
+    private int maxwidth = 0;
 
     private List<ChangeListener> changeListeners;
     private List<CallListener> callListeners;
@@ -343,59 +344,13 @@ public class InstructionView extends JPanel {
                 instructions.add(n);
             }
         }
-        int max = 0;
-        if (instructions.size() > 10000) {
+        if (instructions.size() > 5000) {
             // compute max size
-            max = 20 + tabSize;
-            for (int i = 0; i < instructions.size(); i++) {
-                Node n = instructions.get(i);
-                if (n instanceof BlockNode) {
-                    Location loc = Location.getLocation(trc, ((BlockNode) n).getFirstStep());
-                    int len = 0;
-                    if (loc.getSymbol() != null) {
-                        len += 5 + loc.getSymbol().length();
-                        if (loc.getFilename() != null) {
-                            len += 3 + loc.getFilename().length();
-                        }
-                    } else if (loc.getFilename() != null) {
-                        len += 8 + HexFormatter.tohex(loc.getPC(), 8).length();
-                        len += loc.getFilename().length();
-                    }
-                    max = Math.max(max, 20 + tabSize + 18 + len); // pc = 20, insn = tabsz, arg = 18
-                } else if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
-                    StepEvent step = (StepEvent) ((EventNode) n).getEvent();
-                    InstructionType type = step.getType();
-                    switch (type) {
-                        case SYSCALL: {
-                            CpuState ns = null;
-                            if (i + 1 < instructions.size()) {
-                                StepEvent next;
-                                Node nn = instructions.get(i + 1);
-                                if (nn instanceof BlockNode) {
-                                    next = ((BlockNode) nn).getHead();
-                                } else {
-                                    next = (StepEvent) ((EventNode) nn).getEvent();
-                                }
-                                ns = next == null ? null : next.getState();
-                            }
-                            String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
-                            if (decoded == null) {
-                                max = Math.max(max, 20 + COMMENT_COLUMN);
-                            } else {
-                                max = Math.max(max, 20 + COMMENT_COLUMN + 2 + decoded.length());
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
+            maxwidth = 20 + tabSize;
+            insns.setPrototypeCellValue(StringUtils.repeat("x", maxwidth));
         } else {
-            for (int i = 0; i < model.getSize(); i++) {
-                String s = stripHTML(model.getElementAt(i));
-                max = Math.max(max, s.length());
-            }
+            maxwidth = -1;
         }
-        insns.setPrototypeCellValue(StringUtils.repeat("x", max + 10)); // +10 is a hack
         model.changed();
         // insns.setModel(model);
         insns.setSelectedIndex(0);
@@ -486,6 +441,18 @@ public class InstructionView extends JPanel {
         }
     }
 
+    private void updatePrototype(String text) {
+        if (maxwidth < 1) {
+            return;
+        }
+
+        String plain = stripHTML(text);
+        if (plain.length() > maxwidth) {
+            maxwidth = plain.length();
+            insns.setPrototypeCellValue(text);
+        }
+    }
+
     protected class CellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -565,9 +532,13 @@ public class InstructionView extends JPanel {
                     } else {
                         next = (StepEvent) ((EventNode) nn).getEvent();
                     }
-                    return format(step, next);
+                    String result = format(step, next);
+                    updatePrototype(result);
+                    return result;
                 } else {
-                    return format(step, null);
+                    String result = format(step, null);
+                    updatePrototype(result);
+                    return result;
                 }
             } else if (n instanceof BlockNode) {
                 StepEvent step = ((BlockNode) n).getHead();
@@ -628,7 +599,9 @@ public class InstructionView extends JPanel {
                         buf.append("</span></pre></body></html>");
                     }
                 }
-                return buf.toString();
+                String result = buf.toString();
+                updatePrototype(result);
+                return result;
             } else {
                 throw new IllegalStateException("invalid node type: " + n.getClass().getSimpleName());
             }
