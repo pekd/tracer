@@ -17,7 +17,7 @@ public class MockEventParser extends EventParser {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends StepEvent> T parseStep(WordInputStream in, int tid, long step, long pc, InstructionType type, byte[] machinecode) {
-        return (T) MockStepEvent.create(tid, step, pc, type, machinecode);
+    public <T extends StepEvent> T parseStep(WordInputStream in, int tid, long step, long pc, InstructionType type, byte[] machinecode) throws IOException {
+        return (T) MockStepEvent.create(tid, step, pc, type, machinecode, in);
     }
 }
