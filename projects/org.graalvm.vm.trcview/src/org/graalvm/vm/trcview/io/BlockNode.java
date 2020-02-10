@@ -136,7 +136,9 @@ public class BlockNode extends Node {
         int tid = 0;
         int cnt = 0;
         while ((node = parseRecord(in, analysis, progress, tid, false)) != null) {
-            nodes.add(node);
+            if (isStep(node)) {
+                nodes.add(node);
+            }
             if (tid == 0) {
                 tid = node.getTid();
             }
@@ -148,6 +150,18 @@ public class BlockNode extends Node {
             }
         }
         return new BlockNode(null, nodes);
+    }
+
+    private static boolean isStep(Node node) {
+        if (node instanceof BlockNode) {
+            return true;
+        } else if (node instanceof EventNode) {
+            Event evt = ((EventNode) node).getEvent();
+            if (evt instanceof StepEvent) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Node parseRecord(TraceReader in, Analysis analysis, ProgressListener progress, int thread, boolean ignoreTrap) throws IOException {
@@ -191,7 +205,9 @@ public class BlockNode extends Node {
                         }
                         break;
                     }
-                    result.add(child);
+                    if (isStep(child)) {
+                        result.add(child);
+                    }
                     if (progress != null && cnt > PROGRESS_UPDATE) {
                         cnt = 0;
                         progress.progressUpdate(in.tell());
@@ -266,7 +282,9 @@ public class BlockNode extends Node {
                     }
                     break;
                 }
-                result.add(child);
+                if (isStep(child)) {
+                    result.add(child);
+                }
                 if (progress != null && cnt > 10_000) {
                     cnt = 0;
                     progress.progressUpdate(in.tell());

@@ -37,7 +37,8 @@ public class GetLastWriteResult extends Result {
         long value = in.read64bit();
         int size = in.read();
         Node node = IO.readNode(in);
-        write = new MemoryUpdate(BitTest.test(size, 0x80), addr, (byte) (size & 0x7F), value, pc, insn, node);
+        Node step = IO.readNode(in);
+        write = new MemoryUpdate(BitTest.test(size, 0x80), addr, (byte) (size & 0x7F), value, pc, insn, node, step);
     }
 
     @Override
@@ -54,5 +55,6 @@ public class GetLastWriteResult extends Result {
         out.write64bit(write.value);
         out.write(write.size | (write.be ? 0x80 : 0));
         IO.writeNode(out, write.node);
+        IO.writeNode(out, write.step);
     }
 }

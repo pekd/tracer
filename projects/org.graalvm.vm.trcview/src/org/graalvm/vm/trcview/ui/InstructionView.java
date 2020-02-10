@@ -336,14 +336,7 @@ public class InstructionView extends JPanel {
     }
 
     public void set(BlockNode block) {
-        instructions = new ArrayList<>();
-        for (Node n : block.getNodes()) {
-            if (n instanceof BlockNode) {
-                instructions.add(n);
-            } else if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
-                instructions.add(n);
-            }
-        }
+        instructions = block.getNodes();
         if (instructions.size() > 5000) {
             // compute max size
             maxwidth = 20 + tabSize;

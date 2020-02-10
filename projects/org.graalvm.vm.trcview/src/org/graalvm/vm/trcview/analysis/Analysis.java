@@ -76,6 +76,7 @@ public class Analysis {
 
     private SymbolTable symbols;
     private StepEvent lastStep;
+    private Node lastStepNode;
 
     private NavigableMap<Long, Symbol> symbolTable;
     private NavigableMap<Long, MappedFile> mappedFiles;
@@ -112,6 +113,7 @@ public class Analysis {
 
     public void start() {
         lastStep = null;
+        lastStepNode = null;
         steps = 0;
         idcnt = 0;
         for (Analyzer analyzer : analyzers) {
@@ -174,6 +176,7 @@ public class Analysis {
                 symbols.visit(node);
             }
             lastStep = step;
+            lastStepNode = node;
         } else if (event instanceof SymbolTableEvent) {
             SymbolTableEvent symtab = (SymbolTableEvent) event;
             symbolTable.putAll(symtab.getSymbols());
@@ -199,9 +202,9 @@ public class Analysis {
             if (mmap.getResult() != -1) {
                 mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
                 if (mmap.getData() != null) {
-                    memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node);
+                    memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node, lastStepNode);
                 } else {
-                    memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node);
+                    memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node, lastStepNode);
                 }
             }
         } else if (event instanceof MemoryEvent) {
@@ -217,15 +220,15 @@ public class Analysis {
                 boolean be = memevent.isBigEndian();
                 if (memevent.getSize() <= 8) {
                     long value = memevent.getValue();
-                    memory.write(addr, (byte) memevent.getSize(), value, pc, insn, node, be);
+                    memory.write(addr, (byte) memevent.getSize(), value, pc, insn, node, lastStepNode, be);
                 } else if (memevent.getSize() == 16) {
                     Vector128 value = memevent.getVector();
                     if (be) {
-                        memory.write(addr, (byte) 8, value.getI64(0), pc, insn, node, true);
-                        memory.write(addr + 8, (byte) 8, value.getI64(1), pc, insn, node, true);
+                        memory.write(addr, (byte) 8, value.getI64(0), pc, insn, node, lastStepNode, true);
+                        memory.write(addr + 8, (byte) 8, value.getI64(1), pc, insn, node, lastStepNode, true);
                     } else {
-                        memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node, false);
-                        memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node, false);
+                        memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node, lastStepNode, false);
+                        memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node, lastStepNode, false);
                     }
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
@@ -239,10 +242,10 @@ public class Analysis {
                 }
                 long addr = memevent.getAddress();
                 if (memevent.getSize() <= 8) {
-                    memory.read(addr, (byte) memevent.getSize(), pc, insn, node);
+                    memory.read(addr, (byte) memevent.getSize(), pc, insn, node, lastStepNode);
                 } else if (memevent.getSize() == 16) {
-                    memory.read(addr, (byte) 8, pc, insn, node);
-                    memory.read(addr + 8, (byte) 8, pc, insn, node);
+                    memory.read(addr, (byte) 8, pc, insn, node, lastStepNode);
+                    memory.read(addr + 8, (byte) 8, pc, insn, node, lastStepNode);
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
                 }
@@ -260,10 +263,10 @@ public class Analysis {
             int i;
             for (i = 0; i < data.length - 7; i += 8) {
                 long value = Endianess.get64bitLE(data, i);
-                memory.write(addr + i, (byte) 8, value, pc, insn, node, false);
+                memory.write(addr + i, (byte) 8, value, pc, insn, node, lastStepNode, false);
             }
             for (; i < data.length; i++) {
-                memory.write(addr + i, (byte) 1, data[i], pc, insn, node, false);
+                memory.write(addr + i, (byte) 1, data[i], pc, insn, node, lastStepNode, false);
             }
         } else if (event instanceof BrkEvent) {
             BrkEvent brk = (BrkEvent) event;
@@ -274,7 +277,7 @@ public class Analysis {
                 pc = lastStep.getPC();
                 insn = lastStep.getStep();
             }
-            memory.brk(newbrk, pc, insn, node);
+            memory.brk(newbrk, pc, insn, node, lastStepNode);
         }
     }
 

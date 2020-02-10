@@ -8,13 +8,15 @@ public class MemoryRead {
     public final long pc;
     public final long instructionCount;
     public final Node node;
+    public final Node step;
 
-    public MemoryRead(long address, byte size, long pc, long instructionCount, Node node) {
+    public MemoryRead(long address, byte size, long pc, long instructionCount, Node node, Node step) {
         this.address = address;
         this.size = size;
         this.pc = pc;
         this.instructionCount = instructionCount;
         this.node = node;
+        this.step = step;
     }
 
     public boolean contains(long addr) {

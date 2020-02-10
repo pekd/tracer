@@ -338,32 +338,31 @@ public class MemoryView extends JPanel {
             try {
                 MemoryUpdate update = trc.getLastWrite(address, insn);
                 Node node = null;
+                Node stepNode = null;
                 if (update != null) {
                     node = update.node;
+                    stepNode = update.step;
                 } else {
                     node = trc.getMapNode(address, insn);
+                    stepNode = null;
                 }
                 if (node != null) {
                     content += "Last write to this location:\n";
-                    if (node instanceof EventNode && ((EventNode) node).getEvent() instanceof StepEvent) {
-                        lastUpdateNode = node;
-                        StepEvent event = (StepEvent) ((EventNode) node).getEvent();
+                    lastUpdateNode = stepNode;
+                    if (stepNode instanceof EventNode && ((EventNode) stepNode).getEvent() instanceof StepEvent) {
+                        StepEvent event = (StepEvent) ((EventNode) stepNode).getEvent();
                         content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
-                    } else {
-                        Node lastStep = trc.getPreviousStep(node);
-                        lastUpdateNode = lastStep;
-                        if (lastStep != null) {
-                            StepEvent event = null;
-                            if (lastStep instanceof BlockNode) {
-                                event = ((BlockNode) lastStep).getHead();
-                            } else {
-                                event = (StepEvent) ((EventNode) lastStep).getEvent();
-                            }
-                            if (event != null) {
-                                content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
-                            } else {
-                                content += "Written by the kernel";
-                            }
+                    } else if (stepNode != null) {
+                        StepEvent event = null;
+                        if (stepNode instanceof BlockNode) {
+                            event = ((BlockNode) stepNode).getHead();
+                        } else {
+                            event = (StepEvent) ((EventNode) stepNode).getEvent();
+                        }
+                        if (event != null) {
+                            content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
+                        } else {
+                            content += "Written by the kernel";
                         }
                     }
                     content += "\n" + node;
@@ -375,27 +374,25 @@ public class MemoryView extends JPanel {
                 MemoryRead read = trc.getNextRead(address, insn);
                 if (read != null) {
                     content += "\n\nNext read from this location:\n";
-                    if (read.node instanceof EventNode && ((EventNode) read.node).getEvent() instanceof StepEvent) {
-                        nextReadNode = read.node;
-                        StepEvent event = (StepEvent) ((EventNode) read.node).getEvent();
+                    nextReadNode = read.step;
+                    if (read.step instanceof EventNode && ((EventNode) read.step).getEvent() instanceof StepEvent) {
+                        StepEvent event = (StepEvent) ((EventNode) read.step).getEvent();
                         content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
-                    } else {
-                        Node lastStep = trc.getPreviousStep(read.node);
-                        nextReadNode = lastStep;
-                        if (lastStep != null) {
+                    } else if (read.step != null) {
                             StepEvent event = null;
-                            if (lastStep instanceof BlockNode) {
-                                event = ((BlockNode) lastStep).getHead();
+                            if (read.step instanceof BlockNode) {
+                                event = ((BlockNode) read.step).getHead();
                             } else {
-                                event = (StepEvent) ((EventNode) lastStep).getEvent();
+                                event = (StepEvent) ((EventNode) read.step).getEvent();
                             }
                             if (event != null) {
                                 content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                             } else {
                                 content += "Read by the kernel";
                             }
+                        } else {
+                            content += "Read by the kernel";
                         }
-                    }
                     content += "\n" + read.node;
                 } else {
                     nextReadNode = null;

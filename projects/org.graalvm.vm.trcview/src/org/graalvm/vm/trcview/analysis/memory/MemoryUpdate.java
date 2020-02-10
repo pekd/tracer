@@ -10,8 +10,9 @@ public class MemoryUpdate {
     public final long pc;
     public final long instructionCount;
     public final Node node;
+    public final Node step;
 
-    public MemoryUpdate(boolean be, long address, byte size, long value, long pc, long instructionCount, Node node) {
+    public MemoryUpdate(boolean be, long address, byte size, long value, long pc, long instructionCount, Node node, Node step) {
         this.be = be;
         this.address = address;
         this.size = size;
@@ -19,6 +20,7 @@ public class MemoryUpdate {
         this.pc = pc;
         this.instructionCount = instructionCount;
         this.node = node;
+        this.step = step;
     }
 
     public byte getByte(long addr) {
