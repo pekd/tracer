@@ -5,15 +5,13 @@ import org.graalvm.vm.trcview.io.Node;
 public class MemoryRead {
     public final long address;
     public final byte size;
-    public final long pc;
     public final long instructionCount;
     public final Node node;
     public final Node step;
 
-    public MemoryRead(long address, byte size, long pc, long instructionCount, Node node, Node step) {
+    public MemoryRead(long address, byte size, long instructionCount, Node node, Node step) {
         this.address = address;
         this.size = size;
-        this.pc = pc;
         this.instructionCount = instructionCount;
         this.node = node;
         this.step = step;
@@ -25,6 +23,6 @@ public class MemoryRead {
 
     @Override
     public String toString() {
-        return String.format("[0x%08x] %d bytes @ PC=0x%x/%d", address, size, pc, instructionCount);
+        return String.format("[0x%08x] %d bytes @ #%d", address, size, instructionCount);
     }
 }

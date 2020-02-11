@@ -7,13 +7,13 @@ public interface Page {
 
     byte[] getData();
 
-    void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node, Node step, boolean be);
+    void addUpdate(long addr, byte size, long value, long instructionCount, Node node, Node step, boolean be);
 
-    void addRead(long addr, byte size, long pc, long instructionCount, Node node, Node step);
+    void addRead(long addr, byte size, long instructionCount, Node node, Node step);
 
-    void clear(long pc, long instructionCount, Node node, Node step);
+    void clear(long instructionCount, Node node, Node step);
 
-    void overwrite(byte[] update, long pc, long instructionCount, Node node, Node step);
+    void overwrite(byte[] update, long instructionCount, Node node, Node step);
 
     byte getByte(long addr, long instructionCount) throws MemoryNotMappedException;
 

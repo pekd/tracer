@@ -7,17 +7,15 @@ public class MemoryUpdate {
     public final long address;
     public final byte size;
     public final long value;
-    public final long pc;
     public final long instructionCount;
     public final Node node;
     public final Node step;
 
-    public MemoryUpdate(boolean be, long address, byte size, long value, long pc, long instructionCount, Node node, Node step) {
+    public MemoryUpdate(boolean be, long address, byte size, long value, long instructionCount, Node node, Node step) {
         this.be = be;
         this.address = address;
         this.size = size;
         this.value = value;
-        this.pc = pc;
         this.instructionCount = instructionCount;
         this.node = node;
         this.step = step;
@@ -41,6 +39,6 @@ public class MemoryUpdate {
 
     @Override
     public String toString() {
-        return String.format("[0x%08x] = 0x%x [%d bytes] @ PC=0x%x/%d", address, value, size, pc, instructionCount);
+        return String.format("[0x%08x] = 0x%x [%d bytes] @ #%d", address, value, size, instructionCount);
     }
 }

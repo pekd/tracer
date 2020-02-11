@@ -33,11 +33,10 @@ public class GetNextReadResult extends Result {
         }
         long insn = in.read64bit();
         long addr = in.read64bit();
-        long pc = in.read64bit();
         int size = in.read();
         Node node = IO.readNode(in);
         Node step = IO.readNode(in);
-        read = new MemoryRead(addr, (byte) size, pc, insn, node, step);
+        read = new MemoryRead(addr, (byte) size, insn, node, step);
     }
 
     @Override
@@ -49,7 +48,6 @@ public class GetNextReadResult extends Result {
         out.write(1);
         out.write64bit(read.instructionCount);
         out.write64bit(read.address);
-        out.write64bit(read.pc);
         out.write(read.size);
         IO.writeNode(out, read.node);
         IO.writeNode(out, read.step);

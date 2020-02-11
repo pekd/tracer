@@ -41,31 +41,31 @@ public class CoarsePage implements Page {
     }
 
     @Override
-    public void addUpdate(long addr, byte size, long value, long pc, long instructionCount, Node node, Node step, boolean be) {
+    public void addUpdate(long addr, byte size, long value, long instructionCount, Node node, Node step, boolean be) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
-        updates.add(new MemoryUpdate(be, addr, size, value, pc, instructionCount, node, step));
+        updates.add(new MemoryUpdate(be, addr, size, value, instructionCount, node, step));
     }
 
     @Override
-    public void addRead(long addr, byte size, long pc, long instructionCount, Node node, Node step) {
+    public void addRead(long addr, byte size, long instructionCount, Node node, Node step) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
-        reads.add(new MemoryRead(addr, size, pc, instructionCount, node, step));
+        reads.add(new MemoryRead(addr, size, instructionCount, node, step));
     }
 
     @Override
-    public void clear(long pc, long instructionCount, Node node, Node step) {
+    public void clear(long instructionCount, Node node, Node step) {
         for (int i = 0; i < 4096; i += 8) {
-            addUpdate(address + i, (byte) 8, 0, pc, instructionCount, node, step, false);
+            addUpdate(address + i, (byte) 8, 0, instructionCount, node, step, false);
         }
     }
 
     @Override
-    public void overwrite(byte[] update, long pc, long instructionCount, Node node, Node step) {
+    public void overwrite(byte[] update, long instructionCount, Node node, Node step) {
         for (int i = 0; i < 4096; i += 8) {
             long value = Endianess.get64bitLE(update, i);
-            addUpdate(address + i, (byte) 8, value, pc, instructionCount, node, step, false);
+            addUpdate(address + i, (byte) 8, value, instructionCount, node, step, false);
         }
     }
 
@@ -111,7 +111,7 @@ public class CoarsePage implements Page {
         }
 
         // find update timestamp
-        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, 0, instructionCount, null, null);
+        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, instructionCount, null, null);
         int idx = Collections.binarySearch(updates, target, (a, b) -> {
             return Long.compareUnsigned(a.instructionCount, b.instructionCount);
         });
@@ -195,7 +195,7 @@ public class CoarsePage implements Page {
         }
 
         // find update timestamp
-        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, 0, instructionCount, null, null);
+        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, instructionCount, null, null);
         int idx = Collections.binarySearch(updates, target, (a, b) -> {
             return Long.compareUnsigned(a.instructionCount, b.instructionCount);
         });
@@ -282,7 +282,7 @@ public class CoarsePage implements Page {
         }
 
         // find update timestamp
-        MemoryRead target = new MemoryRead(addr, (byte) 1, 0, instructionCount, null, null);
+        MemoryRead target = new MemoryRead(addr, (byte) 1, instructionCount, null, null);
         int idx = Collections.binarySearch(reads, target, (a, b) -> {
             return Long.compareUnsigned(a.instructionCount, b.instructionCount);
         });
@@ -351,7 +351,7 @@ public class CoarsePage implements Page {
         }
 
         // find update timestamp
-        MemoryRead target = new MemoryRead(addr, (byte) 1, 0, instructionCount, null, null);
+        MemoryRead target = new MemoryRead(addr, (byte) 1, instructionCount, null, null);
         int idx = Collections.binarySearch(reads, target, (a, b) -> {
             return Long.compareUnsigned(a.instructionCount, b.instructionCount);
         });

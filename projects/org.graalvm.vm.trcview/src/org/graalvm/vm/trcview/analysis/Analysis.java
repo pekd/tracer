@@ -210,52 +210,46 @@ public class Analysis {
         } else if (event instanceof MemoryEvent) {
             MemoryEvent memevent = (MemoryEvent) event;
             if (memevent.isWrite()) {
-                long pc = 0;
                 long insn = 0;
                 if (lastStep != null) {
-                    pc = lastStep.getPC();
                     insn = lastStep.getStep();
                 }
                 long addr = memevent.getAddress();
                 boolean be = memevent.isBigEndian();
                 if (memevent.getSize() <= 8) {
                     long value = memevent.getValue();
-                    memory.write(addr, (byte) memevent.getSize(), value, pc, insn, node, lastStepNode, be);
+                    memory.write(addr, (byte) memevent.getSize(), value, insn, node, lastStepNode, be);
                 } else if (memevent.getSize() == 16) {
                     Vector128 value = memevent.getVector();
                     if (be) {
-                        memory.write(addr, (byte) 8, value.getI64(0), pc, insn, node, lastStepNode, true);
-                        memory.write(addr + 8, (byte) 8, value.getI64(1), pc, insn, node, lastStepNode, true);
+                        memory.write(addr, (byte) 8, value.getI64(0), insn, node, lastStepNode, true);
+                        memory.write(addr + 8, (byte) 8, value.getI64(1), insn, node, lastStepNode, true);
                     } else {
-                        memory.write(addr, (byte) 8, value.getI64(1), pc, insn, node, lastStepNode, false);
-                        memory.write(addr + 8, (byte) 8, value.getI64(0), pc, insn, node, lastStepNode, false);
+                        memory.write(addr, (byte) 8, value.getI64(1), insn, node, lastStepNode, false);
+                        memory.write(addr + 8, (byte) 8, value.getI64(0), insn, node, lastStepNode, false);
                     }
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
                 }
             } else { /* read */
-                long pc = 0;
                 long insn = 0;
                 if (lastStep != null) {
-                    pc = lastStep.getPC();
                     insn = lastStep.getStep();
                 }
                 long addr = memevent.getAddress();
                 if (memevent.getSize() <= 8) {
-                    memory.read(addr, (byte) memevent.getSize(), pc, insn, node, lastStepNode);
+                    memory.read(addr, (byte) memevent.getSize(), insn, node, lastStepNode);
                 } else if (memevent.getSize() == 16) {
-                    memory.read(addr, (byte) 8, pc, insn, node, lastStepNode);
-                    memory.read(addr + 8, (byte) 8, pc, insn, node, lastStepNode);
+                    memory.read(addr, (byte) 8, insn, node, lastStepNode);
+                    memory.read(addr + 8, (byte) 8, insn, node, lastStepNode);
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
                 }
             }
         } else if (event instanceof MemoryDumpEvent) {
             MemoryDumpEvent dump = (MemoryDumpEvent) event;
-            long pc = 0;
             long insn = 0;
             if (lastStep != null) {
-                pc = lastStep.getPC();
                 insn = lastStep.getStep();
             }
             long addr = dump.getAddress();
@@ -263,10 +257,10 @@ public class Analysis {
             int i;
             for (i = 0; i < data.length - 7; i += 8) {
                 long value = Endianess.get64bitLE(data, i);
-                memory.write(addr + i, (byte) 8, value, pc, insn, node, lastStepNode, false);
+                memory.write(addr + i, (byte) 8, value, insn, node, lastStepNode, false);
             }
             for (; i < data.length; i++) {
-                memory.write(addr + i, (byte) 1, data[i], pc, insn, node, lastStepNode, false);
+                memory.write(addr + i, (byte) 1, data[i], insn, node, lastStepNode, false);
             }
         } else if (event instanceof BrkEvent) {
             BrkEvent brk = (BrkEvent) event;
