@@ -11,19 +11,31 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MemoryEvent extends Event {
-    private final boolean be;
-    private final boolean write;
-    private final boolean data;
+    private static final byte FLAG_WRITE = 1;
+    private static final byte FLAG_DATA = 2;
+    private static final byte FLAG_BE = 4;
+
+    private final byte flags;
     private final long address;
     private final byte size;
     private final long value64;
     private final Vector128 value128;
 
+    private static byte be(boolean value) {
+        return value ? FLAG_BE : 0;
+    }
+
+    private static byte data(boolean value) {
+        return value ? FLAG_DATA : 0;
+    }
+
+    private static byte write(boolean value) {
+        return value ? FLAG_WRITE : 0;
+    }
+
     public MemoryEvent(boolean be, int tid, long address, byte size, boolean write) {
         super(Elf.EM_NONE, MEMORY, tid);
-        this.be = be;
-        this.write = write;
-        this.data = false;
+        this.flags = (byte) (be(be) | write(write) | data(false));
         this.address = address;
         this.size = size;
         this.value64 = 0;
@@ -32,9 +44,7 @@ public class MemoryEvent extends Event {
 
     public MemoryEvent(boolean be, int tid, long address, byte size, boolean write, long value) {
         super(Elf.EM_NONE, MEMORY, tid);
-        this.be = be;
-        this.write = write;
-        this.data = true;
+        this.flags = (byte) (be(be) | write(write) | data(true));
         this.address = address;
         this.size = size;
         this.value64 = value;
@@ -43,9 +53,7 @@ public class MemoryEvent extends Event {
 
     public MemoryEvent(boolean be, int tid, long address, byte size, boolean write, Vector128 value) {
         super(Elf.EM_NONE, MEMORY, tid);
-        this.be = be;
-        this.write = write;
-        this.data = true;
+        this.flags = (byte) (be(be) | write(write) | data(true));
         this.address = address;
         this.size = size;
         this.value64 = 0;
@@ -54,9 +62,7 @@ public class MemoryEvent extends Event {
 
     private MemoryEvent(boolean be, int tid, long address, byte size, boolean write, boolean data, long value64, Vector128 value) {
         super(Elf.EM_NONE, MEMORY, tid);
-        this.be = be;
-        this.write = write;
-        this.data = data;
+        this.flags = (byte) (be(be) | write(write) | data(data));
         this.address = address;
         this.size = size;
         this.value64 = value64;
@@ -64,15 +70,15 @@ public class MemoryEvent extends Event {
     }
 
     public boolean isBigEndian() {
-        return be;
+        return BitTest.test(flags, FLAG_BE);
     }
 
     public boolean hasData() {
-        return data;
+        return BitTest.test(flags, FLAG_DATA);
     }
 
     public boolean isWrite() {
-        return write;
+        return BitTest.test(flags, FLAG_WRITE);
     }
 
     public long getAddress() {
@@ -93,16 +99,6 @@ public class MemoryEvent extends Event {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        byte bits = 0;
-        if (write) {
-            bits |= 1;
-        }
-        if (data) {
-            bits |= 2;
-        }
-        if (be) {
-            bits |= 4;
-        }
         out.write64bit(address);
         if (value128 == null) {
             out.write64bit(value64);
@@ -111,7 +107,7 @@ public class MemoryEvent extends Event {
             out.write64bit(value128.getI64(0));
             out.write64bit(value128.getI64(1));
         }
-        out.write8bit(bits);
+        out.write8bit(flags);
         out.write8bit(size);
     }
 
@@ -121,9 +117,9 @@ public class MemoryEvent extends Event {
         long v1 = in.read64bit();
         int bits = in.read8bit();
         int size = in.read8bit();
-        boolean write = BitTest.test(bits, 1);
-        boolean data = BitTest.test(bits, 2);
-        boolean be = BitTest.test(bits, 4);
+        boolean write = BitTest.test(bits, FLAG_WRITE);
+        boolean data = BitTest.test(bits, FLAG_DATA);
+        boolean be = BitTest.test(bits, FLAG_BE);
         if (size > 8) {
             Vector128 value = size > 8 ? new Vector128(v0, v1) : null;
             return new MemoryEvent(be, tid, address, (byte) size, write, data, 0, value);
@@ -136,7 +132,7 @@ public class MemoryEvent extends Event {
     public String toString() {
         String str = null;
         StringBuilder val = new StringBuilder("0x");
-        if (data) {
+        if (hasData()) {
             switch (size) {
                 case 1:
                     str = Stringify.i8((byte) value64);
@@ -164,6 +160,6 @@ public class MemoryEvent extends Event {
         if (str != null) {
             val.append(", '").append(str).append("'");
         }
-        return "Memory access to 0x" + HexFormatter.tohex(address, 16) + ": " + (!write ? "read" : "write") + " " + size + (size > 1 ? " bytes" : " byte") + (data ? " (" + val + ")" : "");
+        return "Memory access to 0x" + HexFormatter.tohex(address, 16) + ": " + (!isWrite() ? "read" : "write") + " " + size + (size > 1 ? " bytes" : " byte") + (hasData() ? " (" + val + ")" : "");
     }
 }
