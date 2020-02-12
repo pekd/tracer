@@ -55,9 +55,6 @@ public class StepRecord extends Record {
     private byte[] machinecode;
     private CpuStateRecord cpuState;
 
-    private String disasm;
-    private String[] disasmParts;
-
     StepRecord() {
         super(MAGIC);
     }
@@ -88,38 +85,29 @@ public class StepRecord extends Record {
     }
 
     public String getDisassembly() {
-        if (disasm == null) {
-            try {
-                AMD64Instruction insn = getInstruction();
-                disasm = insn.getDisassembly();
-                disasmParts = insn.getDisassemblyComponents();
-            } catch (Throwable t) {
-                disasm = "db\t" + code();
-                disasmParts = new String[]{"db", code()};
-            }
+        try {
+            AMD64Instruction insn = getInstruction();
+            return insn.getDisassembly();
+        } catch (Throwable t) {
+            return "db\t" + code();
         }
-        return disasm;
     }
 
     public String[] getDisassemblyComponents() {
-        if (disasmParts == null && machinecode != null) {
+        if (machinecode != null) {
             try {
                 AMD64Instruction insn = getInstruction();
-                disasm = insn.getDisassembly();
-                disasmParts = insn.getDisassemblyComponents();
+                return insn.getDisassemblyComponents();
             } catch (Throwable t) {
-                disasm = "db\t" + code();
-                disasmParts = new String[]{"db", code()};
+                return new String[]{"db", code()};
             }
+        } else {
+            return null;
         }
-        return disasmParts;
     }
 
     public String getMnemonic() {
-        // don't cache the result here
-        if (disasmParts != null) {
-            return disasmParts[0];
-        } else if (machinecode == null) {
+        if (machinecode == null) {
             return null;
         } else {
             String[] parts = getInstruction().getDisassemblyComponents();
