@@ -51,7 +51,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
     private CpuState current;
 
-    private byte[] deltaId;
+    private long deltaId;
     private long[] deltaValue;
 
     private long pc;
@@ -66,6 +66,14 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         this.current = current;
         setLastState(lastState);
         computeDelta(current);
+    }
+
+    private boolean getDeltaId(int id) {
+        return (deltaId & (1L << id)) != 0;
+    }
+
+    private void setDeltaId(int id) {
+        deltaId |= 1L << id;
     }
 
     private void computeDelta(CpuState state) {
@@ -137,111 +145,111 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         }
 
         // compute difference data
-        deltaId = new byte[cnt];
+        deltaId = 0;
         deltaValue = new long[cnt];
 
         int pos = 0;
         if (lastState.rax != state.rax) {
-            deltaId[pos] = 0;
+            setDeltaId(0);
             deltaValue[pos] = state.rax;
             pos++;
         }
         if (lastState.rcx != state.rcx) {
-            deltaId[pos] = 1;
+            setDeltaId(1);
             deltaValue[pos] = state.rcx;
             pos++;
         }
         if (lastState.rdx != state.rdx) {
-            deltaId[pos] = 2;
+            setDeltaId(2);
             deltaValue[pos] = state.rdx;
             pos++;
         }
         if (lastState.rbx != state.rbx) {
-            deltaId[pos] = 3;
+            setDeltaId(3);
             deltaValue[pos] = state.rbx;
             pos++;
         }
         if (lastState.rsp != state.rsp) {
-            deltaId[pos] = 4;
+            setDeltaId(4);
             deltaValue[pos] = state.rsp;
             pos++;
         }
         if (lastState.rbp != state.rbp) {
-            deltaId[pos] = 5;
+            setDeltaId(5);
             deltaValue[pos] = state.rbp;
             pos++;
         }
         if (lastState.rsi != state.rsi) {
-            deltaId[pos] = 6;
+            setDeltaId(6);
             deltaValue[pos] = state.rsi;
             pos++;
         }
         if (lastState.rdi != state.rdi) {
-            deltaId[pos] = 7;
+            setDeltaId(7);
             deltaValue[pos] = state.rdi;
             pos++;
         }
         if (lastState.r8 != state.r8) {
-            deltaId[pos] = 8;
+            setDeltaId(8);
             deltaValue[pos] = state.r8;
             pos++;
         }
         if (lastState.r9 != state.r9) {
-            deltaId[pos] = 9;
+            setDeltaId(9);
             deltaValue[pos] = state.r9;
             pos++;
         }
         if (lastState.r10 != state.r10) {
-            deltaId[pos] = 10;
+            setDeltaId(10);
             deltaValue[pos] = state.r10;
             pos++;
         }
         if (lastState.r11 != state.r11) {
-            deltaId[pos] = 11;
+            setDeltaId(11);
             deltaValue[pos] = state.r11;
             pos++;
         }
         if (lastState.r12 != state.r12) {
-            deltaId[pos] = 12;
+            setDeltaId(12);
             deltaValue[pos] = state.r12;
             pos++;
         }
         if (lastState.r13 != state.r13) {
-            deltaId[pos] = 13;
+            setDeltaId(13);
             deltaValue[pos] = state.r13;
             pos++;
         }
         if (lastState.r14 != state.r14) {
-            deltaId[pos] = 14;
+            setDeltaId(14);
             deltaValue[pos] = state.r14;
             pos++;
         }
         if (lastState.r15 != state.r15) {
-            deltaId[pos] = 15;
+            setDeltaId(15);
             deltaValue[pos] = state.r15;
             pos++;
         }
         if (lastState.fs != state.fs) {
-            deltaId[pos] = 16;
+            setDeltaId(16);
             deltaValue[pos] = state.fs;
             pos++;
         }
         if (lastState.gs != state.gs) {
-            deltaId[pos] = 17;
+            setDeltaId(17);
             deltaValue[pos] = state.gs;
             pos++;
         }
         if (lastState.getRFL() != state.getRFL()) {
-            deltaId[pos] = 18;
+            setDeltaId(18);
             deltaValue[pos] = state.getRFL();
             pos++;
         }
         for (int i = 0; i < 16; i++) {
             if (!lastState.xmm[i].equals(state.xmm[i])) {
-                deltaId[pos] = (byte) (19 + 2 * i);
+                setDeltaId(19 + 2 * i);
                 deltaValue[pos] = state.xmm[i].getI64(0);
                 pos++;
-                deltaId[pos] = (byte) (20 + 2 * i);
+                setDeltaId(20 + 2 * i);
                 deltaValue[pos] = state.xmm[i].getI64(1);
                 pos++;
             }
@@ -261,74 +269,73 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             state.rip = pc;
             state.instructionCount = instructionCount;
             clearLastState();
-            for (int i = 0; i < deltaId.length; i++) {
-                long val = deltaValue[i];
-                switch (deltaId[i]) {
-                    case 0:
-                        state.rax = val;
-                        break;
-                    case 1:
-                        state.rcx = val;
-                        break;
-                    case 2:
-                        state.rdx = val;
-                        break;
-                    case 3:
-                        state.rbx = val;
-                        break;
-                    case 4:
-                        state.rsp = val;
-                        break;
-                    case 5:
-                        state.rbp = val;
-                        break;
-                    case 6:
-                        state.rsi = val;
-                        break;
-                    case 7:
-                        state.rdi = val;
-                        break;
-                    case 8:
-                        state.r8 = val;
-                        break;
-                    case 9:
-                        state.r9 = val;
-                        break;
-                    case 10:
-                        state.r10 = val;
-                        break;
-                    case 11:
-                        state.r11 = val;
-                        break;
-                    case 12:
-                        state.r12 = val;
-                        break;
-                    case 13:
-                        state.r13 = val;
-                        break;
-                    case 14:
-                        state.r14 = val;
-                        break;
-                    case 15:
-                        state.r15 = val;
-                        break;
-                    case 16:
-                        state.fs = val;
-                        break;
-                    case 17:
-                        state.gs = val;
-                        break;
-                    case 18:
-                        state.setRFL(val);
-                        break;
-                    default:
-                        if (deltaId[i] > 18 && deltaId[i] < (19 + 16 * 2)) {
-                            int v = deltaId[i] - 19;
-                            int reg = v / 2;
-                            state.xmm[reg].setI64(v % 2 == 0 ? 0 : 1, val);
-                        } else {
-                            throw new RuntimeException("unknown id: " + deltaId[i]);
-                        }
+            int i = 0;
+            if (getDeltaId(0)) {
+                state.rax = deltaValue[i++];
+            }
+            if (getDeltaId(1)) {
+                state.rcx = deltaValue[i++];
+            }
+            if (getDeltaId(2)) {
+                state.rdx = deltaValue[i++];
+            }
+            if (getDeltaId(3)) {
+                state.rbx = deltaValue[i++];
+            }
+            if (getDeltaId(4)) {
+                state.rsp = deltaValue[i++];
+            }
+            if (getDeltaId(5)) {
+                state.rbp = deltaValue[i++];
+            }
+            if (getDeltaId(6)) {
+                state.rsi = deltaValue[i++];
+            }
+            if (getDeltaId(7)) {
+                state.rdi = deltaValue[i++];
+            }
+            if (getDeltaId(8)) {
+                state.r8 = deltaValue[i++];
+            }
+            if (getDeltaId(9)) {
+                state.r9 = deltaValue[i++];
+            }
+            if (getDeltaId(10)) {
+                state.r10 = deltaValue[i++];
+            }
+            if (getDeltaId(11)) {
+                state.r11 = deltaValue[i++];
+            }
+            if (getDeltaId(12)) {
+                state.r12 = deltaValue[i++];
+            }
+            if (getDeltaId(13)) {
+                state.r13 = deltaValue[i++];
+            }
+            if (getDeltaId(14)) {
+                state.r14 = deltaValue[i++];
+            }
+            if (getDeltaId(15)) {
+                state.r15 = deltaValue[i++];
+            }
+            if (getDeltaId(16)) {
+                state.fs = deltaValue[i++];
+            }
+            if (getDeltaId(17)) {
+                state.gs = deltaValue[i++];
+            }
+            if (getDeltaId(18)) {
+                state.setRFL(deltaValue[i++]);
+            }
+            for (int n = 19; n < 64; n++) {
+                if (getDeltaId(n)) {
+                    if (n > 18 && n < (19 + 16 * 2)) {
+                        int v = n - 19;
+                        int reg = v / 2;
+                        state.xmm[reg].setI64(v % 2 == 0 ? 0 : 1, deltaValue[i++]);
+                    } else {
+                        throw new RuntimeException("unknown id: " + n);
+                    }
                 }
             }
             current = state;
@@ -348,7 +355,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
     @Override
     protected int getDataSize() {
-        return 1 + deltaId.length + 8 * deltaId.length + 2 * 8;
+        return 1 + deltaValue.length + 8 * deltaValue.length + 2 * 8;
     }
 
     @Override
@@ -356,21 +363,32 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         pc = in.read64bit();
         instructionCount = in.read64bit();
         int cnt = in.read8bit();
-        deltaId = new byte[cnt];
+        deltaId = 0;
         deltaValue = new long[cnt];
         for (int i = 0; i < cnt; i++) {
-            deltaId[i] = (byte) in.read8bit();
+            setDeltaId(in.read8bit());
             deltaValue[i] = in.read64bit();
         }
+    }
+
+    private byte[] getDeltaId() {
+        byte[] result = new byte[Long.bitCount(deltaId)];
+        for (int i = 0, n = 0; i < 64; i++) {
+            if (getDeltaId(i)) {
+                result[n++] = (byte) i;
+            }
+        }
+        return result;
     }
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
         out.write64bit(pc);
         out.write64bit(instructionCount);
-        out.write8bit((byte) deltaId.length);
-        for (int i = 0; i < deltaId.length; i++) {
-            out.write8bit(deltaId[i]);
+        out.write8bit((byte) deltaValue.length);
+        byte[] deltaIds = getDeltaId();
+        for (int i = 0; i < deltaValue.length; i++) {
+            out.write8bit(deltaIds[i]);
             out.write64bit(deltaValue[i]);
         }
     }
