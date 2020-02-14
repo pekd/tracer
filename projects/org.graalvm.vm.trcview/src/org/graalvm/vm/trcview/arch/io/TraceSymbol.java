@@ -51,7 +51,7 @@ public class TraceSymbol implements Symbol {
     private int visibility;
     private short shndx;
 
-    TraceSymbol(String name, long value, long size, int bind, int type, int visibility, short shndx) {
+    public TraceSymbol(String name, long value, long size, int bind, int type, int visibility, short shndx) {
         this.name = name;
         this.value = value;
         this.size = size;

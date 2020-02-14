@@ -72,6 +72,10 @@ suite = {
     "UPL" : {
       "name" : "Universal Permissive License, Version 1.0",
       "url" : "http://opensource.org/licenses/UPL",
+    },
+    "LGPL-2.1" : {
+      "name" : "GNU Lesser General Public License version 2.1",
+      "url" : "http://opensource.org/licenses/LGPL-2.1",
     }
   },
 
@@ -84,6 +88,85 @@ suite = {
       "sha1" : "ec6ada3f0f3c8c71b57724b3d841d21d6c57fa67",
       "license" : "Apache-2.0",
     },
+
+    "SLF4J_API" : {
+      "sha1" : "b5a4b6d16ab13e34a88fae84c35cd5d68cac922c",
+      "maven" : {
+        "groupId" : "org.slf4j",
+        "artifactId" : "slf4j-api",
+        "version" : "1.7.30",
+      },
+    },
+
+    "SLF4J_JDK14" : {
+      "sha1" : "d35953dd2fe54ebe39fdf18cfd82fe6eb35b25ed",
+      "maven" : {
+        "groupId" : "org.slf4j",
+        "artifactId" : "slf4j-jdk14",
+        "version" : "1.7.30",
+      },
+    },
+
+    "TYPESAFE_CONFIG" : {
+      "sha1" : "a8b341fe81552834edc231193afd6f56a96f0eff",
+      "maven" : {
+        "groupId" : "com.typesafe",
+        "artifactId" : "config",
+        "version" : "1.4.0",
+      },
+    },
+
+    "NETTY" : {
+      "sha1" : "e830eae36d22f2bba3118a3bc08e17f15263a01d",
+      "maven" : {
+        "groupId" : "io.netty",
+        "artifactId" : "netty-all",
+        "version" : "4.1.45.Final",
+      },
+    },
+
+    "CASSANDRA_NATIVE_PROTOCOL" : {
+      "sha1" : "c9ac03b10935050ad6edcb082142de4664c8d1d9",
+      "maven" : {
+        "groupId" : "com.datastax.oss",
+        "artifactId" : "native-protocol",
+        "version" : "1.4.8",
+      },
+    },
+
+    "CASSANDRA_GUAVA" : {
+      "sha1" : "5aefe7f72452c5c6d7532bfe954814ad80512b46",
+      "maven" : {
+        "groupId" : "com.datastax.oss",
+        "artifactId" : "java-driver-shaded-guava",
+        "version" : "25.1-jre",
+      },
+    },
+
+    "CASSANDRA" : {
+      "sha1" : "7a141a50b05ae6961c618786d11768c62cfa7e2d",
+      "maven" : {
+        "groupId" : "com.datastax.oss",
+        "artifactId" : "java-driver-core",
+        "version" : "4.4.0",
+      },
+      "dependencies" : ["CASSANDRA_NATIVE_PROTOCOL", "CASSANDRA_GUAVA", "NETTY", "TYPESAFE_CONFIG", "SLF4J_API", "SLF4J_JDK14"]
+    },
+
+    "MARIADB" : {
+      "urls" : ["https://downloads.mariadb.com/Connectors/java/connector-java-2.5.4/mariadb-java-client-2.5.4.jar"],
+      "sha1" : "adb3dbc97684a254b9ecf488167bbf177a33d8ba",
+      "license" : "LGPL-2.1"
+    },
+
+    "DERBY" : {
+      "sha1" : "7efad40ef52fbb1f08142f07a83b42d29e47d8ce",
+      "maven" : {
+        "groupId" : "org.apache.derby",
+        "artifactId" : "derby",
+        "version" : "10.14.2.0"
+      }
+    }
   },
 
   "defaultLicense" : "UPL",
@@ -207,6 +290,18 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "org.graalvm.vm.trcview",
+      ],
+      "javaCompliance" : "1.8+",
+      "workingSets" : "vmx86",
+      "license" : "UPL",
+    },
+
+    "org.graalvm.vm.trcview.storage.cassandra" : {
+      "subDir" : "projects",
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "org.graalvm.vm.trcview",
+        "CASSANDRA"
       ],
       "javaCompliance" : "1.8+",
       "workingSets" : "vmx86",

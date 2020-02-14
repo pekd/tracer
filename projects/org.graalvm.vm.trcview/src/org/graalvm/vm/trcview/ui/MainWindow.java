@@ -44,6 +44,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -69,13 +70,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -101,6 +106,10 @@ import org.graalvm.vm.trcview.io.TextSerializer;
 import org.graalvm.vm.trcview.net.Client;
 import org.graalvm.vm.trcview.net.Local;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.storage.DatabaseTraceAnalyzer;
+import org.graalvm.vm.trcview.storage.MemoryBackend;
+import org.graalvm.vm.trcview.storage.StorageBackend;
+import org.graalvm.vm.trcview.storage.TraceMetadata;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
@@ -125,6 +134,7 @@ public class MainWindow extends JFrame {
     private TraceView view;
 
     private JMenuItem open;
+    private JMenuItem openDatabase;
     private JMenuItem loadPrototypes;
     private JMenuItem loadSymbols;
     private JMenuItem saveSymbols;
@@ -191,6 +201,9 @@ public class MainWindow extends JFrame {
             };
             worker.execute();
         });
+        openDatabase = new JMenuItem("Connect to database...");
+        openDatabase.setMnemonic('C');
+        openDatabase.addActionListener(e -> connectToDatabase());
         loadSession = new JMenuItem("Load session...");
         loadSession.setMnemonic('l');
         loadSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -333,6 +346,7 @@ public class MainWindow extends JFrame {
 
         if (master == null) {
             fileMenu.add(open);
+            // fileMenu.add(openDatabase);
             fileMenu.addSeparator();
             fileMenu.add(loadSession);
             fileMenu.add(saveSession);
@@ -725,6 +739,7 @@ public class MainWindow extends JFrame {
     public void load(File file) throws IOException {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
+        openDatabase.setEnabled(false);
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
             long size = file.length();
             load(new TraceFileReader(in), size, file.toString());
@@ -734,6 +749,7 @@ public class MainWindow extends JFrame {
             throw t;
         } finally {
             open.setEnabled(true);
+            openDatabase.setEnabled(true);
         }
         log.info("File loaded");
     }
@@ -763,6 +779,7 @@ public class MainWindow extends JFrame {
     public void load(TraceReader reader, long size, String file) throws IOException {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
+        openDatabase.setEnabled(false);
         try {
             String text = "Loading " + file;
             setStatus(text);
@@ -780,6 +797,7 @@ public class MainWindow extends JFrame {
             setTitle(file + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
                 setTrace(new Local(reader.getArchitecture(), root, analysis));
+                // setTrace(new LocalDatabase(reader.getArchitecture(), root, analysis));
             });
         } catch (Throwable t) {
             log.log(Level.INFO, "Loading failed: " + t, t);
@@ -787,6 +805,7 @@ public class MainWindow extends JFrame {
             throw t;
         } finally {
             open.setEnabled(true);
+            openDatabase.setEnabled(true);
         }
     }
 
@@ -1218,6 +1237,65 @@ public class MainWindow extends JFrame {
             log.info("Failed to connect to " + host + " on port " + port);
             throw t;
         }
+    }
+
+    public void connectToDatabase() {
+        log.info("Opening database connection...");
+        connectToDatabase(new MemoryBackend());
+    }
+
+    public void connectToDatabase(StorageBackend storage) {
+        log.info("Connecting to database backend...");
+        List<TraceMetadata> traces = storage.list();
+        if (traces.isEmpty()) {
+            log.info("No traces available");
+            JOptionPane.showMessageDialog(this, "No traces available", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JDialog dlg = new JDialog(this, "Select trace...", true);
+        String[] items = traces.stream().map(TraceMetadata::toString).toArray(String[]::new);
+        JList<String> traceList = new JList<>(items);
+        traceList.setSelectedIndex(0);
+        JPanel buttons = new JPanel(new FlowLayout());
+        JButton ok = new JButton("OK");
+        JButton cancel = new JButton("Cancel");
+        cancel.addActionListener(e -> {
+            dlg.dispose();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        storage.close();
+                    } catch (IOException ex) {
+                        log.log(Levels.WARNING, "Failed to close storage connection: " + ex.getMessage(), e);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        ok.addActionListener(e -> {
+            dlg.dispose();
+            TraceMetadata selected = traces.get(traceList.getSelectedIndex());
+            log.info("Loading trace " + selected.name + " from database");
+            setStatus("Loading trace " + selected.name + " from database");
+            storage.connect(selected.id);
+            loadTrace(storage);
+        });
+        buttons.add(ok);
+        buttons.add(cancel);
+        dlg.setLayout(new BorderLayout());
+        dlg.add(BorderLayout.CENTER, new JScrollPane(traceList));
+        dlg.add(BorderLayout.SOUTH, buttons);
+        dlg.setSize(600, 300);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+
+    public void loadTrace(StorageBackend storage) {
+        EventQueue.invokeLater(() -> {
+            setTrace(new DatabaseTraceAnalyzer(storage));
+        });
     }
 
     private void exit() {
