@@ -153,12 +153,6 @@ suite = {
       "dependencies" : ["CASSANDRA_NATIVE_PROTOCOL", "CASSANDRA_GUAVA", "NETTY", "TYPESAFE_CONFIG", "SLF4J_API", "SLF4J_JDK14"]
     },
 
-    "MARIADB" : {
-      "urls" : ["https://downloads.mariadb.com/Connectors/java/connector-java-2.5.4/mariadb-java-client-2.5.4.jar"],
-      "sha1" : "adb3dbc97684a254b9ecf488167bbf177a33d8ba",
-      "license" : "LGPL-2.1"
-    },
-
     "DERBY" : {
       "sha1" : "7efad40ef52fbb1f08142f07a83b42d29e47d8ce",
       "maven" : {
