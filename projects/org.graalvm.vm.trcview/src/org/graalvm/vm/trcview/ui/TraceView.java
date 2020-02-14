@@ -56,9 +56,9 @@ import javax.swing.KeyStroke;
 
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
+import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
@@ -156,7 +156,7 @@ public class TraceView extends JPanel {
                 watches.setStep(node.getFirstStep());
             }
 
-            public void ret(EventNode ret) {
+            public void ret(Event ret) {
                 BlockNode par = trc.getParent(ret);
                 BlockNode parent = trc.getParent(par);
                 if (parent != null) {

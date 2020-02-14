@@ -12,7 +12,6 @@ import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.expression.TypeParser;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
@@ -241,12 +240,12 @@ public class IO {
         Node node;
         switch (type) {
             case 0:
-                node = new EventNode(Event.read(in));
+                node = Event.read(in);
                 node.setParent(parentNode);
                 node.setId(id);
                 return node;
             case 1:
-                node = new EventNode(readStep(in));
+                node = readStep(in);
                 node.setParent(parentNode);
                 node.setId(id);
                 return node;
@@ -259,7 +258,7 @@ public class IO {
                 }
                 in.read32bit(); // node count
                 StepEvent first = readStep(in);
-                node = new BlockNode(head, Arrays.asList(new EventNode(first)));
+                node = new BlockNode(head, Arrays.asList(first));
                 node.setParent(parentNode);
                 node.setId(id);
                 return node;
@@ -286,9 +285,8 @@ public class IO {
             out.write64bit(parent.getHead().getStep());
         }
 
-        if (node instanceof EventNode) {
-            EventNode n = (EventNode) node;
-            Event r = n.getEvent();
+        if (node instanceof Event) {
+            Event r = (Event) node;
             if (r instanceof StepEvent) {
                 out.write(1);
                 writeStep(out, (StepEvent) r);

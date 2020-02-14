@@ -70,6 +70,11 @@ public class MockStorageBackend extends StorageBackend {
     }
 
     @Override
+    public long getStepCount(long parent) {
+        return steps.stream().filter(x -> x.parent == parent).count();
+    }
+
+    @Override
     public MemoryAccess getRead(long address, long step) {
         // TODO Auto-generated method stub
         return null;

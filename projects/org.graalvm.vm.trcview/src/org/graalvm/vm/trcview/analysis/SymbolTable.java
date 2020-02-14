@@ -54,7 +54,6 @@ import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
@@ -154,8 +153,8 @@ public class SymbolTable {
     }
 
     public void visit(Node node) {
-        if (node instanceof EventNode && ((EventNode) node).getEvent() instanceof StepEvent) {
-            StepEvent step = (StepEvent) ((EventNode) node).getEvent();
+        if (node instanceof StepEvent) {
+            StepEvent step = (StepEvent) node;
             long pc = step.getPC();
             ComputedSymbol sym = symbols.get(pc);
             if (sym != null) {

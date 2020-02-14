@@ -56,7 +56,7 @@ import org.graalvm.vm.trcview.arch.io.TraceReader;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 
-public class BlockNode extends Node {
+public class BlockNode extends Node implements Block {
     private static final Logger log = Trace.create(BlockNode.class);
     private static final int PROGRESS_UPDATE = 10_000;
 
@@ -97,6 +97,7 @@ public class BlockNode extends Node {
         return interrupt;
     }
 
+    @Override
     public StepEvent getHead() {
         return head;
     }
@@ -105,19 +106,28 @@ public class BlockNode extends Node {
         return Collections.unmodifiableList(children);
     }
 
+    @Override
+    public Node get(int i) {
+        return children.get(i);
+    }
+
+    @Override
+    public int size() {
+        return children.size();
+    }
+
     public Node getFirstNode() {
-        for (Node n : children) {
-            if (n instanceof BlockNode || n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
-                return n;
-            }
+        if (children.isEmpty()) {
+            return null;
+        } else {
+            return children.get(0);
         }
-        return null;
     }
 
     public StepEvent getFirstStep() {
         for (Node n : children) {
-            if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
-                return (StepEvent) ((EventNode) n).getEvent();
+            if (n instanceof StepEvent) {
+                return (StepEvent) n;
             } else if (n instanceof BlockNode) {
                 return ((BlockNode) n).getFirstStep();
             }
@@ -155,11 +165,8 @@ public class BlockNode extends Node {
     private static boolean isStep(Node node) {
         if (node instanceof BlockNode) {
             return true;
-        } else if (node instanceof EventNode) {
-            Event evt = ((EventNode) node).getEvent();
-            if (evt instanceof StepEvent) {
-                return true;
-            }
+        } else if (node instanceof StepEvent) {
+            return true;
         }
         return false;
     }
@@ -201,7 +208,7 @@ public class BlockNode extends Node {
                     Node child = parseRecord(in, analysis, progress, tid, ignore);
                     if (child == null) {
                         if (!hasSteps) {
-                            result.add(new EventNode(new IncompleteTraceStep(tid)));
+                            result.add(new IncompleteTraceStep(tid));
                         }
                         break;
                     }
@@ -214,10 +221,10 @@ public class BlockNode extends Node {
                     } else {
                         cnt++;
                     }
-                    if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
+                    if (child instanceof StepEvent) {
                         hasSteps = true;
                         ignore = false;
-                        StepEvent s = (StepEvent) ((EventNode) child).getEvent();
+                        StepEvent s = (StepEvent) child;
                         if (s.getMachinecode() == null || (s.isReturn() || (system && s.isReturnFromSyscall()))) {
                             if (progress != null) {
                                 progress.progressUpdate(in.tell());
@@ -244,14 +251,11 @@ public class BlockNode extends Node {
                                     }
                                 }
                             }
-                            if (last instanceof EventNode) {
-                                Event evt = ((EventNode) last).getEvent();
-                                if (evt instanceof StepEvent) {
-                                    StepEvent s = (StepEvent) evt;
-                                    if (s.isReturnFromSyscall()) {
-                                        log.log(Levels.DEBUG, () -> String.format("break: %d [%x] in %d [%x]\n", s.getStep(), s.getPC(), step.getStep(), step.getPC()));
-                                        break;
-                                    }
+                            if (last instanceof StepEvent) {
+                                StepEvent s = (StepEvent) last;
+                                if (s.isReturnFromSyscall()) {
+                                    log.log(Levels.DEBUG, () -> String.format("break: %d [%x] in %d [%x]\n", s.getStep(), s.getPC(), step.getStep(), step.getPC()));
+                                    break;
                                 }
                             }
                         }
@@ -260,7 +264,7 @@ public class BlockNode extends Node {
                 block.setChildren(result);
                 return block;
             } else {
-                EventNode node = new EventNode(event);
+                Event node = event;
                 analysis.process(event, node);
                 return node;
             }
@@ -278,7 +282,7 @@ public class BlockNode extends Node {
                 Node child = parseRecord(in, analysis, progress, tid, false);
                 if (child == null) {
                     if (!hasSteps) {
-                        result.add(new EventNode(new IncompleteTraceStep(tid)));
+                        result.add(new IncompleteTraceStep(tid));
                     }
                     break;
                 }
@@ -291,9 +295,9 @@ public class BlockNode extends Node {
                 } else {
                     cnt++;
                 }
-                if (child instanceof EventNode && ((EventNode) child).getEvent() instanceof StepEvent) {
+                if (child instanceof StepEvent) {
                     hasSteps = true;
-                    StepEvent s = (StepEvent) ((EventNode) child).getEvent();
+                    StepEvent s = (StepEvent) child;
                     if (s.getMachinecode() == null || s.isReturnFromSyscall()) {
                         if (progress != null) {
                             progress.progressUpdate(in.tell());
@@ -319,14 +323,11 @@ public class BlockNode extends Node {
                                 }
                             }
                         }
-                        if (last instanceof EventNode) {
-                            Event evt = ((EventNode) last).getEvent();
-                            if (evt instanceof StepEvent) {
-                                StepEvent s = (StepEvent) evt;
-                                if (s.isReturnFromSyscall()) {
-                                    log.log(Levels.DEBUG, () -> String.format("break trap: %d [%x]\n", s.getStep(), s.getPC()));
-                                    break;
-                                }
+                        if (last instanceof StepEvent) {
+                            StepEvent s = (StepEvent) last;
+                            if (s.isReturnFromSyscall()) {
+                                log.log(Levels.DEBUG, () -> String.format("break trap: %d [%x]\n", s.getStep(), s.getPC()));
+                                break;
                             }
                         }
                     }
@@ -335,7 +336,7 @@ public class BlockNode extends Node {
             block.setChildren(result);
             return block;
         } else {
-            EventNode node = new EventNode(event);
+            Event node = event;
             analysis.process(event, node);
             return node;
         }

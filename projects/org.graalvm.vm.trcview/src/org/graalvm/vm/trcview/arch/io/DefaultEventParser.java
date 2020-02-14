@@ -34,4 +34,9 @@ public class DefaultEventParser extends EventParser {
     public <T extends StepEvent> T parseStep(WordInputStream in, int tid, long step, long pc, InstructionType type, byte[] machinecode) throws IOException {
         throw new IOException("step events are not supported by this architecture");
     }
+
+    @Override
+    public <T extends InterruptEvent> T parseTrap(WordInputStream in, int tid, long step, long pc, InstructionType type, byte[] machinecode) throws IOException {
+        throw new IOException("interrupt events are not supported by this architecture");
+    }
 }

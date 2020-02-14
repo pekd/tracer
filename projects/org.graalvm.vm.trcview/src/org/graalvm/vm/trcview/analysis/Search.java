@@ -42,9 +42,9 @@ package org.graalvm.vm.trcview.analysis;
 
 import java.util.List;
 
+import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 
 public class Search {
@@ -52,13 +52,13 @@ public class Search {
         if (node instanceof BlockNode) {
             BlockNode block = (BlockNode) node;
             return block.getFirstNode();
-        } else if (node instanceof EventNode && ((EventNode) node).getEvent() instanceof StepEvent) {
+        } else if (node instanceof StepEvent) {
             BlockNode block = node.getParent();
             boolean start = false;
             for (Node n : block.getNodes()) {
                 if (n == node) {
                     start = true;
-                } else if (start && (n instanceof BlockNode || ((EventNode) n).getEvent() instanceof StepEvent)) {
+                } else if (start && (n instanceof BlockNode || n instanceof StepEvent)) {
                     return n;
                 }
             }
@@ -72,13 +72,13 @@ public class Search {
         if (node instanceof BlockNode) {
             BlockNode block = (BlockNode) node;
             return block.getFirstNode();
-        } else if (node instanceof EventNode) {
+        } else if (node instanceof Event) {
             BlockNode block = node.getParent();
             boolean start = false;
             for (Node n : block.getNodes()) {
                 if (n == node) {
                     start = true;
-                } else if (start && (n instanceof BlockNode || ((EventNode) n).getEvent() instanceof StepEvent)) {
+                } else if (start && (n instanceof BlockNode || n instanceof StepEvent)) {
                     return n;
                 }
             }
@@ -104,7 +104,7 @@ public class Search {
                 } else {
                     return block;
                 }
-            } else if (n instanceof BlockNode || ((EventNode) n).getEvent() instanceof StepEvent) {
+            } else if (n instanceof BlockNode || n instanceof StepEvent) {
                 last = n;
             }
         }
@@ -126,7 +126,7 @@ public class Search {
                 for (Node n : block.getNodes()) {
                     if (n == c) {
                         started = true;
-                    } else if (started && (n instanceof BlockNode || (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent))) {
+                    } else if (started && (n instanceof BlockNode || (n instanceof StepEvent))) {
                         Node ret = nextPCChildren(n, pc);
                         if (ret != null) {
                             return ret;
@@ -150,8 +150,8 @@ public class Search {
                 return block;
             }
             for (Node n : block.getNodes()) {
-                if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
-                    StepEvent step = (StepEvent) ((EventNode) n).getEvent();
+                if (n instanceof StepEvent) {
+                    StepEvent step = (StepEvent) n;
                     if (step.getPC() == pc) {
                         return n;
                     }
@@ -163,16 +163,16 @@ public class Search {
                 }
             }
             return null;
-        } else if (start instanceof EventNode && ((EventNode) start).getEvent() instanceof StepEvent) {
-            if (((StepEvent) ((EventNode) start).getEvent()).getPC() == pc) {
+        } else if (start instanceof StepEvent) {
+            if (((StepEvent) start).getPC() == pc) {
                 return start;
             }
             BlockNode parent = start.getParent();
             boolean started = false;
             for (Node n : parent.getNodes()) {
                 if (started) {
-                    if (n instanceof EventNode && ((EventNode) n).getEvent() instanceof StepEvent) {
-                        StepEvent step = (StepEvent) ((EventNode) n).getEvent();
+                    if (n instanceof StepEvent) {
+                        StepEvent step = (StepEvent) n;
                         if (step.getPC() == pc) {
                             return n;
                         }
@@ -188,8 +188,8 @@ public class Search {
             }
             return null;
         } else {
-            if (start instanceof EventNode) {
-                throw new IllegalArgumentException("invalid start node type: " + start.getClass().getCanonicalName() + " [" + ((EventNode) start).getEvent().getClass() + "]");
+            if (start instanceof Event) {
+                throw new IllegalArgumentException("invalid start node type: " + start.getClass().getCanonicalName() + " [" + start.getClass() + "]");
             } else {
                 throw new IllegalArgumentException("invalid start node type: " + start.getClass().getCanonicalName());
             }
@@ -199,8 +199,8 @@ public class Search {
     private static long getInstruction(Node node) {
         if (node instanceof BlockNode) {
             return ((BlockNode) node).getHead().getStep();
-        } else if (node instanceof EventNode && ((EventNode) node).getEvent() instanceof StepEvent) {
-            return ((StepEvent) ((EventNode) node).getEvent()).getStep();
+        } else if (node instanceof StepEvent) {
+            return ((StepEvent) node).getStep();
         } else {
             return -1;
         }
@@ -208,13 +208,9 @@ public class Search {
 
     public static Node instruction(Node root, long insn) {
         assert root != null;
-        if (root instanceof EventNode) {
-            if (((EventNode) root).getEvent() instanceof StepEvent) {
-                StepEvent step = (StepEvent) ((EventNode) root).getEvent();
-                return step.getStep() == insn ? root : null;
-            } else {
-                throw new IllegalArgumentException("Not a BlockNode/RecordNode");
-            }
+        if (root instanceof StepEvent) {
+            StepEvent step = (StepEvent) root;
+            return step.getStep() == insn ? root : null;
         } else if (root instanceof BlockNode) {
             BlockNode block = (BlockNode) root;
             if (block.getHead() != null) {

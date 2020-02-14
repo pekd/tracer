@@ -40,11 +40,11 @@
  */
 package org.graalvm.vm.trcview.ui.event;
 
+import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 
 public interface CallListener {
     void call(BlockNode call);
 
-    void ret(EventNode ret);
+    void ret(Event ret);
 }

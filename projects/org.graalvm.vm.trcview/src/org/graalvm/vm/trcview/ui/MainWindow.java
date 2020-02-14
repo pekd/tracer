@@ -96,7 +96,6 @@ import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.TypeParser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.io.TextSerializer;
 import org.graalvm.vm.trcview.net.Client;
@@ -355,8 +354,8 @@ public class MainWindow extends JFrame {
             // synchronize master view to slave view
             view.addChangeListener(() -> {
                 Node node = view.getSelectedNode();
-                if (node instanceof EventNode) {
-                    Event event = ((EventNode) node).getEvent();
+                if (node instanceof Event) {
+                    Event event = (Event) node;
                     if (event instanceof DerivedStepEvent) {
                         DerivedStepEvent step = (DerivedStepEvent) event;
                         long id = step.getParentStep();
@@ -692,6 +691,7 @@ public class MainWindow extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 600);
+        setLocationRelativeTo(null);
     }
 
     public boolean jump(long insn) {
@@ -738,6 +738,28 @@ public class MainWindow extends JFrame {
         log.info("File loaded");
     }
 
+    private void setTrace(TraceAnalyzer trc) {
+        this.trc = trc;
+        view.setTraceAnalyzer(trc);
+        loadPrototypes.setEnabled(true);
+        loadSymbols.setEnabled(true);
+        saveSymbols.setEnabled(true);
+        loadSession.setEnabled(true);
+        saveSession.setEnabled(true);
+        refresh.setEnabled(false);
+        renameSymbol.setEnabled(true);
+        setFunctionType.setEnabled(true);
+        setCommentInsn.setEnabled(true);
+        setCommentPC.setEnabled(true);
+        setExpression.setEnabled(true);
+        setColor.setEnabled(true);
+        gotoPC.setEnabled(true);
+        gotoInsn.setEnabled(true);
+        gotoNext.setEnabled(true);
+        exportMemory.setEnabled(true);
+        pluginLoader.traceLoaded(trc);
+    }
+
     public void load(TraceReader reader, long size, String file) throws IOException {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
@@ -757,25 +779,7 @@ public class MainWindow extends JFrame {
             setStatus("Trace loaded");
             setTitle(file + " - " + WINDOW_TITLE);
             EventQueue.invokeLater(() -> {
-                trc = new Local(reader.getArchitecture(), root, analysis);
-                view.setTraceAnalyzer(trc);
-                loadPrototypes.setEnabled(true);
-                loadSymbols.setEnabled(true);
-                saveSymbols.setEnabled(true);
-                loadSession.setEnabled(true);
-                saveSession.setEnabled(true);
-                refresh.setEnabled(false);
-                renameSymbol.setEnabled(true);
-                setFunctionType.setEnabled(true);
-                setCommentInsn.setEnabled(true);
-                setCommentPC.setEnabled(true);
-                setExpression.setEnabled(true);
-                setColor.setEnabled(true);
-                gotoPC.setEnabled(true);
-                gotoInsn.setEnabled(true);
-                gotoNext.setEnabled(true);
-                exportMemory.setEnabled(true);
-                pluginLoader.traceLoaded(trc);
+                setTrace(new Local(reader.getArchitecture(), root, analysis));
             });
         } catch (Throwable t) {
             log.log(Level.INFO, "Loading failed: " + t, t);

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.arch.io.InterruptEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.util.io.BEInputStream;
 import org.graalvm.vm.util.io.BEOutputStream;
@@ -98,6 +99,16 @@ public abstract class StorageBackend implements Closeable {
         }
     }
 
+    public static final <T extends InterruptEvent> T getTrap(Step step, short archId) {
+        Architecture arch = Architecture.getArchitecture(archId);
+        try (WordInputStream in = new BEInputStream(new ByteArrayInputStream(step.cpustate))) {
+            return arch.getEventParser().parseTrap(in, step.tid, step.step, step.pc, getInstructionType(step.type), step.machinecode);
+        } catch (IOException e) {
+            log.log(Levels.WARNING, "Error while parsing step event: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
     public abstract List<TraceMetadata> list();
 
     public abstract void connect(String name);
@@ -117,6 +128,8 @@ public abstract class StorageBackend implements Closeable {
     public abstract void flush();
 
     public abstract List<Step> getSteps(long parent, long start, long count);
+
+    public abstract long getStepCount(long parent);
 
     public abstract MemoryAccess getRead(long address, long step);
 

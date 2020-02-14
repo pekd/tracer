@@ -66,13 +66,14 @@ import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.Subroutine;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.InterruptEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.expression.EvaluationException;
+import org.graalvm.vm.trcview.io.Block;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.CallListener;
@@ -110,7 +111,7 @@ public class InstructionView extends JPanel {
 
     private int tabSize = 16;
 
-    private List<Node> instructions;
+    private Block instructions;
     private InstructionViewModel model;
     private JList<String> insns;
     private int maxwidth = 0;
@@ -128,7 +129,22 @@ public class InstructionView extends JPanel {
         changeListeners = new ArrayList<>();
         callListeners = new ArrayList<>();
 
-        instructions = new ArrayList<>();
+        instructions = new Block() {
+            @Override
+            public StepEvent getHead() {
+                return null;
+            }
+
+            @Override
+            public int size() {
+                return 0;
+            }
+
+            @Override
+            public Node get(int i) {
+                return null;
+            }
+        };
         insns = new JList<>(model = new InstructionViewModel());
         insns.setFont(MainWindow.FONT);
         insns.setCellRenderer(new CellRenderer());
@@ -149,7 +165,7 @@ public class InstructionView extends JPanel {
             if (node instanceof BlockNode) {
                 step = ((BlockNode) node).getHead();
             } else {
-                step = (StepEvent) ((EventNode) node).getEvent();
+                step = (StepEvent) node;
             }
             Location loc = Location.getLocation(trc, step);
             StringBuilder buf = new StringBuilder();
@@ -237,7 +253,7 @@ public class InstructionView extends JPanel {
         }
     }
 
-    protected void fireRetEvent(EventNode node) {
+    protected void fireRetEvent(Event node) {
         for (CallListener l : callListeners) {
             try {
                 l.ret(node);
@@ -257,9 +273,9 @@ public class InstructionView extends JPanel {
         if (node instanceof BlockNode) {
             fireCallEvent((BlockNode) node);
         } else {
-            StepEvent step = (StepEvent) ((EventNode) node).getEvent();
+            StepEvent step = (StepEvent) node;
             if (step.getType() == InstructionType.RET || step.getType() == InstructionType.RTI) {
-                fireRetEvent((EventNode) node);
+                fireRetEvent((Event) node);
             }
         }
     }
@@ -336,16 +352,16 @@ public class InstructionView extends JPanel {
     }
 
     public void set(BlockNode block) {
-        instructions = block.getNodes();
+        instructions = block;
         if (instructions.size() > 5000) {
             // compute max size
             maxwidth = 20 + tabSize;
             insns.setPrototypeCellValue(StringUtils.repeat("x", maxwidth));
         } else {
             maxwidth = -1;
+            insns.setPrototypeCellValue(null);
         }
         model.changed();
-        // insns.setModel(model);
         insns.setSelectedIndex(0);
         insns.repaint();
     }
@@ -379,7 +395,7 @@ public class InstructionView extends JPanel {
         if (node instanceof BlockNode) {
             return ((BlockNode) node).getHead();
         } else {
-            return (StepEvent) ((EventNode) node).getEvent();
+            return (StepEvent) node;
         }
     }
 
@@ -399,7 +415,7 @@ public class InstructionView extends JPanel {
         if (node instanceof BlockNode) {
             return ((BlockNode) node).getHead();
         } else {
-            return (StepEvent) ((EventNode) node).getEvent();
+            return (StepEvent) node;
         }
     }
 
@@ -467,8 +483,8 @@ public class InstructionView extends JPanel {
                 if (block.isInterrupt()) {
                     c.setForeground(IRQ_FG);
                 }
-            } else if (node instanceof EventNode) {
-                StepEvent step = (StepEvent) ((EventNode) node).getEvent();
+            } else if (node instanceof Event) {
+                StepEvent step = (StepEvent) node;
                 String mnemonic = step.getMnemonic();
                 if (mnemonic == null) {
                     c.setForeground(ERROR_FG);
@@ -515,15 +531,15 @@ public class InstructionView extends JPanel {
         @Override
         public String getElementAt(int i) {
             Node n = instructions.get(i);
-            if (n instanceof EventNode) {
-                StepEvent step = (StepEvent) ((EventNode) n).getEvent();
+            if (n instanceof Event) {
+                StepEvent step = (StepEvent) n;
                 if (i + 1 < instructions.size()) {
                     StepEvent next;
                     Node nn = instructions.get(i + 1);
                     if (nn instanceof BlockNode) {
                         next = ((BlockNode) nn).getHead();
                     } else {
-                        next = (StepEvent) ((EventNode) nn).getEvent();
+                        next = (StepEvent) nn;
                     }
                     String result = format(step, next);
                     updatePrototype(result);
@@ -546,7 +562,7 @@ public class InstructionView extends JPanel {
                         if (nn instanceof BlockNode) {
                             next = ((BlockNode) nn).getHead();
                         } else {
-                            next = (StepEvent) ((EventNode) nn).getEvent();
+                            next = (StepEvent) nn;
                         }
                         buf.append(format(step, next));
                     } else {

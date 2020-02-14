@@ -4,10 +4,11 @@ import java.io.IOException;
 
 import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public abstract class Event {
+public abstract class Event extends Node {
     public static final byte EOF = 0;
     public static final byte CPU_STATE = 1;
     public static final byte STEP = 2;
@@ -32,12 +33,9 @@ public abstract class Event {
         this.tid = tid;
     }
 
+    @Override
     public final int getTid() {
         return tid;
-    }
-
-    public final byte getId() {
-        return id;
     }
 
     public final short getArchitectureId() {

@@ -27,7 +27,6 @@ import org.graalvm.vm.trcview.expression.ExpressionContext;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.EventNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.JumpListener;
@@ -349,15 +348,15 @@ public class MemoryView extends JPanel {
                 if (node != null) {
                     content += "Last write to this location:\n";
                     lastUpdateNode = stepNode;
-                    if (stepNode instanceof EventNode && ((EventNode) stepNode).getEvent() instanceof StepEvent) {
-                        StepEvent event = (StepEvent) ((EventNode) stepNode).getEvent();
+                    if (stepNode instanceof StepEvent) {
+                        StepEvent event = (StepEvent) stepNode;
                         content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                     } else if (stepNode != null) {
                         StepEvent event = null;
                         if (stepNode instanceof BlockNode) {
                             event = ((BlockNode) stepNode).getHead();
                         } else {
-                            event = (StepEvent) ((EventNode) stepNode).getEvent();
+                            event = (StepEvent) stepNode;
                         }
                         if (event != null) {
                             content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
@@ -375,15 +374,15 @@ public class MemoryView extends JPanel {
                 if (read != null) {
                     content += "\n\nNext read from this location:\n";
                     nextReadNode = read.step;
-                    if (read.step instanceof EventNode && ((EventNode) read.step).getEvent() instanceof StepEvent) {
-                        StepEvent event = (StepEvent) ((EventNode) read.step).getEvent();
+                    if (read.step instanceof StepEvent) {
+                        StepEvent event = (StepEvent) read.step;
                         content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
                     } else if (read.step != null) {
                         StepEvent event = null;
                         if (read.step instanceof BlockNode) {
                             event = ((BlockNode) read.step).getHead();
                         } else {
-                            event = (StepEvent) ((EventNode) read.step).getEvent();
+                            event = (StepEvent) read.step;
                         }
                         if (event != null) {
                             content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
