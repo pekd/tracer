@@ -51,6 +51,7 @@ import org.graalvm.vm.trcview.net.protocol.cmd.GetMapNode;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetNextPC;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetNextRead;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetNextStep;
+import org.graalvm.vm.trcview.net.protocol.cmd.GetNextWrite;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetNode;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetOffset;
 import org.graalvm.vm.trcview.net.protocol.cmd.GetPreviousStep;
@@ -78,6 +79,7 @@ import org.graalvm.vm.trcview.net.protocol.cmdresult.GetMapNodeResult;
 import org.graalvm.vm.trcview.net.protocol.cmdresult.GetNextPCResult;
 import org.graalvm.vm.trcview.net.protocol.cmdresult.GetNextReadResult;
 import org.graalvm.vm.trcview.net.protocol.cmdresult.GetNextStepResult;
+import org.graalvm.vm.trcview.net.protocol.cmdresult.GetNextWriteResult;
 import org.graalvm.vm.trcview.net.protocol.cmdresult.GetNodeResult;
 import org.graalvm.vm.trcview.net.protocol.cmdresult.GetOffsetResult;
 import org.graalvm.vm.trcview.net.protocol.cmdresult.GetPreviousStepResult;
@@ -404,6 +406,20 @@ public class Client implements TraceAnalyzer, Closeable {
             throw new MemoryNotMappedException("no memory mapped");
         }
         return write.getWrite();
+    }
+
+    @Override
+    public MemoryUpdate getNextWrite(long address, long insn) throws MemoryNotMappedException {
+        GetNextWriteResult write = execute(new GetNextWrite(address, insn));
+        if (write.getWrite() == null) {
+            throw new MemoryNotMappedException("no memory mapped");
+        }
+        return write.getWrite();
+    }
+
+    @Override
+    public List<MemoryUpdate> getPreviousWrites(long address, long insn, long count) throws MemoryNotMappedException {
+        return Collections.emptyList(); // TODO: implement
     }
 
     @Override

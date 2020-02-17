@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.analysis.memory;
 
+import java.util.List;
+
 import org.graalvm.vm.trcview.io.Node;
 
 public interface Page {
@@ -21,9 +23,13 @@ public interface Page {
 
     MemoryUpdate getLastUpdate(long addr, long instructionCount) throws MemoryNotMappedException;
 
+    MemoryUpdate getNextUpdate(long addr, long instructionCount) throws MemoryNotMappedException;
+
     MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException;
 
     MemoryRead getNextRead(long addr, long instructionCount) throws MemoryNotMappedException;
+
+    List<MemoryUpdate> getPreviousUpdates(long addr, long instructionCount, long max) throws MemoryNotMappedException;
 
     long getInitialPC();
 

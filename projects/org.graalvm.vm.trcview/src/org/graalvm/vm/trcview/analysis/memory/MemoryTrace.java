@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.analysis.memory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -251,6 +252,14 @@ public class MemoryTrace {
         return page.getLastUpdate(addr, instructionCount);
     }
 
+    public MemoryUpdate getNextWrite(long addr, long instructionCount) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getNextUpdate(addr, instructionCount);
+    }
+
     public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
@@ -265,6 +274,14 @@ public class MemoryTrace {
             throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
         }
         return page.getNextRead(addr, instructionCount);
+    }
+
+    public List<MemoryUpdate> getPreviousWrites(long addr, long instructionCount, long count) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getPreviousUpdates(addr, instructionCount, count);
     }
 
     // TODO: use instructionCount to find *last* map time

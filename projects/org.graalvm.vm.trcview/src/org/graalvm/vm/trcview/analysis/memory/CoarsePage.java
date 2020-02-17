@@ -159,6 +159,11 @@ public class CoarsePage implements Page {
     }
 
     @Override
+    public MemoryUpdate getNextUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
+        return null;
+    }
+
+    @Override
     public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
@@ -398,6 +403,11 @@ public class CoarsePage implements Page {
 
         // no update found
         return null;
+    }
+
+    @Override
+    public List<MemoryUpdate> getPreviousUpdates(long addr, long instructionCount, long max) throws MemoryNotMappedException {
+        return Collections.emptyList();
     }
 
     @Override

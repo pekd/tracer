@@ -178,6 +178,45 @@ public class FinePage implements Page {
     }
 
     @Override
+    public MemoryUpdate getNextUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (updates[off] == null) {
+            return null;
+        }
+
+        if (updates[off].isEmpty()) {
+            // no updates
+            return null;
+        } else if (updates[off].get(0).instructionCount >= instructionCount) {
+            // first update is after instructionCount
+            return updates[off].get(0);
+        } else if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException("memory is not mapped at this time");
+        }
+
+        // find write timestamp
+        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, instructionCount, null, null);
+        int idx = Collections.binarySearch(updates[off], target, (a, b) -> {
+            return Long.compareUnsigned(a.instructionCount, b.instructionCount);
+        });
+
+        if (idx > 0) {
+            return updates[off].get(idx);
+        } else {
+            idx = ~idx;
+            if (idx >= updates[off].size()) {
+                return null;
+            } else {
+                return updates[off].get(idx);
+            }
+        }
+    }
+
+    @Override
     public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
@@ -263,6 +302,66 @@ public class FinePage implements Page {
                 return null;
             } else {
                 return reads[off].get(idx);
+            }
+        }
+    }
+
+    @Override
+    public List<MemoryUpdate> getPreviousUpdates(long addr, long instructionCount, long max) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (updates[off] == null) {
+            return Collections.emptyList();
+        }
+
+        if (updates[off].isEmpty()) {
+            // no update until now
+            return Collections.emptyList();
+        } else if (updates[off].get(0).instructionCount > instructionCount) {
+            // first update is after instructionCount
+            return Collections.emptyList();
+        } else if (updates[off].get(0).instructionCount == instructionCount) {
+            // updates start at our timestamp; find last update
+            List<MemoryUpdate> result = new ArrayList<>();
+            for (MemoryUpdate update : updates[off]) {
+                if (update.instructionCount > instructionCount) {
+                    return result;
+                } else {
+                    result.add(update);
+                }
+            }
+            return result;
+        } else if (instructionCount < firstInstructionCount) {
+            throw new MemoryNotMappedException("memory is not mapped at this time");
+        }
+
+        // find update timestamp
+        MemoryUpdate target = new MemoryUpdate(false, addr, (byte) 1, 0, instructionCount, null, null);
+        int idx = Collections.binarySearch(updates[off], target, (a, b) -> {
+            return Long.compareUnsigned(a.instructionCount, b.instructionCount);
+        });
+
+        if (idx > 0) {
+            assert updates[off].get(idx).instructionCount <= instructionCount;
+            List<MemoryUpdate> result = new ArrayList<>();
+            for (int i = 0; i < max && i < idx; i++) {
+                result.add(updates[off].get(idx - i));
+            }
+            return result;
+        } else {
+            idx = ~idx;
+            if (idx == 0) {
+                return Collections.emptyList();
+            } else {
+                assert updates[off].get(idx - 1).instructionCount <= instructionCount;
+                List<MemoryUpdate> result = new ArrayList<>();
+                for (int i = 0; i < max && i < (idx - 1); i++) {
+                    result.add(updates[off].get(idx - 1 - i));
+                }
+                return result;
             }
         }
     }

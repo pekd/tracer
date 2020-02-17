@@ -36,13 +36,15 @@ public abstract class Command {
     public static final int GET_LAST_READ = 22;
     public static final int GET_NEXT_READ = 23;
     public static final int GET_LAST_WRITE = 24;
-    public static final int GET_MAP_NODE = 25;
+    public static final int GET_NEXT_WRITE = 25;
+    public static final int GET_PREV_WRITES = 26;
+    public static final int GET_MAP_NODE = 27;
 
-    public static final int GET_BASE = 26;
-    public static final int GET_LOAD_BIAS = 27;
-    public static final int GET_OFFSET = 28;
-    public static final int GET_FILE_OFFSET = 29;
-    public static final int GET_FILENAME = 30;
+    public static final int GET_BASE = 28;
+    public static final int GET_LOAD_BIAS = 29;
+    public static final int GET_OFFSET = 30;
+    public static final int GET_FILE_OFFSET = 31;
+    public static final int GET_FILENAME = 32;
 
     private final int type;
 

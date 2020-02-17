@@ -71,8 +71,10 @@ public class MemoryView extends JPanel {
     private StepEvent step;
     private Expression expr;
     private Node lastUpdateNode;
+    private Node nextUpdateNode;
     private Node nextReadNode;
     private JButton gotoLastUpdate;
+    private JButton gotoNextUpdate;
     private JButton gotoNextRead;
     private StepFormat format = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, false);
 
@@ -121,6 +123,14 @@ public class MemoryView extends JPanel {
             }
         });
 
+        gotoNextUpdate = new JButton("Goto next write");
+        gotoNextUpdate.setEnabled(nextUpdateNode != null);
+        gotoNextUpdate.addActionListener(e -> {
+            if (nextUpdateNode != null) {
+                jump.jump(nextUpdateNode);
+            }
+        });
+
         gotoNextRead = new JButton("Goto next read");
         gotoNextRead.setEnabled(nextReadNode != null);
         gotoNextRead.addActionListener(e -> {
@@ -129,8 +139,9 @@ public class MemoryView extends JPanel {
             }
         });
 
-        JPanel gotoButtons = new JPanel(new GridLayout(1, 2));
+        JPanel gotoButtons = new JPanel(new GridLayout(1, 3));
         gotoButtons.add(gotoLastUpdate);
+        gotoButtons.add(gotoNextUpdate);
         gotoButtons.add(gotoNextRead);
         add(BorderLayout.SOUTH, gotoButtons);
     }
@@ -335,7 +346,11 @@ public class MemoryView extends JPanel {
         if (trc != null) {
             content = dump((address - 4 * LINESZ) & 0xFFFFFFFFFFFFFFF0L, 12 * LINESZ) + "\n\n";
             try {
-                MemoryUpdate update = trc.getLastWrite(address, insn);
+                long lastinsn = insn;
+                if (lastinsn > 0) {
+                    lastinsn--;
+                }
+                MemoryUpdate update = trc.getLastWrite(address, lastinsn);
                 Node node = null;
                 Node stepNode = null;
                 if (update != null) {
@@ -370,7 +385,14 @@ public class MemoryView extends JPanel {
                     content += "No write to this address found";
                 }
 
-                MemoryRead read = trc.getNextRead(address, insn);
+                MemoryUpdate nextUpdate = trc.getNextWrite(address, insn + 1);
+                if (nextUpdate != null) {
+                    nextUpdateNode = nextUpdate.step;
+                } else {
+                    nextUpdateNode = null;
+                }
+
+                MemoryRead read = trc.getNextRead(address, insn + 1);
                 if (read != null) {
                     content += "\n\nNext read from this location:\n";
                     nextReadNode = read.step;
@@ -408,6 +430,7 @@ public class MemoryView extends JPanel {
         text.setCaretPosition(0);
 
         gotoLastUpdate.setEnabled(lastUpdateNode != null);
+        gotoNextUpdate.setEnabled(nextUpdateNode != null);
         gotoNextRead.setEnabled(nextReadNode != null);
     }
 }

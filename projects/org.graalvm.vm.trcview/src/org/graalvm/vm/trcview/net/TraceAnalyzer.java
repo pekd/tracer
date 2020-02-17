@@ -81,6 +81,10 @@ public interface TraceAnalyzer {
 
     MemoryUpdate getLastWrite(long address, long insn) throws MemoryNotMappedException;
 
+    MemoryUpdate getNextWrite(long address, long insn) throws MemoryNotMappedException;
+
+    List<MemoryUpdate> getPreviousWrites(long address, long insn, long count) throws MemoryNotMappedException;
+
     Node getMapNode(long address, long insn) throws MemoryNotMappedException;
 
     // files

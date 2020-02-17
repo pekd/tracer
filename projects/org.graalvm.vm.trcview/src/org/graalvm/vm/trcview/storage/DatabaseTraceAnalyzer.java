@@ -221,6 +221,16 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     }
 
     @Override
+    public MemoryUpdate getNextWrite(long address, long insn) throws MemoryNotMappedException {
+        return memory.getNextWrite(address, insn);
+    }
+
+    @Override
+    public List<MemoryUpdate> getPreviousWrites(long address, long insn, long count) throws MemoryNotMappedException {
+        return memory.getPreviousWrites(address, insn, count);
+    }
+
+    @Override
     public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
         return memory.getMapNode(address, insn);
     }

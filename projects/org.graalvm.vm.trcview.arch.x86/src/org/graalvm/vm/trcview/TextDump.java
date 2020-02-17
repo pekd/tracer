@@ -413,6 +413,16 @@ public class TextDump {
         }
 
         @Override
+        public MemoryUpdate getNextWrite(long address, long insn) throws MemoryNotMappedException {
+            return null;
+        }
+
+        @Override
+        public List<MemoryUpdate> getPreviousWrites(long address, long insn, long count) throws MemoryNotMappedException {
+            return null;
+        }
+
+        @Override
         public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
             return null;
         }
