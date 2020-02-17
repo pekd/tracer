@@ -181,7 +181,7 @@ public class StraceView extends JPanel {
             CpuState ns = next == null ? null : next.getState();
             String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
             if (decoded == null) {
-                decoded = step.getDisassembly();
+                decoded = step.getDisassembly().replace('\t', ' ');
             }
             Component c = super.getListCellRendererComponent(list, decoded, index, isSelected, cellHasFocus);
             if (step.getStep() > insn) {
