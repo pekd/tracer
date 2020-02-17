@@ -195,4 +195,9 @@ public class CustomArchitecture extends Architecture {
     public boolean isSystemLevel() {
         return false;
     }
+
+    @Override
+    public boolean isStackedTraps() {
+        return true;
+    }
 }

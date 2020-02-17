@@ -67,4 +67,9 @@ public class None extends Architecture {
     public boolean isSystemLevel() {
         return false;
     }
+
+    @Override
+    public boolean isStackedTraps() {
+        return false;
+    }
 }

@@ -71,4 +71,9 @@ public class PDP11 extends Architecture {
     public boolean isSystemLevel() {
         return true;
     }
+
+    @Override
+    public boolean isStackedTraps() {
+        return true;
+    }
 }

@@ -71,4 +71,9 @@ public class MockArchitecture extends Architecture {
     public boolean isSystemLevel() {
         return systemLevel;
     }
+
+    @Override
+    public boolean isStackedTraps() {
+        return true;
+    }
 }

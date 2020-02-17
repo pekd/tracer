@@ -71,4 +71,9 @@ public class AMD64 extends Architecture {
     public boolean isSystemLevel() {
         return false;
     }
+
+    @Override
+    public boolean isStackedTraps() {
+        return true;
+    }
 }

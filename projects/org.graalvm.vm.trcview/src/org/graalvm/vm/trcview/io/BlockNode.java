@@ -173,6 +173,7 @@ public class BlockNode extends Node implements Block {
 
     private static Node parseRecord(TraceReader in, Analysis analysis, ProgressListener progress, int thread, boolean ignoreTrap) throws IOException {
         boolean system = in.getArchitecture().isSystemLevel();
+        boolean stackedTraps = in.getArchitecture().isStackedTraps();
         int tid = thread;
         Event event = null;
         try {
@@ -236,7 +237,7 @@ public class BlockNode extends Node implements Block {
                         ignore = false;
                         BlockNode n = (BlockNode) child;
                         int size = n.getNodes().size();
-                        if (system && n.getHead() != null && !n.isInterrupt() && !n.getHead().isSyscall() && size > 0) {
+                        if (!stackedTraps && system && n.getHead() != null && !n.isInterrupt() && !n.getHead().isSyscall() && size > 0) {
                             Node last = n.getNodes().get(size - 1);
                             while (last instanceof BlockNode) {
                                 BlockNode b = (BlockNode) last;
@@ -308,7 +309,7 @@ public class BlockNode extends Node implements Block {
                     hasSteps = true;
                     BlockNode n = (BlockNode) child;
                     int size = n.getNodes().size();
-                    if (system && n.getHead() != null && !n.isInterrupt() && !n.getHead().isSyscall() && size > 0) {
+                    if (!stackedTraps && system && n.getHead() != null && !n.isInterrupt() && !n.getHead().isSyscall() && size > 0) {
                         Node last = n.getNodes().get(size - 1);
                         while (last instanceof BlockNode) {
                             BlockNode b = (BlockNode) last;

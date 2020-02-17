@@ -51,6 +51,8 @@ public abstract class Architecture {
 
     public abstract boolean isSystemLevel();
 
+    public abstract boolean isStackedTraps();
+
     public static void register(Architecture arch) {
         log.info("Registering architecture support for " + ElfStrings.getElfMachine(arch.getId()) + " [" + arch.getName() + "]");
         architectures.put(arch.getId(), arch);
