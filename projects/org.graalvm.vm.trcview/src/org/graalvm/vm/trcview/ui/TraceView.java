@@ -76,6 +76,7 @@ public class TraceView extends JPanel {
     private StateView state;
     private InstructionView insns;
     private MemoryView mem;
+    private MemoryHistoryView memhistory;
     private Watches watches;
 
     private ComputedSymbol selectedSymbol;
@@ -97,7 +98,11 @@ public class TraceView extends JPanel {
         rightSplit.setBottomComponent(rightBottomSplit);
         rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        content.setLeftComponent(insns = new InstructionView(status, position));
+        JSplitPane center = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        center.setTopComponent(insns = new InstructionView(status, position));
+        center.setBottomComponent(memhistory = new MemoryHistoryView(status));
+        center.setResizeWeight(0.75);
+        content.setLeftComponent(center);
         content.setRightComponent(rightSplit);
         content.setResizeWeight(1.0);
         content.setDividerLocation(400);
@@ -130,6 +135,7 @@ public class TraceView extends JPanel {
                     state.setState(step);
                 }
                 mem.setStep(step);
+                memhistory.setStep(step);
                 watches.setStep(step);
             }
             if (insns.getSelectedNode() instanceof BlockNode) {
@@ -153,6 +159,7 @@ public class TraceView extends JPanel {
                 insns.set(node);
                 insns.select(node.getFirstNode());
                 mem.setStep(node.getFirstStep());
+                memhistory.setStep(node.getFirstStep());
                 watches.setStep(node.getFirstStep());
             }
 
@@ -165,6 +172,7 @@ public class TraceView extends JPanel {
                     insns.set(parent);
                     insns.select(par);
                     mem.setStep(par.getHead());
+                    memhistory.setStep(par.getHead());
                     watches.setStep(par.getHead());
                 }
             }
@@ -226,6 +234,7 @@ public class TraceView extends JPanel {
         insns.setTraceAnalyzer(trc);
         state.setTraceAnalyzer(trc);
         mem.setTraceAnalyzer(trc);
+        memhistory.setTraceAnalyzer(trc);
         watches.setTraceAnalyzer(trc);
         symbols.setTraceAnalyzer(trc);
 
@@ -241,6 +250,7 @@ public class TraceView extends JPanel {
         insns.select(root.getFirstNode());
         state.setState(root.getFirstStep());
         mem.setStep(root.getFirstStep());
+        memhistory.setStep(root.getFirstStep());
         watches.setStep(root.getFirstStep());
     }
 
