@@ -16,6 +16,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -60,6 +61,8 @@ public interface TraceAnalyzer {
     BlockNode getChildren(BlockNode node);
 
     Node getNode(Node node);
+
+    List<StepEvent> getSyscalls();
 
     // search
     Node getInstruction(long insn);

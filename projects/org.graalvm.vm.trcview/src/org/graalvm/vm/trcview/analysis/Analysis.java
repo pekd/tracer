@@ -82,6 +82,7 @@ public class Analysis {
     private NavigableMap<Long, MappedFile> mappedFiles;
     private SymbolResolver resolver;
     private SymbolResolver augmentedResolver;
+    private List<StepEvent> syscalls;
 
     private long steps;
     private long idcnt;
@@ -106,6 +107,7 @@ public class Analysis {
         mappedFiles = new TreeMap<>();
         resolver = new DefaultSymbolResolver(symbolTable);
         augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
+        syscalls = new ArrayList<>();
         memory = new MemoryTrace();
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
@@ -141,6 +143,9 @@ public class Analysis {
         if (event instanceof StepEvent) {
             steps++;
             StepEvent step = (StepEvent) event;
+            if (step.isSyscall()) {
+                syscalls.add(step);
+            }
             if (lastStep != null) {
                 long pc = step.getPC();
                 Symbol sym;
@@ -319,6 +324,10 @@ public class Analysis {
 
     public MappedFiles getMappedFiles() {
         return new MappedFiles(mappedFiles);
+    }
+
+    public List<StepEvent> getSyscalls() {
+        return syscalls;
     }
 
     public MemoryTrace getMemoryTrace() {

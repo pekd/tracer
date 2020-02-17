@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Expressions;
 import org.graalvm.vm.trcview.info.FormattedExpression;
@@ -197,6 +199,11 @@ public class LocalDatabase implements TraceAnalyzer {
     @Override
     public Node getNode(Node node) {
         return node;
+    }
+
+    @Override
+    public List<StepEvent> getSyscalls() {
+        return Collections.emptyList();
     }
 
     @Override

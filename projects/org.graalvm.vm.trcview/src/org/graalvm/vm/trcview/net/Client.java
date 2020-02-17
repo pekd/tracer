@@ -26,6 +26,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -426,6 +427,11 @@ public class Client implements TraceAnalyzer, Closeable {
     public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
         GetMapNodeResult node = execute(new GetMapNode(address, insn));
         return node.getNode();
+    }
+
+    @Override
+    public List<StepEvent> getSyscalls() {
+        return Collections.emptyList();
     }
 
     @Override

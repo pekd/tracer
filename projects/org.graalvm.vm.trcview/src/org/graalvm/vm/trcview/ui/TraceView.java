@@ -52,6 +52,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
@@ -77,6 +78,7 @@ public class TraceView extends JPanel {
     private InstructionView insns;
     private MemoryView mem;
     private MemoryHistoryView memhistory;
+    private StraceView strace;
     private Watches watches;
 
     private ComputedSymbol selectedSymbol;
@@ -89,6 +91,10 @@ public class TraceView extends JPanel {
         super(new BorderLayout());
         changeListeners = new ArrayList<>();
 
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("strace", strace = new StraceView(this::jump));
+        tabs.addTab("reads", memhistory = new MemoryHistoryView(status));
+
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
         JSplitPane rightBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -100,7 +106,7 @@ public class TraceView extends JPanel {
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         JSplitPane center = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         center.setTopComponent(insns = new InstructionView(status, position));
-        center.setBottomComponent(memhistory = new MemoryHistoryView(status));
+        center.setBottomComponent(tabs);
         center.setResizeWeight(0.75);
         content.setLeftComponent(center);
         content.setRightComponent(rightSplit);
@@ -136,6 +142,7 @@ public class TraceView extends JPanel {
                 }
                 mem.setStep(step);
                 memhistory.setStep(step);
+                strace.setStep(step);
                 watches.setStep(step);
             }
             if (insns.getSelectedNode() instanceof BlockNode) {
@@ -160,6 +167,7 @@ public class TraceView extends JPanel {
                 insns.select(node.getFirstNode());
                 mem.setStep(node.getFirstStep());
                 memhistory.setStep(node.getFirstStep());
+                strace.setStep(node.getFirstStep());
                 watches.setStep(node.getFirstStep());
             }
 
@@ -173,6 +181,7 @@ public class TraceView extends JPanel {
                     insns.select(par);
                     mem.setStep(par.getHead());
                     memhistory.setStep(par.getHead());
+                    strace.setStep(par.getHead());
                     watches.setStep(par.getHead());
                 }
             }
@@ -235,6 +244,7 @@ public class TraceView extends JPanel {
         state.setTraceAnalyzer(trc);
         mem.setTraceAnalyzer(trc);
         memhistory.setTraceAnalyzer(trc);
+        strace.setTraceAnalyzer(trc);
         watches.setTraceAnalyzer(trc);
         symbols.setTraceAnalyzer(trc);
 
@@ -251,6 +261,7 @@ public class TraceView extends JPanel {
         state.setState(root.getFirstStep());
         mem.setStep(root.getFirstStep());
         memhistory.setStep(root.getFirstStep());
+        strace.setStep(root.getFirstStep());
         watches.setStep(root.getFirstStep());
     }
 

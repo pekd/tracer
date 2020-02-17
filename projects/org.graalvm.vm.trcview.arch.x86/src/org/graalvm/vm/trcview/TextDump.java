@@ -50,6 +50,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -365,6 +366,11 @@ public class TextDump {
         @Override
         public Node getNode(Node node) {
             return null;
+        }
+
+        @Override
+        public List<StepEvent> getSyscalls() {
+            return Collections.emptyList();
         }
 
         @Override
