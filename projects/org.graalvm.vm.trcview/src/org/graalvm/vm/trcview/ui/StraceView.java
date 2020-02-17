@@ -23,6 +23,8 @@ import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.io.BlockNode;
+import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.JumpListener;
 import org.graalvm.vm.util.io.WordOutputStream;
@@ -32,9 +34,9 @@ public class StraceView extends JPanel {
     public static final Color PAST_FG = Color.BLACK;
     public static final Color FUTURE_FG = Color.GRAY;
 
-    private JList<StepEvent> strace;
+    private JList<Node> strace;
     private StraceModel model;
-    private List<StepEvent> syscalls;
+    private List<Node> syscalls;
 
     private long insn;
 
@@ -71,7 +73,7 @@ public class StraceView extends JPanel {
     }
 
     private void jump() {
-        StepEvent selected = strace.getSelectedValue();
+        Node selected = strace.getSelectedValue();
         if (selected != null) {
             jump.jump(selected);
         }
@@ -90,8 +92,23 @@ public class StraceView extends JPanel {
         update();
     }
 
+    private static StepEvent step(Node node) {
+        if (node instanceof StepEvent) {
+            return (StepEvent) node;
+        } else if (node instanceof BlockNode) {
+            BlockNode block = (BlockNode) node;
+            if (block.isInterrupt()) {
+                return block.getFirstStep();
+            } else {
+                return block.getHead();
+            }
+        } else {
+            throw new IllegalArgumentException("not a StepEvent/BlockNode");
+        }
+    }
+
     private void update() {
-        StepEvent target = new StepEvent(trc.getArchitecture().getId(), 0) {
+        Node target = new StepEvent(trc.getArchitecture().getId(), 0) {
             @Override
             public byte[] getMachinecode() {
                 return null;
@@ -138,7 +155,7 @@ public class StraceView extends JPanel {
         };
 
         int idx = Collections.binarySearch(syscalls, target, (a, b) -> {
-            return Long.compareUnsigned(a.getStep(), b.getStep());
+            return Long.compareUnsigned(step(a).getStep(), step(b).getStep());
         });
 
         if (idx < 0) {
@@ -159,8 +176,8 @@ public class StraceView extends JPanel {
     protected class CellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            StepEvent step = (StepEvent) value;
-            StepEvent next = (StepEvent) trc.getNextStep(step);
+            StepEvent step = step((Node) value);
+            StepEvent next = (StepEvent) trc.getNextStep((Node) value);
             CpuState ns = next == null ? null : next.getState();
             String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
             if (decoded == null) {
@@ -176,9 +193,9 @@ public class StraceView extends JPanel {
         }
     }
 
-    public class StraceModel extends AbstractListModel<StepEvent> {
+    public class StraceModel extends AbstractListModel<Node> {
         @Override
-        public StepEvent getElementAt(int i) {
+        public Node getElementAt(int i) {
             return syscalls.get(i);
         }
 

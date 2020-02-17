@@ -82,7 +82,7 @@ public class Analysis {
     private NavigableMap<Long, MappedFile> mappedFiles;
     private SymbolResolver resolver;
     private SymbolResolver augmentedResolver;
-    private List<StepEvent> syscalls;
+    private List<Node> syscalls;
 
     private long steps;
     private long idcnt;
@@ -144,7 +144,7 @@ public class Analysis {
             steps++;
             StepEvent step = (StepEvent) event;
             if (step.isSyscall()) {
-                syscalls.add(step);
+                syscalls.add(node);
             }
             if (lastStep != null) {
                 long pc = step.getPC();
@@ -326,7 +326,7 @@ public class Analysis {
         return new MappedFiles(mappedFiles);
     }
 
-    public List<StepEvent> getSyscalls() {
+    public List<Node> getSyscalls() {
         return syscalls;
     }
 

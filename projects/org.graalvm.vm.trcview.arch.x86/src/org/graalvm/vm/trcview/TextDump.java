@@ -369,7 +369,7 @@ public class TextDump {
         }
 
         @Override
-        public List<StepEvent> getSyscalls() {
+        public List<Node> getSyscalls() {
             return Collections.emptyList();
         }
 

@@ -25,7 +25,6 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
-import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
 import org.graalvm.vm.trcview.info.Expressions;
@@ -178,7 +177,7 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     }
 
     @Override
-    public List<StepEvent> getSyscalls() {
+    public List<Node> getSyscalls() {
         return Collections.emptyList();
     }
 
