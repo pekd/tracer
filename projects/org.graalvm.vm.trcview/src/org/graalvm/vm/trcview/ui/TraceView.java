@@ -93,7 +93,7 @@ public class TraceView extends JPanel {
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("strace", strace = new StraceView(this::jump));
-        tabs.addTab("reads", memhistory = new MemoryHistoryView(status));
+        tabs.addTab("writes", memhistory = new MemoryHistoryView(status));
 
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
