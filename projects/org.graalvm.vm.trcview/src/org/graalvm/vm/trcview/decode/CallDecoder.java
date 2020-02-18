@@ -21,7 +21,7 @@ public abstract class CallDecoder {
                 if (repr == Representation.STRING) {
                     return cstr(val, state.getStep(), trc);
                 } else {
-                    return ptr(val);
+                    return ptr(val, trc);
                 }
             case STRING:
                 return cstr(val, state.getStep(), trc);
@@ -33,7 +33,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Integer.toString(Byte.toUnsignedInt((byte) val));
                     case OCT:
-                        return Integer.toOctalString(Byte.toUnsignedInt((byte) val));
+                        return "0" + Integer.toOctalString(Byte.toUnsignedInt((byte) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Byte.toUnsignedInt((byte) val));
                 }
@@ -45,7 +45,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Byte.toString((byte) val);
                     case OCT:
-                        return Integer.toOctalString(Byte.toUnsignedInt((byte) val));
+                        return "0" + Integer.toOctalString(Byte.toUnsignedInt((byte) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Byte.toUnsignedInt((byte) val));
                 }
@@ -61,7 +61,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Integer.toString(Short.toUnsignedInt((short) val));
                     case OCT:
-                        return Integer.toOctalString(Short.toUnsignedInt((short) val));
+                        return "0" + Integer.toOctalString(Short.toUnsignedInt((short) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                 }
@@ -77,7 +77,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Short.toString((short) val);
                     case OCT:
-                        return Integer.toOctalString(Short.toUnsignedInt((short) val));
+                        return "0" + Integer.toOctalString(Short.toUnsignedInt((short) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                 }
@@ -93,7 +93,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Integer.toUnsignedString((int) val);
                     case OCT:
-                        return Integer.toUnsignedString((int) val, 8);
+                        return "0" + Integer.toUnsignedString((int) val, 8);
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
                 }
@@ -109,7 +109,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Integer.toString((int) val);
                     case OCT:
-                        return "0x" + Integer.toOctalString((int) val);
+                        return "0" + Integer.toOctalString((int) val);
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
                 }
@@ -125,7 +125,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Long.toUnsignedString(val);
                     case OCT:
-                        return Long.toUnsignedString(val, 8);
+                        return "0" + Long.toUnsignedString(val, 8);
                     case HEX:
                         return "0x" + Long.toUnsignedString(val, 16);
                 }
@@ -141,7 +141,7 @@ public abstract class CallDecoder {
                     case DEC:
                         return Long.toString(val);
                     case OCT:
-                        return Long.toString(val, 8);
+                        return "0" + Long.toString(val, 8);
                     case HEX:
                         return "0x" + Long.toUnsignedString(val, 16);
                 }

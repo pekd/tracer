@@ -1,8 +1,10 @@
 package org.graalvm.vm.trcview.decode;
 
 import static org.graalvm.vm.util.HexFormatter.tohex;
+import static org.graalvm.vm.util.OctFormatter.tooct;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 
@@ -13,9 +15,23 @@ public class DecoderUtils {
         return tohex(x, 1);
     }
 
+    private static String oct(long x) {
+        return tooct(x, 1);
+    }
+
     public static String ptr(long x) {
+        return ptr(x, false);
+    }
+
+    public static String ptr(long x, TraceAnalyzer trc) {
+        return ptr(x, trc.getArchitecture().getFormat().numberfmt == StepFormat.NUMBERFMT_OCT);
+    }
+
+    public static String ptr(long x, boolean oct) {
         if (x == 0) {
             return "NULL";
+        } else if (oct) {
+            return "0" + oct(x);
         } else {
             return "0x" + hex(x);
         }
@@ -64,7 +80,7 @@ public class DecoderUtils {
                 }
             }
         } catch (MemoryNotMappedException e) {
-            return "0x" + hex(addr);
+            return ptr(addr, trc);
         }
     }
 
@@ -84,7 +100,7 @@ public class DecoderUtils {
             }
             return "\"" + buf + "\"";
         } catch (MemoryNotMappedException e) {
-            return "0x" + hex(addr);
+            return ptr(addr, trc);
         }
     }
 }

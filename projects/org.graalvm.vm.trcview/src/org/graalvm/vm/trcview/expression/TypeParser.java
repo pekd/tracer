@@ -165,23 +165,16 @@ public class TypeParser {
         check(TokenType.IDENT);
         String name = t.str;
 
-        Expression expr = null;
-        if (sym == TokenType.LT) {
-            scan();
-            expr = expr();
-            check(TokenType.GT);
-        }
-
         check(TokenType.LPAR);
         if (sym == TokenType.RPAR) {
             scan();
-            return new Function(name, new Prototype(returnType, expr));
+            return new Function(name, new Prototype(returnType));
         }
         List<Type> args = new ArrayList<>();
         Type type = type();
         if (type.getType() == DataType.VOID) {
             check(TokenType.RPAR);
-            return new Function(name, new Prototype(returnType, args, expr));
+            return new Function(name, new Prototype(returnType, args));
         } else {
             args.add(type);
         }
@@ -203,7 +196,7 @@ public class TypeParser {
         }
         check(TokenType.RPAR);
 
-        return new Function(name, new Prototype(returnType, args, expr));
+        return new Function(name, new Prototype(returnType, args));
     }
 
     private Type type() throws ParseException {

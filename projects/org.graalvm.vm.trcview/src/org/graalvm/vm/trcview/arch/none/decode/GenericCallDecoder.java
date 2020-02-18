@@ -37,10 +37,10 @@ public class GenericCallDecoder extends CallDecoder {
         buf.append(')');
         if (nextState != null) {
             long retval;
-            if (prototype.expr != null) {
+            if (prototype.returnType.getExpression() != null) {
                 try {
                     ExpressionContext ctx = new ExpressionContext(nextState, trc);
-                    retval = prototype.expr.evaluate(ctx);
+                    retval = prototype.returnType.getExpression().evaluate(ctx);
                 } catch (EvaluationException e) {
                     retval = 0;
                 }

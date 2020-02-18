@@ -37,17 +37,17 @@ public class PDP11CallDecoder extends CallDecoder {
         buf.append(')');
         if (nextState != null) {
             long retval;
-            if (prototype.expr != null) {
+            if (prototype.returnType.getExpression() != null) {
                 try {
                     ExpressionContext ctx = new ExpressionContext(nextState, trc);
-                    retval = prototype.expr.evaluate(ctx);
+                    retval = prototype.returnType.getExpression().evaluate(ctx);
                 } catch (EvaluationException e) {
                     retval = 0;
                 }
             } else if (prototype.returnType.getType() == DataType.VOID) {
                 retval = 0;
             } else {
-                return null;
+                return buf.toString();
             }
             String s = str(prototype.returnType, retval, nextState, trc);
             if (s.length() > 0) {

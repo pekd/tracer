@@ -21,10 +21,6 @@ public class Function {
 
     @Override
     public String toString() {
-        if (type.expr != null) {
-            return type.returnType.toString() + " " + name + "<" + type.expr + ">(" + type.args.stream().map(Type::toString).collect(Collectors.joining(", ")) + ")";
-        } else {
-            return type.returnType.toString() + " " + name + "(" + type.args.stream().map(Type::toString).collect(Collectors.joining(", ")) + ")";
-        }
+        return type.returnType.toString() + " " + name + "(" + type.args.stream().map(Type::toString).collect(Collectors.joining(", ")) + ")";
     }
 }
