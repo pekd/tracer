@@ -71,6 +71,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64StepEvent;
@@ -371,6 +372,11 @@ public class TextDump {
         @Override
         public List<Node> getSyscalls() {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Map<Integer, List<IoEvent>> getIo() {
+            return Collections.emptyMap();
         }
 
         @Override

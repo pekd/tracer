@@ -43,7 +43,9 @@ package org.graalvm.vm.trcview.analysis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -60,6 +62,7 @@ import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.BrkEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
@@ -83,6 +86,7 @@ public class Analysis {
     private SymbolResolver resolver;
     private SymbolResolver augmentedResolver;
     private List<Node> syscalls;
+    private Map<Integer, List<IoEvent>> io;
 
     private long steps;
     private long idcnt;
@@ -108,6 +112,7 @@ public class Analysis {
         resolver = new DefaultSymbolResolver(symbolTable);
         augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
         syscalls = new ArrayList<>();
+        io = new HashMap<>();
         memory = new MemoryTrace();
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
@@ -277,6 +282,15 @@ public class Analysis {
                 insn = lastStep.getStep();
             }
             memory.brk(newbrk, pc, insn, node, lastStepNode);
+        } else if (event instanceof IoEvent) {
+            IoEvent evt = (IoEvent) event;
+            int channel = evt.getChannel();
+            List<IoEvent> ch = io.get(channel);
+            if (ch == null) {
+                ch = new ArrayList<>();
+                io.put(channel, ch);
+            }
+            ch.add(evt);
         }
     }
 
@@ -328,6 +342,10 @@ public class Analysis {
 
     public List<Node> getSyscalls() {
         return syscalls;
+    }
+
+    public Map<Integer, List<IoEvent>> getIo() {
+        return io;
     }
 
     public MemoryTrace getMemoryTrace() {

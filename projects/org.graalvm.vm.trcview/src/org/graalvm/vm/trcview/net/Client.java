@@ -26,6 +26,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -431,6 +432,11 @@ public class Client implements TraceAnalyzer, Closeable {
     @Override
     public List<Node> getSyscalls() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Map<Integer, List<IoEvent>> getIo() {
+        return Collections.emptyMap();
     }
 
     @Override

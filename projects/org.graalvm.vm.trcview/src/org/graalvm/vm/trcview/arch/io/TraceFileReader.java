@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.posix.elf.ElfStrings;
+import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.util.io.BEInputStream;
 import org.graalvm.vm.util.io.WordInputStream;
@@ -35,6 +36,11 @@ public class TraceFileReader extends TraceReader {
         }
         reader = arch.getTraceReader(this.in);
         setArchitecture(arch);
+    }
+
+    @Override
+    public Analyzer getAnalyzer() {
+        return reader.getAnalyzer();
     }
 
     @Override

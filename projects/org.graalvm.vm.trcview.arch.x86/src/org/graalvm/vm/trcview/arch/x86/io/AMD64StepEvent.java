@@ -2,7 +2,6 @@ package org.graalvm.vm.trcview.arch.x86.io;
 
 import java.io.IOException;
 
-import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -122,7 +121,7 @@ public class AMD64StepEvent extends StepEvent {
     }
 
     @Override
-    public CpuState getState() {
+    public AMD64CpuState getState() {
         if (cpuState != null) {
             return cpuState;
         } else {

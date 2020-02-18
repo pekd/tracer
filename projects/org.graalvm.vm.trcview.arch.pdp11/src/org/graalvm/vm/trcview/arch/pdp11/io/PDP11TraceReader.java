@@ -7,6 +7,7 @@ import java.io.InputStream;
 import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.util.HexFormatter;
@@ -61,13 +62,14 @@ public class PDP11TraceReader extends ArchTraceReader {
             case MAGIC_CPU0:
                 lastStep = new PDP11StepEvent(in, 0);
                 return lastStep;
-            case MAGIC_CPU1:
+            case MAGIC_CPU1: {
                 PDP11CpuEvent evt = new PDP11CpuEvent(in, 0);
                 if (evt.getType() == PDP11CpuEvent.CPU_TRAP) {
                     return evt.getTrapEvent(lastStep);
                 } else {
                     return evt;
                 }
+            }
             case MAGIC_BUS0: {
                 PDP11BusEvent bus = new PDP11BusEvent(in, 0);
                 MemoryEvent mem = bus.getMemoryEvent();
@@ -84,8 +86,16 @@ public class PDP11TraceReader extends ArchTraceReader {
                 return new PDP11TrapEvent(in, 0);
             case MAGIC_IRQ0:
                 return new PDP11IrqEvent(in, 0);
-            case MAGIC_DLV1:
-                return new PDP11DLV11Event(in, 0);
+            case MAGIC_DLV1: {
+                long step = lastStep != null ? lastStep.getStep() : 0;
+                PDP11DLV11Event evt = new PDP11DLV11Event(in, 0, step);
+                IoEvent ioe = evt.getIoEvent();
+                if (ioe != null) {
+                    return ioe;
+                } else {
+                    return evt;
+                }
+            }
             case MAGIC_RX2C:
                 return new PDP11RXV21Command(in, 0);
             case MAGIC_RX2S:

@@ -802,6 +802,10 @@ public class MainWindow extends JFrame {
             setStatus(text);
             setPosition(-1);
             List<Analyzer> analyzers = pluginLoader.getAnalyzers(reader.getArchitecture());
+            Analyzer analyzer = reader.getAnalyzer();
+            if (analyzer != null) {
+                analyzers.add(analyzer);
+            }
             Analysis analysis = new Analysis(reader.getArchitecture(), analyzers);
             analysis.start();
             BlockNode root = BlockNode.read(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));

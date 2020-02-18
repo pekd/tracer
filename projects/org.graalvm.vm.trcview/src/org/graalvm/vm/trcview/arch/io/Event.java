@@ -22,6 +22,7 @@ public abstract class Event extends Node {
     public static final byte BRK = 10;
     public static final byte SYMBOL_TABLE = 11;
     public static final byte SYSTEM_LOG = 12;
+    public static final byte CONIO = 13;
 
     private final int tid;
     private byte id;

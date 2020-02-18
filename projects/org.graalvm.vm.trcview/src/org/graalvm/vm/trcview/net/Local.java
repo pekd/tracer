@@ -24,6 +24,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
 import org.graalvm.vm.trcview.info.Expressions;
@@ -44,6 +45,7 @@ public class Local implements TraceAnalyzer {
     private MemoryTrace memory;
     private MappedFiles files;
     private List<Node> syscalls;
+    private Map<Integer, List<IoEvent>> io;
     private long steps;
     private List<ChangeListener> symbolChangeListeners;
     private List<ChangeListener> commentChangeListeners;
@@ -59,6 +61,7 @@ public class Local implements TraceAnalyzer {
         memory = analysis.getMemoryTrace();
         files = analysis.getMappedFiles();
         syscalls = analysis.getSyscalls();
+        io = analysis.getIo();
         steps = analysis.getStepCount();
         symbolChangeListeners = new ArrayList<>();
         commentChangeListeners = new ArrayList<>();
@@ -180,6 +183,11 @@ public class Local implements TraceAnalyzer {
     @Override
     public List<Node> getSyscalls() {
         return syscalls;
+    }
+
+    @Override
+    public Map<Integer, List<IoEvent>> getIo() {
+        return io;
     }
 
     @Override

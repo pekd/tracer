@@ -66,6 +66,17 @@ public class DecoderUtils {
         }
     }
 
+    public static String str(String s) {
+        if (s == null) {
+            return "NULL";
+        }
+        StringBuilder buf = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            buf.append(encode(c));
+        }
+        return '"' + buf.toString() + '"';
+    }
+
     public static String cstr(long addr, long insn, TraceAnalyzer trc) {
         if (addr == 0) {
             return "NULL";

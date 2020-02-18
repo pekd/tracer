@@ -192,6 +192,6 @@ public class MemoryHistoryView extends JPanel {
         }
         String html = "<html><head>" + STYLE + "</head><body><pre>" + content + "</pre></body></html>";
         text.setText(html);
-        text.setCaretPosition(0);
+        text.setCaretPosition(text.getDocument().getLength());
     }
 }

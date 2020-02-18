@@ -78,6 +78,7 @@ public class TraceView extends JPanel {
     private InstructionView insns;
     private MemoryView mem;
     private MemoryHistoryView memhistory;
+    private IoView io;
     private StraceView strace;
     private Watches watches;
 
@@ -94,6 +95,7 @@ public class TraceView extends JPanel {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("strace", strace = new StraceView(this::jump));
         tabs.addTab("writes", memhistory = new MemoryHistoryView(status));
+        tabs.addTab("I/O", io = new IoView());
 
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setTopComponent(state = new StateView());
@@ -142,6 +144,7 @@ public class TraceView extends JPanel {
                 }
                 mem.setStep(step);
                 memhistory.setStep(step);
+                io.setStep(step);
                 strace.setStep(step);
                 watches.setStep(step);
             }
@@ -167,6 +170,7 @@ public class TraceView extends JPanel {
                 insns.select(node.getFirstNode());
                 mem.setStep(node.getFirstStep());
                 memhistory.setStep(node.getFirstStep());
+                io.setStep(node.getFirstStep());
                 strace.setStep(node.getFirstStep());
                 watches.setStep(node.getFirstStep());
             }
@@ -181,6 +185,7 @@ public class TraceView extends JPanel {
                     insns.select(par);
                     mem.setStep(par.getHead());
                     memhistory.setStep(par.getHead());
+                    io.setStep(par.getHead());
                     strace.setStep(par.getHead());
                     watches.setStep(par.getHead());
                 }
@@ -244,6 +249,7 @@ public class TraceView extends JPanel {
         state.setTraceAnalyzer(trc);
         mem.setTraceAnalyzer(trc);
         memhistory.setTraceAnalyzer(trc);
+        io.setTraceAnalyzer(trc);
         strace.setTraceAnalyzer(trc);
         watches.setTraceAnalyzer(trc);
         symbols.setTraceAnalyzer(trc);
@@ -261,6 +267,7 @@ public class TraceView extends JPanel {
         state.setState(root.getFirstStep());
         mem.setStep(root.getFirstStep());
         memhistory.setStep(root.getFirstStep());
+        io.setStep(root.getFirstStep());
         strace.setStep(root.getFirstStep());
         watches.setStep(root.getFirstStep());
     }
