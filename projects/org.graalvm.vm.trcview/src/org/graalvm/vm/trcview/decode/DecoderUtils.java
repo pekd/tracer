@@ -23,8 +23,12 @@ public class DecoderUtils {
         return ptr(x, false);
     }
 
+    public static String ptr(long x, StepFormat format) {
+        return ptr(x, format.numberfmt == StepFormat.NUMBERFMT_OCT);
+    }
+
     public static String ptr(long x, TraceAnalyzer trc) {
-        return ptr(x, trc.getArchitecture().getFormat().numberfmt == StepFormat.NUMBERFMT_OCT);
+        return ptr(x, trc.getArchitecture().getFormat());
     }
 
     public static String ptr(long x, boolean oct) {
