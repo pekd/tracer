@@ -89,6 +89,7 @@ import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.Analysis;
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.arch.Architecture;
@@ -399,15 +400,31 @@ public class MainWindow extends JFrame {
                 return;
             }
             String input = JOptionPane.showInputDialog("Enter name:", selected.name);
-            if (input != null && input.trim().length() > 0) {
-                String name = input.trim();
-                for (ComputedSymbol sym : trc.getSymbols()) {
-                    if (sym != selected && sym.name.equals(name)) {
-                        JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
-                        return;
+            if (input != null) {
+                if (input.trim().length() > 0) {
+                    String name = input.trim();
+                    for (ComputedSymbol sym : trc.getSymbols()) {
+                        if (sym != selected && sym.name.equals(name)) {
+                            JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
                     }
+                    trc.renameSymbol(selected, name);
+                } else {
+                    // reset symbol name to default name
+                    SymbolName names = new SymbolName(trc.getArchitecture().getFormat());
+                    String name = null;
+                    switch (selected.type) {
+                        case SUBROUTINE:
+                            name = names.sub(selected.address);
+                            break;
+                        default:
+                        case LOCATION:
+                            name = names.loc(selected.address);
+                            break;
+                    }
+                    trc.renameSymbol(selected, name);
                 }
-                trc.renameSymbol(selected, name);
             }
         });
         renameSymbol.setEnabled(false);
@@ -886,6 +903,7 @@ public class MainWindow extends JFrame {
         List<Watch> watches = new ArrayList<>();
         long insn = -1;
         String memory = null;
+        String memhistory = null;
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -933,6 +951,15 @@ public class MainWindow extends JFrame {
                             continue;
                         }
                         memory = data[0];
+                    } else if (everything && address.equals("MEMHISTORY")) {
+                        // memory history expression
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid memory address");
+                            setStatus("Syntax error in line " + lineno + ": invalid memory address");
+                            ok = false;
+                            continue;
+                        }
+                        memhistory = data[0];
                     } else if (everything && address.equals("INSN")) {
                         // selected instruction
                         if (data.length != 1) {
@@ -1100,10 +1127,14 @@ public class MainWindow extends JFrame {
                 filetype = "Symbol file";
             } else {
                 final String memexpr = memory;
+                final String memhistoryexpr = memhistory;
                 SwingUtilities.invokeLater(() -> {
                     view.setWatches(watches);
                     if (memexpr != null) {
                         view.setMemoryExpression(memexpr);
+                    }
+                    if (memhistoryexpr != null) {
+                        view.setMemoryHistoryExpression(memhistoryexpr);
                     }
                 });
             }
@@ -1192,6 +1223,8 @@ public class MainWindow extends JFrame {
                 }
                 String memexpr = view.getMemoryExpression();
                 out.printf("MEMORY=%s\n", TextSerializer.encode(memexpr));
+                String memhistexpr = view.getMemoryHistoryExpression();
+                out.printf("MEMHISTORY=%s\n", TextSerializer.encode(memhistexpr));
                 StepEvent step = view.getSelectedInstruction();
                 if (step != null) {
                     out.printf("INSN=%d\n", step.getStep());

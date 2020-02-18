@@ -55,7 +55,7 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     public DatabaseTraceAnalyzer(StorageBackend backend) {
         this.arch = Architecture.getArchitecture(backend.getArchitecture());
         resolver = null;
-        symbols = new SymbolTable();
+        symbols = new SymbolTable(arch.getFormat());
         memory = new MemoryTrace();
         files = new MappedFiles(new TreeMap<>());
         steps = 0;

@@ -53,9 +53,9 @@ import java.util.stream.Collectors;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
-import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 
@@ -65,28 +65,22 @@ public class SymbolTable {
     private final Map<Long, ComputedSymbol> symbols = new HashMap<>();
     private final List<SymbolRenameListener> listeners = new ArrayList<>();
 
-    public static String subname(long pc) {
-        return "sub_" + HexFormatter.tohex(pc, 1);
+    private final SymbolName names;
+
+    private ComputedSymbol sub(long pc) {
+        return new ComputedSymbol(names.sub(pc), pc, ComputedSymbol.Type.SUBROUTINE);
     }
 
-    public static String scname(long pc) {
-        return "sc_" + HexFormatter.tohex(pc, 1);
+    private ComputedSymbol sc(long pc) {
+        return new ComputedSymbol(names.sc(pc), pc, ComputedSymbol.Type.SUBROUTINE);
     }
 
-    private static ComputedSymbol sub(long pc) {
-        return new ComputedSymbol(subname(pc), pc, ComputedSymbol.Type.SUBROUTINE);
+    private ComputedSymbol loc(long pc) {
+        return new ComputedSymbol(names.loc(pc), pc, ComputedSymbol.Type.LOCATION);
     }
 
-    private static ComputedSymbol sc(long pc) {
-        return new ComputedSymbol(scname(pc), pc, ComputedSymbol.Type.SUBROUTINE);
-    }
-
-    public static String locname(long pc) {
-        return "loc_" + HexFormatter.tohex(pc, 1);
-    }
-
-    private static ComputedSymbol loc(long pc) {
-        return new ComputedSymbol(locname(pc), pc, ComputedSymbol.Type.LOCATION);
+    public SymbolTable(StepFormat format) {
+        names = new SymbolName(format);
     }
 
     public void addSubroutine(long pc) {
@@ -97,8 +91,8 @@ public class SymbolTable {
             if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
                 sym.type = ComputedSymbol.Type.SUBROUTINE;
             }
-            if (sym.name.equals(locname(pc))) {
-                sym.name = subname(pc);
+            if (sym.name.equals(names.loc(pc))) {
+                sym.name = names.sub(pc);
             }
         }
     }
@@ -111,7 +105,7 @@ public class SymbolTable {
             if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
                 sym.type = ComputedSymbol.Type.SUBROUTINE;
             }
-            if (sym.name.equals(locname(pc)) || sym.name.equals(subname(pc))) {
+            if (sym.name.equals(names.loc(pc)) || sym.name.equals(names.sub(pc))) {
                 sym.name = name;
             }
         }
@@ -125,8 +119,8 @@ public class SymbolTable {
             if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
                 sym.type = ComputedSymbol.Type.SUBROUTINE;
             }
-            if (sym.name.equals(locname(pc))) {
-                sym.name = scname(pc);
+            if (sym.name.equals(names.loc(pc))) {
+                sym.name = names.sc(pc);
             }
         }
     }
@@ -139,7 +133,7 @@ public class SymbolTable {
             if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
                 sym.type = ComputedSymbol.Type.SUBROUTINE;
             }
-            if (sym.name.equals(locname(pc)) || sym.name.equals(subname(pc))) {
+            if (sym.name.equals(names.loc(pc)) || sym.name.equals(names.sub(pc))) {
                 sym.name = name;
             }
         }
@@ -238,7 +232,7 @@ public class SymbolTable {
     public void cleanup() {
         List<ComputedSymbol> unused = symbols.values().stream().filter(s -> s.type == ComputedSymbol.Type.SUBROUTINE).filter(s -> s.visits.size() == 0).collect(Collectors.toList());
         unused.forEach(s -> {
-            log.info("Unused symbol " + s.name + " @ " + HexFormatter.tohex(s.address));
+            log.info("Unused symbol " + s.name + " @ " + names.addr(s.address));
         });
     }
 }

@@ -102,7 +102,7 @@ public class Analysis {
 
     public Analysis(Architecture arch, List<Analyzer> analyzers) {
         this.analyzers = analyzers;
-        symbols = new SymbolTable();
+        symbols = new SymbolTable(arch.getFormat());
         symbolTable = new TreeMap<>();
         mappedFiles = new TreeMap<>();
         resolver = new DefaultSymbolResolver(symbolTable);

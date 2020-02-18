@@ -30,6 +30,14 @@ public class StepFormat {
         }
     }
 
+    public String formatShortAddress(long addr) {
+        if (numberfmt == NUMBERFMT_OCT) {
+            return OctFormatter.tooct(addr);
+        } else {
+            return HexFormatter.tohex(addr);
+        }
+    }
+
     public String formatWord(long data) {
         if (numberfmt == NUMBERFMT_OCT) {
             return OctFormatter.tooct(data, wordwidth);
