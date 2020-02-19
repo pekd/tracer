@@ -26,13 +26,15 @@ import org.graalvm.vm.trcview.expression.ast.OrNode;
 import org.graalvm.vm.trcview.expression.ast.SubNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
+import org.graalvm.vm.trcview.expression.ast.XorNode;
 
 /*
  * expr   = lor { "||" lor } .
  * lor    = land { "&&" land } .
  * land   = rel { ("<" | "<=" | ">" | ">=" | "==") rel } .
  * rel    = or { "|" or } .
- * or     = and { "&" and } .
+ * or     = xor { "^" xor } .
+ * xor    = and { "&" and } .
  * and    = sum { ("+" | "-") sum } .
  * sum    = factor { ("*" | "/") factor } .
  * factor = number
@@ -138,6 +140,15 @@ public class Parser {
     }
 
     private Expression or() throws ParseException {
+        Expression result = xor();
+        while (sym == TokenType.XOR) {
+            scan();
+            result = new XorNode(result, xor());
+        }
+        return result;
+    }
+
+    private Expression xor() throws ParseException {
         Expression result = and();
         while (sym == TokenType.AND) {
             scan();
