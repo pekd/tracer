@@ -80,6 +80,9 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static boolean isJcc(byte[] machinecode) {
+        if (machinecode == null || machinecode.length == 0) {
+            return false;
+        }
         int op = getOpcodeOffset(machinecode);
         switch (machinecode[op]) {
             case AMD64Opcode.JA:
@@ -127,6 +130,9 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static boolean isCall(byte[] machinecode) {
+        if (machinecode == null || machinecode.length == 0) {
+            return false;
+        }
         try {
             int op = getOpcodeOffset(machinecode);
             switch (machinecode[op]) {
@@ -143,6 +149,9 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static boolean isJmp(byte[] machinecode) {
+        if (machinecode == null || machinecode.length == 0) {
+            return false;
+        }
         try {
             int op = getOpcodeOffset(machinecode);
             switch (machinecode[op]) {
@@ -160,6 +169,9 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static boolean isRet(byte[] machinecode) {
+        if (machinecode == null || machinecode.length == 0) {
+            return false;
+        }
         int op = getOpcodeOffset(machinecode);
         switch (machinecode[op]) {
             case AMD64Opcode.RET_NEAR:
@@ -171,11 +183,17 @@ public class AMD64InstructionQuickInfo {
     }
 
     public static boolean isSyscall(byte[] machinecode) {
+        if (machinecode == null || machinecode.length == 0) {
+            return false;
+        }
         int op = getOpcodeOffset(machinecode);
         return (machinecode[op] == AMD64Opcode.ESCAPE) && (machinecode[op + 1] == AMD64Opcode.SYSCALL);
     }
 
     public static InstructionType getType(byte[] machinecode) {
+        if (machinecode == null || machinecode.length == 0) {
+            return InstructionType.OTHER;
+        }
         try {
             int op = getOpcodeOffset(machinecode);
             switch (machinecode[op]) {
