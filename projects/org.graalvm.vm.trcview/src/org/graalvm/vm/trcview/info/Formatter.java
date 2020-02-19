@@ -96,6 +96,10 @@ public class Formatter {
                             buf.append(Stringify.i64force(val));
                             i++;
                             break;
+                        case 'R':
+                            buf.append(Stringify.i32force((int) val));
+                            i++;
+                            break;
                         case 'p':
                             buf.append(DecoderUtils.ptr(val, format));
                             i++;
