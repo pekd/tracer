@@ -41,6 +41,10 @@ public class IoView extends JPanel {
                     ".input {\n" +
                     "    color: " + color(Color.RED) + ";\n" +
                     "}\n" +
+                    ".unprintable-input {\n" +
+                    "    color: " + color(Color.RED) + ";\n" +
+                    "    background-color: " + color(new Color(0xFF, 0xE0, 0xE0)) + ";\n" +
+                    "}\n" +
                     ".cursor {\n" +
                     "    color: " + color(Color.WHITE) + ";\n" +
                     "    background-color: " + color(Color.BLACK) + ";\n" +
@@ -90,7 +94,7 @@ public class IoView extends JPanel {
         return value >= 0x20 && value <= 0x7E; // ascii
     }
 
-    private static void add(StringBuilder buf, char[] s) {
+    private static void add(StringBuilder buf, char[] s, boolean input) {
         for (char val : s) {
             if (val == '\n') {
                 buf.append("<br>");
@@ -114,7 +118,11 @@ public class IoView extends JPanel {
                         buf.append(val);
                 }
             } else {
-                buf.append("<span class=\"unprintable\">&lt;");
+                if (input) {
+                    buf.append("<span class=\"unprintable-input\">&lt;");
+                } else {
+                    buf.append("<span class=\"unprintable\">&lt;");
+                }
                 buf.append(HexFormatter.tohex(val, 2));
                 buf.append("&gt;</span>");
             }
@@ -138,10 +146,10 @@ public class IoView extends JPanel {
 
             if (evt.isInput()) {
                 buf.append("<span class=\"input\">");
-                add(buf, evt.getValue().toCharArray());
+                add(buf, evt.getValue().toCharArray(), true);
                 buf.append("</span>");
             } else {
-                add(buf, evt.getValue().toCharArray());
+                add(buf, evt.getValue().toCharArray(), false);
             }
         }
         buf.append("<span class=\"cursor\">&nbsp;</span>");
