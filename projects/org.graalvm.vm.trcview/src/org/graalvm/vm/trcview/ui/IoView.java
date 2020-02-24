@@ -58,6 +58,8 @@ public class IoView extends JPanel {
     private int[] channels;
 
     private long insn = -1;
+    private long lastInsn = -1;
+    private long nextInsn = -1;
 
     public IoView() {
         super(new BorderLayout());
@@ -76,8 +78,13 @@ public class IoView extends JPanel {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         io = trc.getIo();
-        channels = io.keySet().stream().mapToInt(x -> x).sorted().toArray();
+        int[] tmp = io.keySet().stream().mapToInt(x -> x).sorted().toArray();
+        channels = new int[tmp.length + 1];
+        channels[0] = Integer.MIN_VALUE;
+        System.arraycopy(tmp, 0, channels, 1, tmp.length);
+
         String[] names = IntStream.of(channels).mapToObj(x -> "Channel " + x).toArray(String[]::new);
+        names[0] = "None";
         chaninput.setModel(new DefaultComboBoxModel<>(names));
     }
 
@@ -94,8 +101,9 @@ public class IoView extends JPanel {
         return value >= 0x20 && value <= 0x7E; // ascii
     }
 
-    private static void add(StringBuilder buf, char[] s, boolean input) {
-        for (char val : s) {
+    private static void add(StringBuilder buf, String s, boolean input) {
+        for (int i = 0; i < s.length(); i++) {
+            char val = s.charAt(i);
             if (val == '\n') {
                 buf.append("<br>");
             } else if (val == '\r') {
@@ -134,22 +142,36 @@ public class IoView extends JPanel {
             return;
         }
 
+        if (insn >= lastInsn && insn <= nextInsn) {
+            return;
+        }
+
         int channel = channels[chaninput.getSelectedIndex()];
+
+        if (channel == Integer.MIN_VALUE) {
+            text.setText("<html><head>" + STYLE + "</head><body></body>");
+            text.setCaretPosition(0);
+            return;
+        }
+
         StringBuilder buf = new StringBuilder();
         buf.append("<html><head>");
         buf.append(STYLE);
         buf.append("</head><body><pre>");
         for (IoEvent evt : io.get(channel)) {
             if (evt.getStep() > insn) {
+                nextInsn = evt.getStep();
                 break;
             }
 
+            lastInsn = evt.getStep();
+
             if (evt.isInput()) {
                 buf.append("<span class=\"input\">");
-                add(buf, evt.getValue().toCharArray(), true);
+                add(buf, evt.getValue(), true);
                 buf.append("</span>");
             } else {
-                add(buf, evt.getValue().toCharArray(), false);
+                add(buf, evt.getValue(), false);
             }
         }
         buf.append("<span class=\"cursor\">&nbsp;</span>");
