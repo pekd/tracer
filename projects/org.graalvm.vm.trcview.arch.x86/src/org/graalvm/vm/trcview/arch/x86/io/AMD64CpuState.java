@@ -258,6 +258,19 @@ public class AMD64CpuState extends CpuState {
             case "rflags":
                 return rfl;
             default:
+                if (name.startsWith("xmm") && (name.endsWith(".l") || name.endsWith(".h"))) {
+                    try {
+                        int id = Integer.parseInt(name.substring(3, name.length() - 2));
+                        Vector128 reg = xmm[id];
+                        if (name.endsWith(".l")) {
+                            return reg.getI64(1);
+                        } else {
+                            return reg.getI64(0);
+                        }
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("unknown field " + name);
+                    }
+                }
                 throw new IllegalArgumentException("unknown field " + name);
         }
     }
