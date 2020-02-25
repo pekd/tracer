@@ -60,6 +60,7 @@ public class IoView extends JPanel {
     private long insn = -1;
     private long lastInsn = -1;
     private long nextInsn = -1;
+    private int lastchan = -1;
 
     public IoView() {
         super(new BorderLayout());
@@ -86,6 +87,7 @@ public class IoView extends JPanel {
         String[] names = IntStream.of(channels).mapToObj(x -> "Channel " + x).toArray(String[]::new);
         names[0] = "None";
         chaninput.setModel(new DefaultComboBoxModel<>(names));
+        update();
     }
 
     public void setStep(StepEvent step) {
@@ -142,15 +144,17 @@ public class IoView extends JPanel {
             return;
         }
 
-        if (insn >= lastInsn && insn <= nextInsn) {
-            return;
-        }
-
         int channel = channels[chaninput.getSelectedIndex()];
 
         if (channel == Integer.MIN_VALUE) {
             text.setText("<html><head>" + STYLE + "</head><body></body>");
             text.setCaretPosition(0);
+            return;
+        }
+
+        if (lastchan != channel) {
+            lastchan = channel;
+        } else if (insn >= lastInsn && insn <= nextInsn) {
             return;
         }
 

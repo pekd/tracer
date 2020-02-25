@@ -9,7 +9,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
@@ -42,6 +44,7 @@ public class StraceView extends JPanel {
 
     private JumpListener jump;
     private TraceAnalyzer trc;
+    private CellRenderer renderer;
 
     public StraceView(JumpListener jump) {
         super(new BorderLayout());
@@ -50,7 +53,7 @@ public class StraceView extends JPanel {
         syscalls = Collections.emptyList();
         strace = new JList<>(model = new StraceModel());
         strace.setFont(MainWindow.FONT);
-        strace.setCellRenderer(new CellRenderer());
+        strace.setCellRenderer(renderer = new CellRenderer());
 
         add(BorderLayout.CENTER, new JScrollPane(strace));
 
@@ -89,6 +92,7 @@ public class StraceView extends JPanel {
         insn = -1;
         syscalls = trc.getSyscalls();
         model.changed();
+        renderer.clear();
         update();
     }
 
@@ -174,14 +178,22 @@ public class StraceView extends JPanel {
     }
 
     protected class CellRenderer extends DefaultListCellRenderer {
+        private Map<Integer, String> cache = new HashMap<>();
+
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            String decoded;
             StepEvent step = step((Node) value);
-            StepEvent next = (StepEvent) trc.getNextStep((Node) value);
-            CpuState ns = next == null ? null : next.getState();
-            String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
-            if (decoded == null) {
-                decoded = step.getDisassembly().replace('\t', ' ');
+            if (cache.containsKey(index)) {
+                decoded = cache.get(index);
+            } else {
+                StepEvent next = (StepEvent) trc.getNextStep((Node) value);
+                CpuState ns = next == null ? null : next.getState();
+                decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
+                if (decoded == null) {
+                    decoded = step.getDisassembly().replace('\t', ' ');
+                }
+                cache.put(index, decoded);
             }
             Component c = super.getListCellRendererComponent(list, decoded, index, isSelected, cellHasFocus);
             if (step.getStep() > insn) {
@@ -190,6 +202,10 @@ public class StraceView extends JPanel {
                 c.setForeground(PAST_FG);
             }
             return c;
+        }
+
+        public void clear() {
+            cache.clear();
         }
     }
 
