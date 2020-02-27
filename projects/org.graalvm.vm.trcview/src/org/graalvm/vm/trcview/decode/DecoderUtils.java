@@ -66,6 +66,31 @@ public class DecoderUtils {
         }
     }
 
+    public static String encode(byte b) {
+        switch (Byte.toUnsignedInt(b)) {
+            case '"':
+                return "\\\"";
+            case '\\':
+                return "\\\\";
+            case '\r':
+                return "\\r";
+            case '\n':
+                return "\\n";
+            case '\t':
+                return "\\t";
+            case '\f':
+                return "\\f";
+            case '\b':
+                return "\\b";
+            default:
+                if (b < 0x20 || b >= 0x7f) {
+                    return "\\x" + HexFormatter.tohex(Byte.toUnsignedInt(b), 2);
+                } else {
+                    return Character.toString((char) Byte.toUnsignedInt(b));
+                }
+        }
+    }
+
     public static String str(String s) {
         if (s == null) {
             return "NULL";

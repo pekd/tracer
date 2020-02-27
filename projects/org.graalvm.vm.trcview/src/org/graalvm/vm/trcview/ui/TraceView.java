@@ -98,11 +98,11 @@ public class TraceView extends JPanel {
         tabs.addTab("I/O", io = new IoView());
 
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        rightSplit.setTopComponent(state = new StateView());
         JSplitPane rightBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightBottomSplit.setTopComponent(mem = new MemoryView(status, this::jump));
         rightBottomSplit.setBottomComponent(watches = new Watches(status));
         rightBottomSplit.setResizeWeight(0.5);
+        rightSplit.setTopComponent(state = new StateView(mem));
         rightSplit.setBottomComponent(rightBottomSplit);
         rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);

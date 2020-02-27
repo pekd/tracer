@@ -45,12 +45,26 @@ import static org.graalvm.vm.trcview.ui.Utils.color;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.math.BigInteger;
+import java.util.Objects;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.JToolTip;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.Element;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
@@ -77,6 +91,12 @@ public class StateView extends JPanel {
                     "    color: " + color(Color.BLUE) + ";\n" +
                     "}\n" +
                     "</style>";
+    private static final String TOOLTIP_STYLE = "<style>\n" +
+                    "html, body, pre {\n" +
+                    "    padding: 0;\n" +
+                    "    margin: 0;\n" +
+                    "}\n" +
+                    "</style>";
     private JTextPane text;
 
     private StepEvent step;
@@ -84,13 +104,195 @@ public class StateView extends JPanel {
 
     private TraceAnalyzer trc;
 
-    public StateView() {
+    public StateView(MemoryView mem) {
         super(new BorderLayout());
         text = new JTextPane();
+        text.setEditorKit(new HTMLEditorKit());
         text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
         text.setEditable(false);
         text.setContentType("text/html");
+
+        JToolTip tooltip = text.createToolTip();
+        PopupFactory popupFactory = PopupFactory.getSharedInstance();
+
+        text.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Point p = new Point(e.getX(), e.getY());
+                String number = getValue(p);
+                if (number != null) {
+                    mem.setExpression(toexpr(number));
+                }
+            }
+        });
+        text.addMouseMotionListener(new MouseAdapter() {
+            private Popup tooltipContainer;
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                Point p = new Point(e.getX(), e.getY());
+                String value = getValue(p);
+                if (value != null) {
+                    // show
+                    String oldText = tooltip.getTipText();
+                    tooltip.setTipText(format(value));
+                    if (!Objects.equals(oldText, tooltip.getTipText())) {
+                        oldText = tooltip.getTipText();
+                        if (tooltipContainer != null) {
+                            tooltipContainer.hide();
+                        }
+                        Point loc = text.getToolTipLocation(e);
+                        if (loc == null) {
+                            loc = new Point(e.getX(), e.getY() + 8);
+                        }
+                        int x = text.getLocationOnScreen().x + loc.x;
+                        int y = text.getLocationOnScreen().y + loc.y;
+                        y += 8;
+                        tooltipContainer = popupFactory.getPopup(text, tooltip, x, y);
+                        tooltipContainer.show();
+                    }
+                } else {
+                    // hide
+                    tooltip.setTipText(null);
+                    if (tooltipContainer != null) {
+                        tooltipContainer.hide();
+                        tooltipContainer = null;
+                    }
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (tooltipContainer != null) {
+                    tooltipContainer.hide();
+                    tooltipContainer = null;
+                }
+            }
+        });
         add(BorderLayout.CENTER, new JScrollPane(text));
+    }
+
+    private static String toexpr(String data) {
+        String[] parts = data.split(":");
+        if (parts.length == 2) {
+            String type = parts[0];
+            String number = parts[1];
+            switch (type) {
+                case "oct":
+                    return "0" + number;
+                case "dec":
+                    return number;
+                default:
+                case "hex":
+                    return "0x" + number;
+            }
+        }
+        return null;
+    }
+
+    private static String str(BigInteger value) {
+        byte[] bytes = value.toByteArray();
+        StringBuilder buf = new StringBuilder();
+        for (byte b : bytes) {
+            buf.append(DecoderUtils.encode(b));
+        }
+        return buf.toString();
+    }
+
+    private static String str(long value) {
+        return str(BigInteger.valueOf(value));
+    }
+
+    private static String rev(BigInteger value) {
+        byte[] bytes = value.toByteArray();
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            byte b = bytes[bytes.length - i - 1];
+            buf.append(DecoderUtils.encode(b));
+        }
+        return buf.toString();
+    }
+
+    private static String rev(long value) {
+        return rev(BigInteger.valueOf(value));
+    }
+
+    private static String format(long value) {
+        String result = "<html><head>" + TOOLTIP_STYLE + "</head><body><pre>" +
+                        "Oct: " + Long.toUnsignedString(value, 8) + "<br>" +
+                        "Dec: " + value + "<br>" +
+                        "Hex: " + Long.toUnsignedString(value, 16) + "<br>" +
+                        "Text: \"" + str(value) + "\"<br>" +
+                        "Text (rev): \"" + rev(value) + "\"<br>" +
+                        "</pre></body></html>";
+        return result;
+    }
+
+    private static String format(BigInteger value) {
+        String result = "<html><head>" + TOOLTIP_STYLE + "</head><body><pre>" +
+                        "Oct: " + value.toString(8) + "<br>" +
+                        "Dec: " + value + "<br>" +
+                        "Hex: " + value.toString(16) + "<br>" +
+                        "Text: \"" + str(value) + "\"<br>" +
+                        "Text (rev): \"" + rev(value) + "\"<br>" +
+                        "</pre></body></html>";
+        return result;
+    }
+
+    private static String format(String data) {
+        String[] parts = data.split(":");
+        if (parts.length == 2) {
+            String type = parts[0];
+            String number = parts[1];
+            switch (type) {
+                case "oct":
+                    try {
+                        return format(Long.parseUnsignedLong(number, 8));
+                    } catch (NumberFormatException e) {
+                        return format(new BigInteger(number, 8));
+                    }
+                case "dec": {
+                    try {
+                        return format(Long.parseUnsignedLong(number));
+                    } catch (NumberFormatException e) {
+                        return format(new BigInteger(number));
+                    }
+                }
+                default:
+                case "hex":
+                    try {
+                        return format(Long.parseUnsignedLong(number, 16));
+                    } catch (NumberFormatException e) {
+                        return format(new BigInteger(number, 16));
+                    }
+            }
+        }
+        return null;
+    }
+
+    private String getValue(Point p) {
+        int pos = text.viewToModel(p);
+        if (pos >= 0) {
+            StyledDocument doc = (StyledDocument) text.getDocument();
+            Element elem = doc.getCharacterElement(pos);
+            String data = getData(elem);
+            if (data != null) {
+                return data;
+            }
+        }
+        return null;
+    }
+
+    private static String getData(Element element) {
+        AttributeSet attr = element.getAttributes();
+        AttributeSet attrs = (AttributeSet) attr.getAttribute(HTML.Tag.SPAN);
+        if (attrs != null) {
+            String data = (String) attrs.getAttribute(HTML.Attribute.DATA);
+            if (data != null) {
+                return data;
+            }
+        }
+        return null;
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {

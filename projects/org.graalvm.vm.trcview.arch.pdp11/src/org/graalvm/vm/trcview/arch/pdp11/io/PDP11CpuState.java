@@ -99,11 +99,13 @@ public class PDP11CpuState extends CpuState {
     }
 
     private static void oct(StringBuilder buf, short val) {
+        buf.append("{{");
         String oct = Integer.toString(Short.toUnsignedInt(val), 8);
         for (int i = oct.length(); i < 6; i++) {
             buf.append('0');
         }
         buf.append(oct);
+        buf.append("}}o");
     }
 
     private void reg(StringBuilder buf, int i) {

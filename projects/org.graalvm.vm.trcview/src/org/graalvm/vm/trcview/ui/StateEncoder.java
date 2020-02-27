@@ -56,36 +56,159 @@ public class StateEncoder {
     }
 
     public static String diff(String s1, String s2) {
+        return diff(s1, s2, false);
+    }
+
+    public static String diff(String s1, String s2, boolean html) {
         StringBuilder buf = new StringBuilder();
         String[] lines1 = s1.split("\\n");
         String[] lines2 = s2.split("\\n");
         if (lines1.length != lines2.length) {
-            return html(s2);
+            if (!html) {
+                return html(s2);
+            } else {
+                return s2;
+            }
         }
         for (int i = 0; i < lines1.length; i++) {
             String l1 = lines1[i];
             String l2 = lines2[i];
             if (l1.length() != l2.length()) {
-                buf.append(html(l2)).append('\n');
+                if (!html) {
+                    buf.append(html(l2)).append('\n');
+                } else {
+                    buf.append(l2).append('\n');
+                }
             } else if (l1.equals(l2)) {
-                buf.append(html(l2)).append('\n');
+                if (!html) {
+                    buf.append(html(l2)).append('\n');
+                } else {
+                    buf.append(l2).append('\n');
+                }
             } else {
                 boolean eq = true;
+                int state = 0;
+                StringBuilder attrname = new StringBuilder();
+                StringBuilder attrvalue = new StringBuilder();
+                String data = null;
                 for (int j = 0; j < l1.length(); j++) {
                     char c1 = l1.charAt(j);
                     char c2 = l2.charAt(j);
-                    if (c1 == c2) {
-                        if (!eq) {
-                            eq = true;
-                            buf.append("</span>");
+                    if (html) {
+                        switch (state) {
+                            case 0: // outside of tag
+                                if (c2 == '<') {
+                                    state = 7;
+                                } else if (c1 == c2) {
+                                    if (!eq) {
+                                        eq = true;
+                                        buf.append("</span>");
+                                    }
+                                } else {
+                                    if (eq) {
+                                        eq = false;
+                                        if (data != null) {
+                                            buf.append("<span class=\"change\" data=\"" + data + "\">");
+                                        } else {
+                                            buf.append("<span class=\"change\">");
+                                        }
+                                    }
+                                }
+                                break;
+                            case 1: // in tag
+                                if (c2 == '>') {
+                                    state = 0;
+                                } else if (!Character.isWhitespace(c2)) {
+                                    attrname = new StringBuilder();
+                                    attrvalue = new StringBuilder();
+                                    attrname.append(c2);
+                                    state = 2;
+                                }
+                                break;
+                            case 2: // attribute name
+                                if (c2 == '>') {
+                                    state = 0;
+                                } else if (c2 == '=') {
+                                    state = 3;
+                                } else {
+                                    attrname.append(c2);
+                                }
+                                break;
+                            case 3: // attribute value: begin
+                                if (c2 == '"') {
+                                    state = 4;
+                                } else if (c2 == '\'') {
+                                    state = 5;
+                                } else {
+                                    state = 6;
+                                }
+                                break;
+                            case 4: // attribute value: quoted
+                                if (c2 == '"') {
+                                    if (attrname.toString().equalsIgnoreCase("data")) {
+                                        data = attrvalue.toString();
+                                    }
+                                    state = 1;
+                                } else {
+                                    attrvalue.append(c2);
+                                }
+                                break;
+                            case 5: // attribute value: squoted
+                                if (c2 == '\'') {
+                                    if (attrname.toString().equalsIgnoreCase("data")) {
+                                        data = attrvalue.toString();
+                                    }
+                                    state = 1;
+                                } else {
+                                    attrvalue.append(c2);
+                                }
+                                break;
+                            case 6: // attribute value: not quoted
+                                if (Character.isWhitespace(c2)) {
+                                    if (attrname.toString().equalsIgnoreCase("data")) {
+                                        data = attrvalue.toString();
+                                    }
+                                    state = 1;
+                                } else {
+                                    attrvalue.append(c2);
+                                }
+                                break;
+                            case 7: // '<'
+                                if (c2 == '/') {
+                                    state = 9;
+                                    data = null;
+                                } else {
+                                    state = 8;
+                                }
+                                break;
+                            case 8: // tag name
+                                if (Character.isWhitespace(c2)) {
+                                    state = 1;
+                                } else if (c2 == '>') {
+                                    state = 0;
+                                }
+                                break;
+                            case 9: // closing tag
+                                if (c2 == '>') {
+                                    state = 0;
+                                }
+                                break;
                         }
+                        buf.append(c2);
                     } else {
-                        if (eq) {
-                            eq = false;
-                            buf.append("<span class=\"change\">");
+                        if (c1 == c2) {
+                            if (!eq) {
+                                eq = true;
+                                buf.append("</span>");
+                            }
+                        } else {
+                            if (eq) {
+                                eq = false;
+                                buf.append("<span class=\"change\">");
+                            }
                         }
+                        buf.append(html(Character.toString(c2)));
                     }
-                    buf.append(c2);
                 }
                 if (!eq) {
                     buf.append("</span>");
@@ -94,6 +217,7 @@ public class StateEncoder {
             }
         }
         return buf.toString();
+
     }
 
     private static String str(String s, String style) {
@@ -114,6 +238,89 @@ public class StateEncoder {
             c = 1;
         }
         return StringUtils.repeat(" ", c);
+    }
+
+    private static String state(CpuState state) {
+        StringBuilder buf = new StringBuilder();
+        String text = state.toString();
+        StringBuilder tmp = new StringBuilder();
+        int fsm = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            switch (fsm) {
+                case 0:
+                    switch (c) {
+                        case '&':
+                            buf.append("&amp;");
+                            break;
+                        case '<':
+                            buf.append("&lt;");
+                            break;
+                        case '>':
+                            buf.append("&gt;");
+                            break;
+                        case '{':
+                            fsm = 1;
+                            tmp = new StringBuilder();
+                            break;
+                        default:
+                            buf.append(c);
+                    }
+                    break;
+                case 1:
+                    if (c == '{') {
+                        fsm = 2;
+                    } else {
+                        buf.append('{');
+                        buf.append(c);
+                        fsm = 0;
+                    }
+                    break;
+                case 2:
+                    if (c == '}') {
+                        fsm = 3;
+                    } else {
+                        tmp.append(c);
+                    }
+                    break;
+                case 3:
+                    if (c == '}') {
+                        fsm = 4;
+                    } else {
+                        buf.append("{{");
+                        buf.append(tmp);
+                        buf.append('}');
+                        buf.append(c);
+                        fsm = 0;
+                    }
+                    break;
+                case 4:
+                    if (c == 'x') {
+                        buf.append("<span class=\"number\" data=\"hex:");
+                        buf.append(tmp);
+                        buf.append("\">");
+                        buf.append(tmp);
+                        buf.append("</span>");
+                    } else if (c == 'o') {
+                        buf.append("<span class=\"number\" data=\"oct:");
+                        buf.append(tmp);
+                        buf.append("\">");
+                        buf.append(tmp);
+                        buf.append("</span>");
+                    } else if (c == 'd') {
+                        buf.append("<span class=\"number\" data=\"dec:");
+                        buf.append(tmp);
+                        buf.append("\">");
+                        buf.append(tmp);
+                        buf.append("</span>");
+                    } else {
+                        buf.append(tmp);
+                    }
+                    fsm = 0;
+                    break;
+            }
+        }
+        return buf.toString();
     }
 
     private static String getDisassembly(Location loc) {
@@ -162,7 +369,11 @@ public class StateEncoder {
         CpuState state = step.getState();
         String loc = encode(location);
         String pos = "TID: " + step.getTid() + "\ninstruction: " + step.getStep();
-        return loc + "\n\n" + html(state.toString()) + "\n" + pos;
+        if (trc.getArchitecture().isTaggedState()) {
+            return loc + "\n\n" + state(state) + "\n" + pos;
+        } else {
+            return loc + "\n\n" + state + "\n" + pos;
+        }
     }
 
     public static String encode(TraceAnalyzer trc, StepEvent previous, StepEvent current) {
@@ -171,6 +382,10 @@ public class StateEncoder {
         CpuState state2 = current.getState();
         String loc = encode(location);
         String pos = "TID: " + state2.getTid() + "\ninstruction: " + state2.getStep();
-        return loc + "\n\n" + diff(state1.toString(), state2.toString()) + "\n" + pos;
+        if (trc.getArchitecture().isTaggedState()) {
+            return loc + "\n\n" + diff(state(state1), state(state2), true) + "\n" + pos;
+        } else {
+            return loc + "\n\n" + diff(state1.toString(), state2.toString()) + "\n" + pos;
+        }
     }
 }

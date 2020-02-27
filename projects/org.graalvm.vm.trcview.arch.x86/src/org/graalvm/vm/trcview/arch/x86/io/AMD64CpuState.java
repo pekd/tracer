@@ -314,8 +314,9 @@ public class AMD64CpuState extends CpuState {
                 buf.append(' ');
             }
             buf.append(names[i]);
-            buf.append('=');
+            buf.append("={{");
             buf.append(HexFormatter.tohex(values[i], 16));
+            buf.append("}}x");
         }
         buf.append('\n');
         return buf;
@@ -331,9 +332,9 @@ public class AMD64CpuState extends CpuState {
 
     private static void addSegment(StringBuilder buf, String name, long segment) {
         buf.append(name);
-        buf.append(" =0000 ");
+        buf.append(" =0000 {{");
         buf.append(HexFormatter.tohex(segment, 16));
-        buf.append(" 00000000 00000000\n");
+        buf.append("}}x 00000000 00000000\n");
     }
 
     @Override
@@ -343,7 +344,7 @@ public class AMD64CpuState extends CpuState {
         formatRegLine(buf, new String[]{"RSI", "RDI", "RBP", "RSP"}, new long[]{rsi, rdi, rbp, rsp});
         formatRegLine(buf, new String[]{"R8 ", "R9 ", "R10", "R11"}, new long[]{r8, r9, r10, r11});
         formatRegLine(buf, new String[]{"R12", "R13", "R14", "R15"}, new long[]{r12, r13, r14, r15});
-        buf.append("RIP=").append(HexFormatter.tohex(rip, 16));
+        buf.append("RIP={{").append(HexFormatter.tohex(rip, 16)).append("}}x");
         buf.append(" RFL=").append(HexFormatter.tohex(rfl, 8));
         buf.append(" [");
         addFlag(buf, rfl, Flags.OF, 'O');
@@ -361,12 +362,12 @@ public class AMD64CpuState extends CpuState {
             if (i < 10) {
                 buf.append(' ');
             }
-            buf.append('=');
+            buf.append("={{");
             buf.append(xmm[i].hex());
             if (i % 2 == 0) {
-                buf.append(' ');
+                buf.append("}}x ");
             } else {
-                buf.append('\n');
+                buf.append("}}x\n");
             }
         }
         return buf.toString();
