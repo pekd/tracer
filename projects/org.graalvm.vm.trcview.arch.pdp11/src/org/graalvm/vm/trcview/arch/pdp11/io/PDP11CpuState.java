@@ -109,9 +109,9 @@ public class PDP11CpuState extends CpuState {
     }
 
     private void reg(StringBuilder buf, int i) {
-        buf.append('R');
+        buf.append("{{R");
         buf.append((char) (i + '0'));
-        buf.append('=');
+        buf.append("}}S=");
         oct(buf, registers[i]);
     }
 
@@ -138,9 +138,9 @@ public class PDP11CpuState extends CpuState {
         buf.append(' ');
         reg(buf, 5);
         buf.append('\n');
-        buf.append("SP=");
+        buf.append("{{SP}}S=");
         oct(buf, registers[6]);
-        buf.append(" PC=");
+        buf.append(" {{PC}}S=");
         oct(buf, registers[7]);
         buf.append("\nPSW=");
         oct(buf, psw);

@@ -313,8 +313,9 @@ public class AMD64CpuState extends CpuState {
             if (i > 0) {
                 buf.append(' ');
             }
+            buf.append("{{");
             buf.append(names[i]);
-            buf.append("={{");
+            buf.append("}}S={{");
             buf.append(HexFormatter.tohex(values[i], 16));
             buf.append("}}x");
         }
@@ -344,7 +345,7 @@ public class AMD64CpuState extends CpuState {
         formatRegLine(buf, new String[]{"RSI", "RDI", "RBP", "RSP"}, new long[]{rsi, rdi, rbp, rsp});
         formatRegLine(buf, new String[]{"R8 ", "R9 ", "R10", "R11"}, new long[]{r8, r9, r10, r11});
         formatRegLine(buf, new String[]{"R12", "R13", "R14", "R15"}, new long[]{r12, r13, r14, r15});
-        buf.append("RIP={{").append(HexFormatter.tohex(rip, 16)).append("}}x");
+        buf.append("{{RIP}}S={{").append(HexFormatter.tohex(rip, 16)).append("}}x");
         buf.append(" RFL=").append(HexFormatter.tohex(rfl, 8));
         buf.append(" [");
         addFlag(buf, rfl, Flags.OF, 'O');

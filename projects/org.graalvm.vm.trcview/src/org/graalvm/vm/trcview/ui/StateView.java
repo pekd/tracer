@@ -184,9 +184,10 @@ public class StateView extends JPanel {
                     return "0" + number;
                 case "dec":
                     return number;
-                default:
                 case "hex":
                     return "0x" + number;
+                default:
+                    return number;
             }
         }
         return null;
@@ -260,7 +261,6 @@ public class StateView extends JPanel {
                         return format(new BigInteger(number));
                     }
                 }
-                default:
                 case "hex":
                     try {
                         return format(Long.parseUnsignedLong(number, 16));

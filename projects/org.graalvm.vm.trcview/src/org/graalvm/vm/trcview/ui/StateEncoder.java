@@ -52,7 +52,7 @@ import org.graalvm.vm.util.StringUtils;
 
 public class StateEncoder {
     private static String html(String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;");
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace("\"", "&quot;");
     }
 
     public static String diff(String s1, String s2) {
@@ -295,26 +295,44 @@ public class StateEncoder {
                     }
                     break;
                 case 4:
-                    if (c == 'x') {
-                        buf.append("<span class=\"number\" data=\"hex:");
-                        buf.append(tmp);
-                        buf.append("\">");
-                        buf.append(tmp);
-                        buf.append("</span>");
-                    } else if (c == 'o') {
-                        buf.append("<span class=\"number\" data=\"oct:");
-                        buf.append(tmp);
-                        buf.append("\">");
-                        buf.append(tmp);
-                        buf.append("</span>");
-                    } else if (c == 'd') {
-                        buf.append("<span class=\"number\" data=\"dec:");
-                        buf.append(tmp);
-                        buf.append("\">");
-                        buf.append(tmp);
-                        buf.append("</span>");
-                    } else {
-                        buf.append(tmp);
+                    switch (c) {
+                        case 'x':
+                            buf.append("<span class=\"number\" data=\"hex:");
+                            buf.append(tmp);
+                            buf.append("\">");
+                            buf.append(tmp);
+                            buf.append("</span>");
+                            break;
+                        case 'o':
+                            buf.append("<span class=\"number\" data=\"oct:");
+                            buf.append(tmp);
+                            buf.append("\">");
+                            buf.append(tmp);
+                            buf.append("</span>");
+                            break;
+                        case 'd':
+                            buf.append("<span class=\"number\" data=\"dec:");
+                            buf.append(tmp);
+                            buf.append("\">");
+                            buf.append(tmp);
+                            buf.append("</span>");
+                            break;
+                        case 's':
+                            buf.append("<span class=\"number\" data=\"str:");
+                            buf.append(html(tmp.toString()));
+                            buf.append("\">");
+                            buf.append(tmp);
+                            buf.append("</span>");
+                            break;
+                        case 'S':
+                            buf.append("<span class=\"number\" data=\"str:");
+                            buf.append(html(tmp.toString().toLowerCase()));
+                            buf.append("\">");
+                            buf.append(tmp);
+                            buf.append("</span>");
+                            break;
+                        default:
+                            buf.append(tmp);
                     }
                     fsm = 0;
                     break;
