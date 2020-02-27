@@ -137,6 +137,15 @@ def runAMD64(args=None, out=None):
     vmArgs, vmx86Args = truffle_extract_VM_args(args)
     return mx.run_java(getCommonOptions(False) + vmArgs + getClasspathOptions() + ['org.graalvm.vm.x86.launcher.AMD64Launcher'] + vmx86Args, out=out)
 
+def runAMD64Trace(args=None, out=None):
+    """uses vmx86 to execute a Linux/x86_64 ELF binary"""
+    vmArgs, vmx86Args = truffle_extract_VM_args(args)
+    traceArgs = [
+            '-Dvmx86.exec.trace=true',
+            '-Dvmx86.debug.exec.tracefile=vmx86.trc',
+            '-Dmem.virtual=true']
+    return mx.run_java(getCommonOptions(False) + traceArgs + vmArgs + getClasspathOptions() + ['org.graalvm.vm.x86.launcher.AMD64Launcher'] + vmx86Args, out=out)
+
 def runTrcview(args=None, out=None):
     """GUI tool to inspect execution traces"""
     vmArgs, trcviewArgs = truffle_extract_VM_args(args)
@@ -188,6 +197,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
 
 mx.update_commands(_suite, {
     'vmx86' : [runAMD64, ''],
+    'tvmx86' : [runAMD64Trace, ''],
     'trcview' : [runTrcview, ''],
     'trcdump' : [runTrcdump, ''],
     'trchk' : [runTrchk, '']
