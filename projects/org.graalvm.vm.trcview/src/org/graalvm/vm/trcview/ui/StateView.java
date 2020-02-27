@@ -103,6 +103,7 @@ public class StateView extends JPanel {
     private StepEvent previous;
 
     private TraceAnalyzer trc;
+    private Popup tooltipContainer;
 
     public StateView(MemoryView mem) {
         super(new BorderLayout());
@@ -124,10 +125,18 @@ public class StateView extends JPanel {
                     mem.setExpression(toexpr(number));
                 }
             }
-        });
-        text.addMouseMotionListener(new MouseAdapter() {
-            private Popup tooltipContainer;
 
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (tooltipContainer != null) {
+                    tooltipContainer.hide();
+                    tooltipContainer = null;
+                    tooltip.setTipText(null);
+                }
+            }
+        });
+
+        text.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
                 Point p = new Point(e.getX(), e.getY());
@@ -160,15 +169,8 @@ public class StateView extends JPanel {
                     }
                 }
             }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (tooltipContainer != null) {
-                    tooltipContainer.hide();
-                    tooltipContainer = null;
-                }
-            }
         });
+
         add(BorderLayout.CENTER, new JScrollPane(text));
     }
 
