@@ -43,6 +43,8 @@ public class DecoderUtils {
 
     public static String encode(int b) {
         switch (b) {
+            case 0:
+                return "\\0";
             case '"':
                 return "\\\"";
             case '\\':
@@ -68,6 +70,8 @@ public class DecoderUtils {
 
     public static String encode(byte b) {
         switch (Byte.toUnsignedInt(b)) {
+            case 0:
+                return "\\0";
             case '"':
                 return "\\\"";
             case '\\':
