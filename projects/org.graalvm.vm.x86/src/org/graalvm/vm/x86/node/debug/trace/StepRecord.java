@@ -70,7 +70,11 @@ public class StepRecord extends Record {
     }
 
     public AMD64Instruction getInstruction() {
-        return AMD64InstructionDecoder.decode(getPC(), new CodeArrayReader(machinecode, 0));
+        try {
+            return AMD64InstructionDecoder.decode(getPC(), new CodeArrayReader(machinecode, 0));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return null;
+        }
     }
 
     private String code() {
@@ -87,7 +91,11 @@ public class StepRecord extends Record {
     public String getDisassembly() {
         try {
             AMD64Instruction insn = getInstruction();
-            return insn.getDisassembly();
+            if (insn == null) {
+                return "db\t" + code();
+            } else {
+                return insn.getDisassembly();
+            }
         } catch (Throwable t) {
             return "db\t" + code();
         }
@@ -97,7 +105,11 @@ public class StepRecord extends Record {
         if (machinecode != null) {
             try {
                 AMD64Instruction insn = getInstruction();
-                return insn.getDisassemblyComponents();
+                if (insn == null) {
+                    return new String[]{"db", code()};
+                } else {
+                    return insn.getDisassemblyComponents();
+                }
             } catch (Throwable t) {
                 return new String[]{"db", code()};
             }
@@ -110,8 +122,13 @@ public class StepRecord extends Record {
         if (machinecode == null) {
             return null;
         } else {
-            String[] parts = getInstruction().getDisassemblyComponents();
-            return parts[0];
+            AMD64Instruction insn = getInstruction();
+            if (insn == null) {
+                return "db";
+            } else {
+                String[] parts = insn.getDisassemblyComponents();
+                return parts[0];
+            }
         }
     }
 
