@@ -12,7 +12,7 @@ LD	:= ld
 CFLAGS	:= -fPIE -O3 -g -std=c99 -pedantic -Wall -fdata-sections -ffunction-sections
 LDFLAGS	:= -fPIE -pie -O3 -Wl,--gc-sections
 
-CCNOSTD	:= -ffreestanding -fno-stack-protector -static -nostdlib
+CCNOSTD	:= -ffreestanding -fno-stack-protector -D_FORTIFY_SOURCE=0 -static -nostdlib
 LDNOSTD	:= $(CCNOSTD) -Wl,-y,__stack_chk_fail
 
 CCSTATIC:= -static
