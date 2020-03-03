@@ -55,6 +55,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import org.graalvm.vm.trcview.arch.io.InterruptEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.io.BlockNode;
@@ -212,14 +213,40 @@ public class CallStackView extends JPanel {
         return buf.toString();
     }
 
+    private String format(InterruptEvent irq) {
+        StringBuilder buf = new StringBuilder();
+        if (irq.getStep() != null) {
+            StepEvent step = irq.getStep();
+            buf.append(format.formatAddress(step.getPC()));
+            if (trc.getSymbol(step.getPC()) != null && trc.getSymbol(step.getPC()).getName() != null) {
+                buf.append(" <");
+                buf.append(trc.getSymbol(step.getPC()).getName());
+                buf.append('>');
+            }
+        } else {
+            for (int i = 0; i < format.addrwidth; i++) {
+                buf.append('?');
+            }
+        }
+        buf.append(' ');
+        buf.append(irq.toString().replace('\t', ' '));
+        return buf.toString();
+    }
+
     private void computeCallTrace() {
         callStack = new ArrayList<>();
         callStackBlocks = new ArrayList<>();
         BlockNode block = current;
-        while (block != null && block.getHead() != null) {
-            callStack.add(format(block.getHead()));
-            callStackBlocks.add(block);
-            block = trc.getParent(block);
+        BlockNode parent;
+        while (block != null && (parent = trc.getParent(block)) != null) {
+            if (block.isInterrupt()) {
+                callStack.add(format(block.getInterrupt()));
+                callStackBlocks.add(block);
+            } else if (block.getHead() != null) {
+                callStack.add(format(block.getHead()));
+                callStackBlocks.add(block);
+            }
+            block = parent;
         }
         if (block != null && block.getHead() == null) {
             StepEvent first = block.getFirstStep();
