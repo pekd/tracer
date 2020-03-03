@@ -161,11 +161,10 @@ public class InstructionView extends JPanel {
             }
 
             Node node = instructions.get(selected);
-            StepEvent step;
-            if (node instanceof BlockNode) {
-                step = ((BlockNode) node).getHead();
-            } else {
-                step = (StepEvent) node;
+            StepEvent step = getStep(node);
+            if (step == null) {
+                log.warning("step is null!");
+                return;
             }
             Location loc = Location.getLocation(trc, step);
             StringBuilder buf = new StringBuilder();
@@ -210,6 +209,24 @@ public class InstructionView extends JPanel {
                 trace();
             }
         });
+    }
+
+    private static StepEvent getStep(Node node) {
+        StepEvent step;
+        if (node instanceof BlockNode) {
+            BlockNode block = (BlockNode) node;
+            step = block.getHead();
+            if (step == null && block.isInterrupt()) {
+                step = block.getInterrupt().getStep();
+            }
+            if (step == null) {
+                // this might happen if the first instruction on root level is an irq
+                step = block.getFirstStep();
+            }
+        } else {
+            step = (StepEvent) node;
+        }
+        return step;
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
@@ -332,8 +349,12 @@ public class InstructionView extends JPanel {
         return buf.toString();
     }
 
-    private String format(InterruptEvent irq) {
+    private String format(BlockNode block) {
+        InterruptEvent irq = block.getInterrupt();
         StepEvent step = irq.getStep();
+        if (step == null) {
+            step = getStep(block);
+        }
         StepFormat fmt = step.getFormat();
         Location loc = Location.getLocation(trc, step);
         StringBuilder buf = new StringBuilder();
@@ -424,6 +445,9 @@ public class InstructionView extends JPanel {
         if (prev instanceof BlockNode) {
             BlockNode b = (BlockNode) prev;
             StepEvent step = b.getHead();
+            if (step == null) {
+                return;
+            }
             long npc = step.getPC() + (step.getMachinecode() != null ? step.getMachinecode().length : 0);
             if (pc != npc) {
                 if (b.isInterrupt() && pc == step.getPC()) {
@@ -555,7 +579,7 @@ public class InstructionView extends JPanel {
                 StringBuilder buf = new StringBuilder();
                 StepEvent next = null;
                 if (((BlockNode) n).isInterrupt()) {
-                    buf.append(format(((BlockNode) n).getInterrupt()));
+                    buf.append(format((BlockNode) n));
                 } else {
                     if (i + 1 < instructions.size()) {
                         Node nn = instructions.get(i + 1);

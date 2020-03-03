@@ -198,7 +198,11 @@ public class Search {
 
     private static long getInstruction(Node node) {
         if (node instanceof BlockNode) {
-            return ((BlockNode) node).getHead().getStep();
+            if (((BlockNode) node).getHead() == null) {
+                return ((BlockNode) node).getFirstStep().getStep();
+            } else {
+                return ((BlockNode) node).getHead().getStep();
+            }
         } else if (node instanceof StepEvent) {
             return ((StepEvent) node).getStep();
         } else {
