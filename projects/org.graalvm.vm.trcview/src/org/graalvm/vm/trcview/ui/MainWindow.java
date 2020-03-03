@@ -61,6 +61,7 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -137,6 +138,7 @@ public class MainWindow extends JFrame {
     private JMenuItem open;
     private JMenuItem openDatabase;
     private JMenuItem loadPrototypes;
+    private JMenuItem loadMap;
     private JMenuItem loadSymbols;
     private JMenuItem saveSymbols;
     private JMenuItem loadSession;
@@ -275,6 +277,28 @@ public class MainWindow extends JFrame {
             worker.execute();
         });
         loadPrototypes.setEnabled(false);
+        loadMap = new JMenuItem("Load map...");
+        loadMap.setMnemonic('p');
+        loadMap.addActionListener(e -> {
+            loadSyms.setVisible(true);
+            if (loadSyms.getFile() == null) {
+                return;
+            }
+            String filename = loadSyms.getDirectory() + loadSyms.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        loadMap(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        loadMap.setEnabled(false);
         loadSymbols = new JMenuItem("Load symbols...");
         loadSymbols.setMnemonic('m');
         loadSymbols.addActionListener(e -> {
@@ -354,7 +378,9 @@ public class MainWindow extends JFrame {
             fileMenu.addSeparator();
             fileMenu.add(loadSymbols);
             fileMenu.add(saveSymbols);
+            fileMenu.addSeparator();
             fileMenu.add(loadPrototypes);
+            fileMenu.add(loadMap);
             fileMenu.addSeparator();
             fileMenu.add(refresh);
             fileMenu.addSeparator();
@@ -775,6 +801,7 @@ public class MainWindow extends JFrame {
         this.trc = trc;
         view.setTraceAnalyzer(trc);
         loadPrototypes.setEnabled(true);
+        loadMap.setEnabled(true);
         loadSymbols.setEnabled(true);
         saveSymbols.setEnabled(true);
         loadSession.setEnabled(true);
@@ -877,6 +904,70 @@ public class MainWindow extends JFrame {
             loadPrototypes.setEnabled(true);
         }
         log.info("Prototype file loaded");
+    }
+
+    public void loadMap(File file) throws IOException {
+        log.info("Loading map file " + file + "...");
+        setStatus("Loading map file " + file + "...");
+        loadMap.setEnabled(false);
+        boolean reanalyze = false;
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line;
+            int lineno = 0;
+            Set<Long> globals = new HashSet<>();
+            while ((line = in.readLine()) != null) {
+                lineno++;
+                line = line.trim();
+                String[] parts = line.split(" ");
+                if (parts.length != 3) { // ignore
+                    continue;
+                }
+                long addr;
+                try {
+                    addr = Long.parseUnsignedLong(parts[0], 16);
+                } catch (NumberFormatException e) {
+                    log.info("Parse error in line " + lineno + ": invalid address");
+                    continue;
+                }
+                if (parts[1].length() != 1) {
+                    log.info("Parse error in line " + lineno + ": invalid type");
+                    continue;
+                }
+                String name = parts[2].trim();
+                char type = parts[1].charAt(0);
+                switch (type) {
+                    case 'a':
+                    case 'A':
+                    case 't':
+                    case 'T': {
+                        if (!globals.contains(addr) || Character.isUpperCase(type)) {
+                            ComputedSymbol sym = trc.getComputedSymbol(addr);
+                            if (sym == null) {
+                                trc.addSubroutine(addr, name, null);
+                                reanalyze = true;
+                            } else {
+                                trc.renameSymbol(sym, name);
+                            }
+                            if (Character.isUpperCase(type)) {
+                                globals.add(addr);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            setStatus("Map file loaded");
+        } catch (Throwable t) {
+            log.log(Level.WARNING, "Loading failed: " + t, t);
+            setStatus("Loading failed: " + t);
+            throw t;
+        } finally {
+            loadMap.setEnabled(true);
+            if (reanalyze) {
+                trc.reanalyze();
+            }
+        }
+        log.info("Map file loaded");
     }
 
     public void loadSymbols(File file) throws IOException {
@@ -1254,6 +1345,7 @@ public class MainWindow extends JFrame {
             EventQueue.invokeLater(() -> {
                 view.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
+                loadMap.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
                 refresh.setEnabled(true);
