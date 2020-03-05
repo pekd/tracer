@@ -178,6 +178,39 @@ public class Type {
         }
     }
 
+    public String toCType() {
+        switch (type) {
+            case VOID:
+                return "void";
+            case STRING:
+                return "char*";
+            case U8:
+                return "unsigned __int8";
+            case S8:
+                return "char";
+            case U16:
+                return "unsigned __int16";
+            case S16:
+                return "__int16";
+            case U32:
+                return "unsigned __int32";
+            case S32:
+                return "__int32";
+            case U64:
+                return "unsigned __int64";
+            case S64:
+                return "__int64";
+            case PTR:
+                if (isConst) {
+                    return pointee.toCType() + "* const";
+                } else {
+                    return pointee.toCType() + "*";
+                }
+            default:
+                return "int"; // unknown
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null) {
