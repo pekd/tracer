@@ -82,6 +82,7 @@ import org.graalvm.vm.posix.api.io.Iovec;
 import org.graalvm.vm.posix.api.io.Pollfd;
 import org.graalvm.vm.posix.api.io.Stat;
 import org.graalvm.vm.posix.api.io.Stream;
+import org.graalvm.vm.posix.api.linux.Ptrace;
 import org.graalvm.vm.posix.api.linux.Sysinfo;
 import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.posix.api.net.Msghdr;
@@ -1131,6 +1132,14 @@ public class PosixEnvironment {
                 log.log(Level.INFO, "timer_delete failed: " + Errno.toString(e.getErrno()));
             }
             throw new SyscallException(e.getErrno());
+        }
+    }
+
+    public long ptrace(int request, int pid, long addr, long data) throws SyscallException {
+        if (request == Ptrace.PTRACE_TRACEME) {
+            return 0;
+        } else {
+            throw new SyscallException(Errno.EPERM);
         }
     }
 

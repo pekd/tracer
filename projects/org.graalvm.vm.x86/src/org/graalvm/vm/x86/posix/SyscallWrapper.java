@@ -291,6 +291,8 @@ public class SyscallWrapper extends AMD64Node {
                 return posix.sysinfo(a1);
             case Syscalls.SYS_times:
                 return posix.times(a1);
+            case Syscalls.SYS_ptrace:
+                return posix.ptrace((int) a1, (int) a2, a3, a4);
             case Syscalls.SYS_getuid:
                 return posix.getuid();
             case Syscalls.SYS_getgid:

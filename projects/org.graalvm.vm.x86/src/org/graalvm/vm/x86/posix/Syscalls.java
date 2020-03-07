@@ -93,6 +93,7 @@ public class Syscalls {
     public static final int SYS_gettimeofday = 96;
     public static final int SYS_sysinfo = 99;
     public static final int SYS_times = 100;
+    public static final int SYS_ptrace = 101;
     public static final int SYS_getuid = 102;
     public static final int SYS_getgid = 104;
     public static final int SYS_setuid = 105;
