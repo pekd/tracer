@@ -1135,6 +1135,7 @@ public class PosixEnvironment {
         }
     }
 
+    @SuppressWarnings("unused")
     public long ptrace(int request, int pid, long addr, long data) throws SyscallException {
         if (request == Ptrace.PTRACE_TRACEME) {
             return 0;
