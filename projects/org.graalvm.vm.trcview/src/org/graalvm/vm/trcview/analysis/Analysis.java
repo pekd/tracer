@@ -62,6 +62,7 @@ import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.BrkEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
@@ -321,6 +322,43 @@ public class Analysis {
                                                     new Type(new Type(DataType.STRING)),
                                                     new Type(new Type(DataType.STRING))));
                     break;
+            }
+        }
+
+        // compute j_sub names
+        for (ComputedSymbol sym : symbols.getSubroutines()) {
+            for (Node visit : sym.visits) {
+                InstructionType type;
+                if (visit instanceof BlockNode) {
+                    BlockNode block = (BlockNode) visit;
+                    type = block.getFirstStep().getType();
+                } else if (visit instanceof StepEvent) {
+                    StepEvent step = (StepEvent) visit;
+                    type = step.getType();
+                } else {
+                    continue;
+                }
+
+                // TODO: improve heuristic
+                if (type == InstructionType.JMP || type == InstructionType.JMP_INDIRECT) {
+                    Node node = Search.next(visit);
+                    long pc;
+                    if (node instanceof StepEvent) {
+                        StepEvent step = (StepEvent) node;
+                        pc = step.getPC();
+                    } else if (node instanceof BlockNode) {
+                        BlockNode b = (BlockNode) node;
+                        pc = b.isInterrupt() ? b.getFirstStep().getPC() : b.getHead().getPC();
+                    } else {
+                        break;
+                    }
+
+                    Symbol s = augmentedResolver.getSymbol(pc);
+                    if (s != null) {
+                        sym.name = "j_" + s.getName();
+                        break;
+                    }
+                }
             }
         }
 
