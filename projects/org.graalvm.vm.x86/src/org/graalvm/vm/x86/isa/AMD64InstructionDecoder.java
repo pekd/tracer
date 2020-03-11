@@ -471,6 +471,7 @@ import org.graalvm.vm.x86.isa.instruction.Sqrtpd;
 import org.graalvm.vm.x86.isa.instruction.Sqrtsd;
 import org.graalvm.vm.x86.isa.instruction.Sqrtss;
 import org.graalvm.vm.x86.isa.instruction.Stc;
+import org.graalvm.vm.x86.isa.instruction.Std;
 import org.graalvm.vm.x86.isa.instruction.Stmxcsr;
 import org.graalvm.vm.x86.isa.instruction.Stos.Stosb;
 import org.graalvm.vm.x86.isa.instruction.Stos.Stosd;
@@ -1833,6 +1834,8 @@ public class AMD64InstructionDecoder {
             }
             case AMD64Opcode.STC:
                 return new Stc(pc, Arrays.copyOf(instruction, instructionLength));
+            case AMD64Opcode.STD:
+                return new Std(pc, Arrays.copyOf(instruction, instructionLength));
             case AMD64Opcode.STOSB: {
                 assert segment == null;
                 assert !isREPNZ;

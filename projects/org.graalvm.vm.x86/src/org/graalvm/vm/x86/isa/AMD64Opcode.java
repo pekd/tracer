@@ -451,6 +451,8 @@ public class AMD64Opcode {
 
     public static final byte STC = (byte) 0xF9;
 
+    public static final byte STD = (byte) 0xFD;
+
     public static final byte STOSB = (byte) 0xAA;
     public static final byte STOS = (byte) 0xAB;
 
