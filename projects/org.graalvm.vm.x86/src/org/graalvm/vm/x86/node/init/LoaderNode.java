@@ -42,6 +42,7 @@ package org.graalvm.vm.x86.node.init;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -82,7 +83,23 @@ public class LoaderNode extends AMD64Node {
 
     @TruffleBoundary
     private static Map<String, String> getenv() {
-        if (Options.getBoolean(Options.DEBUG_STATIC_ENV)) {
+        if (Options.getString(Options.ENVIRON) != null) {
+            String environ = Options.getString(Options.ENVIRON);
+            Map<String, String> env = new HashMap<>();
+            byte[] data = Base64.getDecoder().decode(environ);
+            int pos = 0;
+            for (int i = 0; i < data.length; i++) {
+                if (data[i] == 0) {
+                    String part = new String(data, pos, i - pos);
+                    int equal = part.indexOf('=');
+                    String name = part.substring(0, equal);
+                    String value = part.substring(equal + 1);
+                    System.out.println("name = '" + name + "'; value = '" + value + "'");
+                    env.put(name, value);
+                }
+            }
+            return env;
+        } else if (Options.getBoolean(Options.DEBUG_STATIC_ENV)) {
             Map<String, String> env = new HashMap<>();
             env.put("PATH", System.getenv("PATH"));
             env.put("LANG", System.getenv("LANG"));
