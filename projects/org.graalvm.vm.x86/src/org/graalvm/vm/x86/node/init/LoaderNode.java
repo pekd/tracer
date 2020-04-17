@@ -94,8 +94,8 @@ public class LoaderNode extends AMD64Node {
                     int equal = part.indexOf('=');
                     String name = part.substring(0, equal);
                     String value = part.substring(equal + 1);
-                    System.out.println("name = '" + name + "'; value = '" + value + "'");
                     env.put(name, value);
+                    pos = i + 1;
                 }
             }
             return env;
