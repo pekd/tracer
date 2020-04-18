@@ -482,11 +482,15 @@ public class Elf {
             sections.add(new Section(this, off));
         }
 
-        Section shstrndx = sections.get(e_shstrndx);
-        stringTable = new StringTable(shstrndx);
-        String shstrtabName = shstrndx.getName();
-        if (!shstrtabName.equals(".shstrtab")) {
-            throw new IOException("String table section has wrong name: '" + shstrtabName + "'");
+        try {
+            Section shstrndx = sections.get(e_shstrndx);
+            stringTable = new StringTable(shstrndx);
+            String shstrtabName = shstrndx.getName();
+            if (!shstrtabName.equals(".shstrtab")) {
+                throw new IOException("String table section has wrong name: '" + shstrtabName + "'");
+            }
+        } catch (IndexOutOfBoundsException e) {
+            throw new IOException("Invalid section id " + e_shstrndx);
         }
     }
 
