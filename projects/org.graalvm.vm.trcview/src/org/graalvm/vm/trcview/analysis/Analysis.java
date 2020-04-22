@@ -210,7 +210,7 @@ public class Analysis {
                 pc = lastStep.getPC();
                 insn = lastStep.getStep();
             }
-            if (mmap.getResult() != -1) {
+            if (mmap.getResult() >= 0) {
                 mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
                 if (mmap.getData() != null) {
                     memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node, lastStepNode);
