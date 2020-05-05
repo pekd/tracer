@@ -45,6 +45,7 @@ import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.PosixPointer;
 import org.graalvm.vm.posix.api.io.Fcntl;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 
 public class TmpfsFileStream extends Stream {
@@ -149,6 +150,11 @@ public class TmpfsFileStream extends Stream {
     @Override
     public void stat(Stat buf) throws PosixException {
         file.stat(buf);
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        file.statx(mask, buf);
     }
 
     @Override

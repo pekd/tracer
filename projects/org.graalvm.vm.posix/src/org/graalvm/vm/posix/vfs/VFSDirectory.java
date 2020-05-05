@@ -47,7 +47,9 @@ import java.util.stream.Collectors;
 import org.graalvm.vm.posix.api.Dirent;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
+import org.graalvm.vm.util.BitTest;
 
 public abstract class VFSDirectory extends VFSEntry {
     private VFSDirectory mount;
@@ -88,9 +90,10 @@ public abstract class VFSDirectory extends VFSEntry {
     protected Stream opendir(@SuppressWarnings("unused") int flags, @SuppressWarnings("unused") int mode) throws PosixException {
         List<Dirent> entries = new ArrayList<>();
         Dirent self = new Dirent();
-        Stat stat = new Stat();
-        stat(stat);
-        self.d_ino = stat.st_ino;
+        Statx stat = new Statx();
+        int mask = Stat.STATX_INO | Stat.STATX_MODE | Stat.STATX_TYPE;
+        statx(mask, stat);
+        self.d_ino = stat.stx_ino;
         self.d_off = 0;
         self.d_type = Dirent.DT_DIR;
         self.d_name = ".";
@@ -105,10 +108,10 @@ public abstract class VFSDirectory extends VFSEntry {
         long off = 2;
         for (VFSEntry entry : list()) {
             Dirent dirent = new Dirent();
-            entry.stat(stat);
-            dirent.d_ino = stat.st_ino;
+            entry.statx(mask, stat);
+            dirent.d_ino = stat.stx_ino;
             dirent.d_off = off;
-            dirent.d_type = Dirent.IFTODT(stat.st_mode);
+            dirent.d_type = Dirent.IFTODT(stat.stx_mode);
             dirent.d_name = entry.getName();
             entries.add(dirent);
             off++;
@@ -177,6 +180,15 @@ public abstract class VFSDirectory extends VFSEntry {
     public void stat(Stat buf) throws PosixException {
         super.stat(buf);
         buf.st_mode |= Stat.S_IFDIR;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        if (BitTest.test(mask, Stat.STATX_TYPE)) {
+            buf.stx_mode |= Stat.S_IFDIR;
+            buf.stx_mask |= Stat.STATX_TYPE;
+        }
     }
 
     @Override

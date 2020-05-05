@@ -48,6 +48,7 @@ import org.graalvm.vm.posix.api.PosixPointer;
 import org.graalvm.vm.posix.api.Struct;
 import org.graalvm.vm.posix.api.Timespec;
 import org.graalvm.vm.util.BitTest;
+import org.graalvm.vm.util.HexFormatter;
 
 public class Stat implements Struct {
     // @formatter:off
@@ -77,6 +78,30 @@ public class Stat implements Struct {
     public static final int S_IROTH = 00004;
     public static final int S_IWOTH = 00002;
     public static final int S_IXOTH = 00001;
+
+    public static final int STATX_TYPE            = 0x00000001;     /* Want/got stx_mode & S_IFMT */
+    public static final int STATX_MODE            = 0x00000002;     /* Want/got stx_mode & ~S_IFMT */
+    public static final int STATX_NLINK           = 0x00000004;     /* Want/got stx_nlink */
+    public static final int STATX_UID             = 0x00000008;     /* Want/got stx_uid */
+    public static final int STATX_GID             = 0x00000010;     /* Want/got stx_gid */
+    public static final int STATX_ATIME           = 0x00000020;     /* Want/got stx_atime */
+    public static final int STATX_MTIME           = 0x00000040;     /* Want/got stx_mtime */
+    public static final int STATX_CTIME           = 0x00000080;     /* Want/got stx_ctime */
+    public static final int STATX_INO             = 0x00000100;     /* Want/got stx_ino */
+    public static final int STATX_SIZE            = 0x00000200;     /* Want/got stx_size */
+    public static final int STATX_BLOCKS          = 0x00000400;     /* Want/got stx_blocks */
+    public static final int STATX_BASIC_STATS     = 0x000007ff;     /* The stuff in the normal stat struct */
+    public static final int STATX_BTIME           = 0x00000800;     /* Want/got stx_btime */
+    public static final int STATX_ALL             = 0x00000fff;     /* All currently supported flags */
+    public static final int STATX__RESERVED       = 0x80000000;     /* Reserved for future struct statx expansion */
+
+    public static final int STATX_ATTR_COMPRESSED = 0x00000004; /* [I] File is compressed by the fs */
+    public static final int STATX_ATTR_IMMUTABLE  = 0x00000010; /* [I] File is marked immutable */
+    public static final int STATX_ATTR_APPEND     = 0x00000020; /* [I] File is append-only */
+    public static final int STATX_ATTR_NODUMP     = 0x00000040; /* [I] File is not to be dumped */
+    public static final int STATX_ATTR_ENCRYPTED  = 0x00000800; /* [I] File requires key to decrypt in fs */
+
+    public static final int STATX_ATTR_AUTOMOUNT  = 0x00001000; /* Dir: Automount trigger */
     // @formatter:on
 
     public long st_dev;
@@ -299,6 +324,75 @@ public class Stat implements Struct {
             return "0";
         } else {
             return flags.stream().collect(Collectors.joining("|"));
+        }
+    }
+
+    public static String mask(int mask) {
+        List<String> flags = new ArrayList<>();
+        int remainder = mask;
+        if ((mask & STATX_ALL) == STATX_ALL) {
+            flags.add("STATX_ALL");
+            remainder &= ~STATX_ALL;
+        } else if ((mask & STATX_BASIC_STATS) == STATX_BASIC_STATS) {
+            flags.add("STATX_BASIC_STATS");
+            remainder &= ~STATX_BASIC_STATS;
+        }
+
+        if (BitTest.test(remainder, STATX_TYPE)) {
+            flags.add("STATX_TYPE");
+            remainder &= ~STATX_TYPE;
+        }
+        if (BitTest.test(remainder, STATX_MODE)) {
+            flags.add("STATX_MODE");
+            remainder &= ~STATX_MODE;
+        }
+        if (BitTest.test(remainder, STATX_NLINK)) {
+            flags.add("STATX_NLINK");
+            remainder &= ~STATX_NLINK;
+        }
+        if (BitTest.test(remainder, STATX_UID)) {
+            flags.add("STATX_UID");
+            remainder &= ~STATX_UID;
+        }
+        if (BitTest.test(remainder, STATX_GID)) {
+            flags.add("STATX_GID");
+            remainder &= ~STATX_GID;
+        }
+        if (BitTest.test(remainder, STATX_ATIME)) {
+            flags.add("STATX_ATIME");
+            remainder &= ~STATX_ATIME;
+        }
+        if (BitTest.test(remainder, STATX_MTIME)) {
+            flags.add("STATX_MTIME");
+            remainder &= ~STATX_MTIME;
+        }
+        if (BitTest.test(remainder, STATX_CTIME)) {
+            flags.add("STATX_CTIME");
+            remainder &= ~STATX_CTIME;
+        }
+        if (BitTest.test(remainder, STATX_INO)) {
+            flags.add("STATX_INO");
+            remainder &= ~STATX_INO;
+        }
+        if (BitTest.test(remainder, STATX_SIZE)) {
+            flags.add("STATX_SIZE");
+            remainder &= ~STATX_SIZE;
+        }
+        if (BitTest.test(remainder, STATX_BLOCKS)) {
+            flags.add("STATX_BLOCKS");
+            remainder &= ~STATX_BLOCKS;
+        }
+        if (BitTest.test(remainder, STATX__RESERVED)) {
+            flags.add("STATX__RESERVED");
+            remainder &= ~STATX__RESERVED;
+        }
+        if (remainder != 0) {
+            flags.add("0x" + HexFormatter.tohex(Integer.toUnsignedLong(remainder)));
+        }
+        if (flags.isEmpty()) {
+            return "0";
+        } else {
+            return String.join("|", flags);
         }
     }
 }

@@ -44,6 +44,8 @@ import java.util.Date;
 
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
+import org.graalvm.vm.util.BitTest;
 
 public abstract class VFSSymlink extends VFSEntry {
     private Date atime;
@@ -101,5 +103,18 @@ public abstract class VFSSymlink extends VFSEntry {
         super.stat(buf);
         buf.st_nlink = 1;
         buf.st_mode |= Stat.S_IFLNK;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        if (BitTest.test(mask, Stat.STATX_NLINK)) {
+            buf.stx_nlink = 1;
+            buf.stx_mask |= Stat.STATX_NLINK;
+        }
+        if (BitTest.test(mask, Stat.STATX_TYPE)) {
+            buf.stx_mode |= Stat.S_IFLNK;
+            buf.stx_mask |= Stat.STATX_TYPE;
+        }
     }
 }

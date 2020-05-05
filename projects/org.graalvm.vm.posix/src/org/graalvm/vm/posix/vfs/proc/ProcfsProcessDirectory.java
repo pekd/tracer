@@ -47,6 +47,7 @@ import java.util.List;
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.Posix;
 import org.graalvm.vm.posix.api.PosixException;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.vfs.VFSDirectory;
 import org.graalvm.vm.posix.vfs.VFSEntry;
 import org.graalvm.vm.posix.vfs.VFSFile;
@@ -170,5 +171,12 @@ public class ProcfsProcessDirectory extends VFSDirectory {
     @Override
     public Date ctime() throws PosixException {
         return ctime;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        buf.stx_dev_major = 0;
+        buf.stx_dev_minor = 5;
     }
 }

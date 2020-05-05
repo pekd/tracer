@@ -220,6 +220,8 @@ public abstract class Stream {
 
     public abstract void stat(Stat buf) throws PosixException;
 
+    public abstract void statx(int mask, Statx buf) throws PosixException;
+
     public abstract void ftruncate(long size) throws PosixException;
 
     @SuppressWarnings("unused")

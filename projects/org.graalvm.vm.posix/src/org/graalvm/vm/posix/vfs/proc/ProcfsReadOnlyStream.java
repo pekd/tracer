@@ -44,6 +44,7 @@ import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Fcntl;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.posix.vfs.VFSFile;
 
@@ -135,6 +136,13 @@ public class ProcfsReadOnlyStream extends Stream {
     @Override
     public void stat(Stat buf) throws PosixException {
         file.stat(buf);
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        file.statx(mask, buf);
+        buf.stx_dev_major = 0;
+        buf.stx_dev_minor = 5;
     }
 
     @Override

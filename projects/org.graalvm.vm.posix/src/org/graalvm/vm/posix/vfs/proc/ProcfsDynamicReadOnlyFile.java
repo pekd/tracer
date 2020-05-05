@@ -45,6 +45,7 @@ import java.util.function.Supplier;
 
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.posix.vfs.VFSDirectory;
 import org.graalvm.vm.posix.vfs.VFSFile;
@@ -105,5 +106,12 @@ public class ProcfsDynamicReadOnlyFile extends VFSFile {
     @Override
     public Date ctime() throws PosixException {
         return ctime;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        buf.stx_dev_major = 0;
+        buf.stx_dev_minor = 5;
     }
 }

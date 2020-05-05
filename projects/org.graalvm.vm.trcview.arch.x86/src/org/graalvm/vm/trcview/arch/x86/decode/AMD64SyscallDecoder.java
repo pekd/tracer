@@ -289,6 +289,8 @@ public class AMD64SyscallDecoder extends SyscallDecoder {
                 return "dup3(" + a1 + ", " + a2 + ", " + a3 + ")";
             case Syscalls.SYS_prlimit64:
                 return "prlimit64(" + a1 + ", " + a2 + ", " + ptr(a3) + ", " + ptr(a4) + ")";
+            case Syscalls.SYS_statx:
+                return "statx(" + a1 + ", " + cstr(a2, state.getStep(), trc) + ", " + Fcntl.statx((int) a3) + ", " + Stat.mask((int) a4) + ", " + ptr(a5) + ")";
             default:
                 return SyscallNames.getName(id);
         }

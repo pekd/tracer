@@ -345,6 +345,8 @@ public class SyscallWrapper extends AMD64Node {
                 return posix.prlimit64((int) a1, (int) a2, a3, a4);
             case Syscalls.SYS_getrandom:
                 return posix.getrandom(a1, a2, (int) a3);
+            case Syscalls.SYS_statx:
+                return posix.statx((int) a1, a2, (int) a3, (int) a4, a5);
             case Syscalls.SYS_DEBUG:
                 log.log(Levels.INFO, String.format("DEBUG: %d (%x), %d (%x), %d (%x), %d (%x), %d (%x), %d (%x)", a1, a1, a2, a2, a3, a3, a4, a4, a5, a5, a6, a6));
                 return 0;

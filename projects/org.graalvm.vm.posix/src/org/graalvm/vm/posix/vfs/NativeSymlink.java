@@ -40,6 +40,8 @@
  */
 package org.graalvm.vm.posix.vfs;
 
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -52,8 +54,7 @@ import java.util.Date;
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Stat;
-
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import org.graalvm.vm.posix.api.io.Statx;
 
 public class NativeSymlink extends VFSSymlink {
     private Path path;
@@ -172,5 +173,10 @@ public class NativeSymlink extends VFSSymlink {
     @Override
     public void stat(Stat buf) throws PosixException {
         NativeFile.stat(path, buf);
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        NativeFile.statx(path, mask, buf);
     }
 }

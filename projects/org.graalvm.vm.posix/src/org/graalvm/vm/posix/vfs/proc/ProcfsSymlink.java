@@ -41,6 +41,7 @@
 package org.graalvm.vm.posix.vfs.proc;
 
 import org.graalvm.vm.posix.api.PosixException;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.vfs.VFSDirectory;
 import org.graalvm.vm.posix.vfs.VFSEntry;
 import org.graalvm.vm.posix.vfs.VFSSymlink;
@@ -61,5 +62,12 @@ public class ProcfsSymlink extends VFSSymlink {
     @Override
     public String readlink() throws PosixException {
         return link;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        buf.stx_dev_major = 0;
+        buf.stx_dev_minor = 5;
     }
 }

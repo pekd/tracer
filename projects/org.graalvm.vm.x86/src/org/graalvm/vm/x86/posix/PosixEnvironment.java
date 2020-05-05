@@ -81,6 +81,7 @@ import org.graalvm.vm.posix.api.io.FileDescriptorManager;
 import org.graalvm.vm.posix.api.io.Iovec;
 import org.graalvm.vm.posix.api.io.Pollfd;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.posix.api.linux.Ptrace;
 import org.graalvm.vm.posix.api.linux.Sysinfo;
@@ -610,6 +611,28 @@ public class PosixEnvironment {
         } catch (PosixException e) {
             if (strace) {
                 log.log(Level.INFO, "fstat failed: " + Errno.toString(e.getErrno()));
+            }
+            throw new SyscallException(e.getErrno());
+        }
+    }
+
+    public long statx(int dirfd, long pathname, int flags, int mask, long statxbuf) throws SyscallException {
+        PosixPointer ptr = posixPointer(statxbuf);
+        Statx statx = new Statx();
+        try {
+            // TODO: bug report to coreutils/ls; STATX_MODE and STATX_TYPE *should* be independent
+            int reqmask = mask;
+            if (BitTest.test(mask, Stat.STATX_MODE)) {
+                reqmask |= Stat.STATX_TYPE;
+            } else if (BitTest.test(mask, Stat.STATX_TYPE)) {
+                reqmask |= Stat.STATX_MODE;
+            }
+            int result = posix.statx(dirfd, cstr(pathname), flags, reqmask, statx);
+            statx.write64(ptr);
+            return result;
+        } catch (PosixException e) {
+            if (strace) {
+                log.log(Level.INFO, "statx failed: " + Errno.toString(e.getErrno()));
             }
             throw new SyscallException(e.getErrno());
         }

@@ -46,6 +46,9 @@ import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.Timespec;
 import org.graalvm.vm.posix.api.Utimbuf;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
+import org.graalvm.vm.posix.api.io.StatxTimestamp;
+import org.graalvm.vm.util.BitTest;
 
 public abstract class VFSEntry {
     private String path;
@@ -185,6 +188,59 @@ public abstract class VFSEntry {
         buf.st_atim = new Timespec(atime());
         buf.st_mtim = new Timespec(mtime());
         buf.st_ctim = new Timespec(ctime());
+    }
+
+    public void statx(int mask, Statx buf) throws PosixException {
+        buf.stx_mask = 0;
+        buf.stx_attributes = 0;
+        buf.stx_attributes_mask = 0;
+
+        buf.stx_dev_major = 0;
+        buf.stx_dev_minor = 0;
+        if (BitTest.test(mask, Stat.STATX_INO)) {
+            buf.stx_ino = 1;
+            buf.stx_mask |= Stat.STATX_INO;
+        }
+        if (BitTest.test(mask, Stat.STATX_MODE)) {
+            buf.stx_mode = (short) getPermissions();
+            buf.stx_mask |= Stat.STATX_MODE;
+        }
+        if (BitTest.test(mask, Stat.STATX_NLINK)) {
+            buf.stx_nlink = 0;
+            buf.stx_mask |= Stat.STATX_NLINK;
+        }
+        if (BitTest.test(mask, Stat.STATX_UID)) {
+            buf.stx_uid = (int) getUID();
+            buf.stx_mask |= Stat.STATX_UID;
+        }
+        if (BitTest.test(mask, Stat.STATX_GID)) {
+            buf.stx_gid = (int) getGID();
+            buf.stx_mask |= Stat.STATX_GID;
+        }
+        buf.stx_rdev_major = 0;
+        buf.stx_rdev_minor = 0;
+        if (BitTest.test(mask, Stat.STATX_SIZE)) {
+            buf.stx_size = size();
+            buf.stx_mask |= Stat.STATX_SIZE;
+        }
+        if (BitTest.test(mask, Stat.STATX_BLOCKS)) {
+            buf.stx_blksize = 4096;
+            buf.stx_mask |= Stat.STATX_BLOCKS;
+        }
+        buf.stx_blocks = (long) Math.ceil(buf.stx_size / 512.0);
+        if (BitTest.test(mask, Stat.STATX_ATIME)) {
+            buf.stx_atime = new StatxTimestamp(atime());
+            buf.stx_mask |= Stat.STATX_ATIME;
+        }
+        if (BitTest.test(mask, Stat.STATX_CTIME)) {
+            buf.stx_ctime = new StatxTimestamp(ctime());
+            buf.stx_mask |= Stat.STATX_CTIME;
+        }
+        if (BitTest.test(mask, Stat.STATX_MTIME)) {
+            buf.stx_mtime = new StatxTimestamp(mtime());
+            buf.stx_mask |= Stat.STATX_MTIME;
+        }
+
     }
 
     @Override

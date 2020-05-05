@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.graalvm.vm.util.BitTest;
+import org.graalvm.vm.util.HexFormatter;
 
 public class Fcntl {
     // @formatter:off
@@ -95,6 +96,20 @@ public class Fcntl {
     public static final int AT_FDCWD        = -100;          /* Special value used to indicate
                                                                 the *at functions should use the
                                                                 current working directory. */
+
+    public static final int AT_SYMLINK_NOFOLLOW   = 0x100;   /* Do not follow symbolic links. */
+    public static final int AT_REMOVEDIR          = 0x200;   /* Remove directory instead of
+                                                                unlinking file. */
+    public static final int AT_SYMLINK_FOLLOW     = 0x400;   /* Follow symbolic links. */
+    public static final int AT_NO_AUTOMOUNT       = 0x800;   /* Suppress terminal automount traversal */
+    public static final int AT_EMPTY_PATH         = 0x1000;  /* Allow empty relative pathname */
+
+    public static final int AT_STATX_SYNC_TYPE    = 0x6000;  /* Type of synchronisation required from statx() */
+    public static final int AT_STATX_SYNC_AS_STAT = 0x0000;  /* - Do whatever stat() does */
+    public static final int AT_STATX_FORCE_SYNC   = 0x2000;  /* - Force the attributes to be sync'd with the server */
+    public static final int AT_STATX_DONT_SYNC    = 0x4000;  /* - Don't sync attributes with the server */
+
+    public static final int AT_RECURSIVE          = 0x8000;  /* Apply to the entire subtree */
 
     public static final int FD_CLOEXEC      = 1;             /* actually anything with low bit set goes */
     // @formatter:on
@@ -181,6 +196,51 @@ public class Fcntl {
                 return "F_DUPFD_CLOEXEC";
             default:
                 return Integer.toString(cmd);
+        }
+    }
+
+    public static String statx(int flags) {
+        if (flags == AT_STATX_SYNC_AS_STAT) {
+            return "AT_STATX_SYNC_AS_STAT";
+        }
+
+        List<String> result = new ArrayList<>();
+        int remainder = flags;
+        if (BitTest.test(flags, AT_EMPTY_PATH)) {
+            result.add("AT_EMPTY_PATH");
+            remainder &= ~AT_EMPTY_PATH;
+        }
+        if (BitTest.test(flags, AT_NO_AUTOMOUNT)) {
+            result.add("AT_NO_AUTOMOUNT");
+            remainder &= ~AT_NO_AUTOMOUNT;
+        }
+        if (BitTest.test(flags, AT_SYMLINK_NOFOLLOW)) {
+            result.add("AT_SYMLINK_NOFOLLOW");
+            remainder &= ~AT_SYMLINK_NOFOLLOW;
+        }
+        if (BitTest.test(flags, AT_STATX_FORCE_SYNC)) {
+            result.add("AT_STATX_FORCE_SYNC");
+            remainder &= ~AT_STATX_FORCE_SYNC;
+        }
+        if (BitTest.test(flags, AT_STATX_DONT_SYNC)) {
+            result.add("AT_STATX_DONT_SYNC");
+            remainder &= ~AT_STATX_DONT_SYNC;
+        }
+        if (remainder != 0) {
+            result.add("0x" + HexFormatter.tohex(Integer.toUnsignedLong(remainder)));
+        }
+        if (result.isEmpty()) {
+            return "0";
+        } else {
+            return String.join("|", result);
+        }
+    }
+
+    public static String fd(int fd) {
+        if (fd == AT_FDCWD) {
+            return "AT_FDCWD";
+        } else {
+            return Integer.toString(fd);
         }
     }
 }

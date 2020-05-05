@@ -47,6 +47,7 @@ import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.PosixPointer;
 import org.graalvm.vm.posix.api.io.DirectoryStream;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 
 public abstract class VFSDirectoryStream extends DirectoryStream {
     private VFSDirectory dir;
@@ -124,5 +125,10 @@ public abstract class VFSDirectoryStream extends DirectoryStream {
     @Override
     public void stat(Stat buf) throws PosixException {
         dir.stat(buf);
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        dir.statx(mask, buf);
     }
 }

@@ -56,6 +56,8 @@ import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.PosixPointer;
 import org.graalvm.vm.posix.api.Timespec;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
+import org.graalvm.vm.posix.api.io.StatxTimestamp;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.util.io.Endianess;
 
@@ -98,6 +100,30 @@ public abstract class NetworkStream extends Stream {
         buf.st_atim = new Timespec(); // TODO
         buf.st_mtim = new Timespec(); // TODO
         buf.st_ctim = new Timespec(); // TODO
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        buf.stx_mask = Stat.STATX_INO | Stat.STATX_MODE | Stat.STATX_TYPE | Stat.STATX_NLINK | Stat.STATX_UID | Stat.STATX_GID | Stat.STATX_SIZE | Stat.STATX_BLOCKS | Stat.STATX_ATIME |
+                        Stat.STATX_MTIME | Stat.STATX_CTIME;
+        buf.stx_attributes = 0;
+        buf.stx_attributes_mask = 0;
+
+        buf.stx_dev_major = 0; // TODO
+        buf.stx_dev_minor = 0; // TODO
+        buf.stx_ino = 0; // TODO
+        buf.stx_mode = (short) (S_IFSOCK | S_IRUSR | S_IWUSR | S_IWGRP);
+        buf.stx_nlink = 0; // TODO
+        buf.stx_uid = 0; // TODO
+        buf.stx_gid = 0; // TODO
+        buf.stx_rdev_major = 0; // TODO
+        buf.stx_rdev_minor = 0; // TODO
+        buf.stx_size = 0; // TODO
+        buf.stx_blksize = 0; // TODO
+        buf.stx_blocks = 0; // TODO
+        buf.stx_atime = new StatxTimestamp(); // TODO
+        buf.stx_mtime = new StatxTimestamp(); // TODO
+        buf.stx_ctime = new StatxTimestamp(); // TODO
     }
 
     @Override

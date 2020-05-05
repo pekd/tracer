@@ -65,6 +65,7 @@ import org.graalvm.vm.posix.api.io.PipeStream;
 import org.graalvm.vm.posix.api.io.Poll;
 import org.graalvm.vm.posix.api.io.Pollfd;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.posix.api.io.tty.TTYStream;
 import org.graalvm.vm.posix.api.linux.Futex;
@@ -685,6 +686,32 @@ public class Posix {
         }
         Stream stream = fds.getStream(fildes);
         stream.stat(buf);
+        return 0;
+    }
+
+    public int statx(int dir, String pathname, int flags, int mask, Statx statxbuf) throws PosixException {
+        if (strace) {
+            log.log(Levels.INFO, () -> String.format("statx(%s, %s, %s, %s, %s)", Fcntl.fd(dir), str(pathname), Fcntl.statx(flags), Stat.mask(mask), statxbuf));
+        }
+        if (pathname == null) {
+            throw new PosixException(Errno.EFAULT);
+        }
+        VFSEntry entry;
+        boolean followSymlinks = !BitTest.test(flags, Fcntl.AT_SYMLINK_NOFOLLOW);
+        if (dir == Fcntl.AT_FDCWD) {
+            entry = vfs.get(pathname, followSymlinks);
+        } else if (BitTest.test(flags, Fcntl.AT_EMPTY_PATH)) {
+            FileDescriptor dirfd = fds.getFileDescriptor(dir);
+            entry = vfs.get(dirfd.name, followSymlinks);
+        } else {
+            FileDescriptor dirfd = fds.getFileDescriptor(dir);
+            if (!(dirfd.stream instanceof DirectoryStream)) {
+                throw new PosixException(Errno.ENOTDIR);
+            }
+            String resolved = VFS.resolve(pathname, dirfd.name);
+            entry = vfs.get(resolved, followSymlinks);
+        }
+        entry.statx(mask, statxbuf);
         return 0;
     }
 

@@ -63,6 +63,7 @@ import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.Posix;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 
@@ -272,5 +273,10 @@ public class NativeDirectory extends VFSDirectory {
     @Override
     public void stat(Stat buf) throws PosixException {
         NativeFile.stat(absolutePath, buf);
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        NativeFile.statx(absolutePath, mask, buf);
     }
 }

@@ -48,6 +48,7 @@ import static org.graalvm.vm.posix.api.io.Fcntl.O_WRONLY;
 import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.util.BitTest;
 
@@ -93,6 +94,19 @@ public abstract class VFSFile extends VFSEntry {
         super.stat(buf);
         buf.st_nlink = 1;
         buf.st_mode |= Stat.S_IFREG;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        if (BitTest.test(mask, Stat.STATX_NLINK)) {
+            buf.stx_nlink = 1;
+            buf.stx_mask |= Stat.STATX_NLINK;
+        }
+        if (BitTest.test(mask, Stat.STATX_TYPE)) {
+            buf.stx_mode |= Stat.S_IFREG;
+            buf.stx_mask |= Stat.STATX_TYPE;
+        }
     }
 
     @Override

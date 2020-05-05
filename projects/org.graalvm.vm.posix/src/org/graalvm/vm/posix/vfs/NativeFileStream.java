@@ -61,6 +61,7 @@ import org.graalvm.vm.posix.api.Posix;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.PosixPointer;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
 import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.util.BitTest;
@@ -242,6 +243,11 @@ public class NativeFileStream extends Stream {
     @Override
     public void stat(Stat buf) throws PosixException {
         NativeFile.stat(path, buf);
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        NativeFile.statx(path, mask, buf);
     }
 
     @Override

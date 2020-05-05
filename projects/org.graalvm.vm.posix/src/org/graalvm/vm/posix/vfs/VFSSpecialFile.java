@@ -42,6 +42,8 @@ package org.graalvm.vm.posix.vfs;
 
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.io.Stat;
+import org.graalvm.vm.posix.api.io.Statx;
+import org.graalvm.vm.util.BitTest;
 
 public abstract class VFSSpecialFile extends VFSFile {
     public static final int CHAR_DEVICE = 0;
@@ -75,5 +77,29 @@ public abstract class VFSSpecialFile extends VFSFile {
                 break;
         }
         buf.st_mode = (buf.st_mode & ~Stat.S_IFREG) | mode;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        if (BitTest.test(mask, Stat.STATX_TYPE)) {
+            int mode = 0;
+            switch (type) {
+                case CHAR_DEVICE:
+                    mode = Stat.S_IFCHR;
+                    break;
+                case BLOCK_DEVICE:
+                    mode = Stat.S_IFBLK;
+                    break;
+                case FIFO:
+                    mode = Stat.S_IFIFO;
+                    break;
+                case SOCKET:
+                    mode = Stat.S_IFSOCK;
+                    break;
+            }
+            buf.stx_mode = (short) ((buf.stx_mode & ~Stat.S_IFREG) | mode);
+            buf.stx_mask |= Stat.STATX_TYPE;
+        }
     }
 }
