@@ -63,6 +63,7 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
+import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -224,13 +225,28 @@ public class StateView extends JPanel {
         return text.replace("&", "&amp;").replace("<", "&lt;").replace("\"", "&quot;");
     }
 
-    private static String format(long value) {
+    private String cstr(long addr) {
+        return html(DecoderUtils.cstr(addr, step.getStep(), trc, 16));
+    }
+
+    private String format(long value) {
+        String memoryText;
+        try {
+            long mem = trc.getI64(value, step.getStep());
+            memoryText = "Memory (oct): " + Long.toUnsignedString(mem, 8) + "<br>" +
+                            "Memory (dec): " + mem + "<br>" +
+                            "Memory (hex): " + Long.toUnsignedString(mem, 16) + "<br>" +
+                            "Memory (str): " + cstr(value) + "<br>";
+        } catch (MemoryNotMappedException e) {
+            memoryText = "Memory: <i>not mapped</i><br>";
+        }
         String result = "<html><head>" + TOOLTIP_STYLE + "</head><body><pre>" +
                         "Oct: " + Long.toUnsignedString(value, 8) + "<br>" +
                         "Dec: " + value + "<br>" +
                         "Hex: " + Long.toUnsignedString(value, 16) + "<br>" +
                         "Text: \"" + html(str(value)) + "\"<br>" +
                         "Text (rev): \"" + html(rev(value)) + "\"<br>" +
+                        memoryText +
                         "</pre></body></html>";
         return result;
     }
@@ -246,7 +262,7 @@ public class StateView extends JPanel {
         return result;
     }
 
-    private static String format(String data) {
+    private String format(String data) {
         String[] parts = data.split(":");
         if (parts.length == 2) {
             String type = parts[0];

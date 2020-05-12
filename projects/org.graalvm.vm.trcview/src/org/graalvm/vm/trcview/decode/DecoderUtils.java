@@ -107,6 +107,10 @@ public class DecoderUtils {
     }
 
     public static String cstr(long addr, long insn, TraceAnalyzer trc) {
+        return cstr(addr, insn, trc, STRING_MAXLEN);
+    }
+
+    public static String cstr(long addr, long insn, TraceAnalyzer trc, int maxlen) {
         if (addr == 0) {
             return "NULL";
         }
@@ -119,7 +123,7 @@ public class DecoderUtils {
                     return "\"" + buf + "\"";
                 }
                 buf.append(encode(b));
-                if (i >= STRING_MAXLEN) {
+                if (i >= maxlen) {
                     return "\"" + buf + "\"...";
                 }
             }
