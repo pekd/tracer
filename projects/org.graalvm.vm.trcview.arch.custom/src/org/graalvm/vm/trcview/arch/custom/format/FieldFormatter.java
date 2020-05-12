@@ -35,7 +35,16 @@ public class FieldFormatter {
 
         @Override
         public String execute(CpuState state) {
-            return format.format(state.get(field));
+            switch (format.numberfmt) {
+                case Format.FORMAT_OCT:
+                    return "{{" + format.format(state.get(field)) + "}}o";
+                case Format.FORMAT_DEC:
+                    return "{{" + format.format(state.get(field)) + "}}d";
+                case Format.FORMAT_HEX:
+                    return "{{" + format.format(state.get(field)) + "}}x";
+                default:
+                    return format.format(state.get(field));
+            }
         }
     }
 

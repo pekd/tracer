@@ -69,4 +69,9 @@ public class GenericArchitecture extends Architecture {
     public boolean isStackedTraps() {
         return true;
     }
+
+    @Override
+    public boolean isTaggedState() {
+        return true;
+    }
 }
