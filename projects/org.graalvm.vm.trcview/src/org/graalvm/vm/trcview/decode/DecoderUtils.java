@@ -112,7 +112,12 @@ public class DecoderUtils {
 
     public static String cstr(long addr, long insn, TraceAnalyzer trc, int maxlen) {
         if (addr == 0) {
-            return "NULL";
+            try {
+                // check if address 0 is mapped
+                trc.getI8(addr, insn);
+            } catch (MemoryNotMappedException e) {
+                return "NULL";
+            }
         }
         try {
             StringBuilder buf = new StringBuilder();
