@@ -810,6 +810,7 @@ public class MainWindow extends JFrame {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
         openDatabase.setEnabled(false);
+        long start = System.currentTimeMillis();
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
             long size = file.length();
             load(new TraceFileReader(in), size, file.toString());
@@ -821,7 +822,9 @@ public class MainWindow extends JFrame {
             open.setEnabled(true);
             openDatabase.setEnabled(true);
         }
-        log.info("File loaded");
+        long end = System.currentTimeMillis();
+        long time = end - start;
+        log.info("File loaded [" + time + " ms]");
     }
 
     private void setTrace(TraceAnalyzer trc) {
