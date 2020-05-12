@@ -124,7 +124,7 @@ public class AMD64SyscallDecoder extends SyscallDecoder {
 
     public static String decodeResult(int sc, AMD64CpuState state) {
         if (state.rax < 0) {
-            return Errno.getConstant(-(int) state.rax);
+            return "-" + Errno.getConstant(-(int) state.rax);
         } else {
             switch (sc) {
                 case Syscalls.SYS_mmap:
