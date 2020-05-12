@@ -220,13 +220,17 @@ public class StateView extends JPanel {
         return rev(BigInteger.valueOf(value));
     }
 
+    private static String html(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace("\"", "&quot;");
+    }
+
     private static String format(long value) {
         String result = "<html><head>" + TOOLTIP_STYLE + "</head><body><pre>" +
                         "Oct: " + Long.toUnsignedString(value, 8) + "<br>" +
                         "Dec: " + value + "<br>" +
                         "Hex: " + Long.toUnsignedString(value, 16) + "<br>" +
-                        "Text: \"" + str(value) + "\"<br>" +
-                        "Text (rev): \"" + rev(value) + "\"<br>" +
+                        "Text: \"" + html(str(value)) + "\"<br>" +
+                        "Text (rev): \"" + html(rev(value)) + "\"<br>" +
                         "</pre></body></html>";
         return result;
     }
@@ -236,8 +240,8 @@ public class StateView extends JPanel {
                         "Oct: " + value.toString(8) + "<br>" +
                         "Dec: " + value + "<br>" +
                         "Hex: " + value.toString(16) + "<br>" +
-                        "Text: \"" + str(value) + "\"<br>" +
-                        "Text (rev): \"" + rev(value) + "\"<br>" +
+                        "Text: \"" + html(str(value)) + "\"<br>" +
+                        "Text (rev): \"" + html(rev(value)) + "\"<br>" +
                         "</pre></body></html>";
         return result;
     }
