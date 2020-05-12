@@ -1028,7 +1028,7 @@ public class MainWindow extends JFrame {
             out.println("\t// comments");
             Map<Long, String> commentsPC = trc.getCommentsForPCs();
             commentsPC.entrySet().stream().sorted((x, y) -> Long.compareUnsigned(x.getKey(), y.getKey())).forEach(comment -> {
-                out.printf("\tset_cmt(0x%x, %s);\n", comment.getKey(), DecoderUtils.str(comment.getValue()));
+                out.printf("\tset_cmt(0x%x, %s, 0);\n", comment.getKey(), DecoderUtils.str(comment.getValue()));
             });
 
             out.println("}");
