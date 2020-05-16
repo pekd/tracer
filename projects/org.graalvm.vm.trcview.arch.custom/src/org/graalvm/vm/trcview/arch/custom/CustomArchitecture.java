@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.custom.decode.CustomCallDecoder;
+import org.graalvm.vm.trcview.arch.custom.decode.CustomSyscallDecoder;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -169,7 +170,7 @@ public class CustomArchitecture extends Architecture {
 
     @Override
     public SyscallDecoder getSyscallDecoder() {
-        return null;
+        return new CustomSyscallDecoder();
     }
 
     @Override

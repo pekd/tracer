@@ -4,6 +4,7 @@ import java.io.InputStream;
 
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.custom.decode.CustomCallDecoder;
+import org.graalvm.vm.trcview.arch.custom.decode.CustomSyscallDecoder;
 import org.graalvm.vm.trcview.arch.custom.io.GenericTraceReader;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.EventParser;
@@ -42,7 +43,7 @@ public class GenericArchitecture extends Architecture {
 
     @Override
     public SyscallDecoder getSyscallDecoder() {
-        return null;
+        return new CustomSyscallDecoder();
     }
 
     @Override
