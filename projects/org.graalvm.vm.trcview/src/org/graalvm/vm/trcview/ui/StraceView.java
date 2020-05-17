@@ -195,6 +195,21 @@ public class StraceView extends JPanel {
                 }
                 cache.put(index, decoded);
             }
+
+            String comment1 = trc.getCommentForPC(step.getPC());
+            String comment2 = trc.getCommentForInsn(step.getStep());
+            String comment = comment1;
+            if (comment != null) {
+                if (comment2 != null) {
+                    comment += "; " + comment2;
+                }
+            } else {
+                comment = comment2;
+            }
+            if (comment != null) {
+                decoded += " // " + comment;
+            }
+
             Component c = super.getListCellRendererComponent(list, decoded, index, isSelected, cellHasFocus);
             if (step.getStep() > insn) {
                 c.setForeground(FUTURE_FG);
