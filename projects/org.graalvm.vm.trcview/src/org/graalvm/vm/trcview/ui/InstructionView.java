@@ -305,7 +305,7 @@ public class InstructionView extends JPanel {
             buf.append(' ');
         }
         buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
-        buf.append(stripHTML(comment));
+        buf.append(escapeHTML(comment));
         buf.append("</span></pre></body></html>");
     }
 
@@ -372,6 +372,13 @@ public class InstructionView extends JPanel {
         buf.append(":  ");
         buf.append(irq.toString());
         return buf.toString();
+    }
+
+    private static String escapeHTML(String s) {
+        String result = s.replaceAll("&", "&amp;");
+        result = result.replaceAll("<", "&lt;");
+        result = result.replaceAll(">", "&gt;");
+        return result;
     }
 
     private static String stripHTML(String s) {
@@ -633,7 +640,7 @@ public class InstructionView extends JPanel {
                         decoded += " // " + comments;
                     }
                     if (decoded != null) {
-                        int length = buf.length();
+                        int length = buf.length() - step.getFormat().formatAddress(step.getPC()).length() - 3;
                         String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
                         buf = new StringBuilder();
                         buf.append("<html><head><style>").append(STYLE).append("</style></head><body><pre>");
@@ -644,13 +651,13 @@ public class InstructionView extends JPanel {
                             buf.append(StringUtils.repeat(" ", COMMENT_COLUMN - length));
                         }
                         buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
-                        buf.append(decoded);
+                        buf.append(escapeHTML(decoded));
                         buf.append("</span></pre></body></html>");
                     }
                 } else {
                     String comments = comments(step);
                     if (comments != null) {
-                        int length = buf.length();
+                        int length = buf.length() - step.getFormat().formatAddress(step.getPC()).length() - 3;
                         String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
                         buf = new StringBuilder();
                         buf.append("<html><head><style>").append(STYLE).append("</style></head><body><pre>");
@@ -661,7 +668,7 @@ public class InstructionView extends JPanel {
                             buf.append(StringUtils.repeat(" ", COMMENT_COLUMN - length));
                         }
                         buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
-                        buf.append(comments);
+                        buf.append(escapeHTML(comments));
                         buf.append("</span></pre></body></html>");
                     }
                 }
