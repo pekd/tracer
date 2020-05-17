@@ -305,7 +305,7 @@ public class InstructionView extends JPanel {
             buf.append(' ');
         }
         buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
-        buf.append(comment);
+        buf.append(stripHTML(comment));
         buf.append("</span></pre></body></html>");
     }
 
@@ -316,37 +316,47 @@ public class InstructionView extends JPanel {
         buf.append(fmt.formatAddress(loc.getPC()));
         buf.append(":  ");
         buf.append(loc.getAsm(tabSize));
+        String comment = null;
         if (step.getType() == InstructionType.SYSCALL) {
             CpuState ns = next == null ? null : next.getState();
-            String decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
-            if (decoded != null) {
-                comment(buf, loc.getAsm(tabSize), decoded);
-            }
-        } else if (step.getType() != InstructionType.CALL) {
-            String expr = null;
-            try {
-                expr = trc.evaluateExpression(step.getState());
-            } catch (EvaluationException e) {
-                status.accept(e.getMessage());
-            }
-            String comment1 = trc.getCommentForPC(step.getPC());
-            String comment2 = trc.getCommentForInsn(step.getStep());
-            List<String> parts = new ArrayList<>();
-            if (expr != null) {
-                parts.add(expr);
-            }
-            if (comment1 != null) {
-                parts.add(comment1);
-            }
-            if (comment2 != null) {
-                parts.add(comment2);
-            }
-            String comment = parts.isEmpty() ? null : String.join("; ", parts);
-            if (comment != null) {
-                comment(buf, loc.getAsm(tabSize), comment);
+            comment = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
+        }
+        if (step.getType() != InstructionType.CALL) {
+            String comments = comments(step);
+            if (comments != null) {
+                if (comment == null) {
+                    comment = comments;
+                } else {
+                    comment += " // " + comments;
+                }
             }
         }
+        if (comment != null) {
+            comment(buf, loc.getAsm(tabSize), comment);
+        }
         return buf.toString();
+    }
+
+    private String comments(StepEvent step) {
+        String expr = null;
+        try {
+            expr = trc.evaluateExpression(step.getState());
+        } catch (EvaluationException e) {
+            status.accept(e.getMessage());
+        }
+        String comment1 = trc.getCommentForPC(step.getPC());
+        String comment2 = trc.getCommentForInsn(step.getStep());
+        List<String> parts = new ArrayList<>();
+        if (expr != null) {
+            parts.add(expr);
+        }
+        if (comment1 != null) {
+            parts.add(comment1);
+        }
+        if (comment2 != null) {
+            parts.add(comment2);
+        }
+        return parts.isEmpty() ? null : String.join("; ", parts);
     }
 
     private String format(BlockNode block) {
@@ -616,6 +626,12 @@ public class InstructionView extends JPanel {
                     Function fun = new Function(sub.getName(), sub.getPrototype());
                     CpuState ns = next == null ? null : next.getState();
                     String decoded = trc.getArchitecture().getCallDecoder().decode(fun, step.getState(), ns, trc);
+                    String comments = comments(step);
+                    if (decoded == null) {
+                        decoded = comments;
+                    } else if (comments != null) {
+                        decoded += " // " + comments;
+                    }
                     if (decoded != null) {
                         int length = buf.length();
                         String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
@@ -629,6 +645,23 @@ public class InstructionView extends JPanel {
                         }
                         buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
                         buf.append(decoded);
+                        buf.append("</span></pre></body></html>");
+                    }
+                } else {
+                    String comments = comments(step);
+                    if (comments != null) {
+                        int length = buf.length();
+                        String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+                        buf = new StringBuilder();
+                        buf.append("<html><head><style>").append(STYLE).append("</style></head><body><pre>");
+                        buf.append(str);
+                        if (length >= COMMENT_COLUMN) {
+                            buf.append(" ");
+                        } else {
+                            buf.append(StringUtils.repeat(" ", COMMENT_COLUMN - length));
+                        }
+                        buf.append("<span style=\"" + COMMENT_STYLE + "\">; ");
+                        buf.append(comments);
                         buf.append("</span></pre></body></html>");
                     }
                 }
