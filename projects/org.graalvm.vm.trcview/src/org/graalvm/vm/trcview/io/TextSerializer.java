@@ -45,6 +45,9 @@ public class TextSerializer {
                 case '\'':
                     buf.append("\\\'");
                     break;
+                case '\\':
+                    buf.append("\\\\");
+                    break;
                 default:
                     buf.append(c);
                     break;
