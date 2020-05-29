@@ -4,36 +4,26 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
-import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class PDP11CpuState extends CpuState {
-    private final short[] registers = new short[8];
-    private final short psw;
-    private final long step;
-    private final short[] insn = new short[3];
-
-    public PDP11CpuState(WordInputStream in, int tid) throws IOException {
+public abstract class PDP11CpuState extends CpuState {
+    protected PDP11CpuState(int tid) {
         super(PDP11.ID, tid);
-        for (int i = 0; i < 8; i++) {
-            registers[i] = in.read16bit();
-        }
-        psw = in.read16bit();
-        for (int i = 0; i < 3; i++) {
-            insn[i] = in.read16bit();
-        }
-        in.read32bit();
-        step = in.read64bit();
     }
 
-    @Override
-    public long getStep() {
-        return step;
+    public abstract short getRegister(int id);
+
+    public abstract short getPSW();
+
+    public abstract short[] getMachinecode();
+
+    public short getSP() {
+        return getRegister(6);
     }
 
     @Override
     public long getPC() {
-        return Short.toUnsignedLong(registers[7]);
+        return Short.toUnsignedLong(getRegister(7));
     }
 
     @Override
@@ -41,61 +31,38 @@ public class PDP11CpuState extends CpuState {
         switch (name) {
             case "r0":
             case "R0":
-                return Short.toUnsignedLong(registers[0]);
+                return Short.toUnsignedLong(getRegister(0));
             case "r1":
             case "R1":
-                return Short.toUnsignedLong(registers[1]);
+                return Short.toUnsignedLong(getRegister(1));
             case "r2":
             case "R2":
-                return Short.toUnsignedLong(registers[2]);
+                return Short.toUnsignedLong(getRegister(2));
             case "r3":
             case "R3":
-                return Short.toUnsignedLong(registers[3]);
+                return Short.toUnsignedLong(getRegister(3));
             case "r4":
             case "R4":
-                return Short.toUnsignedLong(registers[4]);
+                return Short.toUnsignedLong(getRegister(4));
             case "r5":
             case "R5":
-                return Short.toUnsignedLong(registers[5]);
+                return Short.toUnsignedLong(getRegister(5));
             case "r6":
             case "R6":
-                return Short.toUnsignedLong(registers[6]);
-            case "r7":
-            case "R7":
-                return Short.toUnsignedLong(registers[7]);
             case "sp":
             case "SP":
-                return Short.toUnsignedLong(registers[6]);
+                return Short.toUnsignedLong(getRegister(6));
+            case "r7":
+            case "R7":
             case "pc":
             case "PC":
-                return Short.toUnsignedLong(registers[7]);
+                return Short.toUnsignedLong(getRegister(7));
             case "psw":
             case "PSW":
-                return Short.toUnsignedLong(psw);
+                return Short.toUnsignedLong(getPSW());
             default:
                 throw new IllegalArgumentException("unknown field " + name);
         }
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-
-    }
-
-    public short[] getMachinecode() {
-        return insn;
-    }
-
-    public short getSP() {
-        return registers[6];
-    }
-
-    public short getPSW() {
-        return psw;
-    }
-
-    public short getRegister(int i) {
-        return registers[i];
     }
 
     private static void oct(StringBuilder buf, short val) {
@@ -112,11 +79,11 @@ public class PDP11CpuState extends CpuState {
         buf.append("{{R");
         buf.append((char) (i + '0'));
         buf.append("}}S=");
-        oct(buf, registers[i]);
+        oct(buf, getRegister(i));
     }
 
     private void psw(StringBuilder buf, char c, int bit) {
-        if ((psw & bit) != 0) {
+        if ((getPSW() & bit) != 0) {
             buf.append(c);
         } else {
             buf.append('-');
@@ -139,11 +106,11 @@ public class PDP11CpuState extends CpuState {
         reg(buf, 5);
         buf.append('\n');
         buf.append("{{SP}}S=");
-        oct(buf, registers[6]);
+        oct(buf, getRegister(6));
         buf.append(" {{PC}}S=");
-        oct(buf, registers[7]);
+        oct(buf, getRegister(7));
         buf.append("\nPSW=");
-        oct(buf, psw);
+        oct(buf, getPSW());
         buf.append(" [");
         psw(buf, 'P', 0x80);
         psw(buf, 'T', 0x10);
@@ -153,5 +120,10 @@ public class PDP11CpuState extends CpuState {
         psw(buf, 'C', 0x01);
         buf.append("]\n");
         return buf.toString();
+    }
+
+    @Override
+    protected void writeRecord(WordOutputStream out) throws IOException {
+
     }
 }

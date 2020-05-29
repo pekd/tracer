@@ -16,6 +16,7 @@ import org.graalvm.vm.util.io.WordInputStream;
 
 public class PDP11TraceReader extends ArchTraceReader {
     public static final int MAGIC_CPU0 = 0x43505530;
+    public static final int MAGIC_CPUZ = 0x4350555a;
     public static final int MAGIC_CPU1 = 0x43505531;
     public static final int MAGIC_BUS0 = 0x42555330;
     public static final int MAGIC_BUS1 = 0x42555331;
@@ -28,9 +29,13 @@ public class PDP11TraceReader extends ArchTraceReader {
     public static final int MAGIC_RX2S = 0x52583253;
     public static final int MAGIC_DLV1 = 0x444C5631;
 
+    private static final int STEP_LIMIT = 5_000;
+
     private final WordInputStream in;
     private boolean map;
     private PDP11StepEvent lastStep;
+    private PDP11CpuState lastState = null;
+    private long steps = 0;
 
     public PDP11TraceReader(InputStream in) {
         this(new BEInputStream(in));
@@ -60,7 +65,18 @@ public class PDP11TraceReader extends ArchTraceReader {
         }
         switch (magic) {
             case MAGIC_CPU0:
-                lastStep = new PDP11StepEvent(in, 0);
+                steps = 0;
+                lastState = new PDP11CpuFullState(in, 0);
+                lastStep = new PDP11StepEvent(lastState, 0);
+                return lastStep;
+            case MAGIC_CPUZ:
+                steps++;
+                lastState = new PDP11CpuDeltaState(in, lastState, 0);
+                if (steps >= STEP_LIMIT) {
+                    lastState = new PDP11CpuFullState(lastState);
+                    steps = 0;
+                }
+                lastStep = new PDP11StepEvent(lastState, 0);
                 return lastStep;
             case MAGIC_CPU1: {
                 PDP11CpuEvent evt = new PDP11CpuEvent(in, 0);

@@ -11,16 +11,15 @@ import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Disassembler;
 import org.graalvm.vm.util.io.Endianess;
-import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class PDP11StepEvent extends StepEvent {
     private final PDP11CpuState cpuState;
     private byte[] machinecode = null;
 
-    public PDP11StepEvent(WordInputStream in, int tid) throws IOException {
+    public PDP11StepEvent(PDP11CpuState state, int tid) {
         super(PDP11.ID, tid);
-        cpuState = new PDP11CpuState(in, tid);
+        cpuState = state;
     }
 
     @Override
