@@ -100,10 +100,11 @@ Execution Traces
 First, record an execution trace:
 
 ```
-mx -J"-Dvmx86.debug.exec=true -Dvmx86.debug.exec.trace=true -Dvmx86.debug.exec.tracefile=trace-file.trc -Dmem.virtual=true -Dposix.strace=true" vmx86 /bin/echo hello
+mx tvmx86 /bin/echo hello
 ```
 
-Then, inspect it in the trace viewer:
+This creates a trace file called `trace.trc` in the current working directory.
+Then, inspect it in trcview:
 
 ```
 mx trcview
@@ -115,7 +116,7 @@ Debugging the Interpreter
 To check if all CPU instructions are implemented correctly (at least for a given program execution), one can also verify an execution trace on the host CPU (as long as the host has an x86\_64 CPU):
 
 ```
-mx trchk trace-file.trc
+mx trchk trace.trc
 ```
 
 
