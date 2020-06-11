@@ -117,8 +117,10 @@ public class LoggingStream extends PrintStream {
                         buf.deleteCharAt(0);
                     } else {
                         String msg = buf.substring(0, end);
-                        if (msg.endsWith("\r"))
+                        if (msg.endsWith("\r\n"))
                             msg = msg.substring(0, msg.length() - 2);
+                        else if (msg.endsWith("\r"))
+                            msg = msg.substring(0, msg.length() - 1);
                         print(msg);
                     }
                     buf.delete(0, end);
