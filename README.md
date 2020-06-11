@@ -36,11 +36,17 @@ git clone https://github.com/oracle/graal
 git clone https://github.com/graalvm/vmx86
 ```
 
+*Note:* the current implementation of vmx86's NFI is incompatible with the
+current version of Graal. Use Graal commit
+07bc60dbd6b15073c9c0669e1638855666048915 to avoid this problem.
+
 Set `JAVA_HOME` to a JDK >= 1.8, e.g.:
 
 ```
 echo JAVA_HOME=/usr/lib/jvm/java-11-openjdk > vmx86/mx.vmx86/env
 ```
+
+*Note:* To avoid unnecessary trouble, use OpenJDK 11.
 
 Build vmx86:
 
