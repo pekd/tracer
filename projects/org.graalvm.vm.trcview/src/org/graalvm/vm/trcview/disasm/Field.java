@@ -37,6 +37,10 @@ public class Field {
         this(null, from, to, signed);
     }
 
+    public static Field getLE(int bit) {
+        return getLE(bit, bit, false);
+    }
+
     public static Field getLE(int from, int to) {
         return getLE(from, to, false);
     }
