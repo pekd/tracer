@@ -129,7 +129,12 @@ public class BlockNode extends Node implements Block {
             if (n instanceof StepEvent) {
                 return (StepEvent) n;
             } else if (n instanceof BlockNode) {
-                return ((BlockNode) n).getFirstStep();
+                BlockNode b = (BlockNode) n;
+                if (b.getHead() != null) {
+                    return b.getHead();
+                } else {
+                    return b.getFirstStep();
+                }
             }
         }
         log.log(Levels.WARNING, "No step event found! " + children.size() + " children");
