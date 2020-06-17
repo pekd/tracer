@@ -1,21 +1,21 @@
 package org.graalvm.vm.trcview.disasm;
 
-public class Field {
+public class Field64 {
     public final int from;
     public final int to;
     public final int lo;
     public final int hi;
-    public final int mask;
-    public final int imask;
+    public final long mask;
+    public final long imask;
     public final boolean signed;
 
     private final Value value;
 
-    public Field(Value value, int from, int to) {
+    public Field64(Value value, int from, int to) {
         this(value, from, to, false);
     }
 
-    public Field(Value value, int from, int to, boolean signed) {
+    public Field64(Value value, int from, int to, boolean signed) {
         if (from > to) {
             throw new IllegalArgumentException("from > to");
         }
@@ -29,39 +29,39 @@ public class Field {
         this.value = value;
     }
 
-    public Field(int from, int to) {
+    public Field64(int from, int to) {
         this(null, from, to, false);
     }
 
-    public Field(int from, int to, boolean signed) {
+    public Field64(int from, int to, boolean signed) {
         this(null, from, to, signed);
     }
 
-    public static Field getLE(int bit) {
+    public static Field64 getLE(int bit) {
         return getLE(bit, bit, false);
     }
 
-    public static Field getLE(int from, int to) {
+    public static Field64 getLE(int from, int to) {
         return getLE(from, to, false);
     }
 
-    public static Field getLE(int from, int to, boolean signed) {
-        return new Field(bit(from), bit(to), signed);
+    public static Field64 getLE(int from, int to, boolean signed) {
+        return new Field64(bit(from), bit(to), signed);
     }
 
     private static int bit(int i) {
-        return 31 - i;
+        return 63 - i;
     }
 
-    private int mask() {
+    private long mask() {
         int result = 0;
         for (int i = from; i <= to; i++) {
-            result |= 1 << bit(i);
+            result |= 1L << bit(i);
         }
         return result;
     }
 
-    public int get(int mw) {
+    public long get(long mw) {
         if (signed) {
             return (mw << bit(hi)) >> (bit(hi) + lo);
         } else {
@@ -69,32 +69,32 @@ public class Field {
         }
     }
 
-    public int set(int insn, int value) {
+    public long set(long insn, long value) {
         return (insn & imask) | ((value << lo) & mask);
     }
 
-    public int get() {
+    public long get() {
         if (value == null) {
             throw new IllegalStateException("no value set");
         }
-        return get(value.get());
+        return get(value.get64());
     }
 
-    public void set(int val) {
+    public void set(long val) {
         if (value == null) {
             throw new IllegalStateException("no value set");
         }
-        value.set(set(value.get(), val));
+        value.set64(set(value.get64(), val));
     }
 
-    public boolean getBit(int val) {
+    public boolean getBit(long val) {
         if (from != to) {
             throw new IllegalStateException("not a single bit");
         }
         return get(val) != 0;
     }
 
-    public int setBit(int insn, boolean value) {
+    public long setBit(long insn, boolean value) {
         if (from != to) {
             throw new IllegalStateException("not a single bit");
         }
@@ -127,6 +127,6 @@ public class Field {
 
     @Override
     public String toString() {
-        return String.format("Field[%d;%d;mask=%08X]", from, to, mask);
+        return String.format("Field64[%d;%d;mask=%08X]", from, to, mask);
     }
 }
