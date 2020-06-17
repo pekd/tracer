@@ -51,6 +51,8 @@ public class StepFormat {
             return getPrintableBytes(machinecode);
         } else if (machinecodesz == 2) {
             return getPrintableWords(machinecode);
+        } else if (machinecodesz == 4) {
+            return getPrintableWords4(machinecode);
         } else {
             return getPrintableBytes(machinecode);
         }
@@ -83,6 +85,25 @@ public class StepFormat {
                 buf.append(OctFormatter.tooct(Short.toUnsignedInt(word), 6));
             } else {
                 buf.append(HexFormatter.tohex(Short.toUnsignedInt(word), 4));
+            }
+        }
+        return buf.toString().substring(1);
+    }
+
+    public String getPrintableWords4(byte[] machinecode) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < (machinecode.length / 4); i++) {
+            int word;
+            if (be) {
+                word = Endianess.get32bitBE(machinecode, 4 * i);
+            } else {
+                word = Endianess.get32bitLE(machinecode, 4 * i);
+            }
+            buf.append(' ');
+            if (numberfmt == NUMBERFMT_OCT) {
+                buf.append(OctFormatter.tooct(Integer.toUnsignedLong(word), 11));
+            } else {
+                buf.append(HexFormatter.tohex(Integer.toUnsignedLong(word), 8));
             }
         }
         return buf.toString().substring(1);
