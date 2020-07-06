@@ -12,11 +12,19 @@ import org.graalvm.vm.trcview.expression.ExpressionContext;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class PDP11CallDecoder extends CallDecoder {
+    private static long getRegister(PDP11CpuState state, int reg) {
+        if (reg < 4) {
+            return Short.toUnsignedInt(state.getRegister(reg));
+        } else {
+            return 0;
+        }
+    }
+
     public static String decode(Function function, PDP11CpuState state, PDP11CpuState nextState, TraceAnalyzer trc) {
         StringBuilder buf = new StringBuilder(function.getName());
         buf.append('(');
         Prototype prototype = function.getPrototype();
-        for (int i = 0; i < prototype.args.size(); i++) {
+        for (int i = 0, arg = 0; i < prototype.args.size(); i++) {
             Type type = prototype.args.get(i);
             long val;
             if (type.getExpression() != null) {
@@ -27,7 +35,7 @@ public class PDP11CallDecoder extends CallDecoder {
                     val = 0;
                 }
             } else {
-                return null;
+                val = getRegister(state, arg++);
             }
             if (i > 0) {
                 buf.append(", ");
@@ -47,7 +55,7 @@ public class PDP11CallDecoder extends CallDecoder {
             } else if (prototype.returnType.getType() == DataType.VOID) {
                 retval = 0;
             } else {
-                return buf.toString();
+                retval = Short.toUnsignedInt(nextState.getRegister(0));
             }
             String s = str(prototype.returnType, retval, nextState, trc);
             if (s.length() > 0) {
