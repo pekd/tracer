@@ -4,10 +4,16 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.DeviceEvent;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
+import org.graalvm.vm.trcview.arch.pdp11.device.KD11;
+import org.graalvm.vm.trcview.arch.pdp11.device.PDP11Devices;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class PDP11IrqEvent extends DeviceEvent {
+    public static final int IRQ_OK = 0;
+    public static final int IRQ_FAIL = 1;
+    public static final int IRQ_SIG = 2;
+
     private final short trap;
     private final short type;
 
@@ -21,5 +27,27 @@ public class PDP11IrqEvent extends DeviceEvent {
     protected void writeRecord(WordOutputStream out) throws IOException {
         out.write16bit(trap);
         out.write16bit(type);
+    }
+
+    @Override
+    public int getDeviceId() {
+        return PDP11Devices.CPU;
+    }
+
+    @Override
+    public String getMessage() {
+        String strap = Integer.toString(Short.toUnsignedInt(trap), 8);
+        String name = KD11.getTrapName(trap);
+        String sname = name == null ? "" : (" (" + name + ")");
+        switch (type) {
+            case IRQ_OK:
+                return "interrupt request " + strap + sname;
+            case IRQ_FAIL:
+                return "interrupt request " + strap + sname + " denied";
+            case IRQ_SIG:
+                return "signaling IRQ " + strap + sname;
+            default:
+                return "???";
+        }
     }
 }

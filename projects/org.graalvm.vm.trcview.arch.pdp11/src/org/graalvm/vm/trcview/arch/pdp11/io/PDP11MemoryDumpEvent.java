@@ -2,19 +2,19 @@ package org.graalvm.vm.trcview.arch.pdp11.io;
 
 import java.io.IOException;
 
-import org.graalvm.vm.trcview.arch.io.DeviceEvent;
+import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class PDP11MemoryDumpEvent extends DeviceEvent {
+public class PDP11MemoryDumpEvent extends Event {
     private final short address;
     private final short length;
     private final byte[] data;
 
     public PDP11MemoryDumpEvent(WordInputStream in, int tid) throws IOException {
-        super(PDP11.ID, tid);
+        super(PDP11.ID, (byte) -1, tid);
         address = in.read16bit();
         length = in.read16bit();
         data = new byte[Short.toUnsignedInt(length)];

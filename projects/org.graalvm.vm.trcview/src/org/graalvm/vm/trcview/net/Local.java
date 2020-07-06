@@ -17,6 +17,7 @@ import org.graalvm.vm.trcview.analysis.MappedFiles;
 import org.graalvm.vm.trcview.analysis.Search;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.SymbolTable;
+import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
@@ -46,6 +47,7 @@ public class Local implements TraceAnalyzer {
     private MappedFiles files;
     private List<Node> syscalls;
     private Map<Integer, List<IoEvent>> io;
+    private Map<Integer, Device> devices;
     private long steps;
     private List<ChangeListener> symbolChangeListeners;
     private List<ChangeListener> commentChangeListeners;
@@ -62,6 +64,7 @@ public class Local implements TraceAnalyzer {
         files = analysis.getMappedFiles();
         syscalls = analysis.getSyscalls();
         io = analysis.getIo();
+        devices = analysis.getDevices();
         steps = analysis.getStepCount();
         symbolChangeListeners = new ArrayList<>();
         commentChangeListeners = new ArrayList<>();
@@ -188,6 +191,10 @@ public class Local implements TraceAnalyzer {
     @Override
     public Map<Integer, List<IoEvent>> getIo() {
         return io;
+    }
+
+    public Map<Integer, Device> getDevices() {
+        return devices;
     }
 
     @Override

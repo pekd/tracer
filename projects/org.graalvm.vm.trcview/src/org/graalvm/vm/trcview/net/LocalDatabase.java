@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +20,7 @@ import org.graalvm.vm.trcview.analysis.MappedFiles;
 import org.graalvm.vm.trcview.analysis.Search;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.SymbolTable;
+import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
@@ -391,5 +393,9 @@ public class LocalDatabase implements TraceAnalyzer {
     @Override
     public Map<Long, Color> getColors() {
         return session.getColors();
+    }
+
+    public Map<Integer, Device> getDevices() {
+        return Collections.emptyMap();
     }
 }

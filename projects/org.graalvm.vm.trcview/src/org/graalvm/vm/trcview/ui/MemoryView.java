@@ -166,19 +166,6 @@ public class MemoryView extends JPanel {
         }
     }
 
-    private static String html(char c) {
-        switch (c) {
-            case '&':
-                return "&amp;";
-            case '<':
-                return "&lt;";
-            case '>':
-                return "&gt;";
-            default:
-                return Character.toString(c);
-        }
-    }
-
     public void setHighlight(long start, long end) {
         highlightStart = start;
         highlightEnd = end;
@@ -318,7 +305,7 @@ public class MemoryView extends JPanel {
                     } else if (ptr2 == address) {
                         buf.append("<span class=\"address\">");
                     }
-                    buf.append(html(ch));
+                    buf.append(Utils.html(ch));
                     if (change) {
                         buf.append("</span>");
                     }

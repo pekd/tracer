@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.Analysis;
+import org.graalvm.vm.trcview.arch.io.DeviceDefinitionEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.IncompleteTraceStep;
 import org.graalvm.vm.trcview.arch.io.InterruptEvent;
@@ -189,7 +190,10 @@ public class BlockNode extends Node implements Block {
         if (event == null) {
             return null;
         }
-        while (tid != 0 && event.getTid() != tid) {
+        while ((tid != 0 && event.getTid() != tid) || (tid == 0 && event instanceof DeviceDefinitionEvent)) {
+            if (event instanceof DeviceDefinitionEvent) {
+                analysis.process(event, event);
+            }
             event = in.read();
             if (event == null) {
                 return null;

@@ -23,10 +23,11 @@ public abstract class Event extends Node {
     public static final byte SYMBOL_TABLE = 11;
     public static final byte SYSTEM_LOG = 12;
     public static final byte CONIO = 13;
+    public static final byte DEVICEREG = 14;
 
     private final int tid;
-    private byte id;
-    private short arch;
+    private final byte id;
+    private final short arch;
 
     protected Event(short arch, byte id, int tid) {
         this.arch = arch;

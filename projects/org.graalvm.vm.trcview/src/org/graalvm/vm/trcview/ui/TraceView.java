@@ -65,11 +65,13 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.event.CallListener;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
+import org.graalvm.vm.trcview.ui.event.StepListenable;
+import org.graalvm.vm.trcview.ui.event.StepListener;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 
 @SuppressWarnings("serial")
-public class TraceView extends JPanel {
+public class TraceView extends JPanel implements StepListenable {
     private static final Logger log = Trace.create(TraceView.class);
 
     private SymbolView symbols;
@@ -87,10 +89,12 @@ public class TraceView extends JPanel {
     private TraceAnalyzer trc;
 
     private final List<ChangeListener> changeListeners;
+    private final List<StepListener> stepListeners;
 
     public TraceView(Consumer<String> status, Consumer<Long> position) {
         super(new BorderLayout());
         changeListeners = new ArrayList<>();
+        stepListeners = new ArrayList<>();
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("strace", strace = new StraceView(this::jump));
@@ -147,6 +151,7 @@ public class TraceView extends JPanel {
                 io.setStep(step);
                 strace.setStep(step);
                 watches.setStep(step);
+                fireSetStep(step);
             }
             if (insns.getSelectedNode() instanceof BlockNode) {
                 BlockNode block = (BlockNode) insns.getSelectedNode();
@@ -173,6 +178,7 @@ public class TraceView extends JPanel {
                 io.setStep(node.getFirstStep());
                 strace.setStep(node.getFirstStep());
                 watches.setStep(node.getFirstStep());
+                fireSetStep(node.getFirstStep());
             }
 
             public void ret(Event ret) {
@@ -188,6 +194,7 @@ public class TraceView extends JPanel {
                     io.setStep(par.getHead());
                     strace.setStep(par.getHead());
                     watches.setStep(par.getHead());
+                    fireSetStep(par.getHead());
                 }
             }
         });
@@ -230,6 +237,7 @@ public class TraceView extends JPanel {
             stack.set(parent);
             insns.set(parent);
             insns.select(block);
+            insns.fireChangeEvent();
         }
     }
 
@@ -240,6 +248,7 @@ public class TraceView extends JPanel {
         } else {
             insns.select(block.getFirstNode());
         }
+        insns.fireChangeEvent();
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
@@ -270,6 +279,7 @@ public class TraceView extends JPanel {
         io.setStep(root.getFirstStep());
         strace.setStep(root.getFirstStep());
         watches.setStep(root.getFirstStep());
+        fireSetStep(root.getFirstStep());
     }
 
     public Node getSelectedNode() {
@@ -327,6 +337,34 @@ public class TraceView extends JPanel {
                 l.valueChanged();
             } catch (Throwable t) {
                 log.log(Levels.WARNING, "Failed to run change listener: " + t, t);
+            }
+        }
+    }
+
+    @Override
+    public void addStepListener(StepListener l) {
+        stepListeners.add(l);
+        StepEvent step = getSelectedInstruction();
+        if (step != null) {
+            try {
+                l.setStep(step);
+            } catch (Throwable t) {
+                log.log(Levels.WARNING, "Failed to run step listener: " + t, t);
+            }
+        }
+    }
+
+    @Override
+    public void removeStepListener(StepListener l) {
+        stepListeners.remove(l);
+    }
+
+    protected void fireSetStep(StepEvent node) {
+        for (StepListener l : stepListeners) {
+            try {
+                l.setStep(node);
+            } catch (Throwable t) {
+                log.log(Levels.WARNING, "Failed to run step listener: " + t, t);
             }
         }
     }

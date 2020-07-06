@@ -10,6 +10,7 @@ import java.util.Set;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
+import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
@@ -65,6 +66,8 @@ public interface TraceAnalyzer {
     List<Node> getSyscalls();
 
     Map<Integer, List<IoEvent>> getIo();
+
+    Map<Integer, Device> getDevices();
 
     // search
     Node getInstruction(long insn);

@@ -114,6 +114,7 @@ import org.graalvm.vm.trcview.storage.MemoryBackend;
 import org.graalvm.vm.trcview.storage.StorageBackend;
 import org.graalvm.vm.trcview.storage.TraceMetadata;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
+import org.graalvm.vm.trcview.ui.device.DeviceDialog;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
@@ -156,6 +157,7 @@ public class MainWindow extends JFrame {
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
     private JMenuItem exportMemory;
+    private JMenu subviewMenu;
 
     private TraceAnalyzer trc;
 
@@ -630,6 +632,17 @@ public class MainWindow extends JFrame {
 
         JMenu viewMenu = new JMenu("View");
         viewMenu.setMnemonic('v');
+
+        subviewMenu = new JMenu("Open subview");
+        JMenuItem deviceWindow = new JMenuItem("Devices");
+        deviceWindow.addActionListener(e -> {
+            DeviceDialog dlg = new DeviceDialog(this, trc, view::jump, view);
+            dlg.setVisible(true);
+        });
+        subviewMenu.add(deviceWindow);
+        subviewMenu.setEnabled(false);
+        viewMenu.add(subviewMenu);
+
         gotoPC = new JMenuItem("Goto PC...");
         gotoPC.setMnemonic('g');
         gotoPC.setAccelerator(KeyStroke.getKeyStroke('g'));
@@ -848,6 +861,7 @@ public class MainWindow extends JFrame {
         gotoInsn.setEnabled(true);
         gotoNext.setEnabled(true);
         exportMemory.setEnabled(true);
+        subviewMenu.setEnabled(true);
         pluginLoader.traceLoaded(trc);
     }
 
@@ -1434,6 +1448,7 @@ public class MainWindow extends JFrame {
                 gotoInsn.setEnabled(true);
                 gotoNext.setEnabled(true);
                 exportMemory.setEnabled(true);
+                subviewMenu.setEnabled(true);
                 pluginLoader.traceLoaded(trc);
             });
         } catch (Throwable t) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.DeviceEvent;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
+import org.graalvm.vm.trcview.arch.pdp11.device.PDP11Devices;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
@@ -41,5 +42,30 @@ public class PDP11CpuEvent extends DeviceEvent {
 
     public PDP11CpuTrapEvent getTrapEvent(PDP11StepEvent lastStep) {
         return new PDP11CpuTrapEvent(getTid(), value, lastStep);
+    }
+
+    @Override
+    public int getDeviceId() {
+        return PDP11Devices.CPU;
+    }
+
+    @Override
+    public String getMessage() {
+        switch (type) {
+            case CPU_TRAP:
+                return "TRAP";
+            case CPU_HALT:
+                return "HALT";
+            case CPU_WAIT:
+                return "WAIT";
+            case CPU_RUN:
+                return "RUN";
+            case CPU_DBLBUS:
+                return "DOUBLE BUS TRAP";
+            case CPU_ODT_P:
+                return "CONTINUE FROM ODT";
+            default:
+                return "???";
+        }
     }
 }

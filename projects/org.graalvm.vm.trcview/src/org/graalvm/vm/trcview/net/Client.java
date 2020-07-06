@@ -20,6 +20,7 @@ import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
+import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
@@ -552,5 +553,10 @@ public class Client implements TraceAnalyzer, Closeable {
     public Map<Long, Color> getColors() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public Map<Integer, Device> getDevices() {
+        // TODO Auto-generated method stub
+        return Collections.emptyMap();
     }
 }

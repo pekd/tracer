@@ -18,6 +18,7 @@ import org.graalvm.vm.trcview.analysis.MappedFiles;
 import org.graalvm.vm.trcview.analysis.Search;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.SymbolTable;
+import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
@@ -184,6 +185,10 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
 
     @Override
     public Map<Integer, List<IoEvent>> getIo() {
+        return Collections.emptyMap();
+    }
+
+    public Map<Integer, Device> getDevices() {
         return Collections.emptyMap();
     }
 

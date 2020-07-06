@@ -71,4 +71,27 @@ public class Utils {
         }
         return buf.toString();
     }
+
+    public static String html(char c) {
+        switch (c) {
+            case '&':
+                return "&amp;";
+            case '<':
+                return "&lt;";
+            case '>':
+                return "&gt;";
+            case '"':
+                return "&quot";
+            default:
+                return Character.toString(c);
+        }
+    }
+
+    public static String html(String text) {
+        StringBuilder buf = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) {
+            buf.append(html(c));
+        }
+        return buf.toString();
+    }
 }

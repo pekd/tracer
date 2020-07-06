@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.graalvm.vm.trcview.arch.io.DeviceEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
+import org.graalvm.vm.trcview.arch.pdp11.device.PDP11Devices;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
@@ -51,5 +52,31 @@ public class PDP11BusEvent extends DeviceEvent {
 
     public short getType() {
         return type;
+    }
+
+    @Override
+    public int getDeviceId() {
+        return PDP11Devices.QBUS;
+    }
+
+    @Override
+    public String getMessage() {
+        int uaddr = Short.toUnsignedInt(addr);
+        int uval = Short.toUnsignedInt(value);
+
+        switch (type) {
+            case BUS_RD:
+                return String.format("read %06o = %06o", uaddr, uval);
+            case BUS_RDFAIL:
+                return String.format("read %06o timed out", uaddr);
+            case BUS_WR:
+                return String.format("write %06o = %06o", uaddr, uval);
+            case BUS_WRFAIL:
+                return String.format("write %06o = %06o timed out", uaddr, uval);
+            case BUS_RESET:
+                return "reset";
+            default:
+                return "???";
+        }
     }
 }

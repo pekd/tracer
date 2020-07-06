@@ -10,6 +10,7 @@ import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
+import org.graalvm.vm.trcview.arch.pdp11.device.PDP11Devices;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.BEInputStream;
 import org.graalvm.vm.util.io.WordInputStream;
@@ -32,10 +33,13 @@ public class PDP11TraceReader extends ArchTraceReader {
     private static final int STEP_LIMIT = 5_000;
 
     private final WordInputStream in;
-    private boolean map;
+    private int init = 0;
     private PDP11StepEvent lastStep;
     private PDP11CpuState lastState = null;
     private long steps = 0;
+
+    private MemoryEvent mem;
+    private PDP11DLV11Event dlv11j;
 
     public PDP11TraceReader(InputStream in) {
         this(new BEInputStream(in));
@@ -43,7 +47,6 @@ public class PDP11TraceReader extends ArchTraceReader {
 
     public PDP11TraceReader(WordInputStream in) {
         this.in = in;
-        map = false;
         lastStep = null;
     }
 
@@ -53,10 +56,44 @@ public class PDP11TraceReader extends ArchTraceReader {
 
     @Override
     public Event read() throws IOException {
-        if (!map) {
-            map = true;
-            return map();
+        switch (init) {
+            case 0:
+                init++;
+                return map();
+            case 1:
+                init++;
+                return PDP11Devices.createDevices();
         }
+
+        if (mem != null) {
+            int addr = (int) mem.getAddress();
+            short value = (short) mem.getValue();
+            boolean write = mem.isWrite();
+            mem = null;
+            switch (addr) {
+                case 0177170:
+                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.RXV21, PDP11Devices.RXV21_RX2CS, value, write);
+                case 0177172:
+                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.RXV21, PDP11Devices.RXV21_RX2DB, value, write);
+                case 0177560:
+                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_RCSR, value, write);
+                case 0177562:
+                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_RBUF, value, write);
+                case 0177564:
+                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_XCSR, value, write);
+                case 0177566:
+                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_XBUF, value, write);
+            }
+        }
+
+        if (dlv11j != null) {
+            IoEvent ioe = dlv11j.getIoEvent();
+            dlv11j = null;
+            if (ioe != null) {
+                return ioe;
+            }
+        }
+
         int magic;
         try {
             magic = in.read32bit();
@@ -88,7 +125,7 @@ public class PDP11TraceReader extends ArchTraceReader {
             }
             case MAGIC_BUS0: {
                 PDP11BusEvent bus = new PDP11BusEvent(in, 0);
-                MemoryEvent mem = bus.getMemoryEvent();
+                mem = bus.getMemoryEvent();
                 if (mem != null) {
                     return mem;
                 } else {
@@ -104,13 +141,8 @@ public class PDP11TraceReader extends ArchTraceReader {
                 return new PDP11IrqEvent(in, 0);
             case MAGIC_DLV1: {
                 long step = lastStep != null ? lastStep.getStep() : 0;
-                PDP11DLV11Event evt = new PDP11DLV11Event(in, 0, step);
-                IoEvent ioe = evt.getIoEvent();
-                if (ioe != null) {
-                    return ioe;
-                } else {
-                    return evt;
-                }
+                dlv11j = new PDP11DLV11Event(in, 0, step);
+                return dlv11j;
             }
             case MAGIC_RX2C:
                 return new PDP11RXV21Command(in, 0);

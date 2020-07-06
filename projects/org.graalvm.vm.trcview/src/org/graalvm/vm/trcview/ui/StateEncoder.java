@@ -51,10 +51,6 @@ import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.StringUtils;
 
 public class StateEncoder {
-    private static String html(String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace("\"", "&quot;");
-    }
-
     public static String diff(String s1, String s2) {
         return diff(s1, s2, false);
     }
@@ -65,7 +61,7 @@ public class StateEncoder {
         String[] lines2 = s2.split("\\n");
         if (lines1.length != lines2.length) {
             if (!html) {
-                return html(s2);
+                return Utils.html(s2);
             } else {
                 return s2;
             }
@@ -75,13 +71,13 @@ public class StateEncoder {
             String l2 = lines2[i];
             if (l1.length() != l2.length()) {
                 if (!html) {
-                    buf.append(html(l2)).append('\n');
+                    buf.append(Utils.html(l2)).append('\n');
                 } else {
                     buf.append(l2).append('\n');
                 }
             } else if (l1.equals(l2)) {
                 if (!html) {
-                    buf.append(html(l2)).append('\n');
+                    buf.append(Utils.html(l2)).append('\n');
                 } else {
                     buf.append(l2).append('\n');
                 }
@@ -207,7 +203,7 @@ public class StateEncoder {
                                 buf.append("<span class=\"change\">");
                             }
                         }
-                        buf.append(html(Character.toString(c2)));
+                        buf.append(Utils.html(Character.toString(c2)));
                     }
                 }
                 if (!eq) {
@@ -225,9 +221,9 @@ public class StateEncoder {
             return "";
         } else {
             if (style != null) {
-                return "<span class=\"" + style + "\">" + html(s) + "</span>";
+                return "<span class=\"" + style + "\">" + Utils.html(s) + "</span>";
             } else {
-                return html(s);
+                return Utils.html(s);
             }
         }
     }
@@ -319,14 +315,14 @@ public class StateEncoder {
                             break;
                         case 's':
                             buf.append("<span class=\"number\" data=\"str:");
-                            buf.append(html(tmp.toString()));
+                            buf.append(Utils.html(tmp.toString()));
                             buf.append("\">");
                             buf.append(tmp);
                             buf.append("</span>");
                             break;
                         case 'S':
                             buf.append("<span class=\"number\" data=\"str:");
-                            buf.append(html(tmp.toString().toLowerCase()));
+                            buf.append(Utils.html(tmp.toString().toLowerCase()));
                             buf.append("\">");
                             buf.append(tmp);
                             buf.append("</span>");
@@ -349,7 +345,7 @@ public class StateEncoder {
         if (assembly.length == 1) {
             return str(assembly[0], "mnemonic");
         } else {
-            return str(assembly[0], "mnemonic") + pad(assembly[0], 8) + html(Stream.of(assembly).skip(1).collect(Collectors.joining(", ")));
+            return str(assembly[0], "mnemonic") + pad(assembly[0], 8) + Utils.html(Stream.of(assembly).skip(1).collect(Collectors.joining(", ")));
         }
     }
 
@@ -359,7 +355,7 @@ public class StateEncoder {
         buf.append(str(location.getSymbol(), "symbol"));
         if (location.getFilename() != null) {
             buf.append(" # ");
-            buf.append(html(location.getFilename()));
+            buf.append(Utils.html(location.getFilename()));
             if (location.getOffset() != -1) {
                 buf.append(" @ 0x");
                 buf.append(HexFormatter.tohex(location.getOffset(), 8));
@@ -376,7 +372,7 @@ public class StateEncoder {
         if (location.getDisassembly() != null) {
             buf.append(getDisassembly(location));
             buf.append(" <span class=\"comment\">; ");
-            buf.append(html(location.getPrintableBytes()));
+            buf.append(Utils.html(location.getPrintableBytes()));
             buf.append("</span>");
         }
         return buf.toString();

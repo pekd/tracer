@@ -55,12 +55,17 @@ import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
+import org.graalvm.vm.trcview.analysis.device.Device;
+import org.graalvm.vm.trcview.analysis.device.RegisterValue;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.BrkEvent;
+import org.graalvm.vm.trcview.arch.io.DeviceDefinitionEvent;
+import org.graalvm.vm.trcview.arch.io.DeviceEvent;
+import org.graalvm.vm.trcview.arch.io.DeviceRegisterEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
@@ -88,6 +93,7 @@ public class Analysis {
     private SymbolResolver augmentedResolver;
     private List<Node> syscalls;
     private Map<Integer, List<IoEvent>> io;
+    private Map<Integer, Device> devices;
 
     private long steps;
     private long idcnt;
@@ -114,6 +120,7 @@ public class Analysis {
         augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
         syscalls = new ArrayList<>();
         io = new HashMap<>();
+        devices = new HashMap<>();
         memory = new MemoryTrace();
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
@@ -292,6 +299,43 @@ public class Analysis {
                 io.put(channel, ch);
             }
             ch.add(evt);
+        } else if (event instanceof DeviceDefinitionEvent) {
+            DeviceDefinitionEvent evt = (DeviceDefinitionEvent) event;
+            for (Device dev : evt.getDevices()) {
+                if (devices.containsKey(dev.getId())) {
+                    log.log(Levels.WARNING, "Device with id " + dev.getId() + " already exists");
+                }
+                devices.put(dev.getId(), dev);
+            }
+        } else if (event instanceof DeviceEvent) {
+            DeviceEvent evt = (DeviceEvent) event;
+            Device dev = devices.get(evt.getDeviceId());
+            if (dev == null) {
+                log.log(Levels.INFO, "device " + evt.getDeviceId() + " not found");
+                return;
+            }
+            long step = lastStep == null ? 0 : lastStep.getStep();
+            evt.setStep(step);
+            dev.addEvent(evt);
+            for (RegisterValue val : evt.getValues()) {
+                dev.addValue(step, val);
+            }
+            for (RegisterValue val : evt.getWrites()) {
+                dev.addWrite(step, val);
+            }
+        } else if (event instanceof DeviceRegisterEvent) {
+            long step = lastStep == null ? 0 : lastStep.getStep();
+            DeviceRegisterEvent evt = (DeviceRegisterEvent) event;
+            Device dev = devices.get(evt.getDeviceId());
+            for (RegisterValue val : evt.getValues()) {
+                dev.addValue(step, val);
+            }
+            for (RegisterValue val : evt.getReads()) {
+                dev.addRead(step, val);
+            }
+            for (RegisterValue val : evt.getWrites()) {
+                dev.addWrite(step, val);
+            }
         }
     }
 
@@ -384,6 +428,10 @@ public class Analysis {
 
     public Map<Integer, List<IoEvent>> getIo() {
         return io;
+    }
+
+    public Map<Integer, Device> getDevices() {
+        return devices;
     }
 
     public MemoryTrace getMemoryTrace() {

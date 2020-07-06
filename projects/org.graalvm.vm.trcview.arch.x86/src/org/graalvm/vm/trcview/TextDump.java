@@ -65,6 +65,7 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.MappedFile;
 import org.graalvm.vm.trcview.analysis.MappedFiles;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
+import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
@@ -530,6 +531,10 @@ public class TextDump {
 
         @Override
         public Map<Long, Color> getColors() {
+            return null;
+        }
+
+        public Map<Integer, Device> getDevices() {
             return null;
         }
     }

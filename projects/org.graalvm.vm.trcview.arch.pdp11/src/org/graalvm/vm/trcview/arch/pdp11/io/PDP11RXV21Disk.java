@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.DeviceEvent;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
+import org.graalvm.vm.trcview.arch.pdp11.device.PDP11Devices;
+import org.graalvm.vm.trcview.arch.pdp11.device.RXV21;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
@@ -30,5 +32,29 @@ public class PDP11RXV21Disk extends DeviceEvent {
         out.write8bit(density);
         out.write16bit(rx2sa);
         out.write16bit(rx2ta);
+    }
+
+    @Override
+    public int getDeviceId() {
+        return PDP11Devices.RXV21;
+    }
+
+    private String getName() {
+        switch (type) {
+            case RXV21.READ:
+                return "read";
+            case RXV21.WRITE:
+                return "write";
+            case RXV21.WRITE_DD:
+                return "write (delete data)";
+            default:
+                return "???";
+        }
+    }
+
+    @Override
+    public String getMessage() {
+        String name = getName();
+        return name + " sector SEC=" + rx2sa + ", TR=" + rx2ta + " [drive=" + drive + ", " + (density == 0 ? "single" : "double") + " density]";
     }
 }
