@@ -81,7 +81,7 @@ public class Utils {
             case '>':
                 return "&gt;";
             case '"':
-                return "&quot";
+                return "&quot;";
             default:
                 return Character.toString(c);
         }
