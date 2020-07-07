@@ -141,6 +141,7 @@ public class MainWindow extends JFrame {
     private JMenuItem openDatabase;
     private JMenuItem loadPrototypes;
     private JMenuItem loadMap;
+    private JMenuItem loadIdaMap;
     private JMenuItem generateIDC;
     private JMenuItem loadSymbols;
     private JMenuItem saveSymbols;
@@ -282,7 +283,7 @@ public class MainWindow extends JFrame {
             worker.execute();
         });
         loadPrototypes.setEnabled(false);
-        loadMap = new JMenuItem("Load map...");
+        loadMap = new JMenuItem("Load map (binutils format)...");
         loadMap.setMnemonic('m');
         loadMap.addActionListener(e -> {
             loadSyms.setVisible(true);
@@ -304,6 +305,28 @@ public class MainWindow extends JFrame {
             worker.execute();
         });
         loadMap.setEnabled(false);
+        loadIdaMap = new JMenuItem("Load map (IDA format)...");
+        loadIdaMap.setMnemonic('i');
+        loadIdaMap.addActionListener(e -> {
+            loadSyms.setVisible(true);
+            if (loadSyms.getFile() == null) {
+                return;
+            }
+            String filename = loadSyms.getDirectory() + loadSyms.getFile();
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        loadIdaMap(new File(filename));
+                    } catch (IOException ex) {
+                        MessageBox.showError(MainWindow.this, ex);
+                    }
+                    return null;
+                }
+            };
+            worker.execute();
+        });
+        loadIdaMap.setEnabled(false);
         generateIDC = new JMenuItem("Generate IDC...");
         generateIDC.setMnemonic('i');
         generateIDC.addActionListener(e -> {
@@ -408,6 +431,7 @@ public class MainWindow extends JFrame {
             fileMenu.addSeparator();
             fileMenu.add(loadPrototypes);
             fileMenu.add(loadMap);
+            fileMenu.add(loadIdaMap);
             fileMenu.addSeparator();
             fileMenu.add(generateIDC);
             fileMenu.addSeparator();
@@ -845,6 +869,7 @@ public class MainWindow extends JFrame {
         view.setTraceAnalyzer(trc);
         loadPrototypes.setEnabled(true);
         loadMap.setEnabled(true);
+        loadIdaMap.setEnabled(true);
         generateIDC.setEnabled(true);
         loadSymbols.setEnabled(true);
         saveSymbols.setEnabled(true);
@@ -1008,6 +1033,60 @@ public class MainWindow extends JFrame {
             throw t;
         } finally {
             loadMap.setEnabled(true);
+            if (reanalyze) {
+                trc.reanalyze();
+            }
+        }
+        log.info("Map file loaded");
+    }
+
+    public void loadIdaMap(File file) throws IOException {
+        log.info("Loading map file " + file + "...");
+        setStatus("Loading map file " + file + "...");
+        loadIdaMap.setEnabled(false);
+        boolean reanalyze = false;
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line;
+            int lineno = 0;
+            Set<Long> globals = new HashSet<>();
+            while ((line = in.readLine()) != null) {
+                lineno++;
+                line = line.trim();
+                String[] parts = line.split("\\s+");
+                if (parts.length != 2) { // ignore
+                    continue;
+                }
+                String[] loc = parts[0].split(":");
+                if (loc.length != 2) {
+                    log.info("Parse error in line " + lineno + ": invalid address");
+                    continue;
+                }
+                long addr;
+                try {
+                    addr = Long.parseUnsignedLong(loc[1], 16);
+                } catch (NumberFormatException e) {
+                    log.info("Parse error in line " + lineno + ": invalid address");
+                    continue;
+                }
+                String name = parts[1].trim();
+                if (!globals.contains(addr)) {
+                    ComputedSymbol sym = trc.getComputedSymbol(addr);
+                    if (sym == null) {
+                        trc.addSubroutine(addr, name, null);
+                        reanalyze = true;
+                    } else {
+                        trc.renameSymbol(sym, name);
+                    }
+                    globals.add(addr);
+                }
+            }
+            setStatus("Map file loaded");
+        } catch (Throwable t) {
+            log.log(Level.WARNING, "Loading failed: " + t, t);
+            setStatus("Loading failed: " + t);
+            throw t;
+        } finally {
+            loadIdaMap.setEnabled(true);
             if (reanalyze) {
                 trc.reanalyze();
             }
@@ -1434,6 +1513,7 @@ public class MainWindow extends JFrame {
                 view.setTraceAnalyzer(trc);
                 loadPrototypes.setEnabled(true);
                 loadMap.setEnabled(true);
+                loadIdaMap.setEnabled(true);
                 generateIDC.setEnabled(true);
                 loadSymbols.setEnabled(true);
                 saveSymbols.setEnabled(true);
