@@ -41,6 +41,9 @@
 package org.graalvm.vm.trcview.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -52,9 +55,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.text.AbstractDocument;
 
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -69,8 +75,11 @@ import org.graalvm.vm.util.log.Trace;
 public class SymbolView extends JPanel {
     private static final Logger log = Trace.create(SymbolView.class);
 
+    private JTextField filter;
+    private String filterString;
     private JList<String> syms;
     private List<ComputedSymbol> symbols;
+    private List<ComputedSymbol> filteredSymbols;
     private List<JumpListener> jumpListeners;
     private List<ChangeListener> changeListeners;
     private List<ChangeListener> clickListeners;
@@ -84,6 +93,8 @@ public class SymbolView extends JPanel {
         changeListeners = new ArrayList<>();
         clickListeners = new ArrayList<>();
         symbols = Collections.emptyList();
+        filteredSymbols = Collections.emptyList();
+
         syms = new JList<>(new DefaultListModel<>());
         syms.setFont(MainWindow.FONT);
         syms.addMouseListener(new MouseAdapter() {
@@ -95,7 +106,7 @@ public class SymbolView extends JPanel {
                     if (i == -1) {
                         return;
                     }
-                    ComputedSymbol sym = symbols.get(i);
+                    ComputedSymbol sym = filteredSymbols.get(i);
                     log.info("jumping to first execution of " + sym.name);
                     fireJumpEvent(trc.getNode(sym.visits.get(0)));
                 }
@@ -108,13 +119,44 @@ public class SymbolView extends JPanel {
             }
             fireChangeEvent();
         });
+
+        filter = new JTextField();
+        int sz = filter.getFont().getSize();
+        filter.setFont(new Font(Font.MONOSPACED, Font.PLAIN, sz));
+        ((AbstractDocument) filter.getDocument()).setDocumentFilter(new AbstractDocumentFilter() {
+            @Override
+            public boolean test(String s) {
+                if (s.contains(" ")) {
+                    return false;
+                }
+                return true;
+            }
+        });
+        filter.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                updateFilter();
+            }
+        });
+
+        JButton clear = new JButton("x");
+        clear.addActionListener(e -> {
+            filter.setText("");
+            updateFilter();
+        });
+
+        JPanel filterPanel = new JPanel(new BorderLayout());
+        filterPanel.add(BorderLayout.CENTER, filter);
+        filterPanel.add(BorderLayout.EAST, clear);
+
         add(BorderLayout.CENTER, new JScrollPane(syms));
+        add(BorderLayout.SOUTH, filterPanel);
     }
 
     public ComputedSymbol getSelectedSymbol() {
         int selected = syms.getSelectedIndex();
         if (selected != -1) {
-            return symbols.get(selected);
+            return filteredSymbols.get(selected);
         } else {
             return null;
         }
@@ -122,9 +164,15 @@ public class SymbolView extends JPanel {
 
     public void symbolRenamed(ComputedSymbol sym) {
         for (int i = 0; i < symbols.size(); i++) {
-            ComputedSymbol s = symbols.get(i);
-            if (s.address == sym.address) {
+            if (symbols.get(i).address == sym.address) {
                 symbols.set(i, sym);
+                break;
+            }
+        }
+        for (int i = 0; i < filteredSymbols.size(); i++) {
+            ComputedSymbol s = filteredSymbols.get(i);
+            if (s.address == sym.address) {
+                filteredSymbols.set(i, sym);
                 ((DefaultListModel<String>) syms.getModel()).set(i, format(s));
                 return;
             }
@@ -145,6 +193,7 @@ public class SymbolView extends JPanel {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
+        filterString = null;
         format = trc.getArchitecture().getFormat();
         trc.addSymbolRenameListener(this::symbolRenamed);
         trc.addSymbolChangeListener(this::update);
@@ -153,19 +202,45 @@ public class SymbolView extends JPanel {
 
     public void update() {
         List<ComputedSymbol> sym = new ArrayList<>();
-        DefaultListModel<String> model = new DefaultListModel<>();
         Collection<ComputedSymbol> subroutines = trc.getSubroutines();
         OptionalInt max = subroutines.stream().mapToInt(s -> s.visits.size()).max();
         if (max.isPresent()) {
             int m = max.getAsInt();
             width = (m == 0 ? 0 : (int) Math.ceil(Math.log10(m)));
             subroutines.stream().filter(x -> !x.visits.isEmpty()).sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(s -> {
-                model.addElement(format(s));
                 sym.add(s);
             });
         }
-        syms.setModel(model);
         symbols = sym;
+        updateFilter();
+    }
+
+    private void updateFilter() {
+        String match = filter.getText().trim();
+        if (filterString != null && filterString.equals(match)) {
+            // no change
+            return;
+        } else {
+            filterString = match;
+        }
+
+        List<ComputedSymbol> sym = new ArrayList<>();
+        DefaultListModel<String> model = new DefaultListModel<>();
+        if (match.length() == 0) {
+            for (ComputedSymbol s : symbols) {
+                model.addElement(format(s));
+                sym.add(s);
+            }
+        } else {
+            for (ComputedSymbol s : symbols) {
+                if (s.name.contains(match)) {
+                    model.addElement(format(s));
+                    sym.add(s);
+                }
+            }
+        }
+        syms.setModel(model);
+        filteredSymbols = sym;
     }
 
     public void addJumpListener(JumpListener listener) {
