@@ -61,6 +61,7 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +107,7 @@ import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.io.TextSerializer;
+import org.graalvm.vm.trcview.io.TraceParser;
 import org.graalvm.vm.trcview.net.Client;
 import org.graalvm.vm.trcview.net.Local;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -113,6 +115,7 @@ import org.graalvm.vm.trcview.storage.DatabaseTraceAnalyzer;
 import org.graalvm.vm.trcview.storage.MemoryBackend;
 import org.graalvm.vm.trcview.storage.StorageBackend;
 import org.graalvm.vm.trcview.storage.TraceMetadata;
+import org.graalvm.vm.trcview.ui.TraceView.ThreadID;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.device.DeviceDialog;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
@@ -905,16 +908,27 @@ public class MainWindow extends JFrame {
             }
             Analysis analysis = new Analysis(reader.getArchitecture(), analyzers);
             analysis.start();
-            BlockNode root = BlockNode.read(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
+            Map<Integer, BlockNode> threads = TraceParser.parse(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
+            BlockNode root = null;
+            for (BlockNode block : threads.values()) {
+                if (root == null) {
+                    root = block;
+                } else if (block.getStep() < root.getStep()) {
+                    root = block;
+                }
+            }
             analysis.finish(root);
             if (root == null || root.getFirstStep() == null) {
                 setStatus("Loading failed");
                 return;
             }
+
             setStatus("Trace loaded");
             setTitle(file + " - " + WINDOW_TITLE);
+
+            final BlockNode rootNode = root;
             EventQueue.invokeLater(() -> {
-                setTrace(new Local(reader.getArchitecture(), root, analysis));
+                setTrace(new Local(reader.getArchitecture(), rootNode, threads, analysis));
                 // setTrace(new LocalDatabase(reader.getArchitecture(), root, analysis));
             });
         } catch (Throwable t) {
@@ -1027,6 +1041,7 @@ public class MainWindow extends JFrame {
                 }
             }
             setStatus("Map file loaded");
+            view.updateThreadNames();
         } catch (Throwable t) {
             log.log(Level.WARNING, "Loading failed: " + t, t);
             setStatus("Loading failed: " + t);
@@ -1081,6 +1096,7 @@ public class MainWindow extends JFrame {
                 }
             }
             setStatus("Map file loaded");
+            view.updateThreadNames();
         } catch (Throwable t) {
             log.log(Level.WARNING, "Loading failed: " + t, t);
             setStatus("Loading failed: " + t);
@@ -1166,6 +1182,8 @@ public class MainWindow extends JFrame {
         long insn = -1;
         String memory = null;
         String memhistory = null;
+        Map<Integer, String> threadNames = new HashMap<>();
+        Map<Integer, Long> threadInstructions = new HashMap<>();
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -1328,6 +1346,27 @@ public class MainWindow extends JFrame {
                             ok = false;
                             continue;
                         }
+                    } else if (everything && address.startsWith("THREAD:")) {
+                        // thread
+                        int tid;
+                        if (data.length != 1 && data.length != 2) {
+                            log.info("Syntax error in line " + lineno + ": invalid thread name");
+                            setStatus("Syntax error in line " + lineno + ": invalid thread name");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            tid = Integer.parseInt(address.substring(7), 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid thread id");
+                            setStatus("Syntax error in line " + lineno + ": invalid thread id");
+                            ok = false;
+                            continue;
+                        }
+                        if (data.length == 2) {
+                            threadInstructions.put(tid, Long.parseUnsignedLong(data[1]));
+                        }
+                        threadNames.put(tid, data[0]);
                     } else {
                         // symbol
                         long pc;
@@ -1384,6 +1423,7 @@ public class MainWindow extends JFrame {
                 setStatus("Reanalyzing visits...");
                 trc.reanalyze();
             }
+            view.updateThreadNames();
             String filetype = "Session file";
             if (!everything) {
                 filetype = "Symbol file";
@@ -1398,6 +1438,8 @@ public class MainWindow extends JFrame {
                     if (memhistoryexpr != null) {
                         view.setMemoryHistoryExpression(memhistoryexpr);
                     }
+                    view.setThreadNames(threadNames);
+                    view.setThreadSteps(threadInstructions);
                 });
             }
             log.info(filetype + " " + file + " loaded successfully");
@@ -1490,6 +1532,18 @@ public class MainWindow extends JFrame {
                 StepEvent step = view.getSelectedInstruction();
                 if (step != null) {
                     out.printf("INSN=%d\n", step.getStep());
+                }
+                for (ThreadID thread : view.getThreads()) {
+                    Node node = view.getThreadNode(thread.id);
+                    long id;
+                    if (node instanceof StepEvent) {
+                        id = ((StepEvent) node).getStep();
+                    } else if (node instanceof BlockNode) {
+                        id = ((BlockNode) node).getStep();
+                    } else {
+                        throw new AssertionError("node is not a step event nor a block");
+                    }
+                    out.printf("THREAD:%s=%s\n", thread.id, TextSerializer.encode(thread.name, Long.toUnsignedString(id)));
                 }
             }
             log.info("Session file " + file);

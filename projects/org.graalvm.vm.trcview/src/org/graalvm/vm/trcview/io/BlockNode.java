@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.Analysis;
@@ -76,18 +77,30 @@ public class BlockNode extends Node implements Block {
 
     public BlockNode(StepEvent head, List<Node> children) {
         this.head = head;
+        if (head != null) {
+            head.setParent(this);
+        }
         if (children != null) {
             setChildren(children);
+        } else {
+            this.children = new ArrayList<>();
         }
     }
 
     public void setChildren(List<Node> children) {
-        this.children = children;
         if (children != null) {
+            this.children = children;
             for (Node n : children) {
                 n.setParent(this);
             }
+        } else {
+            this.children = new ArrayList<>();
         }
+    }
+
+    public void add(Node child) {
+        children.add(child);
+        child.setParent(this);
     }
 
     public boolean isInterrupt() {
@@ -125,6 +138,14 @@ public class BlockNode extends Node implements Block {
         }
     }
 
+    public long getStep() {
+        if (head != null) {
+            return head.getStep();
+        } else {
+            return getFirstStep().getStep();
+        }
+    }
+
     public StepEvent getFirstStep() {
         for (Node n : children) {
             if (n instanceof StepEvent) {
@@ -149,13 +170,13 @@ public class BlockNode extends Node implements Block {
     public static BlockNode read(TraceReader in, Analysis analysis, ProgressListener progress) throws IOException {
         List<Node> nodes = new ArrayList<>();
         Node node;
-        int tid = 0;
+        int tid = -1;
         int cnt = 0;
         while ((node = parseRecord(in, analysis, progress, tid, false)) != null) {
             if (isStep(node)) {
                 nodes.add(node);
             }
-            if (tid == 0) {
+            if (tid == -1) {
                 tid = node.getTid();
             }
             if (progress != null && cnt > PROGRESS_UPDATE) {
@@ -190,7 +211,7 @@ public class BlockNode extends Node implements Block {
         if (event == null) {
             return null;
         }
-        while ((tid != 0 && event.getTid() != tid) || (tid == 0 && event instanceof DeviceDefinitionEvent)) {
+        while ((tid != -1 && event.getTid() != tid && (event instanceof StepEvent || event instanceof InterruptEvent)) || (event instanceof DeviceDefinitionEvent)) {
             if (event instanceof DeviceDefinitionEvent) {
                 analysis.process(event, event);
             }
@@ -199,7 +220,7 @@ public class BlockNode extends Node implements Block {
                 return null;
             }
         }
-        if (tid == 0) {
+        if (tid == -1) {
             tid = event.getTid();
         }
         if (event instanceof StepEvent) {

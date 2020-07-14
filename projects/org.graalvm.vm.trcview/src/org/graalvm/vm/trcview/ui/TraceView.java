@@ -41,20 +41,31 @@
 package org.graalvm.vm.trcview.ui;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.arch.io.Event;
@@ -86,10 +97,16 @@ public class TraceView extends JPanel implements StepListenable {
 
     private ComputedSymbol selectedSymbol;
 
+    private JComboBox<ThreadID> threadSelector;
+    private Model<ThreadID> threadSelectorModel;
+    private Map<Integer, Node> currentNodes;
+
     private TraceAnalyzer trc;
 
     private final List<ChangeListener> changeListeners;
     private final List<StepListener> stepListeners;
+
+    private boolean ignoreThreadChange = false;
 
     public TraceView(Consumer<String> status, Consumer<Long> position) {
         super(new BorderLayout());
@@ -126,6 +143,45 @@ public class TraceView extends JPanel implements StepListenable {
         split.setLeftComponent(leftSplit);
         split.setRightComponent(content);
         add(BorderLayout.CENTER, split);
+
+        JPanel threadPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton renameThread = new JButton("Rename");
+
+        currentNodes = new HashMap<>();
+        threadSelectorModel = new Model<>(new ThreadID[]{new ThreadID(0, "Main")});
+        threadPanel.add(new JLabel("Thread:"));
+        threadPanel.add(threadSelector = new JComboBox<>(threadSelectorModel));
+        threadPanel.add(renameThread);
+        add(BorderLayout.NORTH, threadPanel);
+        renameThread.addActionListener(e -> {
+            int id = threadSelector.getSelectedIndex();
+            if (id != -1) {
+                ThreadID thread = threadSelectorModel.getElementAt(id);
+                String name = JOptionPane.showInputDialog("Enter thread name:", thread.name);
+                if (name != null) {
+                    name = name.strip();
+                    thread.name = name.length() > 0 ? name : null;
+                    threadSelectorModel.changed(id);
+                }
+            }
+        });
+        threadSelector.addItemListener(e -> {
+            if (ignoreThreadChange) {
+                return;
+            }
+
+            ThreadID thread = (ThreadID) e.getItem();
+            if (thread != null) {
+                StepEvent step = insns.getSelectedInstruction();
+                if (step != null && step.getTid() != thread.id) {
+                    saveThreadStep(step);
+                } else if (step != null && step.getTid() == thread.id) {
+                    return;
+                }
+                Node target = currentNodes.get(thread.id);
+                SwingUtilities.invokeLater(() -> jump(target));
+            }
+        });
 
         symbols.addJumpListener(this::jump);
         symbols.addChangeListener(() -> {
@@ -214,20 +270,152 @@ public class TraceView extends JPanel implements StepListenable {
         });
     }
 
+    public static class ThreadID {
+        public final int id;
+        public String name;
+
+        ThreadID(int id) {
+            this.id = id;
+        }
+
+        ThreadID(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            if (name != null) {
+                return "TID=" + id + " [" + name + "]";
+            } else {
+                return "TID=" + id;
+            }
+        }
+    }
+
+    private static class Model<T> extends DefaultComboBoxModel<T> {
+        public Model(T[] t) {
+            super(t);
+        }
+
+        public void changed(int id) {
+            fireContentsChanged(this, id, id);
+        }
+    }
+
+    public void updateThreadNames() {
+        Map<Integer, Long> threadStarts = trc.getThreadStarts();
+        for (int i = 0; i < threadSelectorModel.getSize(); i++) {
+            ThreadID thread = threadSelectorModel.getElementAt(i);
+            if (thread.name == null) {
+                long start = threadStarts.get(thread.id);
+                Node node = trc.getInstruction(start);
+                long pc;
+                if (node instanceof BlockNode) {
+                    BlockNode block = (BlockNode) node;
+                    if (block.getHead() != null) {
+                        pc = block.getHead().getPC();
+                    } else {
+                        pc = block.getFirstStep().getPC();
+                    }
+                } else if (node instanceof StepEvent) {
+                    pc = ((StepEvent) node).getPC();
+                } else {
+                    throw new AssertionError("this should be a step event or a BlockNode");
+                }
+                Symbol sym = trc.getSymbol(pc);
+                if (sym != null) {
+                    log.log(Levels.INFO, "Renaming thread TID=" + thread.id + " to \"" + sym.getName() + "\"");
+                    thread.name = sym.getName();
+                    threadSelectorModel.changed(i);
+                }
+            }
+        }
+    }
+
+    public List<ThreadID> getThreads() {
+        List<ThreadID> result = new ArrayList<>();
+        for (int i = 0; i < threadSelectorModel.getSize(); i++) {
+            result.add(threadSelectorModel.getElementAt(i));
+        }
+        return result;
+    }
+
+    public Node getThreadNode(int tid) {
+        return currentNodes.get(tid);
+    }
+
+    public void setThreadNames(Map<Integer, String> names) {
+        for (int i = 0; i < threadSelectorModel.getSize(); i++) {
+            ThreadID thread = threadSelectorModel.getElementAt(i);
+            String name = names.get(i);
+            if (name != null) {
+                thread.name = name;
+                threadSelectorModel.changed(i);
+            }
+        }
+    }
+
+    public void setThreadSteps(Map<Integer, Long> steps) {
+        for (int i = 0; i < threadSelectorModel.getSize(); i++) {
+            Long id = steps.get(i);
+            if (id != null) {
+                Node insn = trc.getInstruction(id);
+                if (insn != null) {
+                    currentNodes.put(i, insn);
+                }
+            }
+        }
+    }
+
+    private void saveThreadStep(StepEvent step) {
+        currentNodes.put(step.getTid(), step);
+    }
+
     public ComputedSymbol getSelectedSymbol() {
         return selectedSymbol;
     }
 
-    public void jump(Node node) {
+    public void jump(Node n) {
+        Node node = n;
+        if (node == null) {
+            log.log(Levels.WARNING, "Cannot jump to NULL node");
+            return;
+        }
+
         BlockNode block = trc.getParent(node);
         if (block == null) {
             block = trc.getRoot();
         }
         block = trc.getChildren(block);
+        if (node instanceof StepEvent && block.getHead() != null && block.getHead().getStep() == ((StepEvent) node).getStep()) {
+            // if node is head of block, use block instead
+            node = block;
+            block = trc.getParent(block);
+            if (block == null) {
+                block = trc.getRoot();
+            }
+        }
+
         stack.set(block);
         insns.set(block);
         insns.select(node);
         insns.fireChangeEvent();
+
+        try {
+            ignoreThreadChange = true;
+
+            // refresh thread view
+            for (int i = 0; i < threadSelectorModel.getSize(); i++) {
+                ThreadID thread = threadSelectorModel.getElementAt(i);
+                if (node.getTid() == thread.id) {
+                    threadSelector.setSelectedIndex(i);
+                    break;
+                }
+            }
+        } finally {
+            ignoreThreadChange = false;
+        }
     }
 
     private void up(BlockNode block) {
@@ -253,20 +441,35 @@ public class TraceView extends JPanel implements StepListenable {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
-        stack.setTraceAnalyzer(trc);
-        insns.setTraceAnalyzer(trc);
-        state.setTraceAnalyzer(trc);
-        mem.setTraceAnalyzer(trc);
-        memhistory.setTraceAnalyzer(trc);
-        io.setTraceAnalyzer(trc);
-        strace.setTraceAnalyzer(trc);
-        watches.setTraceAnalyzer(trc);
-        symbols.setTraceAnalyzer(trc);
+        try {
+            ignoreThreadChange = true;
+            stack.setTraceAnalyzer(trc);
+            insns.setTraceAnalyzer(trc);
+            state.setTraceAnalyzer(trc);
+            mem.setTraceAnalyzer(trc);
+            memhistory.setTraceAnalyzer(trc);
+            io.setTraceAnalyzer(trc);
+            strace.setTraceAnalyzer(trc);
+            watches.setTraceAnalyzer(trc);
+            symbols.setTraceAnalyzer(trc);
 
-        trc.addSymbolRenameListener((sym) -> insns.repaint());
-        trc.addCommentChangeListener(() -> insns.repaint());
+            threadSelectorModel.removeAllElements();
+            trc.getThreadIds().stream().sorted().forEach(tid -> threadSelectorModel.addElement(new ThreadID(tid)));
 
-        showRoot(trc.getRoot());
+            trc.addSymbolRenameListener((sym) -> insns.repaint());
+            trc.addCommentChangeListener(() -> insns.repaint());
+
+            currentNodes.clear();
+            for (Entry<Integer, Long> thread : trc.getThreadStarts().entrySet()) {
+                currentNodes.put(thread.getKey(), trc.getInstruction(thread.getValue()));
+            }
+
+            updateThreadNames();
+
+            showRoot(trc.getRoot());
+        } finally {
+            ignoreThreadChange = false;
+        }
     }
 
     private void showRoot(BlockNode root) {
@@ -360,6 +563,8 @@ public class TraceView extends JPanel implements StepListenable {
     }
 
     protected void fireSetStep(StepEvent node) {
+        saveThreadStep(node);
+
         for (StepListener l : stepListeners) {
             try {
                 l.setStep(node);

@@ -277,6 +277,18 @@ public class Client implements TraceAnalyzer, Closeable {
     }
 
     @Override
+    public Set<Integer> getThreadIds() {
+        return Collections.singleton(0);
+    }
+
+    @Override
+    public Map<Integer, Long> getThreadStarts() {
+        Map<Integer, Long> result = new HashMap<>();
+        result.put(0, 0L);
+        return result;
+    }
+
+    @Override
     public BlockNode getRoot() {
         GetRootResult root = execute(new GetRoot());
         return root.getRoot();

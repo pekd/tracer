@@ -534,7 +534,18 @@ public class TextDump {
             return null;
         }
 
+        @Override
         public Map<Integer, Device> getDevices() {
+            return null;
+        }
+
+        @Override
+        public Set<Integer> getThreadIds() {
+            return null;
+        }
+
+        @Override
+        public Map<Integer, Long> getThreadStarts() {
             return null;
         }
     }

@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -156,6 +157,18 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     @Override
     public long getInstructionCount() {
         return steps;
+    }
+
+    @Override
+    public Set<Integer> getThreadIds() {
+        return Collections.singleton(0);
+    }
+
+    @Override
+    public Map<Integer, Long> getThreadStarts() {
+        Map<Integer, Long> result = new HashMap<>();
+        result.put(0, 0L);
+        return result;
     }
 
     @Override

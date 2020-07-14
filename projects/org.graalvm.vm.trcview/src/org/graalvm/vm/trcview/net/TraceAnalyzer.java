@@ -54,6 +54,11 @@ public interface TraceAnalyzer {
     // misc
     long getInstructionCount();
 
+    // threading
+    Set<Integer> getThreadIds();
+
+    Map<Integer, Long> getThreadStarts();
+
     // node
     BlockNode getRoot();
 

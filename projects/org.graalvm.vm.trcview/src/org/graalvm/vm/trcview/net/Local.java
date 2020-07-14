@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -43,6 +45,7 @@ public class Local implements TraceAnalyzer {
     private SymbolResolver resolver;
     private SymbolTable symbols;
     private BlockNode root;
+    private Map<Integer, BlockNode> threads;
     private MemoryTrace memory;
     private MappedFiles files;
     private List<Node> syscalls;
@@ -55,9 +58,10 @@ public class Local implements TraceAnalyzer {
     private Expressions expressions;
     private Highlighter highlighter;
 
-    public Local(Architecture arch, BlockNode root, Analysis analysis) {
+    public Local(Architecture arch, BlockNode root, Map<Integer, BlockNode> threads, Analysis analysis) {
         this.arch = arch;
         this.root = root;
+        this.threads = threads;
         resolver = analysis.getSymbolResolver();
         symbols = analysis.getComputedSymbolTable();
         memory = analysis.getMemoryTrace();
@@ -164,6 +168,20 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
+    public Set<Integer> getThreadIds() {
+        return threads.keySet();
+    }
+
+    @Override
+    public Map<Integer, Long> getThreadStarts() {
+        Map<Integer, Long> result = new HashMap<>();
+        for (Entry<Integer, BlockNode> entry : threads.entrySet()) {
+            result.put(entry.getKey(), entry.getValue().getStep());
+        }
+        return result;
+    }
+
+    @Override
     public BlockNode getRoot() {
         return root;
     }
@@ -199,7 +217,13 @@ public class Local implements TraceAnalyzer {
 
     @Override
     public Node getInstruction(long insn) {
-        return Search.instruction(root, insn);
+        for (BlockNode node : threads.values()) {
+            Node result = Search.instruction(node, insn);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 
     @Override
