@@ -159,7 +159,7 @@ public class TraceView extends JPanel implements StepListenable {
                 ThreadID thread = threadSelectorModel.getElementAt(id);
                 String name = JOptionPane.showInputDialog("Enter thread name:", thread.name);
                 if (name != null) {
-                    name = name.strip();
+                    name = name.trim();
                     thread.name = name.length() > 0 ? name : null;
                     threadSelectorModel.changed(id);
                 }
