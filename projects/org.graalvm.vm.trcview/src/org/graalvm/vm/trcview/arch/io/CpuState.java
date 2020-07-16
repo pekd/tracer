@@ -1,13 +1,11 @@
 package org.graalvm.vm.trcview.arch.io;
 
-public abstract class CpuState extends Event {
-    protected CpuState(short arch, int tid) {
-        super(arch, CPU_STATE, tid);
-    }
+public interface CpuState {
+    long getStep();
 
-    public abstract long getStep();
+    long getPC();
 
-    public abstract long getPC();
+    long get(String name);
 
-    public abstract long get(String name);
+    int getTid();
 }

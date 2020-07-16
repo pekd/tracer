@@ -88,7 +88,7 @@ public class PDP11CpuDeltaState extends PDP11CpuState {
     }
 
     @Override
-    public short[] getMachinecode() {
+    public short[] getMachinecodeWords() {
         return insn;
     }
 }

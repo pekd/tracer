@@ -11,15 +11,20 @@ import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class GenericStepEvent extends StepEvent {
-    private final GenericCpuState state;
+public class GenericStepEvent extends StepEvent implements CpuState {
     private final InstructionType type;
     private final String[] disassembly;
     private final byte[] machinecode;
 
+    private final long step;
+    private final long pc;
+    private final String data;
+
     protected GenericStepEvent(WordInputStream in, int tid) throws IOException {
         super(None.ID, tid);
-        state = new GenericCpuState(in, tid);
+        step = in.read64bit();
+        pc = in.read64bit();
+        data = IO.readString(in);
         machinecode = IO.readArray(in);
         switch (in.read8bit()) {
             default:
@@ -67,23 +72,37 @@ public class GenericStepEvent extends StepEvent {
     }
 
     @Override
-    public long getPC() {
-        return state.getPC();
-    }
-
-    @Override
     public InstructionType getType() {
         return type;
     }
 
     @Override
     public long getStep() {
-        return state.getStep();
+        return step;
+    }
+
+    @Override
+    public long getPC() {
+        return pc;
+    }
+
+    @Override
+    public long get(String name) {
+        switch (name) {
+            case "pc":
+                return getPC();
+            case "step":
+                return getStep();
+            case "tid":
+                return getTid();
+            default:
+                throw new IllegalArgumentException("unknown variable " + name);
+        }
     }
 
     @Override
     public CpuState getState() {
-        return state;
+        return this;
     }
 
     @Override
@@ -115,9 +134,16 @@ public class GenericStepEvent extends StepEvent {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        state.writeRecord(out);
+        out.write64bit(step);
+        out.write64bit(pc);
+        IO.writeString(out, data);
         IO.writeArray(out, machinecode);
         out.write8bit(getTypeByte());
         IO.writeStringArray(out, disassembly);
+    }
+
+    @Override
+    public String toString() {
+        return data;
     }
 }

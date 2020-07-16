@@ -13,23 +13,28 @@ import org.graalvm.vm.trcview.script.type.Struct;
 import org.graalvm.vm.trcview.script.type.Struct.Member;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class CustomStepEvent extends DerivedStepEvent {
-    private final CustomCpuState state;
+public class CustomStepEvent extends DerivedStepEvent implements CpuState {
     private final CustomAnalyzer analyzer;
     private final Pointer data;
+    private final Pointer state;
     private final long parentStep;
+    private final Struct struct;
+    private final Struct stateStruct;
+    private final String pcName;
 
-    public CustomStepEvent(CustomAnalyzer analyzer, short arch, int tid, Pointer data, CustomCpuState state, long parentStep) {
+    public CustomStepEvent(CustomAnalyzer analyzer, short arch, int tid, String pcName, Pointer data, Pointer state, long parentStep) {
         super(arch, tid);
+        this.pcName = pcName;
         this.data = data;
         this.state = state;
         this.analyzer = analyzer;
         this.parentStep = parentStep;
+        this.struct = (Struct) data.getType();
+        this.stateStruct = (Struct) state.getType();
     }
 
     @Override
     public byte[] getMachinecode() {
-        Struct struct = (Struct) data.getType();
         Member insn = struct.getMember(analyzer.getArchitecture().getInsnName());
         if (insn == null) {
             throw new IllegalStateException("cannot find insn field \"" + analyzer.getArchitecture().getInsnName() + "\"");
@@ -59,7 +64,7 @@ public class CustomStepEvent extends DerivedStepEvent {
 
     @Override
     public long getPC() {
-        return state.getPC();
+        return get(pcName);
     }
 
     @Override
@@ -89,12 +94,62 @@ public class CustomStepEvent extends DerivedStepEvent {
 
     @Override
     public long getStep() {
-        return state.getStep();
+        return get("step");
+    }
+
+    public Pointer getPointer() {
+        return data;
+    }
+
+    @Override
+    public long get(String name) {
+        Member member = stateStruct.getMember(name);
+        if (member == null) {
+            throw new IllegalArgumentException("unknown field " + name);
+        }
+        if (member.type instanceof PrimitiveType) {
+            PrimitiveType type = (PrimitiveType) member.type;
+            Pointer ptr = state.add(type, member.offset);
+            if (type.isUnsigned()) {
+                switch (type.getBasicType()) {
+                    case CHAR:
+                        return Byte.toUnsignedLong(ptr.getI8());
+                    case SHORT:
+                        return Short.toUnsignedLong(ptr.getI16());
+                    case INT:
+                        return Integer.toUnsignedLong(ptr.getI32());
+                    case LONG:
+                        return ptr.getI64();
+                    default:
+                        throw new IllegalStateException("invalid member type " + type.getBasicType());
+                }
+            } else {
+                switch (type.getBasicType()) {
+                    case CHAR:
+                        return ptr.getI8();
+                    case SHORT:
+                        return ptr.getI16();
+                    case INT:
+                        return ptr.getI32();
+                    case LONG:
+                        return ptr.getI64();
+                    default:
+                        throw new IllegalStateException("invalid member type " + type.getBasicType());
+                }
+            }
+        } else {
+            throw new IllegalStateException("invalid member type " + member.type);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return analyzer.printState(this);
     }
 
     @Override
     public CpuState getState() {
-        return state;
+        return this;
     }
 
     @Override

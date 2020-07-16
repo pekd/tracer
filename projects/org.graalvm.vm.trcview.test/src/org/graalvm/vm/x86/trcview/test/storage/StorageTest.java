@@ -19,7 +19,6 @@ import org.graalvm.vm.trcview.storage.StorageBackend;
 import org.graalvm.vm.trcview.storage.TraceParser;
 import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.x86.trcview.test.mock.MockArchitecture;
-import org.graalvm.vm.x86.trcview.test.mock.MockCpuState;
 import org.graalvm.vm.x86.trcview.test.mock.MockStepEvent;
 import org.graalvm.vm.x86.trcview.test.mock.MockTraceReader;
 import org.junit.After;
@@ -50,14 +49,14 @@ public class StorageTest {
     }
 
     private void stepEvent(long step, long pc, InstructionType type, byte[] machinecode) {
-        MockCpuState state = new MockCpuState((short) 0, 0);
+        MockStepEvent state = new MockStepEvent((short) 0, 0, machinecode, type);
         state.step = step;
         state.pc = pc;
         state.data = new byte[machinecode.length + 16];
         Endianess.set64bitBE(state.data, 0, step);
         Endianess.set64bitBE(state.data, 8, pc);
         System.arraycopy(machinecode, 0, state.data, 16, machinecode.length);
-        add(new MockStepEvent(state, machinecode, type));
+        add(state);
     }
 
     private void run() throws IOException {
@@ -104,7 +103,7 @@ public class StorageTest {
         assertArrayEquals(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* step */
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, /* pc */
                         0x42 /* machinecode */
-        }, ((MockCpuState) step.getState()).data);
+        }, ((MockStepEvent) step.getState()).data);
         assertEquals(0, step.getState().getStep());
         assertEquals(0x1000, step.getState().getPC());
 

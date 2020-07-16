@@ -18,6 +18,7 @@ import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.MprotectEvent;
 import org.graalvm.vm.trcview.arch.io.MunmapEvent;
 import org.graalvm.vm.trcview.arch.io.SymbolTableEvent;
+import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
@@ -100,7 +101,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             String s = str(addr, size, step);
                             if (s != null) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(state.getArchitectureId(), state.getTid(), step, ch, true, s);
+                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, true, s);
                             }
                         }
                     }
@@ -114,7 +115,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             String s = str(addr, size, step);
                             if (s != null) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(state.getArchitectureId(), state.getTid(), step, ch, false, s);
+                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, false, s);
                             }
                         }
                     }
@@ -144,7 +145,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                             if (buf.length() > 0) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(state.getArchitectureId(), state.getTid(), step, ch, true, buf.toString());
+                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, true, buf.toString());
                             }
                         }
                     }
@@ -174,7 +175,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                             if (buf.length() > 0) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(state.getArchitectureId(), state.getTid(), step, ch, false, buf.toString());
+                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, false, buf.toString());
                             }
                         }
                     }

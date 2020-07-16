@@ -47,7 +47,7 @@ public class TraceParser {
     }
 
     private void createStep(Step step) {
-        byte[] cpustate = StorageBackend.serialize(step.step.getState());
+        byte[] cpustate = StorageBackend.serialize(step.step);
         int type = StorageBackend.getInstructionType(step.step.getType());
         if (step.trap) {
             type = StorageBackend.TYPE_TRAP;

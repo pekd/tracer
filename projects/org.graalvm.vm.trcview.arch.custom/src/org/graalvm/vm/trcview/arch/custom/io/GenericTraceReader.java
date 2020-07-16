@@ -135,8 +135,7 @@ public class GenericTraceReader extends ArchTraceReader {
                 }
                 byte[] machinecode = IO.readShortArray(in);
                 InstructionType type = getType(in.read8bit());
-                GenericCpuState state = new GenericCpuState(tid, desc, data);
-                return new GenericStepEvent(tid, state, machinecode, asm, type);
+                return new GenericStepEvent(tid, desc, data, machinecode, asm, type);
             }
             case MMAP: {
                 long address = in.read64bit();

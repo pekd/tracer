@@ -2,6 +2,7 @@ package org.graalvm.vm.x86.trcview.test.mock;
 
 import java.io.IOException;
 
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -9,14 +10,16 @@ import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class MockStepEvent extends StepEvent {
-    private MockCpuState state;
+public class MockStepEvent extends StepEvent implements CpuState {
     private byte[] machinecode;
     private InstructionType type;
 
-    public MockStepEvent(MockCpuState state, byte[] machinecode, InstructionType type) {
-        super(state.getArchitectureId(), state.getTid());
-        this.state = state;
+    public long step;
+    public long pc;
+    public byte[] data;
+
+    public MockStepEvent(short arch, int tid, byte[] machinecode, InstructionType type) {
+        super(arch, tid);
         this.machinecode = machinecode;
         this.type = type;
     }
@@ -38,7 +41,7 @@ public class MockStepEvent extends StepEvent {
 
     @Override
     public long getPC() {
-        return state.getPC();
+        return pc;
     }
 
     @Override
@@ -48,12 +51,17 @@ public class MockStepEvent extends StepEvent {
 
     @Override
     public long getStep() {
-        return state.getStep();
+        return step;
     }
 
     @Override
-    public MockCpuState getState() {
-        return state;
+    public long get(String name) {
+        return 0;
+    }
+
+    @Override
+    public MockStepEvent getState() {
+        return this;
     }
 
     @Override
@@ -63,14 +71,14 @@ public class MockStepEvent extends StepEvent {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        // TODO Auto-generated method stub
+        IO.writeArray(out, data);
     }
 
     public static MockStepEvent create(int tid, long step, long pc, InstructionType type, byte[] machinecode, WordInputStream in) throws IOException {
-        MockCpuState state = new MockCpuState(MockArchitecture.ID, tid);
-        state.step = step;
-        state.pc = pc;
-        state.data = IO.readArray(in);
-        return new MockStepEvent(state, machinecode, type);
+        MockStepEvent evt = new MockStepEvent(MockArchitecture.ID, tid, machinecode, type);
+        evt.step = step;
+        evt.pc = pc;
+        evt.data = IO.readArray(in);
+        return evt;
     }
 }

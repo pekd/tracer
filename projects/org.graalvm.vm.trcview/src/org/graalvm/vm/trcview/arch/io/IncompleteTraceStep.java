@@ -6,7 +6,7 @@ import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.arch.none.None;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class IncompleteTraceStep extends StepEvent {
+public class IncompleteTraceStep extends StepEvent implements CpuState {
     public IncompleteTraceStep(int tid) {
         super(Elf.EM_NONE, tid);
     }
@@ -67,33 +67,18 @@ public class IncompleteTraceStep extends StepEvent {
     }
 
     @Override
+    public long get(String name) {
+        return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "<unavailable>\n";
+    }
+
+    @Override
     public CpuState getState() {
-        return new CpuState(Elf.EM_NONE, getTid()) {
-            @Override
-            public long getStep() {
-                return IncompleteTraceStep.this.getPC();
-            }
-
-            @Override
-            public long getPC() {
-                return IncompleteTraceStep.this.getPC();
-            }
-
-            @Override
-            public long get(String name) {
-                return 0;
-            }
-
-            @Override
-            protected void writeRecord(WordOutputStream out) throws IOException {
-                // nothing
-            }
-
-            @Override
-            public String toString() {
-                return "<unavailable>\n";
-            }
-        };
+        return this;
     }
 
     @Override

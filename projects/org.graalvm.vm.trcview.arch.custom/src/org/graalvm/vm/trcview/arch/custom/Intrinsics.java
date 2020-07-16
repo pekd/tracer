@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
-import org.graalvm.vm.trcview.arch.custom.io.CustomCpuState;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
@@ -394,9 +393,8 @@ public class Intrinsics {
             short id = arch.getId();
             Member statemember = ((Struct) type).getMember(stateName);
             Pointer state = data.add(statemember.type, statemember.offset);
-            CustomCpuState cpustate = new CustomCpuState(id, 0, pcName, state, analyzer);
             long parentStep = analyzer.getCurrentStep();
-            Event evt = new CustomStepEvent(analyzer, id, 0, data, cpustate, parentStep);
+            Event evt = new CustomStepEvent(analyzer, id, 0, pcName, data, state, parentStep);
             analyzer.createEvent(evt);
             return 0;
         }

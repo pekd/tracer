@@ -30,7 +30,7 @@ public class PDP11CpuFullState extends PDP11CpuState {
             registers[i] = state.getRegister(i);
         }
         psw = state.getPSW();
-        insn = state.getMachinecode();
+        insn = state.getMachinecodeWords();
         step = state.getStep();
     }
 
@@ -40,7 +40,7 @@ public class PDP11CpuFullState extends PDP11CpuState {
     }
 
     @Override
-    public short[] getMachinecode() {
+    public short[] getMachinecodeWords() {
         return insn;
     }
 

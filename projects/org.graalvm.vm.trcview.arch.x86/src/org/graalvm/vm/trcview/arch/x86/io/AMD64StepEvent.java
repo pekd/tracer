@@ -2,7 +2,6 @@ package org.graalvm.vm.trcview.arch.x86.io;
 
 import java.io.IOException;
 
-import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -137,12 +136,12 @@ public class AMD64StepEvent extends StepEvent {
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
         IO.writeArray(out, getMachinecode());
-        getState().write(out);
+        getState().writeRecord(out);
     }
 
     public static AMD64StepEvent readRecord(WordInputStream in, int tid) throws IOException {
         byte[] machinecode = IO.readArray(in);
-        AMD64CpuState state = Event.read(in);
+        AMD64CpuState state = AMD64CpuState.readRecord(in, tid);
         return new AMD64StepEvent(tid, machinecode, state);
     }
 

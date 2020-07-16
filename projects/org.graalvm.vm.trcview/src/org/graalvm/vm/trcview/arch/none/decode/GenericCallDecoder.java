@@ -5,14 +5,14 @@ import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.CpuState;
-import org.graalvm.vm.trcview.arch.none.io.GenericCpuState;
+import org.graalvm.vm.trcview.arch.none.io.GenericStepEvent;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class GenericCallDecoder extends CallDecoder {
-    public static String decode(Function function, GenericCpuState state, GenericCpuState nextState, TraceAnalyzer trc) {
+    public static String decode(Function function, GenericStepEvent state, GenericStepEvent nextState, TraceAnalyzer trc) {
         StringBuilder buf = new StringBuilder(function.getName());
         buf.append('(');
         Prototype prototype = function.getPrototype();
@@ -60,9 +60,9 @@ public class GenericCallDecoder extends CallDecoder {
 
     @Override
     public String decode(Function function, CpuState state, CpuState nextState, TraceAnalyzer trc) {
-        if (!(state instanceof GenericCpuState) || (nextState != null && !(nextState instanceof GenericCpuState))) {
+        if (!(state instanceof GenericStepEvent) || (nextState != null && !(nextState instanceof GenericStepEvent))) {
             return null;
         }
-        return decode(function, (GenericCpuState) state, (GenericCpuState) nextState, trc);
+        return decode(function, (GenericStepEvent) state, (GenericStepEvent) nextState, trc);
     }
 }

@@ -1,25 +1,20 @@
 package org.graalvm.vm.trcview.arch.pdp11.io;
 
-import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Disassembler;
 import org.graalvm.vm.util.io.Endianess;
-import org.graalvm.vm.util.io.WordOutputStream;
 
-public class PDP11StepEvent extends StepEvent {
-    private final PDP11CpuState cpuState;
+public abstract class PDP11StepEvent extends StepEvent {
     private byte[] machinecode = null;
 
-    public PDP11StepEvent(PDP11CpuState state, int tid) {
+    protected PDP11StepEvent(int tid) {
         super(PDP11.ID, tid);
-        cpuState = state;
     }
 
     @Override
@@ -28,7 +23,7 @@ public class PDP11StepEvent extends StepEvent {
             return machinecode;
         }
 
-        short[] code = cpuState.getMachinecode();
+        short[] code = getState().getMachinecodeWords();
         int length = PDP11Disassembler.getLength(code);
         machinecode = new byte[length * 2];
         for (int i = 0; i < length; i++) {
@@ -49,17 +44,12 @@ public class PDP11StepEvent extends StepEvent {
 
     @Override
     public String[] getDisassemblyComponents() {
-        return PDP11Disassembler.getDisassembly(cpuState.getMachinecode(), (short) cpuState.getPC());
+        return PDP11Disassembler.getDisassembly(getState().getMachinecodeWords(), (short) getPC());
     }
 
     @Override
     public String getMnemonic() {
         return getDisassemblyComponents()[0];
-    }
-
-    @Override
-    public long getPC() {
-        return cpuState.getPC();
     }
 
     @Override
@@ -84,27 +74,15 @@ public class PDP11StepEvent extends StepEvent {
 
     @Override
     public InstructionType getType() {
-        return PDP11Disassembler.getType(cpuState.getMachinecode()[0]);
+        return PDP11Disassembler.getType(getState().getMachinecodeWords()[0]);
     }
 
     @Override
-    public long getStep() {
-        return cpuState.getStep();
-    }
-
-    @Override
-    public CpuState getState() {
-        return cpuState;
-    }
+    public abstract PDP11CpuState getState();
 
     @Override
     public StepFormat getFormat() {
         return PDP11.FORMAT;
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        cpuState.writeRecord(out);
     }
 
     @Override

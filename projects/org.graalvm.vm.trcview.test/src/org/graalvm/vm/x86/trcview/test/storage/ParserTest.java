@@ -19,7 +19,6 @@ import org.graalvm.vm.trcview.storage.Step;
 import org.graalvm.vm.trcview.storage.StorageBackend;
 import org.graalvm.vm.trcview.storage.TraceParser;
 import org.graalvm.vm.x86.trcview.test.mock.MockArchitecture;
-import org.graalvm.vm.x86.trcview.test.mock.MockCpuState;
 import org.graalvm.vm.x86.trcview.test.mock.MockStepEvent;
 import org.graalvm.vm.x86.trcview.test.mock.MockStorageBackend;
 import org.graalvm.vm.x86.trcview.test.mock.MockTraceReader;
@@ -63,10 +62,10 @@ public class ParserTest {
     }
 
     private void stepEvent(long step, long pc, InstructionType type, byte[] machinecode) {
-        MockCpuState state = new MockCpuState((short) 0, 0);
-        state.step = step;
-        state.pc = pc;
-        add(new MockStepEvent(state, machinecode, type));
+        MockStepEvent evt = new MockStepEvent((short) 0, 0, machinecode, type);
+        evt.step = step;
+        evt.pc = pc;
+        add(evt);
     }
 
     private void trapEvent() {

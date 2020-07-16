@@ -9,7 +9,7 @@ import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.arch.custom.CustomArchitecture;
 import org.graalvm.vm.trcview.arch.custom.Intrinsics;
-import org.graalvm.vm.trcview.arch.custom.io.CustomCpuState;
+import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -138,7 +138,7 @@ public class CustomAnalyzer implements Analyzer {
         }
     }
 
-    public String printState(CustomCpuState state) {
+    public String printState(CustomStepEvent state) {
         Pointer data = state.getPointer();
         if (printState == null) {
             Struct struct = (Struct) arch.getStepType();

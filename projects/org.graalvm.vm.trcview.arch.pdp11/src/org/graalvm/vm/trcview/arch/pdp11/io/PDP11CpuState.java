@@ -3,19 +3,18 @@ package org.graalvm.vm.trcview.arch.pdp11.io;
 import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.CpuState;
-import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public abstract class PDP11CpuState extends CpuState {
+public abstract class PDP11CpuState extends PDP11StepEvent implements CpuState {
     protected PDP11CpuState(int tid) {
-        super(PDP11.ID, tid);
+        super(tid);
     }
 
     public abstract short getRegister(int id);
 
     public abstract short getPSW();
 
-    public abstract short[] getMachinecode();
+    public abstract short[] getMachinecodeWords();
 
     public short getSP() {
         return getRegister(6);
@@ -125,5 +124,10 @@ public abstract class PDP11CpuState extends CpuState {
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
 
+    }
+
+    @Override
+    public PDP11CpuState getState() {
+        return this;
     }
 }

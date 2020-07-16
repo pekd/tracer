@@ -14,8 +14,6 @@ public class AMD64EventParser extends EventParser {
     @Override
     public <T extends Event> T parse(WordInputStream in, byte id, int tid) throws IOException {
         switch (id) {
-            case Event.CPU_STATE:
-                return (T) AMD64CpuState.readRecord(in, tid);
             case Event.STEP:
                 return (T) AMD64StepEvent.readRecord(in, tid);
             case Event.SYSTEM_LOG:

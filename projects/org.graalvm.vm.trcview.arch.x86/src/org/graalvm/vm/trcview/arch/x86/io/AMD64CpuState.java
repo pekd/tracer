@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.trcview.arch.io.CpuState;
-import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.WordInputStream;
@@ -12,7 +11,7 @@ import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.Flags;
 import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
 
-public class AMD64CpuState extends CpuState {
+public class AMD64CpuState implements CpuState {
     public final long rax;
     public final long rbx;
     public final long rcx;
@@ -40,8 +39,10 @@ public class AMD64CpuState extends CpuState {
 
     public final long step;
 
+    private final int tid;
+
     private AMD64CpuState(WordInputStream in, int tid) throws IOException {
-        super(AMD64.ID, tid);
+        this.tid = tid;
         rax = in.read64bit();
         rbx = in.read64bit();
         rcx = in.read64bit();
@@ -72,7 +73,7 @@ public class AMD64CpuState extends CpuState {
     }
 
     public AMD64CpuState(CpuStateRecord record) {
-        super(AMD64.ID, record.getTid());
+        this.tid = record.getTid();
         org.graalvm.vm.x86.isa.CpuState state = record.getState();
         rax = state.rax;
         rbx = state.rbx;
@@ -275,8 +276,7 @@ public class AMD64CpuState extends CpuState {
         }
     }
 
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
+    public void writeRecord(WordOutputStream out) throws IOException {
         out.write64bit(rax);
         out.write64bit(rbx);
         out.write64bit(rcx);
@@ -372,5 +372,9 @@ public class AMD64CpuState extends CpuState {
             }
         }
         return buf.toString();
+    }
+
+    public int getTid() {
+        return tid;
     }
 }

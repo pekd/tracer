@@ -104,7 +104,7 @@ public class PDP11TraceReader extends ArchTraceReader {
             case MAGIC_CPU0:
                 steps = 0;
                 lastState = new PDP11CpuFullState(in, 0);
-                lastStep = new PDP11StepEvent(lastState, 0);
+                lastStep = lastState;
                 return lastStep;
             case MAGIC_CPUZ:
                 steps++;
@@ -113,7 +113,7 @@ public class PDP11TraceReader extends ArchTraceReader {
                     lastState = new PDP11CpuFullState(lastState);
                     steps = 0;
                 }
-                lastStep = new PDP11StepEvent(lastState, 0);
+                lastStep = lastState;
                 return lastStep;
             case MAGIC_CPU1: {
                 PDP11CpuEvent evt = new PDP11CpuEvent(in, 0);
