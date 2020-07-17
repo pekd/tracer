@@ -117,33 +117,33 @@ public class AMD64SyscallDecoder extends SyscallDecoder {
             return decode(state, trc);
         } else {
             String call = decode(state, trc);
-            String result = decodeResult((int) state.rax, next);
+            String result = decodeResult((int) state.getRAX(), next);
             return call + " = " + result;
         }
     }
 
     public static String decodeResult(int sc, AMD64CpuState state) {
-        if (state.rax < 0) {
-            return "-" + Errno.getConstant(-(int) state.rax);
+        if (state.getRAX() < 0) {
+            return "-" + Errno.getConstant(-(int) state.getRAX());
         } else {
             switch (sc) {
                 case Syscalls.SYS_mmap:
                 case Syscalls.SYS_brk:
-                    return ptr(state.rax);
+                    return ptr(state.getRAX());
                 default:
-                    return Long.toString(state.rax);
+                    return Long.toString(state.getRAX());
             }
         }
     }
 
     public static String decode(AMD64CpuState state, TraceAnalyzer trc) {
-        int id = (int) state.rax;
-        long a1 = state.rdi;
-        long a2 = state.rsi;
-        long a3 = state.rdx;
-        long a4 = state.r10;
-        long a5 = state.r8;
-        long a6 = state.r9;
+        int id = (int) state.getRAX();
+        long a1 = state.getRDI();
+        long a2 = state.getRSI();
+        long a3 = state.getRDX();
+        long a4 = state.getR10();
+        long a5 = state.getR8();
+        long a6 = state.getR9();
         switch (id) {
             case Syscalls.SYS_read:
                 return "read(" + a1 + ", " + ptr(a2) + ", " + a3 + ")";

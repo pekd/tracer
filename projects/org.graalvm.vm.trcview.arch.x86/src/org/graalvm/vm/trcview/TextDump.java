@@ -75,7 +75,7 @@ import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
-import org.graalvm.vm.trcview.arch.x86.io.AMD64StepEvent;
+import org.graalvm.vm.trcview.arch.x86.io.AMD64FullCpuState;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -225,7 +225,7 @@ public class TextDump {
                     files = new MappedFiles(filenames);
                 } else if (record instanceof StepRecord) {
                     StepRecord step = (StepRecord) record;
-                    StepEvent event = new AMD64StepEvent(step);
+                    StepEvent event = new AMD64FullCpuState(step);
                     if (dumpState) {
                         out.println("----------------");
                         out.println("[tid=" + step.getTid() + "]");

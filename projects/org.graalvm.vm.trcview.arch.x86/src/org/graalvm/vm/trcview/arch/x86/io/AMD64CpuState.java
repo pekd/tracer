@@ -4,101 +4,35 @@ import java.io.IOException;
 
 import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.Flags;
-import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
 
-public class AMD64CpuState implements CpuState {
-    public final long rax;
-    public final long rbx;
-    public final long rcx;
-    public final long rdx;
-    public final long rsi;
-    public final long rdi;
-    public final long rbp;
-    public final long rsp;
-    public final long r8;
-    public final long r9;
-    public final long r10;
-    public final long r11;
-    public final long r12;
-    public final long r13;
-    public final long r14;
-    public final long r15;
-    public final long rip;
+public abstract class AMD64CpuState extends AMD64StepEvent implements CpuState {
+    protected static final int RAX = 0;
+    protected static final int RCX = 1;
+    protected static final int RDX = 2;
+    protected static final int RBX = 3;
+    protected static final int RSP = 4;
+    protected static final int RBP = 5;
+    protected static final int RSI = 6;
+    protected static final int RDI = 7;
+    protected static final int R8 = 8;
+    protected static final int R9 = 9;
+    protected static final int R10 = 10;
+    protected static final int R11 = 11;
+    protected static final int R12 = 12;
+    protected static final int R13 = 13;
+    protected static final int R14 = 14;
+    protected static final int R15 = 15;
 
-    public final long fs;
-    public final long gs;
+    protected long step;
 
-    public final long rfl;
-
-    public final Vector128[] xmm = new Vector128[16];
-
-    public final long step;
-
-    private final int tid;
-
-    private AMD64CpuState(WordInputStream in, int tid) throws IOException {
-        this.tid = tid;
-        rax = in.read64bit();
-        rbx = in.read64bit();
-        rcx = in.read64bit();
-        rdx = in.read64bit();
-        rsi = in.read64bit();
-        rdi = in.read64bit();
-        rbp = in.read64bit();
-        rsp = in.read64bit();
-        r8 = in.read64bit();
-        r9 = in.read64bit();
-        r10 = in.read64bit();
-        r11 = in.read64bit();
-        r12 = in.read64bit();
-        r13 = in.read64bit();
-        r14 = in.read64bit();
-        r15 = in.read64bit();
-        rip = in.read64bit();
-        fs = in.read64bit();
-        gs = in.read64bit();
-        rfl = in.read64bit();
-        step = in.read64bit();
-        for (int i = 0; i < xmm.length; i++) {
-            long v0 = in.read64bit();
-            long v1 = in.read64bit();
-            xmm[i] = new Vector128(v0, v1);
-        }
-
-    }
-
-    public AMD64CpuState(CpuStateRecord record) {
-        this.tid = record.getTid();
-        org.graalvm.vm.x86.isa.CpuState state = record.getState();
-        rax = state.rax;
-        rbx = state.rbx;
-        rcx = state.rcx;
-        rdx = state.rdx;
-        rsi = state.rsi;
-        rdi = state.rdi;
-        rbp = state.rbp;
-        rsp = state.rsp;
-        r8 = state.r8;
-        r9 = state.r9;
-        r10 = state.r10;
-        r11 = state.r11;
-        r12 = state.r12;
-        r13 = state.r13;
-        r14 = state.r14;
-        r15 = state.r15;
-        rip = state.rip;
-        fs = state.fs;
-        gs = state.gs;
-        for (int i = 0; i < xmm.length; i++) {
-            xmm[i] = state.xmm[i];
-        }
-        rfl = state.getRFL();
-        step = record.getInstructionCount();
+    protected AMD64CpuState(int tid, byte[] machinecode) {
+        super(tid, machinecode);
     }
 
     @Override
@@ -108,7 +42,89 @@ public class AMD64CpuState implements CpuState {
 
     @Override
     public long getPC() {
-        return rip;
+        return getRIP();
+    }
+
+    public abstract long getRAX();
+
+    public abstract long getRBX();
+
+    public abstract long getRCX();
+
+    public abstract long getRDX();
+
+    public abstract long getRBP();
+
+    public abstract long getRSP();
+
+    public abstract long getRIP();
+
+    public abstract long getRSI();
+
+    public abstract long getRDI();
+
+    public abstract long getR8();
+
+    public abstract long getR9();
+
+    public abstract long getR10();
+
+    public abstract long getR11();
+
+    public abstract long getR12();
+
+    public abstract long getR13();
+
+    public abstract long getR14();
+
+    public abstract long getR15();
+
+    public abstract long getRFL();
+
+    public abstract long getFS();
+
+    public abstract long getGS();
+
+    public abstract Vector128 getXMM(int i);
+
+    @Override
+    public void writeRecord(WordOutputStream out) throws IOException {
+        IO.writeArray(out, getMachinecode());
+        out.write64bit(getRAX());
+        out.write64bit(getRBX());
+        out.write64bit(getRCX());
+        out.write64bit(getRDX());
+        out.write64bit(getRSI());
+        out.write64bit(getRDI());
+        out.write64bit(getRBP());
+        out.write64bit(getRSP());
+        out.write64bit(getR8());
+        out.write64bit(getR9());
+        out.write64bit(getR10());
+        out.write64bit(getR11());
+        out.write64bit(getR12());
+        out.write64bit(getR13());
+        out.write64bit(getR14());
+        out.write64bit(getR15());
+        out.write64bit(getRIP());
+        out.write64bit(getFS());
+        out.write64bit(getGS());
+        out.write64bit(getRFL());
+        out.write64bit(step);
+        for (int i = 0; i < 16; i++) {
+            out.write64bit(getXMM(i).getI64(0));
+            out.write64bit(getXMM(i).getI64(1));
+        }
+    }
+
+    public static AMD64CpuState readRecord(WordInputStream in, int tid) throws IOException {
+        byte[] machinecode = IO.readArray(in);
+        return new AMD64FullCpuState(in, tid, machinecode);
+    }
+
+    @Override
+    public AMD64CpuState getState() {
+        return this;
     }
 
     @Override
@@ -119,150 +135,150 @@ public class AMD64CpuState implements CpuState {
             case "pc":
                 return getPC();
             case "al":
-                return rax & 0xFF;
+                return getRAX() & 0xFF;
             case "ax":
-                return rax & 0xFFFF;
+                return getRAX() & 0xFFFF;
             case "eax":
-                return rax & 0xFFFFFFFFL;
+                return getRAX() & 0xFFFFFFFFL;
             case "rax":
-                return rax;
+                return getRAX();
             case "bl":
-                return rbx & 0xFF;
+                return getRBX() & 0xFF;
             case "bx":
-                return rbx & 0xFFFF;
+                return getRBX() & 0xFFFF;
             case "ebx":
-                return rbx & 0xFFFFFFFFL;
+                return getRBX() & 0xFFFFFFFFL;
             case "rbx":
-                return rbx;
+                return getRBX();
             case "cl":
-                return rcx & 0xFF;
+                return getRCX() & 0xFF;
             case "cx":
-                return rcx & 0xFFFF;
+                return getRCX() & 0xFFFF;
             case "ecx":
-                return rcx & 0xFFFFFFFFL;
+                return getRCX() & 0xFFFFFFFFL;
             case "rcx":
-                return rcx;
+                return getRCX();
             case "dl":
-                return rdx & 0xFF;
+                return getRDX() & 0xFF;
             case "dx":
-                return rdx & 0xFFFF;
+                return getRDX() & 0xFFFF;
             case "edx":
-                return rdx & 0xFFFFFFFFL;
+                return getRDX() & 0xFFFFFFFFL;
             case "rdx":
-                return rdx;
+                return getRDX();
             case "bpl":
-                return rbp & 0xFF;
+                return getRBP() & 0xFF;
             case "bp":
-                return rbp & 0xFFFF;
+                return getRBP() & 0xFFFF;
             case "ebp":
-                return rbp & 0xFFFFFFFFL;
+                return getRBP() & 0xFFFFFFFFL;
             case "rbp":
-                return rbp;
+                return getRBP();
             case "spl":
-                return rsp & 0xFF;
+                return getRSP() & 0xFF;
             case "sp":
-                return rsp & 0xFFFF;
+                return getRSP() & 0xFFFF;
             case "esp":
-                return rsp & 0xFFFFFFFFL;
+                return getRSP() & 0xFFFFFFFFL;
             case "rsp":
-                return rsp;
+                return getRSP();
             case "ip":
-                return rip & 0xFFFF;
+                return getRIP() & 0xFFFF;
             case "eip":
-                return rip & 0xFFFFFFFFL;
+                return getRIP() & 0xFFFFFFFFL;
             case "rip":
-                return rip;
+                return getRIP();
             case "sil":
-                return rsi & 0xFF;
+                return getRSI() & 0xFF;
             case "si":
-                return rsi & 0xFFFF;
+                return getRSI() & 0xFFFF;
             case "esi":
-                return rsi & 0xFFFFFFFFL;
+                return getRSI() & 0xFFFFFFFFL;
             case "rsi":
-                return rsi;
+                return getRSI();
             case "dil":
-                return rdi & 0xFF;
+                return getRDI() & 0xFF;
             case "di":
-                return rdi & 0xFFFF;
+                return getRDI() & 0xFFFF;
             case "edi":
-                return rdi & 0xFFFFFFFFL;
+                return getRDI() & 0xFFFFFFFFL;
             case "rdi":
-                return rdi;
+                return getRDI();
             case "r8b":
-                return r8 & 0xFF;
+                return getR8() & 0xFF;
             case "r8w":
-                return r8 & 0xFFFF;
+                return getR8() & 0xFFFF;
             case "r8d":
-                return r8 & 0xFFFFFFFFL;
+                return getR8() & 0xFFFFFFFFL;
             case "r8":
-                return r8;
+                return getR8();
             case "r9b":
-                return r9 & 0xFF;
+                return getR9() & 0xFF;
             case "r9w":
-                return r9 & 0xFFFF;
+                return getR9() & 0xFFFF;
             case "r9d":
-                return r9 & 0xFFFFFFFFL;
+                return getR9() & 0xFFFFFFFFL;
             case "r9":
-                return r9;
+                return getR9();
             case "r10b":
-                return r10 & 0xFF;
+                return getR10() & 0xFF;
             case "r10w":
-                return r10 & 0xFFFF;
+                return getR10() & 0xFFFF;
             case "r10d":
-                return r10 & 0xFFFFFFFFL;
+                return getR10() & 0xFFFFFFFFL;
             case "r10":
-                return r10;
+                return getR10();
             case "r11b":
-                return r11 & 0xFF;
+                return getR11() & 0xFF;
             case "r11w":
-                return r11 & 0xFFFF;
+                return getR11() & 0xFFFF;
             case "r11d":
-                return r11 & 0xFFFFFFFFL;
+                return getR11() & 0xFFFFFFFFL;
             case "r11":
-                return r11;
+                return getR11();
             case "r12b":
-                return r12 & 0xFF;
+                return getR12() & 0xFF;
             case "r12w":
-                return r12 & 0xFFFF;
+                return getR12() & 0xFFFF;
             case "r12d":
-                return r12 & 0xFFFFFFFFL;
+                return getR12() & 0xFFFFFFFFL;
             case "r12":
-                return r12;
+                return getR12();
             case "r13b":
-                return r13 & 0xFF;
+                return getR13() & 0xFF;
             case "r13w":
-                return r13 & 0xFFFF;
+                return getR13() & 0xFFFF;
             case "r13d":
-                return r13 & 0xFFFFFFFFL;
+                return getR13() & 0xFFFFFFFFL;
             case "r13":
-                return r13;
+                return getR13();
             case "r14b":
-                return r14 & 0xFF;
+                return getR14() & 0xFF;
             case "r14w":
-                return r14 & 0xFFFF;
+                return getR14() & 0xFFFF;
             case "r14d":
-                return r14 & 0xFFFFFFFFL;
+                return getR14() & 0xFFFFFFFFL;
             case "r14":
-                return r14;
+                return getR14();
             case "r15b":
-                return r15 & 0xFF;
+                return getR15() & 0xFF;
             case "r15w":
-                return r15 & 0xFFFF;
+                return getR15() & 0xFFFF;
             case "r15d":
-                return r15 & 0xFFFFFFFFL;
+                return getR15() & 0xFFFFFFFFL;
             case "r15":
-                return r15;
+                return getR15();
             case "flags":
-                return rfl & 0xFFFF;
+                return getRFL() & 0xFFFF;
             case "eflags":
-                return rfl & 0xFFFFFFFFL;
+                return getRFL() & 0xFFFFFFFFL;
             case "rflags":
-                return rfl;
+                return getRFL();
             default:
                 if (name.startsWith("xmm") && (name.endsWith(".l") || name.endsWith(".h"))) {
                     try {
                         int id = Integer.parseInt(name.substring(3, name.length() - 2));
-                        Vector128 reg = xmm[id];
+                        Vector128 reg = getXMM(id);
                         if (name.endsWith(".l")) {
                             return reg.getI64(1);
                         } else {
@@ -274,38 +290,6 @@ public class AMD64CpuState implements CpuState {
                 }
                 throw new IllegalArgumentException("unknown field " + name);
         }
-    }
-
-    public void writeRecord(WordOutputStream out) throws IOException {
-        out.write64bit(rax);
-        out.write64bit(rbx);
-        out.write64bit(rcx);
-        out.write64bit(rdx);
-        out.write64bit(rsi);
-        out.write64bit(rdi);
-        out.write64bit(rbp);
-        out.write64bit(rsp);
-        out.write64bit(r8);
-        out.write64bit(r9);
-        out.write64bit(r10);
-        out.write64bit(r11);
-        out.write64bit(r12);
-        out.write64bit(r13);
-        out.write64bit(r14);
-        out.write64bit(r15);
-        out.write64bit(rip);
-        out.write64bit(fs);
-        out.write64bit(gs);
-        out.write64bit(rfl);
-        out.write64bit(step);
-        for (int i = 0; i < xmm.length; i++) {
-            out.write64bit(xmm[i].getI64(0));
-            out.write64bit(xmm[i].getI64(1));
-        }
-    }
-
-    public static AMD64CpuState readRecord(WordInputStream in, int tid) throws IOException {
-        return new AMD64CpuState(in, tid);
     }
 
     private static StringBuilder formatRegLine(StringBuilder buf, String[] names, long[] values) {
@@ -341,11 +325,12 @@ public class AMD64CpuState implements CpuState {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        formatRegLine(buf, new String[]{"RAX", "RBX", "RCX", "RDX"}, new long[]{rax, rbx, rcx, rdx});
-        formatRegLine(buf, new String[]{"RSI", "RDI", "RBP", "RSP"}, new long[]{rsi, rdi, rbp, rsp});
-        formatRegLine(buf, new String[]{"R8 ", "R9 ", "R10", "R11"}, new long[]{r8, r9, r10, r11});
-        formatRegLine(buf, new String[]{"R12", "R13", "R14", "R15"}, new long[]{r12, r13, r14, r15});
-        buf.append("{{RIP}}S={{").append(HexFormatter.tohex(rip, 16)).append("}}x");
+        long rfl = getRFL();
+        formatRegLine(buf, new String[]{"RAX", "RBX", "RCX", "RDX"}, new long[]{getRAX(), getRBX(), getRCX(), getRDX()});
+        formatRegLine(buf, new String[]{"RSI", "RDI", "RBP", "RSP"}, new long[]{getRSI(), getRDI(), getRBP(), getRSP()});
+        formatRegLine(buf, new String[]{"R8 ", "R9 ", "R10", "R11"}, new long[]{getR8(), getR9(), getR10(), getR11()});
+        formatRegLine(buf, new String[]{"R12", "R13", "R14", "R15"}, new long[]{getR12(), getR13(), getR14(), getR15()});
+        buf.append("{{RIP}}S={{").append(HexFormatter.tohex(getRIP(), 16)).append("}}x");
         buf.append(" RFL=").append(HexFormatter.tohex(rfl, 8));
         buf.append(" [");
         addFlag(buf, rfl, Flags.OF, 'O');
@@ -356,15 +341,15 @@ public class AMD64CpuState implements CpuState {
         addFlag(buf, rfl, Flags.PF, 'P');
         addFlag(buf, rfl, Flags.CF, 'C');
         buf.append("]\n");
-        addSegment(buf, "FS", fs);
-        addSegment(buf, "GS", gs);
+        addSegment(buf, "FS", getFS());
+        addSegment(buf, "GS", getGS());
         for (int i = 0; i < 16; i++) {
             buf.append("XMM").append(i);
             if (i < 10) {
                 buf.append(' ');
             }
             buf.append("={{");
-            buf.append(xmm[i].hex());
+            buf.append(getXMM(i).hex());
             if (i % 2 == 0) {
                 buf.append("}}x ");
             } else {
@@ -372,9 +357,5 @@ public class AMD64CpuState implements CpuState {
             }
         }
         return buf.toString();
-    }
-
-    public int getTid() {
-        return tid;
     }
 }

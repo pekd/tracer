@@ -14,17 +14,17 @@ public class AMD64CallDecoder extends CallDecoder {
     private static long getRegister(AMD64CpuState state, int reg) {
         switch (reg) {
             case 0:
-                return state.rdi;
+                return state.getRDI();
             case 1:
-                return state.rsi;
+                return state.getRSI();
             case 2:
-                return state.rdx;
+                return state.getRDX();
             case 3:
-                return state.rcx;
+                return state.getRCX();
             case 4:
-                return state.r8;
+                return state.getR8();
             case 5:
-                return state.r9;
+                return state.getR9();
             default:
                 return 0;
         }
@@ -63,7 +63,7 @@ public class AMD64CallDecoder extends CallDecoder {
                     retval = 0;
                 }
             } else {
-                retval = nextState.rax;
+                retval = nextState.getRAX();
             }
             String s = str(prototype.returnType, retval, nextState, trc);
             if (s.length() > 0) {

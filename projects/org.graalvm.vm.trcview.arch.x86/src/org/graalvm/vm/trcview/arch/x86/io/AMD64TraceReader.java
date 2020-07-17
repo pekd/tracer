@@ -43,6 +43,10 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
     private AMD64StepEvent last;
     private AMD64StepEvent stored;
 
+    private long steps;
+    private AMD64CpuState lastState;
+    private StepRecord lastStep;
+
     public AMD64TraceReader(InputStream in) {
         this(new ExecutionTraceReader(in));
     }
@@ -86,17 +90,25 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
 
         Record record = in.read();
         if (record instanceof StepRecord) {
-            stored = new AMD64StepEvent((StepRecord) record);
+            steps++;
+            if (lastStep == null || (steps % 1000 == 0)) {
+                stored = new AMD64FullCpuState((StepRecord) record);
+            } else {
+                stored = AMD64DeltaCpuState.deltaState(lastState, lastStep, (StepRecord) record);
+            }
+            lastState = (AMD64CpuState) stored;
+            lastStep = (StepRecord) record;
 
             if (mem != null && last != null) {
                 AMD64CpuState state = last.getState();
                 last = null;
-                if (state.rax == Syscalls.SYS_read) { // read(int fd, long addr, long sz)
+                long rax = state.getRAX();
+                if (rax == Syscalls.SYS_read) { // read(int fd, long addr, long sz)
                     long step = stored.getStep();
-                    int file = (int) state.rdi;
+                    int file = (int) state.getRDI();
                     if (file >= 0 && file <= 2) {
-                        long addr = state.rsi;
-                        long size = stored.getState().rax;
+                        long addr = state.getRSI();
+                        long size = stored.getState().getRAX();
                         if (size > 0) {
                             String s = str(addr, size, step);
                             if (s != null) {
@@ -105,12 +117,12 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                         }
                     }
-                } else if (state.rax == Syscalls.SYS_write) { // write(int fd, long addr, long sz)
+                } else if (rax == Syscalls.SYS_write) { // write(int fd, long addr, long sz)
                     long step = state.getStep();
-                    int file = (int) state.rdi;
+                    int file = (int) state.getRDI();
                     if (file >= 0 && file <= 2) {
-                        long addr = state.rsi;
-                        long size = stored.getState().rax;
+                        long addr = state.getRSI();
+                        long size = stored.getState().getRAX();
                         if (size > 0) {
                             String s = str(addr, size, step);
                             if (s != null) {
@@ -119,12 +131,12 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                         }
                     }
-                } else if (state.rax == Syscalls.SYS_readv) { // readv(int fd, iov* iov, int cnt)
+                } else if (rax == Syscalls.SYS_readv) { // readv(int fd, iov* iov, int cnt)
                     long step = stored.getStep();
-                    int file = (int) state.rdi;
+                    int file = (int) state.getRDI();
                     if (file >= 0 && file <= 2) {
-                        long iov = state.rsi;
-                        long size = stored.getState().rax;
+                        long iov = state.getRSI();
+                        long size = stored.getState().getRAX();
                         if (size > 0) {
                             StringBuilder buf = new StringBuilder();
                             for (long sz = 0, i = 0; sz < size; i += 16) {
@@ -149,12 +161,12 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                         }
                     }
-                } else if (state.rax == Syscalls.SYS_writev) { // writev(int fd, iov* iov, int cnt)
+                } else if (rax == Syscalls.SYS_writev) { // writev(int fd, iov* iov, int cnt)
                     long step = state.getStep();
-                    int file = (int) state.rdi;
+                    int file = (int) state.getRDI();
                     if (file >= 0 && file <= 2) {
-                        long iov = state.rsi;
-                        long size = stored.getState().rax;
+                        long iov = state.getRSI();
+                        long size = stored.getState().getRAX();
                         if (size > 0) {
                             StringBuilder buf = new StringBuilder();
                             for (long sz = 0, i = 0; sz < size; i += 16) {
