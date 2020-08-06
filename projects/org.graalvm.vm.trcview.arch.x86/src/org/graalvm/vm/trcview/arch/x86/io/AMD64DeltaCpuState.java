@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.arch.x86.io;
 
 import org.graalvm.vm.memory.vector.Vector128;
+import org.graalvm.vm.x86.node.debug.trace.DeltaCpuStateRecord;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 
 public class AMD64DeltaCpuState extends AMD64CpuState {
@@ -10,8 +11,9 @@ public class AMD64DeltaCpuState extends AMD64CpuState {
     private final int efl;
     private final long[] values;
 
-    protected AMD64DeltaCpuState(int tid, byte[] machinecode, AMD64CpuState previous, org.graalvm.vm.x86.isa.CpuState current, int mask) {
+    protected AMD64DeltaCpuState(int tid, byte[] machinecode, AMD64CpuState previous, StepRecord record, int mask) {
         super(tid, machinecode);
+        org.graalvm.vm.x86.isa.CpuState current = record.getState().getState();
         this.previous = previous;
         this.regMask = mask;
         this.rip = current.rip;
@@ -66,16 +68,35 @@ public class AMD64DeltaCpuState extends AMD64CpuState {
 
     public static AMD64CpuState deltaState(AMD64CpuState previous, StepRecord last, StepRecord current) {
         int bits = 0;
-        org.graalvm.vm.x86.isa.CpuState state = current.getState().getState();
-        org.graalvm.vm.x86.isa.CpuState prev = last.getState().getState();
-        for (int i = 0; i < 16; i++) {
-            if (get(prev, i) != get(state, i)) {
-                bits |= 1 << i;
+        if (current.getState() instanceof DeltaCpuStateRecord) {
+            DeltaCpuStateRecord record = (DeltaCpuStateRecord) current.getState();
+            long delta = record.getDelta();
+            if (Long.bitCount(delta) > 0) {
+                if (record.getDeltaId(DeltaCpuStateRecord.ID_FS) | record.getDeltaId(DeltaCpuStateRecord.ID_GS)) {
+                    return new AMD64FullCpuState(current);
+                }
+                bits = (int) (delta & 0xFFFF);
+                for (int i = 0; i < 16; i++) {
+                    if (record.getDeltaXMM(i)) {
+                        bits |= 1 << (16 + i);
+                    }
+                }
             }
-        }
-        for (int i = 0; i < 16; i++) {
-            if (!prev.xmm[i].equals(state.xmm[i])) {
-                bits |= 1 << (16 + i);
+        } else {
+            org.graalvm.vm.x86.isa.CpuState state = current.getState().getState();
+            org.graalvm.vm.x86.isa.CpuState prev = last.getState().getState();
+            if (state.fs != prev.fs || state.gs != prev.gs) {
+                return new AMD64FullCpuState(current);
+            }
+            for (int i = 0; i < 16; i++) {
+                if (get(prev, i) != get(state, i)) {
+                    bits |= 1 << i;
+                }
+            }
+            for (int i = 0; i < 16; i++) {
+                if (!prev.xmm[i].equals(state.xmm[i])) {
+                    bits |= 1 << (16 + i);
+                }
             }
         }
 
@@ -91,7 +112,7 @@ public class AMD64DeltaCpuState extends AMD64CpuState {
 
         // only integer register changed
         if ((bits & 0xFFFF0000) == 0) {
-            return new AMD64DeltaCpuState(current.getTid(), current.getMachinecode(), previous, state, bits);
+            return new AMD64DeltaCpuState(current.getTid(), current.getMachinecode(), previous, current, bits);
         }
 
         return new AMD64FullCpuState(current);

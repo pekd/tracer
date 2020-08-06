@@ -49,6 +49,26 @@ import org.graalvm.vm.x86.isa.CpuState;
 public class DeltaCpuStateRecord extends CpuStateRecord {
     public static final int MAGIC = 0x43505531; // CPU1
 
+    public static final int ID_RAX = 0;
+    public static final int ID_RCX = 1;
+    public static final int ID_RDX = 2;
+    public static final int ID_RBX = 3;
+    public static final int ID_RSP = 4;
+    public static final int ID_RBP = 5;
+    public static final int ID_RSI = 6;
+    public static final int ID_RDI = 7;
+    public static final int ID_R8 = 8;
+    public static final int ID_R9 = 9;
+    public static final int ID_R10 = 10;
+    public static final int ID_R11 = 11;
+    public static final int ID_R12 = 12;
+    public static final int ID_R13 = 13;
+    public static final int ID_R14 = 14;
+    public static final int ID_R15 = 15;
+    public static final int ID_FS = 16;
+    public static final int ID_GS = 17;
+    public static final int ID_RFL = 18;
+
     private CpuState current;
 
     private long deltaId;
@@ -68,8 +88,16 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         computeDelta(current);
     }
 
-    private boolean getDeltaId(int id) {
+    public long getDelta() {
+        return deltaId;
+    }
+
+    public boolean getDeltaId(int id) {
         return (deltaId & (1L << id)) != 0;
+    }
+
+    public boolean getDeltaXMM(int xmm) {
+        return getDeltaId(ID_RFL + 2 * xmm + 1) | getDeltaId(ID_RFL + 2 * xmm + 2);
     }
 
     private void setDeltaId(int id) {
@@ -150,97 +178,97 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
         int pos = 0;
         if (lastState.rax != state.rax) {
-            setDeltaId(0);
+            setDeltaId(ID_RAX);
             deltaValue[pos] = state.rax;
             pos++;
         }
         if (lastState.rcx != state.rcx) {
-            setDeltaId(1);
+            setDeltaId(ID_RCX);
             deltaValue[pos] = state.rcx;
             pos++;
         }
         if (lastState.rdx != state.rdx) {
-            setDeltaId(2);
+            setDeltaId(ID_RDX);
             deltaValue[pos] = state.rdx;
             pos++;
         }
         if (lastState.rbx != state.rbx) {
-            setDeltaId(3);
+            setDeltaId(ID_RBX);
             deltaValue[pos] = state.rbx;
             pos++;
         }
         if (lastState.rsp != state.rsp) {
-            setDeltaId(4);
+            setDeltaId(ID_RSP);
             deltaValue[pos] = state.rsp;
             pos++;
         }
         if (lastState.rbp != state.rbp) {
-            setDeltaId(5);
+            setDeltaId(ID_RBP);
             deltaValue[pos] = state.rbp;
             pos++;
         }
         if (lastState.rsi != state.rsi) {
-            setDeltaId(6);
+            setDeltaId(ID_RSI);
             deltaValue[pos] = state.rsi;
             pos++;
         }
         if (lastState.rdi != state.rdi) {
-            setDeltaId(7);
+            setDeltaId(ID_RDI);
             deltaValue[pos] = state.rdi;
             pos++;
         }
         if (lastState.r8 != state.r8) {
-            setDeltaId(8);
+            setDeltaId(ID_R8);
             deltaValue[pos] = state.r8;
             pos++;
         }
         if (lastState.r9 != state.r9) {
-            setDeltaId(9);
+            setDeltaId(ID_R9);
             deltaValue[pos] = state.r9;
             pos++;
         }
         if (lastState.r10 != state.r10) {
-            setDeltaId(10);
+            setDeltaId(ID_R10);
             deltaValue[pos] = state.r10;
             pos++;
         }
         if (lastState.r11 != state.r11) {
-            setDeltaId(11);
+            setDeltaId(ID_R11);
             deltaValue[pos] = state.r11;
             pos++;
         }
         if (lastState.r12 != state.r12) {
-            setDeltaId(12);
+            setDeltaId(ID_R12);
             deltaValue[pos] = state.r12;
             pos++;
         }
         if (lastState.r13 != state.r13) {
-            setDeltaId(13);
+            setDeltaId(ID_R13);
             deltaValue[pos] = state.r13;
             pos++;
         }
         if (lastState.r14 != state.r14) {
-            setDeltaId(14);
+            setDeltaId(ID_R14);
             deltaValue[pos] = state.r14;
             pos++;
         }
         if (lastState.r15 != state.r15) {
-            setDeltaId(15);
+            setDeltaId(ID_R15);
             deltaValue[pos] = state.r15;
             pos++;
         }
         if (lastState.fs != state.fs) {
-            setDeltaId(16);
+            setDeltaId(ID_FS);
             deltaValue[pos] = state.fs;
             pos++;
         }
         if (lastState.gs != state.gs) {
-            setDeltaId(17);
+            setDeltaId(ID_GS);
             deltaValue[pos] = state.gs;
             pos++;
         }
         if (lastState.getRFL() != state.getRFL()) {
-            setDeltaId(18);
+            setDeltaId(ID_RFL);
             deltaValue[pos] = state.getRFL();
             pos++;
         }
@@ -270,61 +298,61 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
             state.instructionCount = instructionCount;
             clearLastState();
             int i = 0;
-            if (getDeltaId(0)) {
+            if (getDeltaId(ID_RAX)) {
                 state.rax = deltaValue[i++];
             }
-            if (getDeltaId(1)) {
+            if (getDeltaId(ID_RCX)) {
                 state.rcx = deltaValue[i++];
             }
-            if (getDeltaId(2)) {
+            if (getDeltaId(ID_RDX)) {
                 state.rdx = deltaValue[i++];
             }
-            if (getDeltaId(3)) {
+            if (getDeltaId(ID_RBX)) {
                 state.rbx = deltaValue[i++];
             }
-            if (getDeltaId(4)) {
+            if (getDeltaId(ID_RSP)) {
                 state.rsp = deltaValue[i++];
             }
-            if (getDeltaId(5)) {
+            if (getDeltaId(ID_RBP)) {
                 state.rbp = deltaValue[i++];
             }
-            if (getDeltaId(6)) {
+            if (getDeltaId(ID_RSI)) {
                 state.rsi = deltaValue[i++];
             }
-            if (getDeltaId(7)) {
+            if (getDeltaId(ID_RDI)) {
                 state.rdi = deltaValue[i++];
             }
-            if (getDeltaId(8)) {
+            if (getDeltaId(ID_R8)) {
                 state.r8 = deltaValue[i++];
             }
-            if (getDeltaId(9)) {
+            if (getDeltaId(ID_R9)) {
                 state.r9 = deltaValue[i++];
             }
-            if (getDeltaId(10)) {
+            if (getDeltaId(ID_R10)) {
                 state.r10 = deltaValue[i++];
             }
-            if (getDeltaId(11)) {
+            if (getDeltaId(ID_R11)) {
                 state.r11 = deltaValue[i++];
             }
-            if (getDeltaId(12)) {
+            if (getDeltaId(ID_R12)) {
                 state.r12 = deltaValue[i++];
             }
-            if (getDeltaId(13)) {
+            if (getDeltaId(ID_R13)) {
                 state.r13 = deltaValue[i++];
             }
-            if (getDeltaId(14)) {
+            if (getDeltaId(ID_R14)) {
                 state.r14 = deltaValue[i++];
             }
-            if (getDeltaId(15)) {
+            if (getDeltaId(ID_R15)) {
                 state.r15 = deltaValue[i++];
             }
-            if (getDeltaId(16)) {
+            if (getDeltaId(ID_FS)) {
                 state.fs = deltaValue[i++];
             }
-            if (getDeltaId(17)) {
+            if (getDeltaId(ID_GS)) {
                 state.gs = deltaValue[i++];
             }
-            if (getDeltaId(18)) {
+            if (getDeltaId(ID_RFL)) {
                 state.setRFL(deltaValue[i++]);
             }
             for (int n = 19; n < 64; n++) {
