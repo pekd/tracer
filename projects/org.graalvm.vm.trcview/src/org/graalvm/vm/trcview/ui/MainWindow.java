@@ -1119,12 +1119,11 @@ public class MainWindow extends JFrame {
             out.println();
             out.println("#include <idc.idc>\n\n" +
                             "static main(void) {");
-
             out.println("\t// functions");
             Set<ComputedSymbol> symbols = trc.getSubroutines();
             symbols.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(sym -> {
                 out.printf("\tadd_func(0x%x);\n", sym.address);
-                if (!sym.name.startsWith("sub_")) {
+                if (!sym.name.startsWith("sub_") && !sym.name.startsWith("j_sub_")) {
                     out.printf("\tset_name(0x%x, %s);\n", sym.address, DecoderUtils.str(sym.name));
                 }
                 if (sym.prototype != null) {
