@@ -315,6 +315,17 @@ suite = {
       "license" : "UPL",
     },
 
+    "org.graalvm.vm.trcview.libtrc" : {
+      "subDir" : "projects",
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "org.graalvm.vm.util",
+      ],
+      "javaCompliance" : "1.8+",
+      "workingSets" : "vmx86",
+      "license" : "UPL",
+    },
+
     "org.graalvm.vm.x86.testcases.asm" : {
       "subDir" : "tests",
       "class" : "VMX86TestSuite",
@@ -603,6 +614,19 @@ suite = {
         "sdk:GRAAL_SDK",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
+      ],
+      "license" : "UPL",
+    },
+
+    "LIBTRC" : {
+      "path" : "build/libtrc.jar",
+      "subDir" : "core",
+      "sourcesPath" : "build/libtrc.src.zip",
+      "dependencies" : [
+        "org.graalvm.vm.trcview.libtrc",
+      ],
+      "distDependencies" : [
+        "CORE",
       ],
       "license" : "UPL",
     },
