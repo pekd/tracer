@@ -34,6 +34,8 @@ public class GenericTrace<T> {
 
     private final StateSerializer<T> serializer;
 
+    private boolean isBE = true;
+
     public GenericTrace(OutputStream out, Class<T> state) throws IOException {
         this.out = new BEOutputStream(out);
         serializer = new StateSerializer<>(state);
@@ -41,9 +43,13 @@ public class GenericTrace<T> {
     }
 
     private void write(String s) throws IOException {
-        byte[] data = s.getBytes();
-        out.write16bit((short) data.length);
-        out.write(data);
+        if (s == null) {
+            out.write16bit((short) 0xFFFF);
+        } else {
+            byte[] data = s.getBytes();
+            out.write16bit((short) data.length);
+            out.write(data);
+        }
     }
 
     private void writeHeader() throws IOException {
@@ -79,6 +85,14 @@ public class GenericTrace<T> {
         }
     }
 
+    public void setBigEndian() {
+        isBE = true;
+    }
+
+    public void setLittleEndian() {
+        isBE = false;
+    }
+
     public void step(int tid, long step, T state, String[] asm, byte[] machinecode, byte type) throws IOException {
         byte[] magic = {(byte) 'S', (byte) 'T', (byte) 'E', (byte) 'P'};
         out.write(magic);
@@ -107,9 +121,95 @@ public class GenericTrace<T> {
         out.write64bit(off);
         out.write64bit(result);
         out.write32bit(prot);
-        out.write32bit(prot);
         out.write32bit(flags);
         out.write32bit(fd);
         write(filename);
+    }
+
+    public void munmap(int tid, long addr, long len, int result) throws IOException {
+        byte[] magic = {(byte) 'U', (byte) 'M', (byte) 'A', (byte) 'P'};
+        out.write(magic);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write64bit(len);
+        out.write32bit(result);
+    }
+
+    private void read(int tid, long addr, long val, byte size, boolean be) throws IOException {
+        byte[] magic = {(byte) 'M', (byte) 'E', (byte) 'M', (byte) 'R'};
+        out.write(magic);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write64bit(val);
+        out.write8bit(size);
+        out.write8bit((byte) (be ? 3 : 2));
+    }
+
+    private void read(int tid, long addr, byte size, boolean be) throws IOException {
+        byte[] magic = {(byte) 'M', (byte) 'E', (byte) 'M', (byte) 'R'};
+        out.write(magic);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write64bit(0);
+        out.write8bit(size);
+        out.write8bit((byte) (be ? 1 : 0));
+    }
+
+    private void write(int tid, long addr, long val, byte size, boolean be) throws IOException {
+        byte[] magic = {(byte) 'M', (byte) 'E', (byte) 'M', (byte) 'W'};
+        out.write(magic);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write64bit(val);
+        out.write8bit(size);
+        out.write8bit((byte) (be ? 3 : 2));
+    }
+
+    public void readI8(int tid, long addr, byte val) throws IOException {
+        read(tid, addr, Byte.toUnsignedLong(val), (byte) 1, isBE);
+    }
+
+    public void readI8(int tid, long addr) throws IOException {
+        read(tid, addr, (byte) 1, isBE);
+    }
+
+    public void readI16(int tid, long addr, short val) throws IOException {
+        read(tid, addr, Short.toUnsignedLong(val), (byte) 2, isBE);
+    }
+
+    public void readI16(int tid, long addr) throws IOException {
+        read(tid, addr, (byte) 2, isBE);
+    }
+
+    public void readI32(int tid, long addr, int val) throws IOException {
+        read(tid, addr, Integer.toUnsignedLong(val), (byte) 4, isBE);
+    }
+
+    public void readI32(int tid, long addr) throws IOException {
+        read(tid, addr, (byte) 4, isBE);
+    }
+
+    public void readI64(int tid, long addr, long val) throws IOException {
+        read(tid, addr, val, (byte) 8, isBE);
+    }
+
+    public void readI64(int tid, long addr) throws IOException {
+        read(tid, addr, (byte) 8, isBE);
+    }
+
+    public void writeI8(int tid, long addr, byte val) throws IOException {
+        write(tid, addr, Byte.toUnsignedLong(val), (byte) 1, isBE);
+    }
+
+    public void writeI16(int tid, long addr, short val) throws IOException {
+        write(tid, addr, Short.toUnsignedLong(val), (byte) 2, isBE);
+    }
+
+    public void writeI32(int tid, long addr, int val) throws IOException {
+        write(tid, addr, Integer.toUnsignedLong(val), (byte) 4, isBE);
+    }
+
+    public void writeI64(int tid, long addr, long val) throws IOException {
+        write(tid, addr, val, (byte) 8, isBE);
     }
 }
