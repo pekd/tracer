@@ -7,53 +7,44 @@ import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.none.None;
-import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
-public class GenericStepEvent extends StepEvent implements CpuState {
-    private final InstructionType type;
-    private final String[] disassembly;
+public abstract class GenericStepEvent extends StepEvent implements CpuState {
+    public static final byte TYPE_OTHER = 0;
+    public static final byte TYPE_JCC = 1;
+    public static final byte TYPE_JMP = 2;
+    public static final byte TYPE_JMP_INDIRECT = 3;
+    public static final byte TYPE_CALL = 4;
+    public static final byte TYPE_RET = 5;
+    public static final byte TYPE_SYSCALL = 6;
+    public static final byte TYPE_RTI = 7;
+
     private final byte[] machinecode;
+    private final String[] disassembly;
+    private final byte type;
 
-    private final long step;
     private final long pc;
-    private final String data;
+    private final long step;
 
-    protected GenericStepEvent(WordInputStream in, int tid) throws IOException {
+    private final GenericStateDescription description;
+
+    protected GenericStepEvent(GenericStateDescription description, int tid, long step, long pc, byte type, byte[] machinecode, String[] disassembly) {
         super(None.ID, tid);
-        step = in.read64bit();
-        pc = in.read64bit();
-        data = IO.readString(in);
-        machinecode = IO.readArray(in);
-        switch (in.read8bit()) {
-            default:
-            case 0:
-                type = InstructionType.OTHER;
-                break;
-            case 1:
-                type = InstructionType.JCC;
-                break;
-            case 2:
-                type = InstructionType.JMP;
-                break;
-            case 3:
-                type = InstructionType.JMP_INDIRECT;
-                break;
-            case 4:
-                type = InstructionType.CALL;
-                break;
-            case 5:
-                type = InstructionType.RET;
-                break;
-            case 6:
-                type = InstructionType.SYSCALL;
-                break;
-            case 7:
-                type = InstructionType.RTI;
-                break;
-        }
-        disassembly = IO.readStringArray(in);
+        this.description = description;
+        this.step = step;
+        this.pc = pc;
+        this.type = type;
+        this.machinecode = machinecode;
+        this.disassembly = disassembly;
+    }
+
+    public GenericStateDescription getDescription() {
+        return description;
+    }
+
+    public byte getRawType() {
+        return type;
     }
 
     @Override
@@ -68,17 +59,11 @@ public class GenericStepEvent extends StepEvent implements CpuState {
 
     @Override
     public String getMnemonic() {
-        return disassembly[0];
-    }
-
-    @Override
-    public InstructionType getType() {
-        return type;
-    }
-
-    @Override
-    public long getStep() {
-        return step;
+        if (disassembly == null) {
+            return null;
+        } else {
+            return disassembly[0];
+        }
     }
 
     @Override
@@ -87,18 +72,53 @@ public class GenericStepEvent extends StepEvent implements CpuState {
     }
 
     @Override
+    public InstructionType getType() {
+        switch (type) {
+            default:
+            case TYPE_OTHER:
+                return InstructionType.OTHER;
+            case TYPE_JCC:
+                return InstructionType.JCC;
+            case TYPE_JMP:
+                return InstructionType.JMP;
+            case TYPE_JMP_INDIRECT:
+                return InstructionType.JMP_INDIRECT;
+            case TYPE_CALL:
+                return InstructionType.CALL;
+            case TYPE_RET:
+                return InstructionType.RET;
+            case TYPE_SYSCALL:
+                return InstructionType.SYSCALL;
+            case TYPE_RTI:
+                return InstructionType.RTI;
+        }
+    }
+
+    @Override
+    public long getStep() {
+        return step;
+    }
+
+    @Override
     public long get(String name) {
         switch (name) {
             case "pc":
                 return getPC();
-            case "step":
-                return getStep();
             case "tid":
                 return getTid();
+            case "step":
+                return getStep();
             default:
-                throw new IllegalArgumentException("unknown variable " + name);
+                Field field = description.getField(name);
+                if (field == null) {
+                    throw new IllegalArgumentException("unknown variable " + name);
+                } else {
+                    return field.getValue(getData());
+                }
         }
     }
+
+    public abstract byte[] getData();
 
     @Override
     public CpuState getState() {
@@ -107,43 +127,24 @@ public class GenericStepEvent extends StepEvent implements CpuState {
 
     @Override
     public StepFormat getFormat() {
-        return None.FORMAT;
-    }
-
-    private byte getTypeByte() {
-        switch (type) {
-            default:
-            case OTHER:
-                return 0;
-            case JCC:
-                return 1;
-            case JMP:
-                return 2;
-            case JMP_INDIRECT:
-                return 3;
-            case CALL:
-                return 4;
-            case RET:
-                return 5;
-            case SYSCALL:
-                return 6;
-            case RTI:
-                return 7;
-        }
+        return description.getFormat();
     }
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
-        out.write64bit(step);
-        out.write64bit(pc);
-        IO.writeString(out, data);
-        IO.writeArray(out, machinecode);
-        out.write8bit(getTypeByte());
-        IO.writeStringArray(out, disassembly);
+        // TODO Auto-generated method stub
     }
 
     @Override
     public String toString() {
+        return description.format(getData());
+    }
+
+    protected static byte[] read8(WordInputStream in) throws IOException {
+        int size = in.read8bit();
+        byte[] data = new byte[size];
+        in.read(data);
         return data;
     }
+
 }

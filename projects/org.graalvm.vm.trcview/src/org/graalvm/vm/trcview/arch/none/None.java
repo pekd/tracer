@@ -8,6 +8,8 @@ import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.DefaultEventParser;
 import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.arch.none.decode.GenericCallDecoder;
+import org.graalvm.vm.trcview.arch.none.decode.GenericSyscallDecoder;
 import org.graalvm.vm.trcview.arch.none.io.GenericTraceReader;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
@@ -45,12 +47,12 @@ public class None extends Architecture {
 
     @Override
     public SyscallDecoder getSyscallDecoder() {
-        return null;
+        return new GenericSyscallDecoder();
     }
 
     @Override
     public CallDecoder getCallDecoder() {
-        return null;
+        return new GenericCallDecoder();
     }
 
     @Override
@@ -71,5 +73,10 @@ public class None extends Architecture {
     @Override
     public boolean isStackedTraps() {
         return false;
+    }
+
+    @Override
+    public boolean isTaggedState() {
+        return true;
     }
 }

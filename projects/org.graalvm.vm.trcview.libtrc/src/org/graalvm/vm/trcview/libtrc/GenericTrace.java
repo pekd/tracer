@@ -2,20 +2,39 @@ package org.graalvm.vm.trcview.libtrc;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.util.io.BEOutputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class GenericTrace<T> {
+    public static final int NUMBERFMT_HEX = 0;
+    public static final int NUMBERFMT_OCT = 1;
+
     public static final byte RECORD_STEP = 0;
-    public static final byte RECORD_MMAP = 1;
-    public static final byte RECORD_MUNMAP = 2;
-    public static final byte RECORD_MPROTECT = 3;
-    public static final byte RECORD_READ = 4;
-    public static final byte RECORD_WRITE = 5;
-    public static final byte RECORD_DUMP = 6;
+    public static final byte RECORD_DELTA_STEP = 1;
+    public static final byte RECORD_MMAP = 2;
+    public static final byte RECORD_MUNMAP = 3;
+    public static final byte RECORD_MPROTECT = 4;
+    public static final byte RECORD_READ = 5;
+    public static final byte RECORD_WRITE = 6;
+    public static final byte RECORD_READ_8 = 7;
+    public static final byte RECORD_READ_16 = 8;
+    public static final byte RECORD_READ_32 = 9;
+    public static final byte RECORD_READ_64 = 10;
+    public static final byte RECORD_WRITE_8 = 11;
+    public static final byte RECORD_WRITE_16 = 12;
+    public static final byte RECORD_WRITE_32 = 13;
+    public static final byte RECORD_WRITE_64 = 14;
+    public static final byte RECORD_DUMP = 15;
+    public static final byte RECORD_TRAP = 16;
+    public static final byte RECORD_SYMBOLS = 17;
+    public static final byte RECORD_ENDIANESS = 18;
 
     public static final byte LITTLE_ENDIAN = 0;
     public static final byte BIG_ENDIAN = 1;
@@ -33,39 +52,85 @@ public class GenericTrace<T> {
     private final Map<String, Integer> strings = new HashMap<>();
 
     private final StateSerializer<T> serializer;
+    private final int masklen;
 
     private boolean isBE = true;
+
+    private T lastState = null;
+    private byte[] lastSerializedState = null;
+
+    private int numberfmt = NUMBERFMT_HEX;
+    private int addrwidth = 16;
+    private int wordwidth = 16;
+    private int machinecodesz = 1;
 
     public GenericTrace(OutputStream out, Class<T> state) throws IOException {
         this.out = new BEOutputStream(out);
         serializer = new StateSerializer<>(state);
+        int mask = serializer.getSize() / 8;
+        if ((serializer.getSize() % 8) != 0) {
+            mask++;
+        }
+        masklen = mask;
         writeHeader();
+    }
+
+    public void setNumberFormat(int fmt) {
+        numberfmt = fmt;
+    }
+
+    public void setAddressWidth(int width) {
+        addrwidth = width;
+    }
+
+    public void setWordWidth(int width) {
+        wordwidth = width;
+    }
+
+    public void setMachinecodeSize(int sz) {
+        machinecodesz = sz;
     }
 
     private void write(String s) throws IOException {
         if (s == null) {
             out.write16bit((short) 0xFFFF);
         } else {
-            byte[] data = s.getBytes();
+            byte[] data = s.getBytes(StandardCharsets.UTF_8);
             out.write16bit((short) data.length);
             out.write(data);
         }
     }
 
+    private void write8(String s) throws IOException {
+        if (s == null) {
+            out.write8bit((byte) 0);
+        } else {
+            byte[] data = s.getBytes(StandardCharsets.UTF_8);
+            out.write8bit((byte) data.length);
+            out.write(data);
+        }
+    }
+
     private void writeHeader() throws IOException {
-        byte[] magic = {(byte) 'X', (byte) 'T', (byte) 'R', (byte) 'C', -1, -1};
+        byte[] magic = {(byte) 'X', (byte) 'T', (byte) 'R', (byte) 'C', 0, 0};
         out.write(magic);
-        int stepoff = 0;
-        int stepsz = 8;
-        int statesz = stepsz + serializer.getSize();
+
+        out.write8bit((byte) (numberfmt | (isBE ? 0x80 : 0)));
+        out.write8bit((byte) addrwidth);
+        out.write8bit((byte) wordwidth);
+        out.write8bit((byte) machinecodesz);
+
+        int statesz = serializer.getSize();
         out.write16bit((short) statesz);
-        out.write16bit((short) (serializer.getPCOffset() + stepsz));
-        out.write16bit((short) serializer.getPCSize());
-        out.write16bit((short) stepoff);
-        out.write16bit((short) stepsz);
-        write("u64 __step;" + serializer.getLayout());
+        List<StateField> fields = serializer.getLayout();
+        out.write16bit((short) fields.size());
+        for (StateField field : fields) {
+            out.write16bit((short) field.getOffset());
+            out.write8bit((byte) (field.getType() | (field.getFormat() << 4) | 0x80));
+            write8(field.getName());
+        }
+
         write(serializer.getFormat());
-        out.write(BIG_ENDIAN);
     }
 
     private int getString(String s) {
@@ -94,12 +159,28 @@ public class GenericTrace<T> {
     }
 
     public void step(int tid, long step, T state, String[] asm, byte[] machinecode, byte type) throws IOException {
-        byte[] magic = {(byte) 'S', (byte) 'T', (byte) 'E', (byte) 'P'};
-        out.write(magic);
+        if (lastState == null) {
+            fullStep(tid, step, state, asm, machinecode, type);
+        } else {
+            deltaStep(tid, step, state, asm, machinecode, type);
+        }
+        lastState = state;
+    }
+
+    public void fullStep(int tid, long step, T state, String[] asm, byte[] machinecode, byte type) throws IOException {
+        long pc;
+        try {
+            pc = serializer.getPC(state);
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            throw new IOException("Error while serializing state: " + e, e);
+        }
+        out.write8bit(RECORD_STEP);
         out.write32bit(tid);
         out.write64bit(step);
+        out.write64bit(pc);
         try {
-            out.write(serializer.serialize(state));
+            lastSerializedState = serializer.serialize(state);
+            out.write(lastSerializedState);
         } catch (IllegalAccessException | IllegalArgumentException e) {
             throw new IOException("Error while serializing state: " + e, e);
         }
@@ -107,14 +188,55 @@ public class GenericTrace<T> {
         for (String s : asm) {
             writeCmdPart(s);
         }
-        out.write16bit((short) machinecode.length);
+        out.write8bit((byte) machinecode.length);
         out.write(machinecode);
-        out.write(type);
+        out.write8bit(type);
+    }
+
+    public void deltaStep(int tid, long step, T state, String[] asm, byte[] machinecode, byte type) throws IOException {
+        long pc;
+        try {
+            pc = serializer.getPC(state);
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            throw new IOException("Error while serializing state: " + e, e);
+        }
+        out.write8bit(RECORD_DELTA_STEP);
+        out.write32bit(tid);
+        out.write64bit(step);
+        out.write64bit(pc);
+        try {
+            byte[] current = serializer.serialize(state);
+            byte[] mask = new byte[masklen];
+            int deltalen = 0;
+            for (int i = 0; i < current.length; i++) {
+                if (current[i] != lastSerializedState[i]) {
+                    mask[i / 8] |= 1 << (i % 8);
+                    deltalen++;
+                }
+            }
+            byte[] delta = new byte[deltalen];
+            for (int i = 0, j = 0; i < current.length; i++) {
+                if (current[i] != lastSerializedState[i]) {
+                    delta[j++] = current[i];
+                }
+            }
+            out.write(mask);
+            out.write(delta);
+            lastSerializedState = current;
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            throw new IOException("Error while serializing state: " + e, e);
+        }
+        out.write((byte) asm.length);
+        for (String s : asm) {
+            writeCmdPart(s);
+        }
+        out.write8bit((byte) machinecode.length);
+        out.write(machinecode);
+        out.write8bit(type);
     }
 
     public void mmap(int tid, long addr, long len, int prot, int flags, long off, int fd, long result, String filename) throws IOException {
-        byte[] magic = {(byte) 'M', (byte) 'M', (byte) 'A', (byte) 'P'};
-        out.write(magic);
+        out.write8bit(RECORD_MMAP);
         out.write32bit(tid);
         out.write64bit(addr);
         out.write64bit(len);
@@ -127,17 +249,15 @@ public class GenericTrace<T> {
     }
 
     public void munmap(int tid, long addr, long len, int result) throws IOException {
-        byte[] magic = {(byte) 'U', (byte) 'M', (byte) 'A', (byte) 'P'};
-        out.write(magic);
+        out.write8bit(RECORD_MUNMAP);
         out.write32bit(tid);
         out.write64bit(addr);
         out.write64bit(len);
         out.write32bit(result);
     }
 
-    private void read(int tid, long addr, long val, byte size, boolean be) throws IOException {
-        byte[] magic = {(byte) 'M', (byte) 'E', (byte) 'M', (byte) 'R'};
-        out.write(magic);
+    public void read(int tid, long addr, long val, byte size, boolean be) throws IOException {
+        out.write8bit(RECORD_READ);
         out.write32bit(tid);
         out.write64bit(addr);
         out.write64bit(val);
@@ -145,9 +265,8 @@ public class GenericTrace<T> {
         out.write8bit((byte) (be ? 3 : 2));
     }
 
-    private void read(int tid, long addr, byte size, boolean be) throws IOException {
-        byte[] magic = {(byte) 'M', (byte) 'E', (byte) 'M', (byte) 'R'};
-        out.write(magic);
+    public void read(int tid, long addr, byte size, boolean be) throws IOException {
+        out.write8bit(RECORD_READ);
         out.write32bit(tid);
         out.write64bit(addr);
         out.write64bit(0);
@@ -155,9 +274,8 @@ public class GenericTrace<T> {
         out.write8bit((byte) (be ? 1 : 0));
     }
 
-    private void write(int tid, long addr, long val, byte size, boolean be) throws IOException {
-        byte[] magic = {(byte) 'M', (byte) 'E', (byte) 'M', (byte) 'W'};
-        out.write(magic);
+    public void write(int tid, long addr, long val, byte size, boolean be) throws IOException {
+        out.write8bit(RECORD_WRITE);
         out.write32bit(tid);
         out.write64bit(addr);
         out.write64bit(val);
@@ -166,7 +284,10 @@ public class GenericTrace<T> {
     }
 
     public void readI8(int tid, long addr, byte val) throws IOException {
-        read(tid, addr, Byte.toUnsignedLong(val), (byte) 1, isBE);
+        out.write8bit(RECORD_READ_8);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write8bit(val);
     }
 
     public void readI8(int tid, long addr) throws IOException {
@@ -174,7 +295,10 @@ public class GenericTrace<T> {
     }
 
     public void readI16(int tid, long addr, short val) throws IOException {
-        read(tid, addr, Short.toUnsignedLong(val), (byte) 2, isBE);
+        out.write8bit(RECORD_READ_16);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write16bit(val);
     }
 
     public void readI16(int tid, long addr) throws IOException {
@@ -182,7 +306,10 @@ public class GenericTrace<T> {
     }
 
     public void readI32(int tid, long addr, int val) throws IOException {
-        read(tid, addr, Integer.toUnsignedLong(val), (byte) 4, isBE);
+        out.write8bit(RECORD_READ_32);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write32bit(val);
     }
 
     public void readI32(int tid, long addr) throws IOException {
@@ -190,7 +317,10 @@ public class GenericTrace<T> {
     }
 
     public void readI64(int tid, long addr, long val) throws IOException {
-        read(tid, addr, val, (byte) 8, isBE);
+        out.write8bit(RECORD_READ_64);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write64bit(val);
     }
 
     public void readI64(int tid, long addr) throws IOException {
@@ -198,18 +328,56 @@ public class GenericTrace<T> {
     }
 
     public void writeI8(int tid, long addr, byte val) throws IOException {
-        write(tid, addr, Byte.toUnsignedLong(val), (byte) 1, isBE);
+        out.write8bit(RECORD_WRITE_8);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write8bit(val);
     }
 
     public void writeI16(int tid, long addr, short val) throws IOException {
-        write(tid, addr, Short.toUnsignedLong(val), (byte) 2, isBE);
+        out.write8bit(RECORD_WRITE_16);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write16bit(val);
     }
 
     public void writeI32(int tid, long addr, int val) throws IOException {
-        write(tid, addr, Integer.toUnsignedLong(val), (byte) 4, isBE);
+        out.write8bit(RECORD_WRITE_32);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write32bit(val);
     }
 
     public void writeI64(int tid, long addr, long val) throws IOException {
-        write(tid, addr, val, (byte) 8, isBE);
+        out.write8bit(RECORD_WRITE_64);
+        out.write32bit(tid);
+        out.write64bit(addr);
+        out.write64bit(val);
+    }
+
+    public void symbols(int tid, long loadbias, long address, long size, String filename, Collection<Symbol> symbols) throws IOException {
+        out.write8bit(RECORD_SYMBOLS);
+        out.write32bit(tid);
+        out.write64bit(loadbias);
+        out.write64bit(address);
+        out.write64bit(size);
+        write(filename);
+        out.write32bit(symbols.size());
+        for (Symbol sym : symbols) {
+            out.write64bit(sym.getValue());
+            out.write64bit(sym.getSize());
+            out.write8bit((byte) (sym.getType() | (sym.getBind() << 4)));
+            out.write8bit((byte) sym.getVisibility());
+            out.write16bit(sym.getSectionIndex());
+            write(sym.getName());
+        }
+    }
+
+    public void dump(int tid, long address, byte[] data) throws IOException {
+        out.write8bit(RECORD_DUMP);
+        out.write32bit(tid);
+        out.write64bit(address);
+        out.write32bit(data.length);
+        out.write(data);
     }
 }

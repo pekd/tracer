@@ -15,18 +15,28 @@ import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.node.debug.trace.EofRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
+import org.graalvm.vm.x86.node.debug.trace.MemoryDumpRecord;
 import org.graalvm.vm.x86.node.debug.trace.MemoryEventRecord;
 import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.MunmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
 import org.graalvm.vm.x86.node.debug.trace.StepRecord;
+import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 
 public class GenericDump {
-    @StateFormat("RAX=${rax;x16} RBX=${rbx;x16} RCX=${rcx;x16} RDX=${rdx;x16}\n" +
-                    "RSI=${rsi;x16} RDI=${rdi;x16} RBP=${rbp;x16} RSP=${rsp;x16}\n" +
-                    "R8 =${r8;x16} R9 =${r9;x16} R10=${r10;x16} R11=${r11;x16}\n" +
-                    "R12=${r12;x16} R13=${r13;x16} R14=${r14;x16} R15=${r15;x16}\n" +
-                    "RIP=${rip;x16}")
+    @StateFormat("RAX=${rax} RBX=${rbx} RCX=${rcx} RDX=${rdx}\n" +
+                    "RSI=${rsi} RDI=${rdi} RBP=${rbp} RSP=${rsp}\n" +
+                    "R8 =${r8} R9 =${r9} R10=${r10} R11=${r11}\n" +
+                    "R12=${r12} R13=${r13} R14=${r14} R15=${r15}\n" +
+                    "RIP=${rip}\n" +
+                    "XMM0=${xmm0H}${xmm0L} XMM8 =${xmm8H}${xmm8L}\n" +
+                    "XMM1=${xmm1H}${xmm1L} XMM9 =${xmm9H}${xmm9L}\n" +
+                    "XMM2=${xmm2H}${xmm2L} XMM10=${xmm10H}${xmm10L}\n" +
+                    "XMM3=${xmm3H}${xmm3L} XMM11=${xmm11H}${xmm11L}\n" +
+                    "XMM4=${xmm4H}${xmm4L} XMM12=${xmm12H}${xmm12L}\n" +
+                    "XMM5=${xmm5H}${xmm5L} XMM13=${xmm13H}${xmm13L}\n" +
+                    "XMM6=${xmm6H}${xmm6L} XMM14=${xmm14H}${xmm14L}\n" +
+                    "XMM7=${xmm7H}${xmm7L} XMM15=${xmm15H}${xmm15L}")
     public static class State {
         @Register public long rax;
         @Register public long rbx;
@@ -45,6 +55,38 @@ public class GenericDump {
         @Register public long r14;
         @Register public long r15;
         @Register public long rfl;
+        @Register public long xmm0H;
+        @Register public long xmm0L;
+        @Register public long xmm1H;
+        @Register public long xmm1L;
+        @Register public long xmm2H;
+        @Register public long xmm2L;
+        @Register public long xmm3H;
+        @Register public long xmm3L;
+        @Register public long xmm4H;
+        @Register public long xmm4L;
+        @Register public long xmm5H;
+        @Register public long xmm5L;
+        @Register public long xmm6H;
+        @Register public long xmm6L;
+        @Register public long xmm7H;
+        @Register public long xmm7L;
+        @Register public long xmm8H;
+        @Register public long xmm8L;
+        @Register public long xmm9H;
+        @Register public long xmm9L;
+        @Register public long xmm10H;
+        @Register public long xmm10L;
+        @Register public long xmm11H;
+        @Register public long xmm11L;
+        @Register public long xmm12H;
+        @Register public long xmm12L;
+        @Register public long xmm13H;
+        @Register public long xmm13L;
+        @Register public long xmm14H;
+        @Register public long xmm14L;
+        @Register public long xmm15H;
+        @Register public long xmm15L;
 
         @ProgramCounter @Register public long rip;
     }
@@ -84,6 +126,38 @@ public class GenericDump {
                     state.r15 = cpustate.r15;
                     state.rip = cpustate.rip;
                     state.rfl = cpustate.getRFL();
+                    state.xmm0H = cpustate.xmm[0].getI64(0);
+                    state.xmm0L = cpustate.xmm[0].getI64(1);
+                    state.xmm1H = cpustate.xmm[1].getI64(0);
+                    state.xmm1L = cpustate.xmm[1].getI64(1);
+                    state.xmm2H = cpustate.xmm[2].getI64(0);
+                    state.xmm2L = cpustate.xmm[2].getI64(1);
+                    state.xmm3H = cpustate.xmm[3].getI64(0);
+                    state.xmm3L = cpustate.xmm[3].getI64(1);
+                    state.xmm4H = cpustate.xmm[4].getI64(0);
+                    state.xmm4L = cpustate.xmm[4].getI64(1);
+                    state.xmm5H = cpustate.xmm[5].getI64(0);
+                    state.xmm5L = cpustate.xmm[5].getI64(1);
+                    state.xmm6H = cpustate.xmm[6].getI64(0);
+                    state.xmm6L = cpustate.xmm[6].getI64(1);
+                    state.xmm7H = cpustate.xmm[7].getI64(0);
+                    state.xmm7L = cpustate.xmm[7].getI64(1);
+                    state.xmm8H = cpustate.xmm[8].getI64(0);
+                    state.xmm8L = cpustate.xmm[8].getI64(1);
+                    state.xmm9H = cpustate.xmm[9].getI64(0);
+                    state.xmm9L = cpustate.xmm[9].getI64(1);
+                    state.xmm10H = cpustate.xmm[10].getI64(0);
+                    state.xmm10L = cpustate.xmm[10].getI64(1);
+                    state.xmm11H = cpustate.xmm[11].getI64(0);
+                    state.xmm11L = cpustate.xmm[11].getI64(1);
+                    state.xmm12H = cpustate.xmm[12].getI64(0);
+                    state.xmm12L = cpustate.xmm[12].getI64(1);
+                    state.xmm13H = cpustate.xmm[13].getI64(0);
+                    state.xmm13L = cpustate.xmm[13].getI64(1);
+                    state.xmm14H = cpustate.xmm[14].getI64(0);
+                    state.xmm14L = cpustate.xmm[14].getI64(1);
+                    state.xmm15H = cpustate.xmm[15].getI64(0);
+                    state.xmm15L = cpustate.xmm[15].getI64(1);
                     byte type;
                     switch (AMD64InstructionQuickInfo.getType(step.getMachinecode())) {
                         default:
@@ -114,6 +188,9 @@ public class GenericDump {
                     MmapRecord mmap = (MmapRecord) record;
                     trc.mmap(mmap.getTid(), mmap.getAddress(), mmap.getLength(), mmap.getProtection(), mmap.getFlags(), mmap.getFlags(), mmap.getFileDescriptor(), mmap.getResult(),
                                     mmap.getFilename());
+                    if (mmap.getData() != null && mmap.getResult() != -1) {
+                        trc.dump(mmap.getTid(), mmap.getResult(), mmap.getData());
+                    }
                 } else if (record instanceof MunmapRecord) {
                     MunmapRecord munmap = (MunmapRecord) record;
                     trc.munmap(munmap.getTid(), munmap.getAddress(), munmap.getLength(), munmap.getResult());
@@ -171,6 +248,12 @@ public class GenericDump {
                             }
                             break;
                     }
+                } else if (record instanceof SymbolTableRecord) {
+                    SymbolTableRecord symbols = (SymbolTableRecord) record;
+                    trc.symbols(symbols.getTid(), symbols.getLoadBias(), symbols.getAddress(), symbols.getSize(), symbols.getFilename(), symbols.getSymbols().values());
+                } else if (record instanceof MemoryDumpRecord) {
+                    MemoryDumpRecord dump = (MemoryDumpRecord) record;
+                    trc.dump(dump.getTid(), dump.getAddress(), dump.getData());
                 } else if (record instanceof EofRecord) {
                     break;
                 }

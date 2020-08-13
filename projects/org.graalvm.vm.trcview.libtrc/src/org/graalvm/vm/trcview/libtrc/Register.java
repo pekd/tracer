@@ -9,8 +9,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Register {
     public static final int FORMAT_HEX = 0;
-    public static final int FORMAT_OCT = 1;
-    public static final int FORMAT_DEC = 2;
+    public static final int FORMAT_BIN = 1;
+    public static final int FORMAT_OCT = 2;
+    public static final int FORMAT_DEC = 3;
 
     int value() default FORMAT_HEX;
 }

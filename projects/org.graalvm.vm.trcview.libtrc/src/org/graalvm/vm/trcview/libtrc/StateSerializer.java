@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
@@ -22,11 +21,10 @@ public class StateSerializer<T> {
 
     private List<Field> stateFields = new ArrayList<>();
 
-    private int pcOffset;
-    private int pcSize;
+    private Field pc;
 
-    private String layout;
     private String format;
+    private List<StateField> layout;
 
     private int size;
 
@@ -49,20 +47,35 @@ public class StateSerializer<T> {
         }
     }
 
-    private static String getLayoutField(Field field) {
-        String name = field.getName();
+    private static int getType(Field field) {
         Class<?> type = field.getType();
         if (type == byte.class) {
-            return "u8 " + name + ";";
+            return TYPE_I8;
         } else if (type == short.class) {
-            return "u16 " + name + ";";
-        } else if (type == int.class || type == float.class) {
-            return "u32 " + name + ";";
-        } else if (type == long.class || type == double.class) {
-            return "u64 " + name + ";";
+            return TYPE_I16;
+        } else if (type == int.class) {
+            return TYPE_I32;
+        } else if (type == long.class) {
+            return TYPE_I64;
+        } else if (type == float.class) {
+            return TYPE_F32;
+        } else if (type == double.class) {
+            return TYPE_F64;
         } else {
             throw new IllegalArgumentException("invalid field type");
         }
+    }
+
+    private static StateField getLayoutField(Field field, int offset) {
+        String name = field.getName();
+
+        int fmt = StateField.FORMAT_HEX;
+        Register[] annotations = field.getAnnotationsByType(Register.class);
+        if (annotations.length == 1) {
+            fmt = annotations[0].value();
+        }
+
+        return new StateField(name, getType(field), fmt, offset);
     }
 
     private static boolean checkType(Class<?> type) {
@@ -73,7 +86,7 @@ public class StateSerializer<T> {
         // collect all relevant fields
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
-            if (field.isAnnotationPresent(Register.class) || field.isAnnotationPresent(ProgramCounter.class)) {
+            if (field.isAnnotationPresent(Register.class)) {
                 if (checkType(field.getType())) {
                     stateFields.add(field);
                 } else {
@@ -94,20 +107,21 @@ public class StateSerializer<T> {
 
         // sort to improve alignment
         Collections.sort(stateFields, (a, b) -> getSize(b) - getSize(a));
-        layout = stateFields.stream().map(StateSerializer::getLayoutField).collect(Collectors.joining(" "));
-
-        // get program counter offset and size
+        layout = new ArrayList<>();
         int off = 0;
         for (Field field : stateFields) {
+            layout.add(getLayoutField(field, off));
+            off += getSize(field);
+        }
+
+        // get program counter offset and size
+        for (Field field : stateFields) {
             if (field.isAnnotationPresent(ProgramCounter.class)) {
-                pcOffset = off;
-                pcSize = getSize(field);
+                pc = field;
                 break;
-            } else {
-                off += getSize(field);
             }
         }
-        if (pcOffset == 0 && pcSize == 0) {
+        if (pc == null) {
             log.log(Levels.WARNING, "No program counter defined in " + clazz.getSimpleName());
         }
 
@@ -120,7 +134,7 @@ public class StateSerializer<T> {
         log.log(Levels.INFO, "State has " + stateFields.size() + " fields with " + size + " bytes");
     }
 
-    public String getLayout() {
+    public List<StateField> getLayout() {
         return layout;
     }
 
@@ -132,12 +146,26 @@ public class StateSerializer<T> {
         return size;
     }
 
-    public int getPCOffset() {
-        return pcOffset;
-    }
-
-    public int getPCSize() {
-        return pcSize;
+    public long getPC(T state) throws IllegalArgumentException, IllegalAccessException {
+        if (pc == null) {
+            throw new IllegalStateException("no pc defined");
+        }
+        Class<?> type = pc.getType();
+        if (type == byte.class) {
+            return Byte.toUnsignedLong(pc.getByte(state));
+        } else if (type == short.class) {
+            return Short.toUnsignedLong(pc.getShort(state));
+        } else if (type == int.class) {
+            return Integer.toUnsignedLong(pc.getInt(state));
+        } else if (type == long.class) {
+            return pc.getLong(state);
+        } else if (type == float.class) {
+            return Integer.toUnsignedLong(Float.floatToRawIntBits(pc.getFloat(state)));
+        } else if (type == double.class) {
+            return Double.doubleToRawLongBits(pc.getDouble(state));
+        } else {
+            throw new IllegalArgumentException("invalid field type");
+        }
     }
 
     public byte[] serialize(T state) throws IllegalArgumentException, IllegalAccessException {
