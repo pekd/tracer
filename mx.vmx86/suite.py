@@ -262,6 +262,7 @@ suite = {
       "dependencies" : [
         "org.graalvm.vm.x86",
         "org.graalvm.vm.trcview",
+        "org.graalvm.vm.trcview.libtrc",
       ],
       "javaCompliance" : "1.8+",
       "workingSets" : "vmx86",
@@ -320,6 +321,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "org.graalvm.vm.util",
+        "org.graalvm.vm.posix",
       ],
       "javaCompliance" : "1.8+",
       "workingSets" : "vmx86",
@@ -627,6 +629,7 @@ suite = {
       ],
       "distDependencies" : [
         "CORE",
+        "POSIX",
       ],
       "license" : "UPL",
     },
