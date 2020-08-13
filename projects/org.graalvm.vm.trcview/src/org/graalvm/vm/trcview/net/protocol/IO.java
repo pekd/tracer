@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.net.protocol;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class IO {
         } else {
             byte[] bytes = new byte[length];
             in.read(bytes);
-            return new String(bytes);
+            return new String(bytes, StandardCharsets.UTF_8);
         }
     }
 
@@ -36,7 +37,7 @@ public class IO {
         } else if (s.length() == 0) {
             out.write16bit((short) 0);
         } else {
-            byte[] bytes = s.getBytes();
+            byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
             out.write16bit((short) bytes.length);
             out.write(bytes);
         }
@@ -55,7 +56,7 @@ public class IO {
                 } else {
                     byte[] bytes = new byte[slen];
                     in.read(bytes);
-                    result[i] = new String(bytes);
+                    result[i] = new String(bytes, StandardCharsets.UTF_8);
                 }
             }
             return result;
