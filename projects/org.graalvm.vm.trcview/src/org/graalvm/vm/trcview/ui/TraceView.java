@@ -325,6 +325,7 @@ public class TraceView extends JPanel implements StepListenable {
                 }
                 Symbol sym = trc.getSymbol(pc);
                 if (sym != null) {
+                    // TODO: do we really want to have a name like "_start" for the main thread?
                     log.log(Levels.INFO, "Renaming thread TID=" + thread.id + " to \"" + sym.getName() + "\"");
                     thread.name = sym.getName();
                     threadSelectorModel.changed(i);
@@ -458,6 +459,10 @@ public class TraceView extends JPanel implements StepListenable {
 
             trc.addSymbolRenameListener((sym) -> insns.repaint());
             trc.addCommentChangeListener(() -> insns.repaint());
+            trc.addABIChangeListener(() -> {
+                insns.repaint();
+                strace.refresh();
+            });
 
             currentNodes.clear();
             for (Entry<Integer, Long> thread : trc.getThreadStarts().entrySet()) {

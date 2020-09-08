@@ -96,6 +96,11 @@ public class StraceView extends JPanel {
         update();
     }
 
+    public void refresh() {
+        renderer.clear();
+        repaint();
+    }
+
     private static StepEvent step(Node node) {
         if (node instanceof StepEvent) {
             return (StepEvent) node;

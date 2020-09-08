@@ -100,12 +100,15 @@ public class FormattedExpression {
     }
 
     public String evaluate(CpuState step, TraceAnalyzer trc) throws EvaluationException {
-        ExpressionContext ctx = new ExpressionContext(step, trc);
+        return evaluate(new ExpressionContext(step, trc));
+    }
+
+    public String evaluate(ExpressionContext ctx) throws EvaluationException {
         long[] values = new long[expr.length];
         for (int i = 0; i < expr.length; i++) {
             values[i] = expr[i].evaluate(ctx);
         }
-        return Formatter.format(type, format, step.getStep(), trc, values);
+        return Formatter.format(type, format, ctx.state.getStep(), ctx.trc, values);
     }
 
     @Override

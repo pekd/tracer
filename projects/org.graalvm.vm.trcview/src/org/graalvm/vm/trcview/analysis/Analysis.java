@@ -364,7 +364,8 @@ public class Analysis {
                     sym.prototype = new Prototype(new Type(DataType.S32),
                                     Arrays.asList(new Type(DataType.S32),
                                                     new Type(new Type(DataType.STRING)),
-                                                    new Type(new Type(DataType.STRING))));
+                                                    new Type(new Type(DataType.STRING))),
+                                    Arrays.asList("argc", "argv", "envp"));
                     break;
             }
         }

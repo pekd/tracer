@@ -18,6 +18,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -111,6 +112,7 @@ public interface TraceAnalyzer {
 
     String getFilename(long pc);
 
+    // misc
     Architecture getArchitecture();
 
     void addCommentChangeListener(ChangeListener l);
@@ -140,4 +142,8 @@ public interface TraceAnalyzer {
     Color getColor(CpuState state);
 
     Map<Long, Color> getColors();
+
+    ABI getABI();
+
+    void addABIChangeListener(ChangeListener l);
 }

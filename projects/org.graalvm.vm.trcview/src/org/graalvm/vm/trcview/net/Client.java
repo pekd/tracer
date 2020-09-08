@@ -28,6 +28,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -570,5 +571,16 @@ public class Client implements TraceAnalyzer, Closeable {
     public Map<Integer, Device> getDevices() {
         // TODO Auto-generated method stub
         return Collections.emptyMap();
+    }
+
+    @Override
+    public ABI getABI() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void addABIChangeListener(ChangeListener l) {
+        // TODO Auto-generated method stub
     }
 }

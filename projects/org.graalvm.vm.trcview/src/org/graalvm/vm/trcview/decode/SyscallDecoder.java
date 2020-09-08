@@ -46,7 +46,7 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 public abstract class SyscallDecoder {
     public abstract String decode(CpuState state, CpuState next, TraceAnalyzer trc);
 
-    public abstract String decodeResult(int sc, CpuState state);
+    public abstract String decodeResult(int sc, CpuState state, TraceAnalyzer trc);
 
     public abstract String decode(CpuState state, TraceAnalyzer trc);
 }

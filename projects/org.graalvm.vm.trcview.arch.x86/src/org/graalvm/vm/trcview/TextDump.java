@@ -76,6 +76,7 @@ import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64FullCpuState;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -547,6 +548,15 @@ public class TextDump {
         @Override
         public Map<Integer, Long> getThreadStarts() {
             return null;
+        }
+
+        @Override
+        public ABI getABI() {
+            return null;
+        }
+
+        @Override
+        public void addABIChangeListener(ChangeListener l) {
         }
     }
 }

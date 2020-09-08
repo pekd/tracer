@@ -28,6 +28,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
 import org.graalvm.vm.trcview.info.Expressions;
@@ -382,5 +383,16 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     @Override
     public Map<Long, Color> getColors() {
         return highlighter.getColors();
+    }
+
+    @Override
+    public ABI getABI() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void addABIChangeListener(ChangeListener l) {
+        // TODO Auto-generated method stub
     }
 }

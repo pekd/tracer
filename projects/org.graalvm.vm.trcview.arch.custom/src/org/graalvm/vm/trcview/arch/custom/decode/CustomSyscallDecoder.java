@@ -11,7 +11,7 @@ public class CustomSyscallDecoder extends SyscallDecoder {
     }
 
     @Override
-    public String decodeResult(int sc, CpuState state) {
+    public String decodeResult(int sc, CpuState state, TraceAnalyzer trc) {
         return null;
     }
 

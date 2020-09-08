@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.analysis.type;
 
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Function {
     private final String name;
@@ -21,6 +22,16 @@ public class Function {
 
     @Override
     public String toString() {
-        return type.returnType.toString() + " " + name + "(" + type.args.stream().map(Type::toString).collect(Collectors.joining(", ")) + ")";
+        List<String> args = new ArrayList<>();
+        for (int i = 0; i < type.args.size(); i++) {
+            String t = type.args.get(i).toString();
+            String n = type.names.get(i);
+            if (n != null) {
+                args.add(t + " " + n);
+            } else {
+                args.add(t);
+            }
+        }
+        return type.returnType.toString() + " " + name + "(" + String.join(", ", args) + ")";
     }
 }

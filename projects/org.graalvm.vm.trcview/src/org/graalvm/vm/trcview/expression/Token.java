@@ -47,6 +47,9 @@ public class Token {
         S64,
         VOID,
         CONST,
+        STRUCT,
+        UNION,
+        TYPEDEF,
         EOF;
     }
 

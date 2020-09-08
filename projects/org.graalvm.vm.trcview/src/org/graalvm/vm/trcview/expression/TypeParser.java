@@ -33,6 +33,16 @@ import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
 
 /*
+ * def       = ( "typedef" type ident ";" | struct | union ) .
+ * struct    = "struct" [ ident ] "{"
+ *           { type ident ";" }
+ *           "}" ";"
+ *           .
+ * union     = "union" [ ident ] "{"
+ *           { type ident ";" }
+ *           "}" ";"
+ *           .
+ *
  * prototype = type ident ["<" expr ">" ] "(" [ type [ ident ] { "," type [ ident ] } ] ")" .
  * type      = basic { "*" ["const"] } ["$out" | "$dec" | "$hex" | "$char"] .
  * basic     = ["const"]
@@ -141,6 +151,15 @@ public class TypeParser {
                 case "void":
                     la = new Token(TokenType.VOID);
                     break;
+                case "struct":
+                    la = new Token(TokenType.STRUCT);
+                    break;
+                case "union":
+                    la = new Token(TokenType.UNION);
+                    break;
+                case "typedef":
+                    la = new Token(TokenType.TYPEDEF);
+                    break;
             }
         }
         sym = la.type;
@@ -171,16 +190,19 @@ public class TypeParser {
             return new Function(name, new Prototype(returnType));
         }
         List<Type> args = new ArrayList<>();
+        List<String> argnames = new ArrayList<>();
         Type type = type();
         if (type.getType() == DataType.VOID) {
             check(TokenType.RPAR);
-            return new Function(name, new Prototype(returnType, args));
+            return new Function(name, new Prototype(returnType, args, argnames));
         } else {
             args.add(type);
         }
         if (sym == TokenType.IDENT) {
             scan();
-            // name: t.str
+            argnames.add(t.str);
+        } else {
+            argnames.add(null);
         }
         while (sym == TokenType.COMMA) {
             scan();
@@ -191,12 +213,14 @@ public class TypeParser {
             args.add(type);
             if (sym == TokenType.IDENT) {
                 scan();
-                // name: t.str
+                argnames.add(t.str);
+            } else {
+                argnames.add(null);
             }
         }
         check(TokenType.RPAR);
 
-        return new Function(name, new Prototype(returnType, args));
+        return new Function(name, new Prototype(returnType, args, argnames));
     }
 
     private Type type() throws ParseException {

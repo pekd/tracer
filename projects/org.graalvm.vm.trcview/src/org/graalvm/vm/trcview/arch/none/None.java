@@ -8,10 +8,12 @@ import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.DefaultEventParser;
 import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.trcview.arch.none.decode.GenericCallDecoder;
-import org.graalvm.vm.trcview.arch.none.decode.GenericSyscallDecoder;
 import org.graalvm.vm.trcview.arch.none.io.GenericTraceReader;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
+import org.graalvm.vm.trcview.decode.GenericABI;
+import org.graalvm.vm.trcview.decode.GenericCallDecoder;
+import org.graalvm.vm.trcview.decode.GenericSyscallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
 
 public class None extends Architecture {
@@ -78,5 +80,10 @@ public class None extends Architecture {
     @Override
     public boolean isTaggedState() {
         return true;
+    }
+
+    @Override
+    public ABI createABI() {
+        return new GenericABI();
     }
 }

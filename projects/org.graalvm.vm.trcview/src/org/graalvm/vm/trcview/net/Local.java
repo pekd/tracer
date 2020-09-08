@@ -28,6 +28,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
 import org.graalvm.vm.trcview.info.Expressions;
@@ -57,11 +58,13 @@ public class Local implements TraceAnalyzer {
     private Comments comments;
     private Expressions expressions;
     private Highlighter highlighter;
+    private ABI abi;
 
     public Local(Architecture arch, BlockNode root, Map<Integer, BlockNode> threads, Analysis analysis) {
         this.arch = arch;
         this.root = root;
         this.threads = threads;
+        abi = arch.createABI();
         resolver = analysis.getSymbolResolver();
         symbols = analysis.getComputedSymbolTable();
         memory = analysis.getMemoryTrace();
@@ -398,5 +401,17 @@ public class Local implements TraceAnalyzer {
     @Override
     public Map<Long, Color> getColors() {
         return highlighter.getColors();
+    }
+
+    @Override
+    public ABI getABI() {
+        return abi;
+    }
+
+    @Override
+    public void addABIChangeListener(ChangeListener l) {
+        if (abi != null) {
+            abi.addChangeListener(l);
+        }
     }
 }

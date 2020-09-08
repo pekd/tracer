@@ -13,6 +13,11 @@ public class VariableNode extends Expression {
 
     @Override
     public long evaluate(ExpressionContext ctx) throws EvaluationException {
+        Long val = ctx.constants.get(name);
+        if (val != null) {
+            return val;
+        }
+
         try {
             return ctx.state.get(name);
         } catch (IllegalArgumentException e) {

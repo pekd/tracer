@@ -117,6 +117,7 @@ import org.graalvm.vm.trcview.storage.StorageBackend;
 import org.graalvm.vm.trcview.storage.TraceMetadata;
 import org.graalvm.vm.trcview.ui.TraceView.ThreadID;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
+import org.graalvm.vm.trcview.ui.call.ABIEditor;
 import org.graalvm.vm.trcview.ui.device.DeviceDialog;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
@@ -661,12 +662,21 @@ public class MainWindow extends JFrame {
         viewMenu.setMnemonic('v');
 
         subviewMenu = new JMenu("Open subview");
+        subviewMenu.setMnemonic('s');
         JMenuItem deviceWindow = new JMenuItem("Devices");
+        deviceWindow.setMnemonic('D');
         deviceWindow.addActionListener(e -> {
             DeviceDialog dlg = new DeviceDialog(this, trc, view::jump, view);
             dlg.setVisible(true);
         });
+        JMenuItem abiWindow = new JMenuItem("ABI");
+        abiWindow.setMnemonic('i');
+        abiWindow.addActionListener(e -> {
+            ABIEditor dlg = new ABIEditor(this, trc);
+            dlg.setVisible(true);
+        });
         subviewMenu.add(deviceWindow);
+        subviewMenu.add(abiWindow);
         subviewMenu.setEnabled(false);
         viewMenu.add(subviewMenu);
 

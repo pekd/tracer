@@ -13,6 +13,7 @@ import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.none.None;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
 import org.graalvm.vm.util.log.Trace;
@@ -55,6 +56,10 @@ public abstract class Architecture {
 
     public boolean isTaggedState() {
         return false;
+    }
+
+    public ABI createABI() {
+        return null;
     }
 
     public static void register(Architecture arch) {

@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.arch.custom.decode;
 
+import static org.graalvm.vm.trcview.decode.DecoderUtils.str;
+
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
