@@ -28,6 +28,9 @@ import org.graalvm.vm.trcview.expression.ast.NeNode;
 import org.graalvm.vm.trcview.expression.ast.NegNode;
 import org.graalvm.vm.trcview.expression.ast.NotNode;
 import org.graalvm.vm.trcview.expression.ast.OrNode;
+import org.graalvm.vm.trcview.expression.ast.SarNode;
+import org.graalvm.vm.trcview.expression.ast.ShlNode;
+import org.graalvm.vm.trcview.expression.ast.ShrNode;
 import org.graalvm.vm.trcview.expression.ast.SubNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
@@ -264,6 +267,15 @@ public class TypeParser {
                     scan();
                     type.setRepresentation(Representation.HEX);
                     break;
+                case "$r50":
+                case "$rad50":
+                    scan();
+                    type.setRepresentation(Representation.RAD50);
+                    break;
+                case "$fx32":
+                    scan();
+                    type.setRepresentation(Representation.FX32);
+                    break;
                 default:
                     return type;
             }
@@ -396,6 +408,21 @@ public class TypeParser {
     }
 
     private Expression factor() throws ParseException {
+        Expression result = shift();
+        while (sym == TokenType.SHL || sym == TokenType.SHR || sym == TokenType.SAR) {
+            scan();
+            if (t.type == TokenType.SHL) {
+                result = new ShlNode(result, shift());
+            } else if (t.type == TokenType.SHR) {
+                result = new ShrNode(result, shift());
+            } else if (t.type == TokenType.SAR) {
+                result = new SarNode(result, shift());
+            }
+        }
+        return result;
+    }
+
+    private Expression shift() throws ParseException {
         if (sym == TokenType.SUB) {
             scan();
             if (sym == TokenType.NUMBER) {

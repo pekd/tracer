@@ -229,6 +229,8 @@ public class DecoderUtils {
                         return "0" + Integer.toOctalString(Short.toUnsignedInt((short) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
+                    case RAD50:
+                        return "/" + Radix50.decode((short) val) + "/";
                 }
             case S16:
                 switch (repr) {
@@ -245,6 +247,8 @@ public class DecoderUtils {
                         return "0" + Integer.toOctalString(Short.toUnsignedInt((short) val));
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
+                    case RAD50:
+                        return "/" + Radix50.decode((short) val) + "/";
                 }
             case U32:
                 switch (repr) {
@@ -261,6 +265,10 @@ public class DecoderUtils {
                         return "0" + Integer.toUnsignedString((int) val, 8);
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
+                    case RAD50:
+                        return "/" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "/";
+                    case FX32:
+                        return "FX32_CONST(" + Fx32.toDouble((int) val) + ")";
                 }
             case S32:
                 switch (repr) {
@@ -277,6 +285,10 @@ public class DecoderUtils {
                         return "0" + Integer.toOctalString((int) val);
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
+                    case RAD50:
+                        return "/" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "/";
+                    case FX32:
+                        return "FX32_CONST(" + Fx32.toDouble((int) val) + ")";
                 }
             case U64:
                 switch (repr) {

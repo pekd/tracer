@@ -141,6 +141,12 @@ public class Type {
                 case CHAR:
                     reprstr = " $char";
                     break;
+                case RAD50:
+                    reprstr = " $rad50";
+                    break;
+                case FX32:
+                    reprstr = " $fx32";
+                    break;
             }
         } else if (type == DataType.PTR && pointee.getType() == DataType.S8 && representation == Representation.HEX) {
             // special handling for strings (char*) which were declared as $out

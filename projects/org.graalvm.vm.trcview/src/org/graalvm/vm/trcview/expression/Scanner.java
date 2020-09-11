@@ -162,7 +162,13 @@ public class Scanner {
                 if (c == '=') {
                     return new Token(TokenType.GE);
                 } else if (c == '>') {
-                    return new Token(TokenType.SHR);
+                    c = read();
+                    if (c == '>') {
+                        return new Token(TokenType.SHR);
+                    } else {
+                        unread();
+                        return new Token(TokenType.SAR);
+                    }
                 } else {
                     unread();
                     return new Token(TokenType.GT);

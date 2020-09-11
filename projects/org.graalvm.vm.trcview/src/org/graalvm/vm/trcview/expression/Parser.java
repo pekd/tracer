@@ -23,6 +23,9 @@ import org.graalvm.vm.trcview.expression.ast.NeNode;
 import org.graalvm.vm.trcview.expression.ast.NegNode;
 import org.graalvm.vm.trcview.expression.ast.NotNode;
 import org.graalvm.vm.trcview.expression.ast.OrNode;
+import org.graalvm.vm.trcview.expression.ast.SarNode;
+import org.graalvm.vm.trcview.expression.ast.ShlNode;
+import org.graalvm.vm.trcview.expression.ast.ShrNode;
 import org.graalvm.vm.trcview.expression.ast.SubNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
@@ -37,7 +40,8 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
  * xor    = and { "&" and } .
  * and    = sum { ("+" | "-") sum } .
  * sum    = factor { ("*" | "/") factor } .
- * factor = number
+ * factor = shift { ("<<" | ">>" | ">>>") shift } .
+ * shift  = number
  *        | ident [ "(" [ expr { "," expr } ] ")" ]
  *        | "(" expr ")"
  *        | "!" expr
@@ -184,6 +188,21 @@ public class Parser {
     }
 
     private Expression factor() throws ParseException {
+        Expression result = shift();
+        while (sym == TokenType.SHL || sym == TokenType.SHR || sym == TokenType.SAR) {
+            scan();
+            if (t.type == TokenType.SHL) {
+                result = new ShlNode(result, shift());
+            } else if (t.type == TokenType.SHR) {
+                result = new ShrNode(result, shift());
+            } else if (t.type == TokenType.SAR) {
+                result = new SarNode(result, shift());
+            }
+        }
+        return result;
+    }
+
+    private Expression shift() throws ParseException {
         if (sym == TokenType.SUB) {
             scan();
             if (sym == TokenType.NUMBER) {
