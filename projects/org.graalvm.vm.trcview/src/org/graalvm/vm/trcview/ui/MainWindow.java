@@ -100,10 +100,13 @@ import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
+import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.DecoderUtils;
+import org.graalvm.vm.trcview.decode.GenericABI;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.TypeParser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
+import org.graalvm.vm.trcview.io.ABISerializer;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.io.TextSerializer;
@@ -1376,6 +1379,24 @@ public class MainWindow extends JFrame {
                             threadInstructions.put(tid, Long.parseUnsignedLong(data[1]));
                         }
                         threadNames.put(tid, data[0]);
+                    } else if (everything && address.equals("ABI")) {
+                        // ABI definition
+                        try {
+                            ABI abi = trc.getABI();
+                            if (abi instanceof GenericABI) {
+                                ABISerializer.load((GenericABI) abi, line.substring(idx + 1));
+                            } else {
+                                log.info("Cannot change non-generic ABI");
+                                setStatus("Cannot change non-generic ABI");
+                                ok = false;
+                                continue;
+                            }
+                        } catch (IOException | ParseException e) {
+                            log.info("Syntax error in line " + lineno + ": " + e.getMessage());
+                            setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
+                            ok = false;
+                            continue;
+                        }
                     } else {
                         // symbol
                         long pc;
@@ -1553,6 +1574,10 @@ public class MainWindow extends JFrame {
                         throw new AssertionError("node is not a step event nor a block");
                     }
                     out.printf("THREAD:%s=%s\n", thread.id, TextSerializer.encode(thread.name, Long.toUnsignedString(id)));
+                }
+                if (trc.getABI() instanceof GenericABI) {
+                    GenericABI abi = (GenericABI) trc.getABI();
+                    out.printf("ABI=%s\n", ABISerializer.store(abi));
                 }
             }
             log.info("Session file " + file);
