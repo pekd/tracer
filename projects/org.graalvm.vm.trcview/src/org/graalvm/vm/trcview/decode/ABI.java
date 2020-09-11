@@ -17,19 +17,11 @@ public abstract class ABI {
 
     public abstract Function getSyscall(long id);
 
-    public abstract int getSyscallArgumentCount();
+    public abstract Expression getSyscallId();
 
-    public abstract Expression getSyscallArgument(int i);
+    public abstract CallingConvention getCall();
 
-    public abstract int getCallArgumentCount();
-
-    public abstract Expression getCallArgument(int i);
-
-    public abstract Expression getReturnExpression();
-
-    public abstract Expression getSyscallIdExpression();
-
-    public abstract Expression getSyscallReturnExpression();
+    public abstract CallingConvention getSyscall();
 
     public void addChangeListener(ChangeListener l) {
         listeners.add(l);

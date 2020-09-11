@@ -119,14 +119,14 @@ public class SyscallCallingConventionEditor extends JPanel {
     }
 
     private void update() {
-        Expression id = abi.getSyscallIdExpression();
+        Expression id = abi.getSyscallId();
         if (id != null) {
             syscallId.setText(id.toString());
         } else {
             syscallId.setText("");
         }
 
-        Expression retn = abi.getSyscallReturnExpression();
+        Expression retn = abi.getSyscall().getReturn();
         if (retn != null) {
             returnValue.setText(retn.toString());
         } else {
@@ -134,7 +134,7 @@ public class SyscallCallingConventionEditor extends JPanel {
         }
 
         expressions.clear();
-        for (Expression expr : abi.getSyscallArguments()) {
+        for (Expression expr : abi.getSyscall().getArguments()) {
             expressions.add(expr.toString());
         }
         argmodel.update();
@@ -178,11 +178,11 @@ public class SyscallCallingConventionEditor extends JPanel {
     public void commit() {
         String idexpr = syscallId.getText().trim();
         if (idexpr.isEmpty()) {
-            abi.setSyscallIdExpression(null);
+            abi.setSyscallId(null);
         } else {
             try {
                 Expression id = new Parser(idexpr).parse();
-                abi.setSyscallIdExpression(id);
+                abi.setSyscallId(id);
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + idexpr + "\": " + e.getMessage(), e);
             }
@@ -190,11 +190,11 @@ public class SyscallCallingConventionEditor extends JPanel {
 
         String retexpr = returnValue.getText().trim();
         if (retexpr.isEmpty()) {
-            abi.setSyscallReturnExpression(null);
+            abi.getSyscall().setReturn(null);
         } else {
             try {
                 Expression retn = new Parser(retexpr).parse();
-                abi.setSyscallReturnExpression(retn);
+                abi.getSyscall().setReturn(retn);
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + retexpr + "\": " + e.getMessage(), e);
             }
@@ -209,7 +209,7 @@ public class SyscallCallingConventionEditor extends JPanel {
                 args.add(new ValueNode(0));
             }
         }
-        abi.setSyscallArguments(args);
+        abi.getSyscall().setArguments(args);
     }
 
     private class Model extends AbstractTableModel {

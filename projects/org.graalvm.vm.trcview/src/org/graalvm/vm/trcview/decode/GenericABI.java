@@ -1,35 +1,35 @@
 package org.graalvm.vm.trcview.decode;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 
 public class GenericABI extends ABI {
-    private final List<Expression> callArguments = new ArrayList<>();
-    private Expression callReturn;
+    private final GenericCallingConvention call = new GenericCallingConvention();
+    private final GenericCallingConvention syscall = new GenericCallingConvention();
 
     private Expression syscallId;
     private final Map<Long, Function> syscalls = new HashMap<>();
-    private final List<Expression> syscallArguments = new ArrayList<>();
-    private Expression syscallReturn;
 
-    public void setReturnExpression(Expression expr) {
-        callReturn = expr;
-        fireChangeEvent();
+    public GenericABI() {
+        call.addChangeListener(this::fireChangeEvent);
+        syscall.addChangeListener(this::fireChangeEvent);
     }
 
-    public void setCallArguments(List<Expression> expr) {
-        callArguments.clear();
-        callArguments.addAll(expr);
-        fireChangeEvent();
+    @Override
+    public GenericCallingConvention getCall() {
+        return call;
     }
 
-    public void setSyscallIdExpression(Expression expr) {
+    @Override
+    public GenericCallingConvention getSyscall() {
+        return syscall;
+    }
+
+    public void setSyscallId(Expression expr) {
         syscallId = expr;
         fireChangeEvent();
     }
@@ -49,62 +49,13 @@ public class GenericABI extends ABI {
         fireChangeEvent();
     }
 
-    public void setSyscallReturnExpression(Expression expr) {
-        syscallReturn = expr;
-        fireChangeEvent();
-    }
-
-    public void setSyscallArguments(List<Expression> expr) {
-        syscallArguments.clear();
-        syscallArguments.addAll(expr);
-        fireChangeEvent();
-    }
-
     @Override
     public Function getSyscall(long id) {
         return syscalls.get(id);
     }
 
-    public List<Expression> getCallArguments() {
-        return Collections.unmodifiableList(callArguments);
-    }
-
     @Override
-    public int getCallArgumentCount() {
-        return callArguments.size();
-    }
-
-    @Override
-    public Expression getCallArgument(int i) {
-        return getCallArguments().get(i);
-    }
-
-    @Override
-    public Expression getReturnExpression() {
-        return callReturn;
-    }
-
-    @Override
-    public Expression getSyscallIdExpression() {
+    public Expression getSyscallId() {
         return syscallId;
-    }
-
-    public List<Expression> getSyscallArguments() {
-        return Collections.unmodifiableList(syscallArguments);
-    }
-
-    @Override
-    public int getSyscallArgumentCount() {
-        return syscallArguments.size();
-    }
-
-    @Override
-    public Expression getSyscallArgument(int i) {
-        return syscallArguments.get(i);
-    }
-
-    @Override
-    public Expression getSyscallReturnExpression() {
-        return syscallReturn;
     }
 }

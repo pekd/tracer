@@ -99,7 +99,7 @@ public class CallEditor extends JPanel {
     }
 
     private void update() {
-        Expression retn = abi.getReturnExpression();
+        Expression retn = abi.getCall().getReturn();
         if (retn != null) {
             returnValue.setText(retn.toString());
         } else {
@@ -107,7 +107,7 @@ public class CallEditor extends JPanel {
         }
 
         expressions.clear();
-        for (Expression expr : abi.getCallArguments()) {
+        for (Expression expr : abi.getCall().getArguments()) {
             expressions.add(expr.toString());
         }
         argmodel.update();
@@ -140,11 +140,11 @@ public class CallEditor extends JPanel {
     public void commit() {
         String retexpr = returnValue.getText().trim();
         if (retexpr.isEmpty()) {
-            abi.setReturnExpression(null);
+            abi.getCall().setReturn(null);
         } else {
             try {
                 Expression retn = new Parser(retexpr).parse();
-                abi.setReturnExpression(retn);
+                abi.getCall().setReturn(retn);
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + retexpr + "\": " + e.getMessage(), e);
             }
@@ -159,7 +159,7 @@ public class CallEditor extends JPanel {
                 args.add(new ValueNode(0));
             }
         }
-        abi.setCallArguments(args);
+        abi.getCall().setArguments(args);
     }
 
     private class Model extends AbstractTableModel {
