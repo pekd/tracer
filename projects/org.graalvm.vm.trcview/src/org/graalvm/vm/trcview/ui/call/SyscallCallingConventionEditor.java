@@ -36,6 +36,7 @@ public class SyscallCallingConventionEditor extends JPanel {
     private static final String[] COLUMN_NAMES = {"ID", "Expression"};
 
     private JTextField syscallId;
+    private JTextField stackArguments;
     private JTextField returnValue;
     private GenericABI abi;
 
@@ -50,6 +51,8 @@ public class SyscallCallingConventionEditor extends JPanel {
         north.add(LabeledPairLayout.COMPONENT, syscallId = new JTextField("0"));
         north.add(LabeledPairLayout.LABEL, new JLabel("Return Value"));
         north.add(LabeledPairLayout.COMPONENT, returnValue = new JTextField("0"));
+        north.add(LabeledPairLayout.LABEL, new JLabel("Extra Arguments"));
+        north.add(LabeledPairLayout.COMPONENT, stackArguments = new JTextField(""));
         add(BorderLayout.NORTH, north);
 
         add(BorderLayout.NORTH, north);
@@ -104,6 +107,21 @@ public class SyscallCallingConventionEditor extends JPanel {
                 }
             }
         });
+
+        stackArguments.setForeground(Color.BLACK);
+        stackArguments.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String s = stackArguments.getText();
+                Parser parser = new Parser(s.trim());
+                try {
+                    parser.parse();
+                    stackArguments.setForeground(Color.BLACK);
+                } catch (ParseException ex) {
+                    stackArguments.setForeground(Color.RED);
+                }
+            }
+        });
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
@@ -111,10 +129,12 @@ public class SyscallCallingConventionEditor extends JPanel {
         if (a instanceof GenericABI) {
             abi = (GenericABI) a;
             returnValue.setEditable(true);
+            stackArguments.setEditable(true);
             update();
         } else {
             abi = null;
             returnValue.setEditable(false);
+            stackArguments.setEditable(false);
         }
     }
 
@@ -131,6 +151,13 @@ public class SyscallCallingConventionEditor extends JPanel {
             returnValue.setText(retn.toString());
         } else {
             returnValue.setText("");
+        }
+
+        Expression stack = abi.getSyscall().getStack();
+        if (stack != null) {
+            stackArguments.setText(stack.toString());
+        } else {
+            stackArguments.setText("");
         }
 
         expressions.clear();
@@ -155,6 +182,17 @@ public class SyscallCallingConventionEditor extends JPanel {
         String retexpr = returnValue.getText().trim();
         if (!retexpr.isEmpty()) {
             Parser parser = new Parser(retexpr);
+            try {
+                parser.parse();
+            } catch (ParseException e) {
+                JOptionPane.showMessageDialog(this, "Parse error: " + e.getMessage(), "Parse error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+
+        String stackexpr = stackArguments.getText().trim();
+        if (!stackexpr.isEmpty()) {
+            Parser parser = new Parser(stackexpr);
             try {
                 parser.parse();
             } catch (ParseException e) {
@@ -197,6 +235,18 @@ public class SyscallCallingConventionEditor extends JPanel {
                 abi.getSyscall().setReturn(retn);
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + retexpr + "\": " + e.getMessage(), e);
+            }
+        }
+
+        String stackexpr = stackArguments.getText().trim();
+        if (stackexpr.isEmpty()) {
+            abi.getSyscall().setStack(null);
+        } else {
+            try {
+                Expression stack = new Parser(stackexpr).parse();
+                abi.getSyscall().setStack(stack);
+            } catch (ParseException e) {
+                log.log(Levels.WARNING, "Cannot parse expression \"" + stackexpr + "\": " + e.getMessage(), e);
             }
         }
 

@@ -1,7 +1,9 @@
 package org.graalvm.vm.trcview.expression.ast;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.expression.ArityException;
@@ -255,9 +257,56 @@ public class CallNode extends Expression {
                 } catch (MemoryNotMappedException e) {
                     throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(tmp, 16));
                 }
+            case "getMem":
+            case "getUMem": {
+                if (args.size() != 2) {
+                    throw new ArityException(2, args.size());
+                }
+                long addr = args.get(0).evaluate(ctx);
+                long size = args.get(1).evaluate(ctx);
+                if (size < 1 || size > 8) {
+                    throw new EvaluationException("invalid data size: " + size);
+                }
+                try {
+                    if (ctx.trc.getArchitecture().getFormat().be) {
+                        switch ((int) size) {
+                            case 1:
+                                return Byte.toUnsignedLong(ctx.getI8(addr));
+                            case 2:
+                                return Short.toUnsignedLong(Short.reverseBytes(ctx.getI16(addr)));
+                            case 4:
+                                return Integer.toUnsignedLong(Integer.reverseBytes(ctx.getI32(addr)));
+                            case 8:
+                                return Long.reverseBytes(ctx.getI64(addr));
+                            default:
+                                throw new EvaluationException("invalid data size: " + size);
+                        }
+                    } else {
+                        switch ((int) size) {
+                            case 1:
+                                return Byte.toUnsignedLong(ctx.getI8(addr));
+                            case 2:
+                                return Short.toUnsignedLong(ctx.getI16(addr));
+                            case 4:
+                                return Integer.toUnsignedLong(ctx.getI32(addr));
+                            case 8:
+                                return ctx.getI64(addr);
+                            default:
+                                throw new EvaluationException("invalid data size: " + size);
+                        }
+                    }
+                } catch (MemoryNotMappedException e) {
+                    throw new EvaluationException("memory not mapped at 0x" + HexFormatter.tohex(addr, 16));
+                }
+            }
             default:
                 throw new EvaluationException("not implemented: " + name);
         }
+    }
+
+    @Override
+    public Expression materialize(Map<String, Long> vars) {
+        return new CallNode(name, args.stream().map(x -> x.materialize(vars)).collect(Collectors.toList()));
     }
 
     @Override

@@ -2,9 +2,13 @@ package org.graalvm.vm.trcview.decode;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.trcview.analysis.type.Prototype;
+import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
 import org.graalvm.vm.util.log.Levels;
@@ -15,7 +19,8 @@ public class GenericCallingConvention extends CallingConvention {
 
     private List<ChangeListener> listeners = new ArrayList<>();
 
-    private final List<Expression> callArguments = new ArrayList<>();
+    private final List<Expression> fixedArguments = new ArrayList<>();
+    private Expression stackArguments;
     private Expression callReturn;
 
     protected void fireChangeEvent() {
@@ -41,28 +46,67 @@ public class GenericCallingConvention extends CallingConvention {
         fireChangeEvent();
     }
 
+    public void setStack(Expression expr) {
+        stackArguments = expr;
+        fireChangeEvent();
+    }
+
+    public Expression getStack() {
+        return stackArguments;
+    }
+
     public void setArguments(List<Expression> expr) {
-        callArguments.clear();
-        callArguments.addAll(expr);
+        fixedArguments.clear();
+        fixedArguments.addAll(expr);
         fireChangeEvent();
     }
 
     public List<Expression> getArguments() {
-        return Collections.unmodifiableList(callArguments);
+        return Collections.unmodifiableList(fixedArguments);
     }
 
     @Override
     public int getFixedArgumentCount() {
-        return callArguments.size();
+        return fixedArguments.size();
     }
 
     @Override
     public Expression getArgument(int i) {
-        return callArguments.get(i);
+        if (i >= getFixedArgumentCount()) {
+            return null;
+        } else {
+            return fixedArguments.get(i);
+        }
     }
 
     @Override
     public Expression getReturn() {
         return callReturn;
+    }
+
+    @Override
+    public List<Expression> getArguments(Prototype proto) {
+        List<Expression> result = new ArrayList<>();
+        long totalsize = 0;
+        long id = 0;
+        Map<String, Long> vars = new HashMap<>();
+        for (int i = 0, j = 0; i < proto.args.size(); i++) {
+            Type arg = proto.args.get(i);
+            if (arg.getExpression() == null) {
+                if (j < getFixedArgumentCount()) {
+                    result.add(getArgument(j++));
+                } else {
+                    vars.put("arg_totalsize", totalsize);
+                    vars.put("arg_id", id++);
+                    vars.put("arg_size", (long) arg.getSize());
+                    Expression expr = stackArguments.materialize(vars);
+                    totalsize += arg.getSize();
+                    result.add(expr);
+                }
+            } else {
+                result.add(arg.getExpression());
+            }
+        }
+        return result;
     }
 }

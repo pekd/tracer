@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.expression.ast;
 
+import java.util.Map;
+
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 
@@ -13,6 +15,16 @@ public class InvNode extends Expression {
     @Override
     public long evaluate(ExpressionContext ctx) throws EvaluationException {
         return ~child.evaluate(ctx);
+    }
+
+    @Override
+    public Expression materialize(Map<String, Long> vars) {
+        Expression c = child.materialize(vars);
+        if (c != child) {
+            return new InvNode(c);
+        } else {
+            return c;
+        }
     }
 
     @Override

@@ -17,14 +17,19 @@ import org.graalvm.vm.trcview.expression.ast.Expression;
 
 public class ABISerializer {
     private static String encode(GenericCallingConvention cc) {
-        String[] parts = new String[cc.getFixedArgumentCount() + 1];
+        String[] parts = new String[cc.getFixedArgumentCount() + 2];
         if (cc.getReturn() != null) {
             parts[0] = cc.getReturn().toString();
         } else {
             parts[0] = null;
         }
+        if (cc.getStack() != null) {
+            parts[1] = cc.getStack().toString();
+        } else {
+            parts[1] = null;
+        }
         for (int i = 0; i < cc.getFixedArgumentCount(); i++) {
-            parts[i + 1] = cc.getArgument(i).toString();
+            parts[i + 2] = cc.getArgument(i).toString();
         }
         return TextSerializer.encode(parts);
     }
@@ -36,9 +41,14 @@ public class ABISerializer {
         } else {
             cc.setReturn(null);
         }
+        if (parts[1] != null) {
+            cc.setStack(new Parser(parts[1]).parse());
+        } else {
+            cc.setStack(null);
+        }
         List<Expression> args = new ArrayList<>();
-        for (int i = 0; i < parts.length - 1; i++) {
-            args.add(new Parser(parts[i + 1]).parse());
+        for (int i = 0; i < parts.length - 2; i++) {
+            args.add(new Parser(parts[i + 2]).parse());
         }
         cc.setArguments(args);
     }

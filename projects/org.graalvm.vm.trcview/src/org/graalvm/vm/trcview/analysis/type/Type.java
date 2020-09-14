@@ -80,6 +80,7 @@ public class Type {
                 return 0;
             case STRING:
             case PTR:
+                // TODO: pointer size depends on the architecture
                 return 8;
             case U8:
             case S8:

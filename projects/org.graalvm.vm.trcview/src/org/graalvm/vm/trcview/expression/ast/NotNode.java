@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.expression.ast;
 
+import java.util.Map;
+
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 
@@ -17,6 +19,16 @@ public class NotNode extends Expression {
             return 1;
         } else {
             return 0;
+        }
+    }
+
+    @Override
+    public Expression materialize(Map<String, Long> vars) {
+        Expression c = child.materialize(vars);
+        if (c != child) {
+            return new NotNode(c);
+        } else {
+            return c;
         }
     }
 

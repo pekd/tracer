@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.expression.ast;
 
+import java.util.Map;
+
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 import org.graalvm.vm.trcview.expression.UnknownVariableException;
@@ -22,6 +24,16 @@ public class VariableNode extends Expression {
             return ctx.state.get(name);
         } catch (IllegalArgumentException e) {
             throw new UnknownVariableException(name);
+        }
+    }
+
+    @Override
+    public Expression materialize(Map<String, Long> vars) {
+        Long val = vars.get(name);
+        if (val != null) {
+            return new ValueNode(val);
+        } else {
+            return this;
         }
     }
 

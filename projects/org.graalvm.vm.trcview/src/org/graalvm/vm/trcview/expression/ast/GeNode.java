@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.expression.ast;
 
+import java.util.Map;
 import java.util.Objects;
 
 import org.graalvm.vm.trcview.expression.EvaluationException;
@@ -17,6 +18,17 @@ public class GeNode extends Expression {
     @Override
     public long evaluate(ExpressionContext ctx) throws EvaluationException {
         return left.evaluate(ctx) >= right.evaluate(ctx) ? 1 : 0;
+    }
+
+    @Override
+    public Expression materialize(Map<String, Long> vars) {
+        Expression l = left.materialize(vars);
+        Expression r = right.materialize(vars);
+        if (l != left || r != right) {
+            return new GeNode(l, r);
+        } else {
+            return this;
+        }
     }
 
     @Override

@@ -21,7 +21,7 @@ public class ABISerializerTest {
     @Test
     public void serializeNull() {
         GenericABI abi = new GenericABI();
-        assertEquals("\"NULL\";\"NULL\";NULL", ABISerializer.store(abi));
+        assertEquals("\"NULL;NULL\";\"NULL;NULL\";NULL", ABISerializer.store(abi));
     }
 
     @Test
@@ -34,14 +34,14 @@ public class ABISerializerTest {
         abi.getSyscall().setReturn(new VariableNode("r0"));
         abi.addSyscall(0, new Function("test", new Prototype()));
 
-        String def = "\"\\\"r0\\\";\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"\\\"r0\\\";\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"(getU16(pc) ^ 34816)\";\"0=void test()\"";
+        String def = "\"\\\"r0\\\";NULL;\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"\\\"r0\\\";NULL;\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"(getU16(pc) ^ 34816)\";\"0=void test()\"";
         assertEquals(def, ABISerializer.store(abi));
     }
 
     @Test
     public void deserializeNull() throws Exception {
         GenericABI abi = new GenericABI();
-        ABISerializer.load(abi, "\"NULL\";\"NULL\";NULL");
+        ABISerializer.load(abi, "\"NULL;NULL\";\"NULL;NULL\";NULL");
         assertNull(abi.getSyscallId());
         assertTrue(abi.getSyscalls().isEmpty());
 
@@ -56,7 +56,7 @@ public class ABISerializerTest {
 
     @Test
     public void deserialize() throws Exception {
-        String def = "\"\\\"r0\\\";\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"\\\"r0\\\";\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"(getU16(pc) ^ 34816)\";\"0=void test()\"";
+        String def = "\"\\\"r0\\\";NULL;\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"\\\"r0\\\";NULL;\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"(getU16(pc) ^ 34816)\";\"0=void test()\"";
         GenericABI abi = new GenericABI();
         ABISerializer.load(abi, def);
 

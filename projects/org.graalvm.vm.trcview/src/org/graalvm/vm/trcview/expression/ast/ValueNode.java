@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.expression.ast;
 
+import java.util.Map;
+
 import org.graalvm.vm.trcview.expression.ExpressionContext;
 
 public class ValueNode extends Expression {
@@ -12,6 +14,11 @@ public class ValueNode extends Expression {
     @Override
     public long evaluate(ExpressionContext ctx) {
         return value;
+    }
+
+    @Override
+    public Expression materialize(Map<String, Long> vars) {
+        return this;
     }
 
     @Override
