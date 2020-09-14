@@ -166,7 +166,14 @@ public class DecoderUtils {
     }
 
     public static ExpressionContext getExpressionContext(CpuState state, TraceAnalyzer trc) {
+        return getExpressionContext(state, trc, null);
+    }
+
+    public static ExpressionContext getExpressionContext(CpuState state, TraceAnalyzer trc, Map<String, Long> vars) {
         Map<String, Long> constants = new HashMap<>();
+        if (vars != null) {
+            constants.putAll(vars);
+        }
         if (state instanceof StepEvent) {
             byte[] code = ((StepEvent) state).getMachinecode();
             constants.put("codelen", (long) code.length);
