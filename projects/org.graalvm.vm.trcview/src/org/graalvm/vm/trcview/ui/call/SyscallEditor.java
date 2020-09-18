@@ -19,7 +19,7 @@ import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.GenericABI;
-import org.graalvm.vm.trcview.expression.TypeParser;
+import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 @SuppressWarnings("serial")
@@ -140,9 +140,9 @@ public class SyscallEditor extends JPanel {
                 }
             } else if (col == 1) {
                 long id = syscalls.get(row).id;
-                TypeParser parser = new TypeParser((String) value);
+                Parser parser = new Parser((String) value);
                 try {
-                    Function func = parser.parse();
+                    Function func = parser.parsePrototype();
                     Syscall sc = new Syscall(id, func);
                     syscalls.set(row, sc);
                 } catch (ParseException e) {

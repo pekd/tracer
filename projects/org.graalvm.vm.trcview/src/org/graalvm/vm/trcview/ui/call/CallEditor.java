@@ -80,7 +80,7 @@ public class CallEditor extends JPanel {
                 String s = returnValue.getText();
                 Parser parser = new Parser(s.trim());
                 try {
-                    parser.parse();
+                    parser.parseExpression();
                     returnValue.setForeground(Color.BLACK);
                 } catch (ParseException ex) {
                     returnValue.setForeground(Color.RED);
@@ -95,7 +95,7 @@ public class CallEditor extends JPanel {
                 String s = stackArguments.getText();
                 Parser parser = new Parser(s.trim());
                 try {
-                    parser.parse();
+                    parser.parseExpression();
                     stackArguments.setForeground(Color.BLACK);
                 } catch (ParseException ex) {
                     stackArguments.setForeground(Color.RED);
@@ -145,7 +145,7 @@ public class CallEditor extends JPanel {
         if (!retexpr.isEmpty()) {
             Parser parser = new Parser(retexpr);
             try {
-                parser.parse();
+                parser.parseExpression();
             } catch (ParseException e) {
                 JOptionPane.showMessageDialog(this, "Parse error: " + e.getMessage(), "Parse error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -156,7 +156,7 @@ public class CallEditor extends JPanel {
         if (!stackexpr.isEmpty()) {
             Parser parser = new Parser(stackexpr);
             try {
-                parser.parse();
+                parser.parseExpression();
             } catch (ParseException e) {
                 JOptionPane.showMessageDialog(this, "Parse error: " + e.getMessage(), "Parse error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -166,7 +166,7 @@ public class CallEditor extends JPanel {
         for (String expr : expressions) {
             Parser parser = new Parser(expr);
             try {
-                parser.parse();
+                parser.parseExpression();
             } catch (ParseException e) {
                 JOptionPane.showMessageDialog(this, "Cannot parse expression \"" + expr + "\": " + e.getMessage(), "Parse error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -181,7 +181,7 @@ public class CallEditor extends JPanel {
             abi.getCall().setReturn(null);
         } else {
             try {
-                Expression retn = new Parser(retexpr).parse();
+                Expression retn = new Parser(retexpr).parseExpression();
                 abi.getCall().setReturn(retn);
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + retexpr + "\": " + e.getMessage(), e);
@@ -193,7 +193,7 @@ public class CallEditor extends JPanel {
             abi.getCall().setStack(null);
         } else {
             try {
-                Expression stack = new Parser(stackexpr).parse();
+                Expression stack = new Parser(stackexpr).parseExpression();
                 abi.getCall().setStack(stack);
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + stackexpr + "\": " + e.getMessage(), e);
@@ -203,7 +203,7 @@ public class CallEditor extends JPanel {
         List<Expression> args = new ArrayList<>();
         for (String expr : expressions) {
             try {
-                args.add(new Parser(expr).parse());
+                args.add(new Parser(expr).parseExpression());
             } catch (ParseException e) {
                 log.log(Levels.WARNING, "Cannot parse expression \"" + expr + "\": " + e.getMessage(), e);
                 args.add(new ValueNode(0));

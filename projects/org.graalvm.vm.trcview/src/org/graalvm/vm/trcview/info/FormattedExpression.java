@@ -54,7 +54,7 @@ public class FormattedExpression {
                     if (c == '}') {
                         state = 0;
                         Parser parser = new Parser(buf.toString());
-                        expressions.add(parser.parse());
+                        expressions.add(parser.parseExpression());
                         fmt.append('%');
                     } else {
                         buf.append(c);

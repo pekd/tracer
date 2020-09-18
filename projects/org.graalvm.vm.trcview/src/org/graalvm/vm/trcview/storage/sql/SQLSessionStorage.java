@@ -26,7 +26,7 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol.Type;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.io.TraceSymbol;
-import org.graalvm.vm.trcview.expression.TypeParser;
+import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.storage.SessionStorage;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
@@ -273,8 +273,7 @@ public class SQLSessionStorage extends SessionStorage {
         ComputedSymbol sym = new ComputedSymbol(name, address, type);
         if (proto != null) {
             try {
-                TypeParser parser = new TypeParser(proto);
-                Function fun = parser.parse();
+                Function fun = new Parser(proto).parsePrototype();
                 sym.prototype = fun.getPrototype();
             } catch (ParseException e) {
                 log.log(Levels.INFO, "Invalid prototype " + proto + " stored in database: " + e.getMessage(), e);

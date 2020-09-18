@@ -15,7 +15,7 @@ import java.util.UUID;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol.Type;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
-import org.graalvm.vm.trcview.expression.TypeParser;
+import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.storage.SessionStorage;
 import org.graalvm.vm.trcview.storage.sql.SQLSessionStorage;
 import org.junit.After;
@@ -141,8 +141,8 @@ public class SessionStorageTest {
 
     @Test
     public void setPrototype() throws ParseException {
-        Prototype proto1 = new TypeParser("void f(int)").parse().getPrototype();
-        Prototype proto2 = new TypeParser("long f(char)").parse().getPrototype();
+        Prototype proto1 = new Parser("void f(int)").parsePrototype().getPrototype();
+        Prototype proto2 = new Parser("long f(char)").parsePrototype().getPrototype();
 
         ComputedSymbol sym = storage.getComputedSymbol(0x1000);
         assertNull(sym);

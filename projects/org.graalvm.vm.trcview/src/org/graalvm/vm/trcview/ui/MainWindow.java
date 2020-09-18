@@ -104,7 +104,6 @@ import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.decode.GenericABI;
 import org.graalvm.vm.trcview.expression.Parser;
-import org.graalvm.vm.trcview.expression.TypeParser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.io.ABISerializer;
 import org.graalvm.vm.trcview.io.BlockNode;
@@ -532,8 +531,8 @@ public class MainWindow extends JFrame {
             String input = JOptionPane.showInputDialog("Enter prototype:", prototype);
             if (input != null && input.trim().length() > 0) {
                 try {
-                    TypeParser parser = new TypeParser(input.trim());
-                    Function fun = parser.parse();
+                    Parser parser = new Parser(input.trim());
+                    Function fun = parser.parsePrototype();
                     String name = fun.getName();
                     for (ComputedSymbol sym : trc.getSymbols()) {
                         if (sym != selected && sym.name.equals(name)) {
@@ -974,8 +973,8 @@ public class MainWindow extends JFrame {
                 }
                 if (line.length() > 0) {
                     try {
-                        TypeParser parser = new TypeParser(line);
-                        Function fun = parser.parse();
+                        Parser parser = new Parser(line);
+                        Function fun = parser.parsePrototype();
                         List<ComputedSymbol> sym = syms.get(fun.getName());
                         if (sym != null) {
                             for (ComputedSymbol sy : sym) {
@@ -1226,7 +1225,7 @@ public class MainWindow extends JFrame {
                         String str = data[2];
                         Expression expr = null;
                         try {
-                            expr = new Parser(str).parse();
+                            expr = new Parser(str).parseExpression();
                         } catch (ParseException e) {
                             log.info("Syntax error in line " + lineno + ": " + e.getMessage());
                             setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
@@ -1420,7 +1419,7 @@ public class MainWindow extends JFrame {
                             String proto = data[1] + " f(" + data[2] + ")";
                             Function fun;
                             try {
-                                fun = new TypeParser(proto).parse();
+                                fun = new Parser(proto).parsePrototype();
                             } catch (ParseException e) {
                                 log.info("Syntax error in line " + lineno + ": " + e.getMessage());
                                 setStatus("Syntax error in line " + lineno + ": " + e.getMessage());

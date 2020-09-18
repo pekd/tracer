@@ -4,6 +4,11 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.Prototype;
+import org.graalvm.vm.trcview.analysis.type.Representation;
+import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.expression.Token.TokenType;
 import org.graalvm.vm.trcview.expression.ast.AddNode;
 import org.graalvm.vm.trcview.expression.ast.AndNode;
@@ -32,20 +37,52 @@ import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.graalvm.vm.trcview.expression.ast.XorNode;
 
 /*
- * expr   = lor { "||" lor } .
- * lor    = land { "&&" land } .
- * land   = rel { ("<" | "<=" | ">" | ">=" | "==") rel } .
- * rel    = or { "|" or } .
- * or     = xor { "^" xor } .
- * xor    = and { "&" and } .
- * and    = sum { ("+" | "-") sum } .
- * sum    = factor { ("*" | "/") factor } .
- * factor = shift { ("<<" | ">>" | ">>>") shift } .
- * shift  = number
- *        | ident [ "(" [ expr { "," expr } ] ")" ]
- *        | "(" expr ")"
- *        | "!" expr
- *        | "-" expr .
+ * def       = ( "typedef" type ident ";" | struct | union ) .
+ * struct    = "struct" [ ident ] "{"
+ *           { type ident ";" }
+ *           "}" ";"
+ *           .
+ * union     = "union" [ ident ] "{"
+ *           { type ident ";" }
+ *           "}" ";"
+ *           .
+ *
+ * prototype = type ident ["<" rexpr ">" ] "(" [ type [ ident ] { "," type [ ident ] } ] ")" .
+ * type      = basic { "*" ["const"] } ["$out" | "$dec" | "$hex" | "$char"] .
+ * basic     = ["const"]
+ *           ( ["unsigned" | "signed"] integer
+ *           | "u8"
+ *           | "s8"
+ *           | "u16"
+ *           | "s16"
+ *           | "u32"
+ *           | "s32"
+ *           | "u64"
+ *           | "s64"
+ *           | "void" )
+ *           [ "<" rexpr ">" ]
+ *           .
+ * integer   = "char"
+ *           | "short"
+ *           | "int"
+ *           | "long"
+ *           .
+ * rexpr     = and .
+ *
+ * expr      = lor { "||" lor } .
+ * lor       = land { "&&" land } .
+ * land      = rel { ("<" | "<=" | ">" | ">=" | "==") rel } .
+ * rel       = or { "|" or } .
+ * or        = xor { "^" xor } .
+ * xor       = and { "&" and } .
+ * and       = sum { ("+" | "-") sum } .
+ * sum       = factor { ("*" | "/") factor } .
+ * factor    = shift { ("<<" | ">>" | ">>>") shift } .
+ * shift     = number
+ *           | ident [ "(" [ expr { "," expr } ] ")" ]
+ *           | "(" expr ")"
+ *           | "!" expr
+ *           | "-" expr .
  */
 public class Parser {
     private Scanner scanner;
@@ -65,6 +102,77 @@ public class Parser {
     private void scan() throws ParseException {
         t = la;
         la = scanner.next();
+        if (la.type == TokenType.IDENT) {
+            switch (la.str) {
+                case "unsigned":
+                    la = new Token(TokenType.UNSIGNED);
+                    break;
+                case "signed":
+                    la = new Token(TokenType.UNSIGNED);
+                    break;
+                case "const":
+                    la = new Token(TokenType.CONST);
+                    break;
+                case "char":
+                    la = new Token(TokenType.CHAR);
+                    break;
+                case "short":
+                    la = new Token(TokenType.SHORT);
+                    break;
+                case "int":
+                    la = new Token(TokenType.INT);
+                    break;
+                case "long":
+                    la = new Token(TokenType.LONG);
+                    break;
+                case "u8":
+                case "uint8_t":
+                    la = new Token(TokenType.U8);
+                    break;
+                case "u16":
+                case "uint16_t":
+                    la = new Token(TokenType.U16);
+                    break;
+                case "u32":
+                case "uint32_t":
+                    la = new Token(TokenType.U32);
+                    break;
+                case "u64":
+                case "uint64_t":
+                case "size_t":
+                    la = new Token(TokenType.U64);
+                    break;
+                case "s8":
+                case "int8_t":
+                    la = new Token(TokenType.S8);
+                    break;
+                case "s16":
+                case "int16_t":
+                    la = new Token(TokenType.S16);
+                    break;
+                case "s32":
+                case "int32_t":
+                    la = new Token(TokenType.S32);
+                    break;
+                case "s64":
+                case "int64_t":
+                case "ssize_t":
+                    la = new Token(TokenType.S64);
+                    break;
+                case "void":
+                    la = new Token(TokenType.VOID);
+                    break;
+                case "struct":
+                    la = new Token(TokenType.STRUCT);
+                    break;
+                case "union":
+                    la = new Token(TokenType.UNION);
+                    break;
+                case "typedef":
+                    la = new Token(TokenType.TYPEDEF);
+                    break;
+            }
+        }
         sym = la.type;
     }
 
@@ -75,11 +183,221 @@ public class Parser {
         scan();
     }
 
-    public Expression parse() throws ParseException {
+    public Function parsePrototype() throws ParseException {
+        scan();
+        Function prototype = prototype();
+        check(TokenType.EOF);
+        return prototype;
+    }
+
+    private Function prototype() throws ParseException {
+        Type returnType = type();
+        check(TokenType.IDENT);
+        String name = t.str;
+
+        check(TokenType.LPAR);
+        if (sym == TokenType.RPAR) {
+            scan();
+            return new Function(name, new Prototype(returnType));
+        }
+        List<Type> args = new ArrayList<>();
+        List<String> argnames = new ArrayList<>();
+        Type type = type();
+        if (type.getType() == DataType.VOID) {
+            check(TokenType.RPAR);
+            return new Function(name, new Prototype(returnType, args, argnames));
+        } else {
+            args.add(type);
+        }
+        if (sym == TokenType.IDENT) {
+            scan();
+            argnames.add(t.str);
+        } else {
+            argnames.add(null);
+        }
+        while (sym == TokenType.COMMA) {
+            scan();
+            type = type();
+            if (type.getType() == DataType.VOID) {
+                error("unexpected type void");
+            }
+            args.add(type);
+            if (sym == TokenType.IDENT) {
+                scan();
+                argnames.add(t.str);
+            } else {
+                argnames.add(null);
+            }
+        }
+        check(TokenType.RPAR);
+
+        return new Function(name, new Prototype(returnType, args, argnames));
+    }
+
+    private Type type() throws ParseException {
+        Type type = basic();
+        while (sym == TokenType.MUL) {
+            scan();
+            if (sym == TokenType.CONST) {
+                scan();
+                type = new Type(type, true);
+            } else {
+                type = new Type(type, false);
+            }
+        }
+        if (sym == TokenType.LT) {
+            scan();
+            Expression expr = rexpr();
+            type.setExpression(expr);
+            check(TokenType.GT);
+        }
+        if (sym == TokenType.IDENT) {
+            switch (la.str) {
+                case "$out":
+                    scan();
+                    if (type.getType() == DataType.PTR || type.getType() == DataType.STRING) {
+                        type.setRepresentation(Representation.HEX);
+                    }
+                    break;
+                case "$char":
+                    scan();
+                    type.setRepresentation(Representation.CHAR);
+                    break;
+                case "$dec":
+                    scan();
+                    type.setRepresentation(Representation.DEC);
+                    break;
+                case "$oct":
+                    scan();
+                    type.setRepresentation(Representation.OCT);
+                    break;
+                case "$hex":
+                    scan();
+                    type.setRepresentation(Representation.HEX);
+                    break;
+                case "$r50":
+                case "$rad50":
+                    scan();
+                    type.setRepresentation(Representation.RAD50);
+                    break;
+                case "$fx32":
+                    scan();
+                    type.setRepresentation(Representation.FX32);
+                    break;
+                default:
+                    return type;
+            }
+        }
+        return type;
+    }
+
+    private Type integer(boolean isConst) throws ParseException {
+        boolean unsigned = false;
+        if (sym == TokenType.UNSIGNED) {
+            scan();
+            unsigned = true;
+        } else if (sym == TokenType.SIGNED) {
+            scan();
+        }
+        if (unsigned) {
+            switch (sym) {
+                case CHAR:
+                    scan();
+                    return new Type(DataType.U8, isConst);
+                case SHORT:
+                    scan();
+                    return new Type(DataType.U16, isConst);
+                case INT:
+                    scan();
+                    return new Type(DataType.U32, isConst);
+                case LONG:
+                    scan();
+                    return new Type(DataType.U64, isConst);
+                default:
+                    error("unexpected token " + sym);
+                    throw new AssertionError("unreachable");
+            }
+        } else {
+            switch (sym) {
+                case CHAR:
+                    scan();
+                    return new Type(DataType.S8, isConst);
+                case SHORT:
+                    scan();
+                    return new Type(DataType.S16, isConst);
+                case INT:
+                    scan();
+                    return new Type(DataType.S32, isConst);
+                case LONG:
+                    scan();
+                    return new Type(DataType.S64, isConst);
+                default:
+                    error("unexpected token " + sym);
+                    throw new AssertionError("unreachable");
+            }
+        }
+    }
+
+    private Type basic() throws ParseException {
+        boolean isConst = false;
+        if (sym == TokenType.CONST) {
+            scan();
+            isConst = true;
+        }
+
+        switch (sym) {
+            case UNSIGNED:
+            case SIGNED:
+            case CHAR:
+            case SHORT:
+            case INT:
+            case LONG:
+                return integer(isConst);
+            case U8:
+                scan();
+                return new Type(DataType.U8, isConst);
+            case S8:
+                scan();
+                return new Type(DataType.S8, isConst);
+            case U16:
+                scan();
+                return new Type(DataType.U16, isConst);
+            case S16:
+                scan();
+                return new Type(DataType.S16, isConst);
+            case U32:
+                scan();
+                return new Type(DataType.U32, isConst);
+            case S32:
+                scan();
+                return new Type(DataType.S32, isConst);
+            case U64:
+                scan();
+                return new Type(DataType.U64, isConst);
+            case S64:
+                scan();
+                return new Type(DataType.S64, isConst);
+            case VOID:
+                scan();
+                return new Type(DataType.VOID);
+            case IDENT: // TODO: user defined types
+                scan();
+                return new Type(DataType.VOID);
+            default:
+                error("unexpected token " + sym);
+                throw new AssertionError("unreachable");
+        }
+    }
+
+    public Expression parseExpression() throws ParseException {
         scan();
         Expression expr = expr();
         check(TokenType.EOF);
         return expr;
+    }
+
+    private Expression rexpr() throws ParseException {
+        return and();
     }
 
     private Expression expr() throws ParseException {

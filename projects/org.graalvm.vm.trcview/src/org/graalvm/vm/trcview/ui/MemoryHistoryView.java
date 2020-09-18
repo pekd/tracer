@@ -79,7 +79,7 @@ public class MemoryHistoryView extends JPanel {
                 String s = addrinput.getText();
                 Parser parser = new Parser(s.trim());
                 try {
-                    expr = parser.parse();
+                    expr = parser.parseExpression();
                     addrinput.setForeground(Color.BLACK);
                     status.accept("Expression parsed successfully");
                     if (eval() != address) {
@@ -103,7 +103,7 @@ public class MemoryHistoryView extends JPanel {
         addrinput.setText(expression.trim());
         Parser parser = new Parser(expression.trim());
         try {
-            expr = parser.parse();
+            expr = parser.parseExpression();
             addrinput.setForeground(Color.BLACK);
             status.accept("Expression parsed successfully");
             if (eval() != address) {

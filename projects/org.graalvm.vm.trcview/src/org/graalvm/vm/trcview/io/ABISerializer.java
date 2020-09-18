@@ -12,7 +12,6 @@ import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.decode.GenericABI;
 import org.graalvm.vm.trcview.decode.GenericCallingConvention;
 import org.graalvm.vm.trcview.expression.Parser;
-import org.graalvm.vm.trcview.expression.TypeParser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 
 public class ABISerializer {
@@ -37,18 +36,18 @@ public class ABISerializer {
     private static void decode(GenericCallingConvention cc, String s) throws IOException, ParseException {
         String[] parts = TextSerializer.tokenize(s);
         if (parts[0] != null) {
-            cc.setReturn(new Parser(parts[0]).parse());
+            cc.setReturn(new Parser(parts[0]).parseExpression());
         } else {
             cc.setReturn(null);
         }
         if (parts[1] != null) {
-            cc.setStack(new Parser(parts[1]).parse());
+            cc.setStack(new Parser(parts[1]).parseExpression());
         } else {
             cc.setStack(null);
         }
         List<Expression> args = new ArrayList<>();
         for (int i = 0; i < parts.length - 2; i++) {
-            args.add(new Parser(parts[i + 2]).parse());
+            args.add(new Parser(parts[i + 2]).parseExpression());
         }
         cc.setArguments(args);
     }
@@ -72,7 +71,7 @@ public class ABISerializer {
         decode(abi.getCall(), parts[0]);
         decode(abi.getSyscall(), parts[1]);
         if (parts[2] != null) {
-            abi.setSyscallId(new Parser(parts[2]).parse());
+            abi.setSyscallId(new Parser(parts[2]).parseExpression());
         } else {
             abi.setSyscallId(null);
         }
@@ -85,7 +84,7 @@ public class ABISerializer {
             }
             try {
                 long id = Long.parseUnsignedLong(def.substring(0, idx));
-                Function func = new TypeParser(def.substring(idx + 1)).parse();
+                Function func = new Parser(def.substring(idx + 1)).parsePrototype();
                 syscalls.put(id, func);
             } catch (NumberFormatException e) {
                 throw new IOException("invalid syscall id: " + e.getMessage(), e);

@@ -11,7 +11,7 @@ import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
-import org.graalvm.vm.trcview.expression.TypeParser;
+import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.WordInputStream;
@@ -147,7 +147,7 @@ public class IO {
         String rettype = IO.readString(in);
         String args = IO.readString(in);
         try {
-            Function fun = new TypeParser(rettype + " f(" + args + ")").parse();
+            Function fun = new Parser(rettype + " f(" + args + ")").parsePrototype();
             return fun.getPrototype();
         } catch (ParseException e) {
             throw new IOException("Invalid prototype: " + e.getMessage() + " [prototype = '" + rettype + " f(" + args + ")']", e);

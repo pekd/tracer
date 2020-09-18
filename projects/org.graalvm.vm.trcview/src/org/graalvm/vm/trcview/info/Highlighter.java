@@ -27,7 +27,7 @@ public class Highlighter {
         public HighlightInfo(String expression, Color color) throws ParseException {
             this.expression = expression;
             this.color = color;
-            this.expr = new Parser(expression).parse();
+            this.expr = new Parser(expression).parseExpression();
         }
     }
 

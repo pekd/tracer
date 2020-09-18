@@ -172,7 +172,7 @@ public class Watches extends JPanel {
             } else if (column == 1) {
                 watches.get(row).str = (String) value;
                 try {
-                    Expression expr = new Parser((String) value).parse();
+                    Expression expr = new Parser((String) value).parseExpression();
                     watches.get(row).expr = expr;
                     changed();
                 } catch (ParseException e) {

@@ -19,7 +19,7 @@ public class ParserTest {
     @Test
     public void testVariable001() throws ParseException {
         Parser p = new Parser("hello");
-        Expression expr = p.parse();
+        Expression expr = p.parseExpression();
         assertSame(VariableNode.class, expr.getClass());
         assertEquals("hello", ((VariableNode) expr).name);
     }
@@ -27,7 +27,7 @@ public class ParserTest {
     @Test
     public void testVariable002() throws ParseException {
         Parser p = new Parser("$");
-        Expression expr = p.parse();
+        Expression expr = p.parseExpression();
         assertSame(VariableNode.class, expr.getClass());
         assertEquals("$", ((VariableNode) expr).name);
     }
@@ -35,7 +35,7 @@ public class ParserTest {
     @Test
     public void testExpression001() throws ParseException {
         Parser p = new Parser("(eax + 4) * 2 + 0xBEEF / mem(0x42)");
-        Expression expr = p.parse();
+        Expression expr = p.parseExpression();
         assertSame(AddNode.class, expr.getClass());
         AddNode root = (AddNode) expr;
         assertSame(MulNode.class, root.left.getClass());
@@ -70,7 +70,7 @@ public class ParserTest {
     @Test
     public void testExpression002() throws ParseException {
         Parser p = new Parser("if(x == 49 && y == 42, mem(0) & 0xFF, rax | 0xF)");
-        Expression expr = p.parse();
+        Expression expr = p.parseExpression();
         System.out.println(expr);
     }
 }

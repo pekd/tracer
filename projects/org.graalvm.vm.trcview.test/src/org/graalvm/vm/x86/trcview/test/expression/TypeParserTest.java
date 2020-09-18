@@ -8,15 +8,15 @@ import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
-import org.graalvm.vm.trcview.expression.TypeParser;
+import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.junit.Test;
 
 public class TypeParserTest {
     @Test
     public void testMain001() throws ParseException {
-        TypeParser p = new TypeParser("int main()");
-        Function fun = p.parse();
+        Parser p = new Parser("int main()");
+        Function fun = p.parsePrototype();
         assertEquals("main", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.S32, proto.returnType.getType());
@@ -25,8 +25,8 @@ public class TypeParserTest {
 
     @Test
     public void testMain002() throws ParseException {
-        TypeParser p = new TypeParser("int main(void)");
-        Function fun = p.parse();
+        Parser p = new Parser("int main(void)");
+        Function fun = p.parsePrototype();
         assertEquals("main", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.S32, proto.returnType.getType());
@@ -35,8 +35,8 @@ public class TypeParserTest {
 
     @Test
     public void testMain003() throws ParseException {
-        TypeParser p = new TypeParser("int main(int argc)");
-        Function fun = p.parse();
+        Parser p = new Parser("int main(int argc)");
+        Function fun = p.parsePrototype();
         assertEquals("main", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.S32, proto.returnType.getType());
@@ -46,8 +46,8 @@ public class TypeParserTest {
 
     @Test
     public void testMain004() throws ParseException {
-        TypeParser p = new TypeParser("int main(int argc, char** argv)");
-        Function fun = p.parse();
+        Parser p = new Parser("int main(int argc, char** argv)");
+        Function fun = p.parsePrototype();
         assertEquals("main", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.S32, proto.returnType.getType());
@@ -60,8 +60,8 @@ public class TypeParserTest {
 
     @Test
     public void testRepr001() throws ParseException {
-        TypeParser p = new TypeParser("void putch(char c)");
-        Function fun = p.parse();
+        Parser p = new Parser("void putch(char c)");
+        Function fun = p.parsePrototype();
         assertEquals("putch", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.VOID, proto.returnType.getType());
@@ -72,8 +72,8 @@ public class TypeParserTest {
 
     @Test
     public void testRepr002() throws ParseException {
-        TypeParser p = new TypeParser("void putch(char $char)");
-        Function fun = p.parse();
+        Parser p = new Parser("void putch(char $char)");
+        Function fun = p.parsePrototype();
         assertEquals("putch", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.VOID, proto.returnType.getType());
@@ -84,8 +84,8 @@ public class TypeParserTest {
 
     @Test
     public void testRepr003() throws ParseException {
-        TypeParser p = new TypeParser("void putch(char $char c)");
-        Function fun = p.parse();
+        Parser p = new Parser("void putch(char $char c)");
+        Function fun = p.parsePrototype();
         assertEquals("putch", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.VOID, proto.returnType.getType());
@@ -96,8 +96,8 @@ public class TypeParserTest {
 
     @Test
     public void testExpr001() throws ParseException {
-        TypeParser p = new TypeParser("u16<r0> checksum(void*<r0>)");
-        Function fun = p.parse();
+        Parser p = new Parser("u16<r0> checksum(void*<r0>)");
+        Function fun = p.parsePrototype();
         assertEquals("checksum", fun.getName());
         Prototype proto = fun.getPrototype();
         assertEquals(DataType.U16, proto.returnType.getType());
