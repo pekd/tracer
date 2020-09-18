@@ -28,8 +28,8 @@ public class NegNode extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "-" + child;
+    protected String str(boolean par) {
+        return "-" + child.str(true);
     }
 
     @Override

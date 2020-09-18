@@ -38,7 +38,7 @@ public class VariableNode extends Expression {
     }
 
     @Override
-    public String toString() {
+    protected String str(boolean par) {
         return name;
     }
 

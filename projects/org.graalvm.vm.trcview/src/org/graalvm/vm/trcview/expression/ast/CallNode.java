@@ -310,7 +310,7 @@ public class CallNode extends Expression {
     }
 
     @Override
-    public String toString() {
+    protected String str(boolean par) {
         StringBuilder buf = new StringBuilder(name);
         buf.append('(');
         boolean first = true;
@@ -320,7 +320,7 @@ public class CallNode extends Expression {
             } else {
                 first = false;
             }
-            buf.append(arg);
+            buf.append(arg.str(false));
         }
         buf.append(')');
         return buf.toString();

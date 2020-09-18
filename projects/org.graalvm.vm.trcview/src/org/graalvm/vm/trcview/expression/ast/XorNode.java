@@ -32,8 +32,27 @@ public class XorNode extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "(" + left + " ^ " + right + ")";
+    protected String str(boolean par) {
+        String l;
+        String r;
+
+        if (left instanceof XorNode) {
+            l = left.str(false);
+        } else {
+            l = left.str(true);
+        }
+
+        if (right instanceof XorNode) {
+            r = right.str(false);
+        } else {
+            r = right.str(true);
+        }
+
+        if (par) {
+            return "(" + l + " ^ " + r + ")";
+        } else {
+            return l + " ^ " + r;
+        }
     }
 
     @Override

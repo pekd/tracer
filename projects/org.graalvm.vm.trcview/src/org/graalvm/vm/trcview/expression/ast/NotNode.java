@@ -33,8 +33,8 @@ public class NotNode extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "!" + child;
+    protected String str(boolean par) {
+        return "!" + child.str(true);
     }
 
     @Override

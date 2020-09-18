@@ -22,7 +22,7 @@ public class ValueNode extends Expression {
     }
 
     @Override
-    public String toString() {
+    protected String str(boolean par) {
         return Long.toString(value);
     }
 

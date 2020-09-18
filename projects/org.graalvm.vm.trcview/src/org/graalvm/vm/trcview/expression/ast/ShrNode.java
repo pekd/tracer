@@ -32,8 +32,12 @@ public class ShrNode extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "(" + left + " >>> " + right + ")";
+    protected String str(boolean par) {
+        if (par) {
+            return "(" + left.str(true) + " >>> " + right.str(true) + ")";
+        } else {
+            return left.str(true) + " >>> " + right.str(true);
+        }
     }
 
     @Override
