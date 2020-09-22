@@ -51,6 +51,7 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
  * type      = basic { "*" ["const"] } ["$out" | "$dec" | "$hex" | "$char"] .
  * basic     = ["const"]
  *           ( ["unsigned" | "signed"] integer
+ *           | fractional
  *           | "u8"
  *           | "s8"
  *           | "u16"
@@ -63,9 +64,12 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
  *           [ "<" rexpr ">" ]
  *           .
  * integer   = "char"
- *           | "short"
+ *           | "short" [ "int" ]
  *           | "int"
- *           | "long"
+ *           | "long" [ "int" ]
+ *           .
+ * fractional= "float"
+ *           | "double"
  *           .
  * rexpr     = and .
  *
@@ -322,12 +326,18 @@ public class Parser {
                     return new Type(DataType.U8, isConst);
                 case SHORT:
                     scan();
+                    if (sym == TokenType.INT) {
+                        scan();
+                    }
                     return new Type(DataType.U16, isConst);
                 case INT:
                     scan();
                     return new Type(DataType.U32, isConst);
                 case LONG:
                     scan();
+                    if (sym == TokenType.INT) {
+                        scan();
+                    }
                     return new Type(DataType.U64, isConst);
                 default:
                     error("unexpected token " + sym);
@@ -340,12 +350,18 @@ public class Parser {
                     return new Type(DataType.S8, isConst);
                 case SHORT:
                     scan();
+                    if (sym == TokenType.INT) {
+                        scan();
+                    }
                     return new Type(DataType.S16, isConst);
                 case INT:
                     scan();
                     return new Type(DataType.S32, isConst);
                 case LONG:
                     scan();
+                    if (sym == TokenType.INT) {
+                        scan();
+                    }
                     return new Type(DataType.S64, isConst);
                 default:
                     error("unexpected token " + sym);
