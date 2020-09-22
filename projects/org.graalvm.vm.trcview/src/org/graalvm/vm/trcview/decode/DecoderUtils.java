@@ -237,7 +237,7 @@ public class DecoderUtils {
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                     case RAD50:
-                        return "/" + Radix50.decode((short) val) + "/";
+                        return "\\" + Radix50.decode((short) val) + "\\";
                 }
             case S16:
                 switch (repr) {
@@ -255,7 +255,7 @@ public class DecoderUtils {
                     case HEX:
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                     case RAD50:
-                        return "/" + Radix50.decode((short) val) + "/";
+                        return "\\" + Radix50.decode((short) val) + "\\";
                 }
             case U32:
                 switch (repr) {
@@ -273,9 +273,11 @@ public class DecoderUtils {
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
                     case RAD50:
-                        return "/" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "/";
+                        return "\\" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "\\";
                     case FX32:
                         return "FX32_CONST(" + Fx32.toDouble((int) val) + ")";
+                    case FLOAT:
+                        return Float.intBitsToFloat((int) val) + "f";
                 }
             case S32:
                 switch (repr) {
@@ -293,9 +295,11 @@ public class DecoderUtils {
                     case HEX:
                         return "0x" + Integer.toUnsignedString((int) val, 16);
                     case RAD50:
-                        return "/" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "/";
+                        return "\\" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "\\";
                     case FX32:
                         return "FX32_CONST(" + Fx32.toDouble((int) val) + ")";
+                    case FLOAT:
+                        return Float.intBitsToFloat((int) val) + "f";
                 }
             case U64:
                 switch (repr) {
@@ -312,6 +316,8 @@ public class DecoderUtils {
                         return "0" + Long.toUnsignedString(val, 8);
                     case HEX:
                         return "0x" + Long.toUnsignedString(val, 16);
+                    case FLOAT:
+                        return Double.toString(Double.longBitsToDouble(val));
                 }
             case S64:
                 switch (repr) {
@@ -328,6 +334,48 @@ public class DecoderUtils {
                         return "0" + Long.toString(val, 8);
                     case HEX:
                         return "0x" + Long.toUnsignedString(val, 16);
+                    case FLOAT:
+                        return Double.toString(Double.longBitsToDouble(val));
+                }
+            case F32:
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    case DEC:
+                        return Integer.toString((int) val);
+                    case OCT:
+                        return "0" + Integer.toOctalString((int) val);
+                    case HEX:
+                        return "0x" + Integer.toUnsignedString((int) val, 16);
+                    case RAD50:
+                        return "\\" + Radix50.decode((short) val) + Radix50.decode((short) (val >> 16)) + "\\";
+                    case FX32:
+                        return "FX32_CONST(" + Fx32.toDouble((int) val) + ")";
+                    default:
+                    case FLOAT:
+                        return Float.intBitsToFloat((int) val) + "f";
+                }
+            case F64:
+                switch (repr) {
+                    case CHAR:
+                        if (Short.toUnsignedInt((short) val) < 0x100) {
+                            return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
+                        } else {
+                            return Short.toString((short) val);
+                        }
+                    case DEC:
+                        return Long.toString(val);
+                    case OCT:
+                        return "0" + Long.toString(val, 8);
+                    case HEX:
+                        return "0x" + Long.toUnsignedString(val, 16);
+                    default:
+                    case FLOAT:
+                        return Double.toString(Double.longBitsToDouble(val));
                 }
             case STRUCT:
                 return "/* struct */";

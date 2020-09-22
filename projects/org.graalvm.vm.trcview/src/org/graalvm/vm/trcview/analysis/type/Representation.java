@@ -5,6 +5,7 @@ public enum Representation {
     OCT,
     HEX,
     CHAR,
+    FLOAT,
     RAD50,
     FX32,
     STRING;

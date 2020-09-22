@@ -12,5 +12,9 @@ public enum DataType {
     S16,
     S32,
     S64,
-    STRUCT
+    F32,
+    F64,
+    STRUCT,
+    UNION,
+    USER
 }

@@ -90,9 +90,11 @@ public class Type {
                 return 2;
             case U32:
             case S32:
+            case F32:
                 return 4;
             case U64:
             case S64:
+            case F64:
                 return 8;
             case STRUCT:
                 return struct.getSize();
@@ -106,6 +108,9 @@ public class Type {
                 return Representation.HEX;
             case STRING:
                 return Representation.STRING;
+            case F32:
+            case F64:
+                return Representation.FLOAT;
             default:
                 return Representation.DEC;
         }
@@ -148,6 +153,9 @@ public class Type {
                 case FX32:
                     reprstr = " $fx32";
                     break;
+                case FLOAT:
+                    reprstr = " $float";
+                    break;
             }
         } else if (type == DataType.PTR && pointee.getType() == DataType.S8 && representation == Representation.HEX) {
             // special handling for strings (char*) which were declared as $out
@@ -174,6 +182,10 @@ public class Type {
                 return conststr + "u64" + exprstr + reprstr;
             case S64:
                 return conststr + "s64" + exprstr + reprstr;
+            case F32:
+                return conststr + "f32" + exprstr + reprstr;
+            case F64:
+                return conststr + "f64" + exprstr + reprstr;
             case PTR:
                 if (isConst) {
                     return pointee.toString() + "* const" + exprstr + reprstr;
@@ -207,6 +219,10 @@ public class Type {
                 return "unsigned __int64";
             case S64:
                 return "__int64";
+            case F32:
+                return "float";
+            case F64:
+                return "double";
             case PTR:
                 if (isConst) {
                     return pointee.toCType() + "* const";

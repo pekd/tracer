@@ -125,6 +125,12 @@ public class Parser {
                 case "long":
                     la = new Token(TokenType.LONG);
                     break;
+                case "float":
+                    la = new Token(TokenType.FLOAT);
+                    break;
+                case "double":
+                    la = new Token(TokenType.DOUBLE);
+                    break;
                 case "u8":
                 case "uint8_t":
                     la = new Token(TokenType.U8);
@@ -158,6 +164,12 @@ public class Parser {
                 case "int64_t":
                 case "ssize_t":
                     la = new Token(TokenType.S64);
+                    break;
+                case "f32":
+                    la = new Token(TokenType.F32);
+                    break;
+                case "f64":
+                    la = new Token(TokenType.F64);
                     break;
                 case "void":
                     la = new Token(TokenType.VOID);
@@ -284,6 +296,10 @@ public class Parser {
                     scan();
                     type.setRepresentation(Representation.FX32);
                     break;
+                case "$float":
+                    scan();
+                    type.setRepresentation(Representation.FLOAT);
+                    break;
                 default:
                     return type;
             }
@@ -338,6 +354,20 @@ public class Parser {
         }
     }
 
+    private Type fractional(boolean isConst) throws ParseException {
+        switch (sym) {
+            case FLOAT:
+                scan();
+                return new Type(DataType.F32, isConst);
+            case DOUBLE:
+                scan();
+                return new Type(DataType.F64, isConst);
+            default:
+                error("unexpected token " + sym);
+                throw new AssertionError("unreachable");
+        }
+    }
+
     private Type basic() throws ParseException {
         boolean isConst = false;
         if (sym == TokenType.CONST) {
@@ -353,6 +383,9 @@ public class Parser {
             case INT:
             case LONG:
                 return integer(isConst);
+            case FLOAT:
+            case DOUBLE:
+                return fractional(isConst);
             case U8:
                 scan();
                 return new Type(DataType.U8, isConst);
@@ -377,6 +410,12 @@ public class Parser {
             case S64:
                 scan();
                 return new Type(DataType.S64, isConst);
+            case F32:
+                scan();
+                return new Type(DataType.F32, isConst);
+            case F64:
+                scan();
+                return new Type(DataType.F64, isConst);
             case VOID:
                 scan();
                 return new Type(DataType.VOID);
