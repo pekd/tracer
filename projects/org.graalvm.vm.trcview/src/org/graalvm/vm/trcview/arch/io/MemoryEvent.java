@@ -7,6 +7,7 @@ import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.HexFormatter;
+import org.graalvm.vm.util.OctFormatter;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
@@ -20,6 +21,8 @@ public class MemoryEvent extends Event {
     private final byte size;
     private final long value64;
     private final Vector128 value128;
+
+    private MemoryEvent next = null;
 
     private static byte be(boolean value) {
         return value ? FLAG_BE : 0;
@@ -97,6 +100,14 @@ public class MemoryEvent extends Event {
         return value128;
     }
 
+    public void setNext(MemoryEvent next) {
+        this.next = next;
+    }
+
+    public MemoryEvent getNext() {
+        return next;
+    }
+
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
         out.write64bit(address);
@@ -161,5 +172,76 @@ public class MemoryEvent extends Event {
             val.append(", '").append(str).append("'");
         }
         return "Memory access to 0x" + HexFormatter.tohex(address, 16) + ": " + (!isWrite() ? "read" : "write") + " " + size + (size > 1 ? " bytes" : " byte") + (hasData() ? " (" + val + ")" : "");
+    }
+
+    public String info() {
+        StepFormat fmt = getArchitecture().getFormat();
+        StringBuilder val = new StringBuilder();
+        String addr = fmt.formatAddress(address);
+        if (fmt.numberfmt == StepFormat.NUMBERFMT_OCT) {
+            String str = null;
+            val.append("0");
+            if (hasData()) {
+                switch (size) {
+                    case 1:
+                        str = Stringify.i8((byte) value64);
+                        val.append(OctFormatter.tooct(value64, 2));
+                        break;
+                    case 2:
+                        str = Stringify.i16((short) value64);
+                        val.append(OctFormatter.tooct(value64, 4));
+                        break;
+                    case 4:
+                        str = Stringify.i32((int) value64);
+                        val.append(OctFormatter.tooct(value64, 8));
+                        break;
+                    case 8:
+                        str = Stringify.i64(value64);
+                        val.append(OctFormatter.tooct(value64, 16));
+                        break;
+                    case 16:
+                        str = Stringify.i128(value128);
+                        val.append(OctFormatter.tooct(value128.getI64(0), 16));
+                        val.append(" ");
+                        val.append(OctFormatter.tooct(value128.getI64(1), 16));
+                        break;
+                }
+            }
+            if (str != null) {
+                val.append(", '").append(str).append("'");
+            }
+        } else {
+            String str = null;
+            val.append("0x");
+            if (hasData()) {
+                switch (size) {
+                    case 1:
+                        str = Stringify.i8((byte) value64);
+                        val.append(HexFormatter.tohex(value64, 2));
+                        break;
+                    case 2:
+                        str = Stringify.i16((short) value64);
+                        val.append(HexFormatter.tohex(value64, 4));
+                        break;
+                    case 4:
+                        str = Stringify.i32((int) value64);
+                        val.append(HexFormatter.tohex(value64, 8));
+                        break;
+                    case 8:
+                        str = Stringify.i64(value64);
+                        val.append(HexFormatter.tohex(value64, 16));
+                        break;
+                    case 16:
+                        str = Stringify.i128(value128);
+                        val.append(HexFormatter.tohex(value128.getI64(0), 16));
+                        val.append(HexFormatter.tohex(value128.getI64(1), 16));
+                        break;
+                }
+            }
+            if (str != null) {
+                val.append(", '").append(str).append("'");
+            }
+        }
+        return addr + ": " + (!isWrite() ? "READ " : "WRITE") + " " + size + (size > 1 ? " bytes" : " byte ") + (hasData() ? " (" + val + ")" : "");
     }
 }

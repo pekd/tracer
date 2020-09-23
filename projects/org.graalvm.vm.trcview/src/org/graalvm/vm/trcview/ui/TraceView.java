@@ -90,6 +90,7 @@ public class TraceView extends JPanel implements StepListenable {
     private StateView state;
     private InstructionView insns;
     private MemoryView mem;
+    private MemoryAccessView memaccess;
     private MemoryHistoryView memhistory;
     private IoView io;
     private StraceView strace;
@@ -113,11 +114,6 @@ public class TraceView extends JPanel implements StepListenable {
         changeListeners = new ArrayList<>();
         stepListeners = new ArrayList<>();
 
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("strace", strace = new StraceView(this::jump));
-        tabs.addTab("writes", memhistory = new MemoryHistoryView(status));
-        tabs.addTab("I/O", io = new IoView());
-
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         JSplitPane rightBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightBottomSplit.setTopComponent(mem = new MemoryView(status, this::jump));
@@ -128,6 +124,13 @@ public class TraceView extends JPanel implements StepListenable {
         rightSplit.setResizeWeight(0.5);
         JSplitPane content = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         JSplitPane center = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("strace", strace = new StraceView(this::jump));
+        tabs.addTab("memory", memaccess = new MemoryAccessView(mem));
+        tabs.addTab("writes", memhistory = new MemoryHistoryView(status));
+        tabs.addTab("I/O", io = new IoView());
+
         center.setTopComponent(insns = new InstructionView(status, position));
         center.setBottomComponent(tabs);
         center.setResizeWeight(0.75);
@@ -203,6 +206,7 @@ public class TraceView extends JPanel implements StepListenable {
                     state.setState(step);
                 }
                 mem.setStep(step);
+                memaccess.setStep(step);
                 memhistory.setStep(step);
                 io.setStep(step);
                 strace.setStep(step);
@@ -230,6 +234,7 @@ public class TraceView extends JPanel implements StepListenable {
                 insns.set(node);
                 insns.select(node.getFirstNode());
                 mem.setStep(node.getFirstStep());
+                memaccess.setStep(node.getFirstStep());
                 memhistory.setStep(node.getFirstStep());
                 io.setStep(node.getFirstStep());
                 strace.setStep(node.getFirstStep());
@@ -246,6 +251,7 @@ public class TraceView extends JPanel implements StepListenable {
                     insns.set(parent);
                     insns.select(par);
                     mem.setStep(par.getHead());
+                    memaccess.setStep(par.getHead());
                     memhistory.setStep(par.getHead());
                     io.setStep(par.getHead());
                     strace.setStep(par.getHead());
@@ -483,6 +489,7 @@ public class TraceView extends JPanel implements StepListenable {
         insns.select(root.getFirstNode());
         state.setState(root.getFirstStep());
         mem.setStep(root.getFirstStep());
+        memaccess.setStep(root.getFirstStep());
         memhistory.setStep(root.getFirstStep());
         io.setStep(root.getFirstStep());
         strace.setStep(root.getFirstStep());

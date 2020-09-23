@@ -2,6 +2,7 @@ package org.graalvm.vm.trcview.analysis.memory;
 
 import java.util.List;
 
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 
 public interface Page {
@@ -9,13 +10,13 @@ public interface Page {
 
     byte[] getData();
 
-    void addUpdate(long addr, byte size, long value, long instructionCount, Node node, Node step, boolean be);
+    void addUpdate(long addr, byte size, long value, long instructionCount, Node node, StepEvent step, boolean be);
 
-    void addRead(long addr, byte size, long instructionCount, Node node, Node step);
+    void addRead(long addr, byte size, long instructionCount, Node node, StepEvent step);
 
-    void clear(long instructionCount, Node node, Node step);
+    void clear(long instructionCount, Node node, StepEvent step);
 
-    void overwrite(byte[] update, long instructionCount, Node node, Node step);
+    void overwrite(byte[] update, long instructionCount, Node node, StepEvent step);
 
     byte getByte(long addr, long instructionCount) throws MemoryNotMappedException;
 

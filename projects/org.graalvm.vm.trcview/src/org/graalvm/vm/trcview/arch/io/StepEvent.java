@@ -4,6 +4,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class StepEvent extends Event {
+    public MemoryEvent read;
+    public MemoryEvent write;
+
     protected StepEvent(short arch, int tid) {
         super(arch, STEP, tid);
     }
@@ -48,4 +51,34 @@ public abstract class StepEvent extends Event {
     public abstract CpuState getState();
 
     public abstract StepFormat getFormat();
+
+    public final void setRead(MemoryEvent evt) {
+        assert !evt.isWrite();
+        read = evt;
+    }
+
+    public final void addRead(MemoryEvent evt) {
+        assert !evt.isWrite();
+        evt.setNext(read);
+        read = evt;
+    }
+
+    public final MemoryEvent getRead() {
+        return read;
+    }
+
+    public final void setWrite(MemoryEvent evt) {
+        assert evt.isWrite();
+        write = evt;
+    }
+
+    public final void addWrite(MemoryEvent evt) {
+        assert evt.isWrite();
+        evt.setNext(write);
+        write = evt;
+    }
+
+    public final MemoryEvent getWrite() {
+        return write;
+    }
 }

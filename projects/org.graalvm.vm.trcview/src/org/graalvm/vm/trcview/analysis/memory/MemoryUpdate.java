@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.analysis.memory;
 
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 
 public class MemoryUpdate {
@@ -9,9 +10,9 @@ public class MemoryUpdate {
     public final long value;
     public final long instructionCount;
     public final Node node;
-    public final Node step;
+    public final StepEvent step;
 
-    public MemoryUpdate(boolean be, long address, byte size, long value, long instructionCount, Node node, Node step) {
+    public MemoryUpdate(boolean be, long address, byte size, long value, long instructionCount, Node node, StepEvent step) {
         this.be = be;
         this.address = address;
         this.size = size;

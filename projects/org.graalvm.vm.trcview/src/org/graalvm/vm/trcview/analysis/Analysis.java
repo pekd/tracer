@@ -85,7 +85,6 @@ public class Analysis {
 
     private SymbolTable symbols;
     private StepEvent lastStep;
-    private Node lastStepNode;
 
     private NavigableMap<Long, Symbol> symbolTable;
     private NavigableMap<Long, MappedFile> mappedFiles;
@@ -103,7 +102,7 @@ public class Analysis {
     private List<Node> nodes;
     private boolean system;
 
-    private boolean leightweight = false;
+    private boolean leightweight = true;
 
     private List<Analyzer> analyzers;
 
@@ -128,7 +127,6 @@ public class Analysis {
 
     public void start() {
         lastStep = null;
-        lastStepNode = null;
         steps = 0;
         idcnt = 0;
         for (Analyzer analyzer : analyzers) {
@@ -142,7 +140,7 @@ public class Analysis {
             node.setId(idcnt++);
             nodes.add(node);
         } else {
-            idcnt++;
+            node.setId(idcnt++);
         }
     }
 
@@ -194,7 +192,6 @@ public class Analysis {
                 symbols.visit(node);
             }
             lastStep = step;
-            lastStepNode = node;
         } else if (event instanceof SymbolTableEvent) {
             SymbolTableEvent symtab = (SymbolTableEvent) event;
             symbolTable.putAll(symtab.getSymbols());
@@ -220,9 +217,9 @@ public class Analysis {
             if (mmap.getResult() >= 0) {
                 mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
                 if (mmap.getData() != null) {
-                    memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node, lastStepNode);
+                    memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node, lastStep);
                 } else {
-                    memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node, lastStepNode);
+                    memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node, lastStep);
                 }
             }
         } else if (event instanceof MemoryEvent) {
@@ -236,15 +233,15 @@ public class Analysis {
                 boolean be = memevent.isBigEndian();
                 if (memevent.getSize() <= 8) {
                     long value = memevent.getValue();
-                    memory.write(addr, (byte) memevent.getSize(), value, insn, node, lastStepNode, be);
+                    memory.write(addr, (byte) memevent.getSize(), value, insn, node, lastStep, be);
                 } else if (memevent.getSize() == 16) {
                     Vector128 value = memevent.getVector();
                     if (be) {
-                        memory.write(addr, (byte) 8, value.getI64(0), insn, node, lastStepNode, true);
-                        memory.write(addr + 8, (byte) 8, value.getI64(1), insn, node, lastStepNode, true);
+                        memory.write(addr, (byte) 8, value.getI64(0), insn, node, lastStep, true);
+                        memory.write(addr + 8, (byte) 8, value.getI64(1), insn, node, lastStep, true);
                     } else {
-                        memory.write(addr, (byte) 8, value.getI64(1), insn, node, lastStepNode, false);
-                        memory.write(addr + 8, (byte) 8, value.getI64(0), insn, node, lastStepNode, false);
+                        memory.write(addr, (byte) 8, value.getI64(1), insn, node, lastStep, false);
+                        memory.write(addr + 8, (byte) 8, value.getI64(0), insn, node, lastStep, false);
                     }
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
@@ -256,10 +253,10 @@ public class Analysis {
                 }
                 long addr = memevent.getAddress();
                 if (memevent.getSize() <= 8) {
-                    memory.read(addr, (byte) memevent.getSize(), insn, node, lastStepNode);
+                    memory.read(addr, (byte) memevent.getSize(), insn, node, lastStep);
                 } else if (memevent.getSize() == 16) {
-                    memory.read(addr, (byte) 8, insn, node, lastStepNode);
-                    memory.read(addr + 8, (byte) 8, insn, node, lastStepNode);
+                    memory.read(addr, (byte) 8, insn, node, lastStep);
+                    memory.read(addr + 8, (byte) 8, insn, node, lastStep);
                 } else {
                     throw new AssertionError("unknown size: " + memevent.getSize());
                 }
@@ -275,10 +272,10 @@ public class Analysis {
             int i;
             for (i = 0; i < data.length - 7; i += 8) {
                 long value = Endianess.get64bitLE(data, i);
-                memory.write(addr + i, (byte) 8, value, insn, node, lastStepNode, false);
+                memory.write(addr + i, (byte) 8, value, insn, node, lastStep, false);
             }
             for (; i < data.length; i++) {
-                memory.write(addr + i, (byte) 1, data[i], insn, node, lastStepNode, false);
+                memory.write(addr + i, (byte) 1, data[i], insn, node, lastStep, false);
             }
         } else if (event instanceof BrkEvent) {
             BrkEvent brk = (BrkEvent) event;
@@ -289,7 +286,7 @@ public class Analysis {
                 pc = lastStep.getPC();
                 insn = lastStep.getStep();
             }
-            memory.brk(newbrk, pc, insn, node, lastStepNode);
+            memory.brk(newbrk, pc, insn, node, lastStep);
         } else if (event instanceof IoEvent) {
             IoEvent evt = (IoEvent) event;
             int channel = evt.getChannel();

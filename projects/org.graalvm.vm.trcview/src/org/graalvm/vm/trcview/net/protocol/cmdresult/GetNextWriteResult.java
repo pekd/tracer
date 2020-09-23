@@ -3,6 +3,7 @@ package org.graalvm.vm.trcview.net.protocol.cmdresult;
 import java.io.IOException;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.trcview.net.protocol.cmd.Command;
@@ -36,7 +37,7 @@ public class GetNextWriteResult extends Result {
         long value = in.read64bit();
         int size = in.read();
         Node node = IO.readNode(in);
-        Node step = IO.readNode(in);
+        StepEvent step = (StepEvent) IO.readNode(in);
         write = new MemoryUpdate(BitTest.test(size, 0x80), addr, (byte) (size & 0x7F), value, insn, node, step);
     }
 

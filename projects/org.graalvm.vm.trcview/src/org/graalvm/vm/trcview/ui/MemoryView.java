@@ -383,21 +383,9 @@ public class MemoryView extends JPanel {
                 if (read != null) {
                     content += "\n\nNext read from this location:\n";
                     nextReadNode = read.step;
-                    if (read.step instanceof StepEvent) {
-                        StepEvent event = (StepEvent) read.step;
+                    if (read.step != null) {
+                        StepEvent event = read.step;
                         content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
-                    } else if (read.step != null) {
-                        StepEvent event = null;
-                        if (read.step instanceof BlockNode) {
-                            event = ((BlockNode) read.step).getHead();
-                        } else {
-                            event = (StepEvent) read.step;
-                        }
-                        if (event != null) {
-                            content += "0x" + HexFormatter.tohex(event.getPC(), 16) + ": " + event.getDisassembly() + " # instruction " + event.getStep();
-                        } else {
-                            content += "Read by the kernel";
-                        }
                     } else {
                         content += "Read by the kernel";
                     }

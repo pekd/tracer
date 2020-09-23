@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.Endianess;
 
@@ -41,28 +42,28 @@ public class CoarsePage implements Page {
     }
 
     @Override
-    public void addUpdate(long addr, byte size, long value, long instructionCount, Node node, Node step, boolean be) {
+    public void addUpdate(long addr, byte size, long value, long instructionCount, Node node, StepEvent step, boolean be) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
         updates.add(new MemoryUpdate(be, addr, size, value, instructionCount, node, step));
     }
 
     @Override
-    public void addRead(long addr, byte size, long instructionCount, Node node, Node step) {
+    public void addRead(long addr, byte size, long instructionCount, Node node, StepEvent step) {
         assert addr >= address && addr < (address + data.length);
         assert addr + size <= (address + data.length);
         reads.add(new MemoryRead(addr, size, instructionCount, node, step));
     }
 
     @Override
-    public void clear(long instructionCount, Node node, Node step) {
+    public void clear(long instructionCount, Node node, StepEvent step) {
         for (int i = 0; i < 4096; i += 8) {
             addUpdate(address + i, (byte) 8, 0, instructionCount, node, step, false);
         }
     }
 
     @Override
-    public void overwrite(byte[] update, long instructionCount, Node node, Node step) {
+    public void overwrite(byte[] update, long instructionCount, Node node, StepEvent step) {
         for (int i = 0; i < 4096; i += 8) {
             long value = Endianess.get64bitLE(update, i);
             addUpdate(address + i, (byte) 8, value, instructionCount, node, step, false);

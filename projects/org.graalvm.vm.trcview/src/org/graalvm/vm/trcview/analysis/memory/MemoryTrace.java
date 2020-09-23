@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
@@ -22,7 +23,7 @@ public class MemoryTrace {
         return address & 0xFFFFFFFFFFFFF000L;
     }
 
-    public void mmap(long address, long size, long pc, long instructionCount, Node node, Node step) {
+    public void mmap(long address, long size, long pc, long instructionCount, Node node, StepEvent step) {
         long addr = getPageAddress(address);
         long sz = size;
         sz += address - addr;
@@ -43,7 +44,7 @@ public class MemoryTrace {
         }
     }
 
-    public void mmap(long address, long size, byte[] data, long pc, long instructionCount, Node node, Node step) {
+    public void mmap(long address, long size, byte[] data, long pc, long instructionCount, Node node, StepEvent step) {
         long addr = getPageAddress(address);
         long sz = size;
         sz += address - addr;
@@ -87,7 +88,7 @@ public class MemoryTrace {
         }
     }
 
-    public void brk(long newbrk, long pc, long instructionCount, Node node, Node step) {
+    public void brk(long newbrk, long pc, long instructionCount, Node node, StepEvent step) {
         if (brk == -1) {
             brk = getPageAddress(newbrk);
             if (brk != newbrk) {
@@ -127,7 +128,7 @@ public class MemoryTrace {
         }
     }
 
-    public void write(long addr, byte size, long value, long instructionCount, Node node, Node step, boolean be) {
+    public void write(long addr, byte size, long value, long instructionCount, Node node, StepEvent step, boolean be) {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
             // segfault
@@ -167,7 +168,7 @@ public class MemoryTrace {
         }
     }
 
-    public void read(long addr, byte size, long instructionCount, Node node, Node step) {
+    public void read(long addr, byte size, long instructionCount, Node node, StepEvent step) {
         Page page = pages.get(getPageAddress(addr));
         if (page == null) {
             // segfault

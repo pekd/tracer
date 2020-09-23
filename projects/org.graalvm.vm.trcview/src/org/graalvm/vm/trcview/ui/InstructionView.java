@@ -511,15 +511,15 @@ public class InstructionView extends JPanel {
             if (node instanceof BlockNode) {
                 BlockNode block = (BlockNode) node;
                 c.setForeground(CALL_FG);
+                StepEvent head = block.getHead();
                 if (index > 0) {
                     Node prev = instructions.get(index - 1);
-                    StepEvent head = block.getHead();
                     if (!isSelected) {
                         highlight(head, prev, c);
                     }
-                    if (head != null && head.isSyscall()) {
-                        c.setForeground(SYSCALL_FG);
-                    }
+                }
+                if (head != null && head.isSyscall()) {
+                    c.setForeground(SYSCALL_FG);
                 }
                 if (block.isInterrupt()) {
                     c.setForeground(IRQ_FG);

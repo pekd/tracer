@@ -3,6 +3,7 @@ package org.graalvm.vm.trcview.net.protocol.cmdresult;
 import java.io.IOException;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.trcview.net.protocol.cmd.Command;
@@ -35,7 +36,7 @@ public class GetLastReadResult extends Result {
         long addr = in.read64bit();
         int size = in.read();
         Node node = IO.readNode(in);
-        Node step = IO.readNode(in);
+        StepEvent step = (StepEvent) IO.readNode(in);
         read = new MemoryRead(addr, (byte) size, insn, node, step);
     }
 
