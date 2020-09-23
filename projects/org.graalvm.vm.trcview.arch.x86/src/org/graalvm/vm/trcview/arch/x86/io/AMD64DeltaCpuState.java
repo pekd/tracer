@@ -13,6 +13,7 @@ public class AMD64DeltaCpuState extends AMD64CpuState {
 
     protected AMD64DeltaCpuState(int tid, byte[] machinecode, AMD64CpuState previous, StepRecord record, int mask) {
         super(tid, machinecode);
+        step = record.getInstructionCount();
         org.graalvm.vm.x86.isa.CpuState current = record.getState().getState();
         this.previous = previous;
         this.regMask = mask;
