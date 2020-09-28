@@ -817,6 +817,10 @@ public class AMD64InstructionDecoder {
                         byte imm = code.read8();
                         return new Orb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
+                    case 2: {
+                        byte imm = code.read8();
+                        return new Adcb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
+                    }
                     case 3: {
                         byte imm = code.read8();
                         return new Sbbb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
