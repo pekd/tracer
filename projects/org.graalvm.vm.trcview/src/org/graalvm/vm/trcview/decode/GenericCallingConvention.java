@@ -95,6 +95,8 @@ public class GenericCallingConvention extends CallingConvention {
             if (arg.getExpression() == null) {
                 if (j < getFixedArgumentCount()) {
                     result.add(getArgument(j++));
+                } else if (stackArguments == null) {
+                    result.add(null);
                 } else {
                     vars.put("arg_totalsize", totalsize);
                     vars.put("arg_id", id++);
