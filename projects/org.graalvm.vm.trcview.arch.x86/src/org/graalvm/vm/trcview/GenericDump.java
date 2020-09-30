@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -92,8 +94,8 @@ public class GenericDump {
     }
 
     public static void main(String[] args) throws IOException {
-        try (InputStream in = new FileInputStream(args[0]);
-                        OutputStream out = new FileOutputStream(args[1])) {
+        try (InputStream in = new BufferedInputStream(new FileInputStream(args[0]));
+                        OutputStream out = new BufferedOutputStream(new FileOutputStream(args[1]))) {
             byte[] header = new byte[6];
             in.read(header);
             ExecutionTraceReader reader = new ExecutionTraceReader(in);
