@@ -101,12 +101,14 @@ public class GenericDump {
             ExecutionTraceReader reader = new ExecutionTraceReader(in);
             GenericTrace<State> trc = new GenericTrace<>(out, State.class);
             trc.setLittleEndian();
+            long steps = 0;
             while (true) {
                 Record record = reader.read();
                 if (record == null) {
                     break;
                 }
                 if (record instanceof StepRecord) {
+                    steps++;
                     StepRecord step = (StepRecord) record;
                     State state = new State();
                     CpuState cpustate = step.getState().getState();
@@ -260,6 +262,7 @@ public class GenericDump {
                     break;
                 }
             }
+            System.out.println(steps + " steps");
         }
     }
 }
