@@ -10,6 +10,8 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.analysis.type.UserDefinedType;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.expression.Token.TokenType;
 import org.graalvm.vm.trcview.expression.ast.AddNode;
 import org.graalvm.vm.trcview.expression.ast.AndNode;
@@ -91,14 +93,22 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
  *           | "-" expr .
  */
 public class Parser {
-    private Scanner scanner;
+    private static final UserTypeDatabase EMPTY = new UserTypeDatabase();
+
+    private final Scanner scanner;
+    private final UserTypeDatabase userTypes;
 
     private Token t;
     private Token la;
     private TokenType sym;
 
     public Parser(String s) {
+        this(s, EMPTY);
+    }
+
+    public Parser(String s, UserTypeDatabase db) {
         scanner = new Scanner(s);
+        userTypes = db;
     }
 
     private static void error(String msg) throws ParseException {
@@ -453,9 +463,18 @@ public class Parser {
             case VOID:
                 scan();
                 return new Type(DataType.VOID);
-            case IDENT: // TODO: user defined types
+            case IDENT: {
                 scan();
-                return new Type(DataType.VOID);
+                UserDefinedType type = userTypes.get(t.str);
+                if (type == null) {
+                    error("Unknown type " + t.str);
+                }
+                if (type instanceof Struct) {
+                    return new Type((Struct) type, isConst);
+                } else {
+                    return new Type(DataType.VOID);
+                }
+            }
             default:
                 error("unexpected token " + sym);
                 throw new AssertionError("unreachable");

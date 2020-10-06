@@ -532,7 +532,7 @@ public class MainWindow extends JFrame {
             String input = JOptionPane.showInputDialog("Enter prototype:", prototype);
             if (input != null && input.trim().length() > 0) {
                 try {
-                    Parser parser = new Parser(input.trim());
+                    Parser parser = new Parser(input.trim(), trc.getTypeDatabase());
                     Function fun = parser.parsePrototype();
                     String name = fun.getName();
                     for (ComputedSymbol sym : trc.getSymbols()) {
@@ -981,7 +981,7 @@ public class MainWindow extends JFrame {
                 }
                 if (line.length() > 0) {
                     try {
-                        Parser parser = new Parser(line);
+                        Parser parser = new Parser(line, trc.getTypeDatabase());
                         Function fun = parser.parsePrototype();
                         List<ComputedSymbol> sym = syms.get(fun.getName());
                         if (sym != null) {
@@ -1427,7 +1427,7 @@ public class MainWindow extends JFrame {
                             String proto = data[1] + " f(" + data[2] + ")";
                             Function fun;
                             try {
-                                fun = new Parser(proto).parsePrototype();
+                                fun = new Parser(proto, trc.getTypeDatabase()).parsePrototype();
                             } catch (ParseException e) {
                                 log.info("Syntax error in line " + lineno + ": " + e.getMessage());
                                 setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
