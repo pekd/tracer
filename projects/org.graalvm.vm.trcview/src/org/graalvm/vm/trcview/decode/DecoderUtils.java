@@ -238,6 +238,8 @@ public class DecoderUtils {
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                     case RAD50:
                         return "\\" + Radix50.decode((short) val) + "\\";
+                    case FX16:
+                        return "FX16_CONST(" + Fx16.toDouble((short) val) + ")";
                 }
             case S16:
                 switch (repr) {
@@ -256,6 +258,8 @@ public class DecoderUtils {
                         return "0x" + Integer.toHexString(Short.toUnsignedInt((short) val));
                     case RAD50:
                         return "\\" + Radix50.decode((short) val) + "\\";
+                    case FX16:
+                        return "FX16_CONST(" + Fx16.toDouble((short) val) + ")";
                 }
             case U32:
                 switch (repr) {

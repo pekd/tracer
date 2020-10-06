@@ -70,6 +70,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
@@ -557,6 +558,11 @@ public class TextDump {
 
         @Override
         public void addABIChangeListener(ChangeListener l) {
+        }
+
+        @Override
+        public UserTypeDatabase getTypeDatabase() {
+            return null;
         }
     }
 }

@@ -27,6 +27,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
@@ -59,6 +60,7 @@ public class LocalDatabase implements TraceAnalyzer {
     private List<ChangeListener> commentChangeListeners;
     private List<SymbolRenameListener> symbolRenameListeners;
     private Expressions expressions;
+    private UserTypeDatabase types;
 
     public LocalDatabase(Architecture arch, BlockNode root, Analysis analysis) {
         this.arch = arch;
@@ -86,6 +88,7 @@ public class LocalDatabase implements TraceAnalyzer {
         symbolChangeListeners = new ArrayList<>();
         commentChangeListeners = new ArrayList<>();
         expressions = new Expressions();
+        types = new UserTypeDatabase();
     }
 
     @Override
@@ -421,5 +424,10 @@ public class LocalDatabase implements TraceAnalyzer {
 
     @Override
     public void addABIChangeListener(ChangeListener l) {
+    }
+
+    @Override
+    public UserTypeDatabase getTypeDatabase() {
+        return types;
     }
 }

@@ -7,6 +7,7 @@ public enum Representation {
     CHAR,
     FLOAT,
     RAD50,
+    FX16,
     FX32,
     STRING;
 }

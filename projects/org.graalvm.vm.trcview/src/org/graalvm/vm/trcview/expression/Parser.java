@@ -8,6 +8,7 @@ import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
+import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.expression.Token.TokenType;
 import org.graalvm.vm.trcview.expression.ast.AddNode;
@@ -37,18 +38,19 @@ import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.graalvm.vm.trcview.expression.ast.XorNode;
 
 /*
- * def       = ( "typedef" type ident ";" | struct | union ) .
+ * def       = ( "typedef" type ident array ";" | struct | union ) .
  * struct    = "struct" [ ident ] "{"
- *           { type ident ";" }
+ *           { type ident array ";" }
  *           "}" ";"
  *           .
  * union     = "union" [ ident ] "{"
- *           { type ident ";" }
+ *           { type ident array ";" }
  *           "}" ";"
  *           .
  *
+ * array     = [ "[" expr "]" ] .
  * prototype = type ident ["<" rexpr ">" ] "(" [ type [ ident ] { "," type [ ident ] } ] ")" .
- * type      = basic { "*" ["const"] } ["$out" | "$dec" | "$hex" | "$char"] .
+ * type      = basic { "*" ["const"] } ["$out" | "$dec" | "$hex" | "$char" | "$fx16" | "$fx32" | "$rad50" | "$float"] .
  * basic     = ["const"]
  *           ( ["unsigned" | "signed"] integer
  *           | fractional
@@ -175,6 +177,12 @@ public class Parser {
                 case "f64":
                     la = new Token(TokenType.F64);
                     break;
+                case "fx16":
+                    la = new Token(TokenType.FX16);
+                    break;
+                case "fx32":
+                    la = new Token(TokenType.FX32);
+                    break;
                 case "void":
                     la = new Token(TokenType.VOID);
                     break;
@@ -295,6 +303,10 @@ public class Parser {
                 case "$rad50":
                     scan();
                     type.setRepresentation(Representation.RAD50);
+                    break;
+                case "$fx16":
+                    scan();
+                    type.setRepresentation(Representation.FX16);
                     break;
                 case "$fx32":
                     scan();
@@ -432,6 +444,12 @@ public class Parser {
             case F64:
                 scan();
                 return new Type(DataType.F64, isConst);
+            case FX16:
+                scan();
+                return new Type(DataType.FX16, isConst);
+            case FX32:
+                scan();
+                return new Type(DataType.FX32, isConst);
             case VOID:
                 scan();
                 return new Type(DataType.VOID);
@@ -442,6 +460,47 @@ public class Parser {
                 error("unexpected token " + sym);
                 throw new AssertionError("unreachable");
         }
+    }
+
+    public Struct parseStruct() throws ParseException {
+        scan();
+        Struct struct = struct();
+        if (sym == TokenType.SEMICOLON) {
+            scan();
+        }
+        check(TokenType.EOF);
+        return struct;
+    }
+
+    private Struct struct() throws ParseException {
+        check(TokenType.STRUCT);
+        check(TokenType.IDENT);
+        String name = t.str;
+        check(TokenType.LBRACE);
+        Struct struct = new Struct(name);
+        while (sym != TokenType.RBRACE) {
+            Type type = type();
+            check(TokenType.IDENT);
+            String field = t.str;
+            long array = array();
+            type.setElements(array);
+            check(TokenType.SEMICOLON);
+            struct.add(field, type);
+        }
+        check(TokenType.RBRACE);
+        return struct;
+    }
+
+    private long array() throws ParseException {
+        if (sym != TokenType.LBRACK) {
+            return -1;
+        } else {
+            scan();
+        }
+        check(TokenType.NUMBER);
+        long val = t.value;
+        check(TokenType.RBRACK);
+        return val;
     }
 
     public Expression parseExpression() throws ParseException {

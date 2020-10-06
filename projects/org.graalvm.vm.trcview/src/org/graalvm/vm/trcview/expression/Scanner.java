@@ -47,7 +47,7 @@ public class Scanner {
 
     public Token next() throws ParseException {
         int c = read();
-        while (c == ' ' || c == '\r' || c == '\n') {
+        while (c == ' ' || c == '\r' || c == '\n' || c == '\t') {
             c = read();
         }
 
@@ -125,8 +125,18 @@ public class Scanner {
                 return new Token(TokenType.LPAR);
             case ')':
                 return new Token(TokenType.RPAR);
+            case '{':
+                return new Token(TokenType.LBRACE);
+            case '}':
+                return new Token(TokenType.RBRACE);
+            case '[':
+                return new Token(TokenType.LBRACK);
+            case ']':
+                return new Token(TokenType.RBRACK);
             case ',':
                 return new Token(TokenType.COMMA);
+            case ';':
+                return new Token(TokenType.SEMICOLON);
             case '&':
                 c = read();
                 if (c == '&') {

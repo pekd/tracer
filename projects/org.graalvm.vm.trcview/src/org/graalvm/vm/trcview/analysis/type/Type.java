@@ -9,6 +9,7 @@ public class Type {
     private final DataType type;
     private final Type pointee;
     private final Struct struct;
+    private long elements;
     private Representation representation;
     private Expression expr;
 
@@ -17,11 +18,16 @@ public class Type {
     }
 
     public Type(DataType type, boolean isConst) {
+        this(type, isConst, -1);
+    }
+
+    public Type(DataType type, boolean isConst, int elements) {
         this.type = type;
         this.pointee = null;
         this.struct = null;
         this.isConst = isConst;
         this.representation = getDefaultRepresentation();
+        this.elements = elements;
     }
 
     public Type(Struct struct) {
@@ -29,11 +35,16 @@ public class Type {
     }
 
     public Type(Struct struct, boolean isConst) {
+        this(struct, isConst, -1);
+    }
+
+    public Type(Struct struct, boolean isConst, int elements) {
         this.type = DataType.STRUCT;
         this.pointee = null;
         this.struct = struct;
         this.isConst = isConst;
         this.representation = getDefaultRepresentation();
+        this.elements = elements;
     }
 
     public Type(Type type) {
@@ -41,6 +52,10 @@ public class Type {
     }
 
     public Type(Type type, boolean isConst) {
+        this(type, isConst, type.elements);
+    }
+
+    public Type(Type type, boolean isConst, long elements) {
         this.type = DataType.PTR;
         this.pointee = type;
         this.struct = null;
@@ -50,6 +65,15 @@ public class Type {
         } else {
             this.representation = getDefaultRepresentation();
         }
+        this.elements = elements;
+    }
+
+    public void setElements(long elements) {
+        this.elements = elements;
+    }
+
+    public long getElements() {
+        return elements;
     }
 
     public void setRepresentation(Representation representation) {
@@ -74,7 +98,12 @@ public class Type {
         return isConst;
     }
 
-    public int getSize() {
+    public long getSize() {
+        long cnt = elements < 0 ? 1 : elements;
+        return getElementSize() * cnt;
+    }
+
+    public long getElementSize() {
         switch (type) {
             case VOID:
                 return 0;
@@ -87,10 +116,12 @@ public class Type {
                 return 1;
             case U16:
             case S16:
+            case FX16:
                 return 2;
             case U32:
             case S32:
             case F32:
+            case FX32:
                 return 4;
             case U64:
             case S64:
@@ -111,6 +142,10 @@ public class Type {
             case F32:
             case F64:
                 return Representation.FLOAT;
+            case FX16:
+                return Representation.FX16;
+            case FX32:
+                return Representation.FX32;
             default:
                 return Representation.DEC;
         }
@@ -150,6 +185,9 @@ public class Type {
                 case RAD50:
                     reprstr = " $rad50";
                     break;
+                case FX16:
+                    reprstr = " $fx16";
+                    break;
                 case FX32:
                     reprstr = " $fx32";
                     break;
@@ -165,7 +203,7 @@ public class Type {
             case VOID:
                 return "void";
             case STRING:
-                return "char*" + exprstr;
+                return conststr + "char*" + exprstr;
             case U8:
                 return conststr + "u8" + exprstr + reprstr;
             case S8:
@@ -186,12 +224,18 @@ public class Type {
                 return conststr + "f32" + exprstr + reprstr;
             case F64:
                 return conststr + "f64" + exprstr + reprstr;
+            case FX16:
+                return conststr + "fx16" + exprstr + reprstr;
+            case FX32:
+                return conststr + "fx32" + exprstr + reprstr;
             case PTR:
                 if (isConst) {
                     return pointee.toString() + "* const" + exprstr + reprstr;
                 } else {
                     return pointee.toString() + "*" + exprstr + reprstr;
                 }
+            case STRUCT:
+                return conststr + struct.getName();
             default:
                 return "/* unknown */";
         }
@@ -223,6 +267,10 @@ public class Type {
                 return "float";
             case F64:
                 return "double";
+            case FX16:
+                return "fx16";
+            case FX32:
+                return "fx32";
             case PTR:
                 if (isConst) {
                     return pointee.toCType() + "* const";

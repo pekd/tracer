@@ -25,6 +25,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
@@ -394,5 +395,10 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     @Override
     public void addABIChangeListener(ChangeListener l) {
         // TODO Auto-generated method stub
+    }
+
+    public UserTypeDatabase getTypeDatabase() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

@@ -5,9 +5,11 @@ import static org.junit.Assert.assertEquals;
 import java.text.ParseException;
 
 import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Field;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
+import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.junit.Test;
@@ -106,5 +108,16 @@ public class TypeParserTest {
         assertEquals(DataType.PTR, proto.args.get(0).getType());
         assertEquals(Representation.HEX, proto.args.get(0).getRepresentation());
         assertEquals(new VariableNode("r0"), proto.args.get(0).getExpression());
+    }
+
+    @Test
+    public void primitiveArray() throws ParseException {
+        Parser p = new Parser("struct S { int x[4]; };");
+        Struct s = p.parseStruct();
+        Field x = s.getField("x");
+        assertEquals("x", x.getName());
+        assertEquals(4, x.getType().getElements());
+        assertEquals(16, x.getType().getSize());
+        assertEquals(DataType.S32, x.getType().getType());
     }
 }
