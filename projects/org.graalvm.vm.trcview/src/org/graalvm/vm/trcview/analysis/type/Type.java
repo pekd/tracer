@@ -9,6 +9,7 @@ public class Type {
     private final DataType type;
     private final Type pointee;
     private final Struct struct;
+    private final ArchitectureTypeInfo info;
     private long elements;
     private Representation representation;
     private Expression expr;
@@ -25,6 +26,7 @@ public class Type {
         this.type = type;
         this.pointee = null;
         this.struct = null;
+        this.info = null;
         this.isConst = isConst;
         this.representation = getDefaultRepresentation();
         this.elements = elements;
@@ -42,23 +44,25 @@ public class Type {
         this.type = DataType.STRUCT;
         this.pointee = null;
         this.struct = struct;
+        this.info = null;
         this.isConst = isConst;
         this.representation = getDefaultRepresentation();
         this.elements = elements;
     }
 
-    public Type(Type type) {
-        this(type, false);
+    public Type(Type type, ArchitectureTypeInfo info) {
+        this(type, false, info);
     }
 
-    public Type(Type type, boolean isConst) {
-        this(type, isConst, type.elements);
+    public Type(Type type, boolean isConst, ArchitectureTypeInfo info) {
+        this(type, isConst, -1, info);
     }
 
-    public Type(Type type, boolean isConst, long elements) {
+    public Type(Type type, boolean isConst, long elements, ArchitectureTypeInfo info) {
         this.type = DataType.PTR;
         this.pointee = type;
         this.struct = null;
+        this.info = info;
         this.isConst = isConst;
         if (type.getType() == DataType.U8 || type.getType() == DataType.S8) {
             this.representation = Representation.STRING;
@@ -109,8 +113,7 @@ public class Type {
                 return 0;
             case STRING:
             case PTR:
-                // TODO: pointer size depends on the architecture
-                return 8;
+                return info.getPointerSize();
             case U8:
             case S8:
                 return 1;

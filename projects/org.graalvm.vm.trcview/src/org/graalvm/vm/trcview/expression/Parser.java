@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
@@ -94,10 +95,11 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
  *           | "-" expr .
  */
 public class Parser {
-    private static final UserTypeDatabase EMPTY = new UserTypeDatabase();
+    private static final UserTypeDatabase EMPTY = new UserTypeDatabase(ArchitectureTypeInfo.LP64);
 
     private final Scanner scanner;
     private final UserTypeDatabase userTypes;
+    private final ArchitectureTypeInfo info;
 
     private Token t;
     private Token la;
@@ -110,6 +112,7 @@ public class Parser {
     public Parser(String s, UserTypeDatabase db) {
         scanner = new Scanner(s);
         userTypes = new UserTypeDatabase(db);
+        info = userTypes.getTypeInfo();
     }
 
     private static void error(String msg) throws ParseException {
@@ -275,9 +278,9 @@ public class Parser {
             scan();
             if (sym == TokenType.CONST) {
                 scan();
-                type = new Type(type, true);
+                type = new Type(type, true, info);
             } else {
-                type = new Type(type, false);
+                type = new Type(type, false, info);
             }
         }
         if (sym == TokenType.LT) {
@@ -352,16 +355,16 @@ public class Parser {
                     if (sym == TokenType.INT) {
                         scan();
                     }
-                    return new Type(DataType.U16, isConst);
+                    return new Type(info.getShortType(true), isConst);
                 case INT:
                     scan();
-                    return new Type(DataType.U32, isConst);
+                    return new Type(info.getIntType(true), isConst);
                 case LONG:
                     scan();
                     if (sym == TokenType.INT) {
                         scan();
                     }
-                    return new Type(DataType.U64, isConst);
+                    return new Type(info.getLongType(true), isConst);
                 default:
                     error("unexpected token " + sym);
                     throw new AssertionError("unreachable");
@@ -376,16 +379,16 @@ public class Parser {
                     if (sym == TokenType.INT) {
                         scan();
                     }
-                    return new Type(DataType.S16, isConst);
+                    return new Type(info.getShortType(false), isConst);
                 case INT:
                     scan();
-                    return new Type(DataType.S32, isConst);
+                    return new Type(info.getIntType(false), isConst);
                 case LONG:
                     scan();
                     if (sym == TokenType.INT) {
                         scan();
                     }
-                    return new Type(DataType.S64, isConst);
+                    return new Type(info.getLongType(false), isConst);
                 default:
                     error("unexpected token " + sym);
                     throw new AssertionError("unreachable");

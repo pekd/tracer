@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 import org.graalvm.vm.posix.elf.Elf;
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.EventParser;
@@ -88,6 +89,11 @@ public class AMD64 extends Architecture {
     @Override
     public boolean isTaggedState() {
         return true;
+    }
+
+    @Override
+    public ArchitectureTypeInfo getTypeInfo() {
+        return ArchitectureTypeInfo.LP64;
     }
 
     @Override

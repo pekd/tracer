@@ -7,12 +7,15 @@ import java.util.Map;
 public class UserTypeDatabase {
     private final UserTypeDatabase parent;
     private final Map<String, UserDefinedType> types = new HashMap<>();
+    private final ArchitectureTypeInfo info;
 
-    public UserTypeDatabase() {
+    public UserTypeDatabase(ArchitectureTypeInfo info) {
+        this.info = info;
         parent = null;
     }
 
     public UserTypeDatabase(UserTypeDatabase parent) {
+        this.info = parent.info;
         this.parent = parent;
     }
 
@@ -69,5 +72,9 @@ public class UserTypeDatabase {
 
     public Collection<UserDefinedType> getTypes() {
         return types.values();
+    }
+
+    public ArchitectureTypeInfo getTypeInfo() {
+        return info;
     }
 }

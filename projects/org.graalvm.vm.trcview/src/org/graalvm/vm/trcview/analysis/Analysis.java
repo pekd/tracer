@@ -58,6 +58,7 @@ import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.device.RegisterValue;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Type;
@@ -101,6 +102,7 @@ public class Analysis {
 
     private List<Node> nodes;
     private boolean system;
+    private ArchitectureTypeInfo info;
 
     private boolean leightweight = true;
 
@@ -123,6 +125,7 @@ public class Analysis {
         memory = new MemoryTrace();
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
+        info = arch.getTypeInfo();
     }
 
     public void start() {
@@ -360,8 +363,8 @@ public class Analysis {
                 case "main":
                     sym.prototype = new Prototype(new Type(DataType.S32),
                                     Arrays.asList(new Type(DataType.S32),
-                                                    new Type(new Type(DataType.STRING)),
-                                                    new Type(new Type(DataType.STRING))),
+                                                    new Type(new Type(DataType.STRING), info),
+                                                    new Type(new Type(DataType.STRING), info)),
                                     Arrays.asList("argc", "argv", "envp"));
                     break;
             }

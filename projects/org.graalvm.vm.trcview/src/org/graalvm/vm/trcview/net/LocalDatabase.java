@@ -88,7 +88,7 @@ public class LocalDatabase implements TraceAnalyzer {
         symbolChangeListeners = new ArrayList<>();
         commentChangeListeners = new ArrayList<>();
         expressions = new Expressions();
-        types = new UserTypeDatabase();
+        types = new UserTypeDatabase(arch.getTypeInfo());
     }
 
     @Override

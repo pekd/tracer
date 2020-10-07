@@ -80,7 +80,7 @@ public class Local implements TraceAnalyzer {
         comments = new Comments();
         expressions = new Expressions();
         highlighter = new Highlighter();
-        types = new UserTypeDatabase();
+        types = new UserTypeDatabase(arch.getTypeInfo());
     }
 
     @Override

@@ -101,6 +101,15 @@ public class DatatypeView extends JPanel {
             }
         });
 
+        KeyStroke f9 = KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f9, f9);
+        getActionMap().put(f9, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateTextView();
+            }
+        });
+
         types.addListSelectionListener(e -> {
             updateTextView();
         });

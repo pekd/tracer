@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 import org.graalvm.vm.posix.elf.Elf;
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.EventParser;
@@ -24,6 +25,7 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
 public class PDP11 extends Architecture {
     public static final short ID = Elf.EM_PDP11;
     public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_OCT, 6, 6, 2, false);
+    public static final ArchitectureTypeInfo TYPE_INFO = new ArchitectureTypeInfo(2, 2, 2, 4);
 
     private static final SyscallDecoder syscallDecoder = new GenericSyscallDecoder();
     private static final CallDecoder callDecoder = new GenericCallDecoder();
@@ -87,6 +89,11 @@ public class PDP11 extends Architecture {
     @Override
     public boolean isTaggedState() {
         return true;
+    }
+
+    @Override
+    public ArchitectureTypeInfo getTypeInfo() {
+        return TYPE_INFO;
     }
 
     @Override
