@@ -167,7 +167,6 @@ public class DatatypeView extends JPanel {
             try {
                 typeDatabase.rename(type, name);
                 update();
-                updateTextView();
             } catch (NameAlreadyUsedException ex) {
                 JOptionPane.showMessageDialog(this, "A type with name " + name + " exists already", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -190,6 +189,7 @@ public class DatatypeView extends JPanel {
         } else if (type instanceof Struct) {
             text.setText(((Struct) type).prettyprint() + ";");
             text.setEnabled(true);
+            text.setForeground(Color.BLACK);
         } else {
             text.setText("/* unsupported type */");
             text.setEnabled(false);
@@ -212,6 +212,7 @@ public class DatatypeView extends JPanel {
         } else {
             types.clearSelection();
         }
+        updateTextView();
     }
 
     public void setTypeDatabase(UserTypeDatabase db) {
