@@ -4,16 +4,20 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
+import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -21,8 +25,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 
 import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
+import org.graalvm.vm.trcview.analysis.type.NameValidator;
 import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.TypeAlias;
 import org.graalvm.vm.trcview.analysis.type.UserDefinedType;
@@ -39,8 +45,9 @@ public class DatatypeView extends JPanel {
 
     private UserTypeDatabase typeDatabase;
 
-    public DatatypeView(UserTypeDatabase db) {
+    public DatatypeView(UserTypeDatabase db, Consumer<String> status) {
         super(new BorderLayout());
+
         model = new Model();
         types = new JList<>(model);
         types.setCellRenderer(new Renderer());
@@ -63,42 +70,34 @@ public class DatatypeView extends JPanel {
         split.setRightComponent(new JScrollPane(text));
         add(BorderLayout.CENTER, split);
 
-        add.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog(this, "Enter type name:", "New type...", JOptionPane.PLAIN_MESSAGE);
-            if (name != null && name.trim().length() > 0) {
-                name = name.trim();
-                try {
-                    typeDatabase.add(new Struct(name));
-                    update();
-                } catch (NameAlreadyUsedException ex) {
-                    JOptionPane.showMessageDialog(this, "A type with name " + name + " exists already", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+        add.addActionListener(e -> create());
+        rename.addActionListener(e -> rename());
+        remove.addActionListener(e -> remove());
+
+        KeyStroke n = KeyStroke.getKeyStroke(KeyEvent.VK_N, 0);
+        left.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(n, n);
+        left.getActionMap().put(n, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                rename();
             }
         });
 
-        rename.addActionListener(e -> {
-            UserDefinedType type = types.getSelectedValue();
-            if (type == null) {
-                return;
-            }
-            String name = (String) JOptionPane.showInputDialog(this, "Enter type name:", "New type...", JOptionPane.PLAIN_MESSAGE, null, null, type.getName());
-            if (name != null && name.trim().length() > 0) {
-                name = name.trim();
-                try {
-                    typeDatabase.rename(type, name);
-                    update();
-                    updateTextView();
-                } catch (NameAlreadyUsedException ex) {
-                    JOptionPane.showMessageDialog(this, "A type with name " + name + " exists already", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+        KeyStroke ins = KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
+        left.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ins, ins);
+        left.getActionMap().put(ins, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                create();
             }
         });
 
-        remove.addActionListener(e -> {
-            UserDefinedType type = types.getSelectedValue();
-            if (type != null) {
-                typeDatabase.undefine(type.getName());
-                update();
+        KeyStroke del = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
+        left.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(del, del);
+        left.getActionMap().put(del, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                remove();
             }
         });
 
@@ -112,7 +111,7 @@ public class DatatypeView extends JPanel {
                 String def = text.getText().trim();
                 if (def.length() > 0) {
                     try {
-                        Struct struct = new Parser(def).parseStruct();
+                        Struct struct = new Parser(def, typeDatabase).parseStruct(false);
                         text.setForeground(Color.BLACK);
                         UserDefinedType type = types.getSelectedValue();
                         if (type == null || !(type instanceof Struct)) {
@@ -121,16 +120,66 @@ public class DatatypeView extends JPanel {
                         Struct s = (Struct) type;
                         s.set(struct);
                         types.repaint();
+                        status.accept("Struct parsed successfully");
                     } catch (ParseException ex) {
                         text.setForeground(Color.RED);
+                        status.accept("Parse error: " + ex.getMessage());
                     }
                 } else {
                     text.setForeground(Color.BLACK);
+                    status.accept("Ready");
                 }
             }
         });
 
         setTypeDatabase(db);
+    }
+
+    private void create() {
+        String name = JOptionPane.showInputDialog(this, "Enter type name:", "New type...", JOptionPane.PLAIN_MESSAGE);
+        if (name != null && name.trim().length() > 0) {
+            name = name.trim();
+            if (!NameValidator.isValidName(name)) {
+                JOptionPane.showMessageDialog(this, "Invalid name", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                typeDatabase.add(new Struct(name));
+                update();
+            } catch (NameAlreadyUsedException ex) {
+                JOptionPane.showMessageDialog(this, "A type with name " + name + " exists already", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void rename() {
+        UserDefinedType type = types.getSelectedValue();
+        if (type == null) {
+            return;
+        }
+        String name = (String) JOptionPane.showInputDialog(this, "Enter type name:", "New type...", JOptionPane.PLAIN_MESSAGE, null, null, type.getName());
+        if (name != null && name.trim().length() > 0) {
+            name = name.trim();
+            if (!NameValidator.isValidName(name)) {
+                JOptionPane.showMessageDialog(this, "Invalid name", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                typeDatabase.rename(type, name);
+                update();
+                updateTextView();
+            } catch (NameAlreadyUsedException ex) {
+                JOptionPane.showMessageDialog(this, "A type with name " + name + " exists already", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void remove() {
+        UserDefinedType type = types.getSelectedValue();
+        if (type != null) {
+            typeDatabase.undefine(type.getName());
+            update();
+        }
     }
 
     private void updateTextView() {

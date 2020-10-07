@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
@@ -108,7 +109,7 @@ public class Parser {
 
     public Parser(String s, UserTypeDatabase db) {
         scanner = new Scanner(s);
-        userTypes = db;
+        userTypes = new UserTypeDatabase(db);
     }
 
     private static void error(String msg) throws ParseException {
@@ -468,6 +469,7 @@ public class Parser {
                 UserDefinedType type = userTypes.get(t.str);
                 if (type == null) {
                     error("Unknown type " + t.str);
+                    throw new AssertionError("unreachable");
                 }
                 if (type instanceof Struct) {
                     return new Type((Struct) type, isConst);
@@ -482,8 +484,12 @@ public class Parser {
     }
 
     public Struct parseStruct() throws ParseException {
+        return parseStruct(true);
+    }
+
+    public Struct parseStruct(boolean add) throws ParseException {
         scan();
-        Struct struct = struct();
+        Struct struct = struct(add);
         if (sym == TokenType.SEMICOLON) {
             scan();
         }
@@ -491,12 +497,24 @@ public class Parser {
         return struct;
     }
 
-    private Struct struct() throws ParseException {
+    private Struct struct(boolean add) throws ParseException {
         check(TokenType.STRUCT);
         check(TokenType.IDENT);
         String name = t.str;
         check(TokenType.LBRACE);
         Struct struct = new Struct(name);
+        if (add) {
+            try {
+                userTypes.add(struct);
+            } catch (NameAlreadyUsedException e) {
+                UserDefinedType type = userTypes.get(name);
+                // allow empty struct definitions
+                if (!(type instanceof Struct) || !((Struct) type).getFields().isEmpty()) {
+                    error("Type name " + name + " is already used");
+                    throw new AssertionError("unreachable");
+                }
+            }
+        }
         while (sym != TokenType.RBRACE) {
             Type type = type();
             check(TokenType.IDENT);

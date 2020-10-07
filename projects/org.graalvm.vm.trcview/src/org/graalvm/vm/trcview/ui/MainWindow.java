@@ -60,6 +60,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,6 +95,10 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
+import org.graalvm.vm.trcview.analysis.type.Struct;
+import org.graalvm.vm.trcview.analysis.type.UserDefinedType;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.DerivedStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
@@ -1203,6 +1208,7 @@ public class MainWindow extends JFrame {
         String memhistory = null;
         Map<Integer, String> threadNames = new HashMap<>();
         Map<Integer, Long> threadInstructions = new HashMap<>();
+        Map<String, String> types = new HashMap<>();
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -1404,8 +1410,22 @@ public class MainWindow extends JFrame {
                             ok = false;
                             continue;
                         }
+                    } else if (everything && address.startsWith("TYPE")) {
+                        // data type
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid type");
+                            setStatus("Syntax error in line " + lineno + ": invalid type");
+                            ok = false;
+                            continue;
+                        }
+                        String name = address.substring(5);
+                        String value = data[0];
+                        types.put(name, value);
                     } else {
                         // symbol
+                        // first, flush all pending types
+                        defineTypes(types);
+                        // then, parse the symbol
                         long pc;
                         try {
                             pc = Long.parseUnsignedLong(address, 16);
@@ -1454,6 +1474,7 @@ public class MainWindow extends JFrame {
                     ok = false;
                 }
             }
+            defineTypes(types);
             if (reanalyze) {
                 reanalyze = false;
                 log.info("Reanalyzing visits...");
@@ -1507,6 +1528,38 @@ public class MainWindow extends JFrame {
         }
     }
 
+    private void defineTypes(Map<String, String> types) {
+        if (!types.isEmpty()) {
+            UserTypeDatabase db = trc.getTypeDatabase();
+            // create all structs
+            for (Entry<String, String> entry : types.entrySet()) {
+                if (entry.getValue().startsWith("struct")) {
+                    try {
+                        db.add(new Struct(entry.getKey()), true);
+                    } catch (NameAlreadyUsedException e) {
+                        log.info("Data type " + entry.getKey() + " already defined");
+                        setStatus("Data type " + entry.getKey() + " already defined");
+                    }
+                }
+            }
+            // add the struct bodies
+            for (Entry<String, String> entry : types.entrySet()) {
+                if (entry.getValue().startsWith("struct")) {
+                    Parser p = new Parser(entry.getValue(), db);
+                    try {
+                        Struct s = p.parseStruct();
+                        Struct defined = (Struct) db.get(entry.getKey());
+                        defined.set(s);
+                    } catch (ParseException e) {
+                        log.info("Syntax error in data type definition of " + entry.getKey());
+                        setStatus("Syntax error in data type definition of " + entry.getKey());
+                    }
+                }
+            }
+            types.clear();
+        }
+    }
+
     public void loadSession(File file) throws IOException {
         log.info("Loading session file " + file + "...");
         setStatus("Loading session file " + file + "...");
@@ -1531,11 +1584,17 @@ public class MainWindow extends JFrame {
 
     public void saveSession(File file, boolean everything) throws IOException {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file)))) {
+            if (everything) {
+                Collection<UserDefinedType> types = trc.getTypeDatabase().getTypes();
+                for (UserDefinedType type : types) {
+                    out.printf("TYPE:%s=%s\n", type.getName(), TextSerializer.encode(type.toString()));
+                }
+            }
             Set<ComputedSymbol> symbols = trc.getSubroutines();
             symbols.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(sym -> {
                 if (sym.prototype != null) {
                     out.printf("%x=%s\n", sym.address,
-                                    TextSerializer.encode(sym.name, sym.prototype.returnType.toString(), sym.prototype.args.stream().map(Object::toString).collect(Collectors.joining(", "))));
+                                    TextSerializer.encode(sym.name, sym.prototype.returnType.toString(), String.join(", ", sym.prototype.getArgumentsAsString())));
                 } else {
                     out.printf("%x=%s\n", sym.address, TextSerializer.encode(sym.name));
                 }

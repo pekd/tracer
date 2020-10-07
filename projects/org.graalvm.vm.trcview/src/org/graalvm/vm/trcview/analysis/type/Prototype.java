@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.analysis.type;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -24,6 +25,20 @@ public class Prototype {
         this.returnType = returnType;
         this.args = args;
         this.names = names;
+    }
+
+    public List<String> getArgumentsAsString() {
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < args.size(); i++) {
+            Type arg = args.get(i);
+            String name = names.get(i);
+            if (name != null) {
+                result.add(arg + " " + name);
+            } else {
+                result.add(arg.toString());
+            }
+        }
+        return result;
     }
 
     @Override
