@@ -125,6 +125,7 @@ import org.graalvm.vm.trcview.storage.TraceMetadata;
 import org.graalvm.vm.trcview.ui.TraceView.ThreadID;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.call.ABIEditor;
+import org.graalvm.vm.trcview.ui.data.DataDialog;
 import org.graalvm.vm.trcview.ui.data.DatatypeDialog;
 import org.graalvm.vm.trcview.ui.device.DeviceDialog;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
@@ -673,25 +674,36 @@ public class MainWindow extends JFrame {
         subviewMenu.setMnemonic('s');
         JMenuItem deviceWindow = new JMenuItem("Devices");
         deviceWindow.setMnemonic('D');
+        deviceWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK));
         deviceWindow.addActionListener(e -> {
             DeviceDialog dlg = new DeviceDialog(this, trc, view::jump, view);
             dlg.setVisible(true);
         });
         JMenuItem datatypeWindow = new JMenuItem("Datatypes");
         datatypeWindow.setMnemonic('a');
+        datatypeWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.SHIFT_DOWN_MASK));
         datatypeWindow.addActionListener(e -> {
             DatatypeDialog dlg = new DatatypeDialog(this, trc);
             dlg.setVisible(true);
         });
         JMenuItem abiWindow = new JMenuItem("ABI");
         abiWindow.setMnemonic('i');
+        abiWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.SHIFT_DOWN_MASK));
         abiWindow.addActionListener(e -> {
             ABIEditor dlg = new ABIEditor(this, trc);
             dlg.setVisible(true);
         });
-        subviewMenu.add(deviceWindow);
+        JMenuItem dataWindow = new JMenuItem("Data");
+        dataWindow.setMnemonic('i');
+        dataWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.SHIFT_DOWN_MASK));
+        dataWindow.addActionListener(e -> {
+            DataDialog dlg = new DataDialog(this, trc, view);
+            dlg.setVisible(true);
+        });
         subviewMenu.add(datatypeWindow);
         subviewMenu.add(abiWindow);
+        subviewMenu.add(dataWindow);
+        subviewMenu.add(deviceWindow);
         subviewMenu.setEnabled(false);
         viewMenu.add(subviewMenu);
 

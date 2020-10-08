@@ -1,6 +1,8 @@
 package org.graalvm.vm.trcview.ui.device;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -8,11 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -55,6 +60,16 @@ public class DeviceDialog extends JDialog {
         step.addStepListener(deviceView);
 
         add(BorderLayout.CENTER, split);
+
+        KeyStroke esc = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        deviceView.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(esc, esc);
+        deviceView.getActionMap().put(esc, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                step.removeStepListener(deviceView);
+                dispose();
+            }
+        });
 
         if (trc != null) {
             setTraceAnalyzer(trc);
