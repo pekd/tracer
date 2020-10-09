@@ -23,6 +23,8 @@ public class SyntheticSymbol implements Symbol {
     public int getType() {
         switch (sym.type) {
             default:
+            case DATA:
+            case UNKNOWN:
             case LOCATION:
                 return Symbol.NOTYPE;
             case SUBROUTINE:

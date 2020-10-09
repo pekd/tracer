@@ -138,6 +138,11 @@ public class LocalDatabase implements TraceAnalyzer {
         symbolRenameListeners.add(listener);
     }
 
+    @Override
+    public void removeSymbolRenameListener(SymbolRenameListener listener) {
+        symbolRenameListeners.remove(listener);
+    }
+
     protected void fireSymbolRenameEvent(ComputedSymbol sym) {
         for (SymbolRenameListener l : symbolRenameListeners) {
             try {
@@ -151,6 +156,11 @@ public class LocalDatabase implements TraceAnalyzer {
     @Override
     public void addSymbolChangeListener(ChangeListener listener) {
         symbolChangeListeners.add(listener);
+    }
+
+    @Override
+    public void removeSymbolChangeListener(ChangeListener listener) {
+        symbolChangeListeners.remove(listener);
     }
 
     @Override
@@ -336,6 +346,11 @@ public class LocalDatabase implements TraceAnalyzer {
     @Override
     public void addCommentChangeListener(ChangeListener l) {
         commentChangeListeners.add(l);
+    }
+
+    @Override
+    public void removeCommentChangeListener(ChangeListener l) {
+        commentChangeListeners.remove(l);
     }
 
     protected void fireCommentChanged() {

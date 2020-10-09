@@ -129,8 +129,18 @@ public class Local implements TraceAnalyzer {
     }
 
     @Override
+    public void removeSymbolRenameListener(SymbolRenameListener listener) {
+        symbols.removeSymbolRenameListener(listener);
+    }
+
+    @Override
     public void addSymbolChangeListener(ChangeListener listener) {
         symbolChangeListeners.add(listener);
+    }
+
+    @Override
+    public void removeSymbolChangeListener(ChangeListener listener) {
+        symbolChangeListeners.remove(listener);
     }
 
     @Override
@@ -330,6 +340,11 @@ public class Local implements TraceAnalyzer {
     @Override
     public void addCommentChangeListener(ChangeListener l) {
         commentChangeListeners.add(l);
+    }
+
+    @Override
+    public void removeCommentChangeListener(ChangeListener l) {
+        commentChangeListeners.remove(l);
     }
 
     protected void fireCommentChanged() {

@@ -92,7 +92,6 @@ import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.Analysis;
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
-import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
@@ -491,33 +490,7 @@ public class MainWindow extends JFrame {
             if (selected == null) {
                 return;
             }
-            String input = JOptionPane.showInputDialog("Enter name:", selected.name);
-            if (input != null) {
-                if (input.trim().length() > 0) {
-                    String name = input.trim();
-                    for (ComputedSymbol sym : trc.getSymbols()) {
-                        if (sym != selected && sym.name.equals(name)) {
-                            JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Rename symbol...", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
-                    }
-                    trc.renameSymbol(selected, name);
-                } else {
-                    // reset symbol name to default name
-                    SymbolName names = new SymbolName(trc.getArchitecture().getFormat());
-                    String name = null;
-                    switch (selected.type) {
-                        case SUBROUTINE:
-                            name = names.sub(selected.address);
-                            break;
-                        default:
-                        case LOCATION:
-                            name = names.loc(selected.address);
-                            break;
-                    }
-                    trc.renameSymbol(selected, name);
-                }
-            }
+            Utils.rename(selected, trc, this);
         });
         renameSymbol.setEnabled(false);
         editMenu.add(renameSymbol);
@@ -529,35 +502,7 @@ public class MainWindow extends JFrame {
             if (selected == null) {
                 return;
             }
-            String prototype;
-            if (selected.prototype != null) {
-                prototype = new Function(selected.name, selected.prototype).toString();
-            } else {
-                prototype = "void " + selected.name + "()";
-            }
-            String input = JOptionPane.showInputDialog("Enter prototype:", prototype);
-            if (input != null && input.trim().length() > 0) {
-                try {
-                    Parser parser = new Parser(input.trim(), trc.getTypeDatabase());
-                    Function fun = parser.parsePrototype();
-                    String name = fun.getName();
-                    for (ComputedSymbol sym : trc.getSymbols()) {
-                        if (sym != selected && sym.name.equals(name)) {
-                            JOptionPane.showMessageDialog(this, "Error: symbol " + name + " already exists", "Set function type...", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
-                    }
-                    if (!fun.getName().equals(selected.name)) {
-                        trc.renameSymbol(selected, fun.getName());
-                    }
-                    trc.setPrototype(selected, fun.getPrototype());
-                } catch (ParseException ex) {
-                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set function type...", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            } else if (input != null) {
-                trc.setPrototype(selected, null);
-            }
+            Utils.setFunctionType(selected, trc, this);
         });
         setFunctionType.setEnabled(false);
         editMenu.add(setFunctionType);
@@ -594,20 +539,7 @@ public class MainWindow extends JFrame {
             if (insn == null) {
                 return;
             }
-            String comment = trc.getCommentForPC(insn.getPC());
-            if (comment != null) {
-                String input = JOptionPane.showInputDialog("Enter comment:", comment);
-                if (input != null && input.trim().length() > 0) {
-                    trc.setCommentForPC(insn.getPC(), input.trim());
-                } else if (input != null) {
-                    trc.setCommentForPC(insn.getPC(), null);
-                }
-            } else {
-                String input = JOptionPane.showInputDialog("Enter comment:");
-                if (input != null && input.trim().length() > 0) {
-                    trc.setCommentForPC(insn.getPC(), input.trim());
-                }
-            }
+            Utils.setCommentPC(insn.getPC(), trc);
         });
         setCommentPC.setEnabled(false);
         editMenu.add(setCommentPC);
@@ -619,35 +551,7 @@ public class MainWindow extends JFrame {
             if (insn == null) {
                 return;
             }
-            String expr = trc.getExpression(insn.getPC());
-            if (expr != null) {
-                String input = JOptionPane.showInputDialog("Enter expression:", expr);
-                if (input != null && input.trim().length() > 0) {
-                    try {
-                        trc.setExpression(insn.getPC(), input.trim());
-                    } catch (ParseException ex) {
-                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set expression...", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                } else if (input != null) {
-                    try {
-                        trc.setExpression(insn.getPC(), null);
-                    } catch (ParseException ex) {
-                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set expression...", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                }
-            } else {
-                String input = JOptionPane.showInputDialog("Enter expression:");
-                if (input != null && input.trim().length() > 0) {
-                    try {
-                        trc.setExpression(insn.getPC(), input.trim());
-                    } catch (ParseException ex) {
-                        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Set expression...", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                }
-            }
+            Utils.setExpression(insn.getPC(), trc, this);
         });
         setExpression.setEnabled(false);
         editMenu.add(setExpression);

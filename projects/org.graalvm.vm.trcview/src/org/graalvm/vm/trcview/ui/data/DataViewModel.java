@@ -1,17 +1,42 @@
 package org.graalvm.vm.trcview.ui.data;
 
+import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.data.editor.EditorModel;
 import org.graalvm.vm.trcview.ui.data.editor.Line;
+import org.graalvm.vm.trcview.ui.event.ChangeListener;
 
-public class DataViewModel extends EditorModel {
+public class DataViewModel extends EditorModel implements ChangeListener, SymbolRenameListener {
+    public static final int NAME_WIDTH = 40;
+
     private TraceAnalyzer trc;
     private long step;
 
     private int maxlen = 80;
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
+        if (this.trc != null) {
+            this.trc.removeCommentChangeListener(this);
+            this.trc.removeSymbolChangeListener(this);
+            this.trc.removeSymbolRenameListener(this);
+        }
+
         this.trc = trc;
+        trc.addCommentChangeListener(this);
+        trc.addSymbolChangeListener(this);
+        trc.addSymbolRenameListener(this);
+
+        fireChangeEvent();
+    }
+
+    @Override
+    public void valueChanged() {
+        fireChangeEvent();
+    }
+
+    @Override
+    public void symbolRenamed(ComputedSymbol sym) {
         fireChangeEvent();
     }
 

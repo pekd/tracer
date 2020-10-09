@@ -226,8 +226,18 @@ public class Client implements TraceAnalyzer, Closeable {
     }
 
     @Override
+    public void removeSymbolRenameListener(SymbolRenameListener listener) {
+        symbolRenameListeners.remove(listener);
+    }
+
+    @Override
     public void addSymbolChangeListener(ChangeListener listener) {
         symbolChangeListeners.add(listener);
+    }
+
+    @Override
+    public void removeSymbolChangeListener(ChangeListener listener) {
+        symbolChangeListeners.remove(listener);
     }
 
     protected void fireSymbolRename(ComputedSymbol sym) {
@@ -510,6 +520,11 @@ public class Client implements TraceAnalyzer, Closeable {
     // TODO: implement the annotation related features
     @Override
     public void addCommentChangeListener(ChangeListener l) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void removeCommentChangeListener(ChangeListener l) {
         // TODO Auto-generated method stub
     }
 

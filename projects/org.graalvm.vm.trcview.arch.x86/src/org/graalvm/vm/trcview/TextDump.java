@@ -332,7 +332,15 @@ public class TextDump {
         }
 
         @Override
+        public void removeSymbolRenameListener(SymbolRenameListener listener) {
+        }
+
+        @Override
         public void addSymbolChangeListener(ChangeListener listener) {
+        }
+
+        @Override
+        public void removeSymbolChangeListener(ChangeListener listener) {
         }
 
         @Override
@@ -483,6 +491,10 @@ public class TextDump {
 
         @Override
         public void addCommentChangeListener(ChangeListener l) {
+        }
+
+        @Override
+        public void removeCommentChangeListener(ChangeListener l) {
         }
 
         @Override

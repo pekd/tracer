@@ -50,7 +50,9 @@ import org.graalvm.vm.util.HexFormatter;
 public class ComputedSymbol {
     public static enum Type {
         SUBROUTINE,
-        LOCATION;
+        LOCATION,
+        DATA,
+        UNKNOWN;
     }
 
     public String name;

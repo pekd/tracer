@@ -3,6 +3,7 @@ package org.graalvm.vm.trcview.ui.data;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -30,12 +31,17 @@ public class DataLine extends Line {
         StepFormat fmt = trc.getArchitecture().getFormat();
 
         List<Element> result = new ArrayList<>();
-        String label = StringUtils.pad("unk_" + fmt.formatShortAddress(addr), 40);
+        String label = "";
         String address = fmt.formatAddress(addr);
+
+        Symbol sym = trc.getSymbol(addr);
+        if (sym != null && sym.getValue() == addr) {
+            label = StringUtils.pad(sym.getName(), DataViewModel.NAME_WIDTH);
+        }
 
         result.add(new DefaultElement(address, Element.TYPE_COMMENT));
         result.add(new DefaultElement(" ", Element.TYPE_PLAIN));
-        result.add(new DefaultElement(label, Element.TYPE_IDENTIFIER));
+        result.add(new DefaultElement(StringUtils.pad(label, DataViewModel.NAME_WIDTH), Element.TYPE_IDENTIFIER));
         result.add(new DefaultElement(" ", Element.TYPE_PLAIN));
 
         long val;

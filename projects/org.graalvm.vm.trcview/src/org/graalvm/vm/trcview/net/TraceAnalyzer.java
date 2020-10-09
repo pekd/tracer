@@ -45,7 +45,11 @@ public interface TraceAnalyzer {
 
     void addSymbolRenameListener(SymbolRenameListener listener);
 
+    void removeSymbolRenameListener(SymbolRenameListener listener);
+
     void addSymbolChangeListener(ChangeListener listener);
+
+    void removeSymbolChangeListener(ChangeListener listener);
 
     void addSubroutine(long pc, String name, Prototype prototype);
 
@@ -121,6 +125,8 @@ public interface TraceAnalyzer {
     Architecture getArchitecture();
 
     void addCommentChangeListener(ChangeListener l);
+
+    void removeCommentChangeListener(ChangeListener l);
 
     void setCommentForPC(long pc, String comment);
 

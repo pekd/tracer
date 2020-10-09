@@ -24,4 +24,8 @@ public class SymbolName {
     public String sc(long pc) {
         return "sc_" + addr(pc);
     }
+
+    public String unk(long pc) {
+        return "unk_" + addr(pc);
+    }
 }
