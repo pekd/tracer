@@ -53,6 +53,8 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     private Map<Integer, Line> lineCache = new HashMap<>();
 
+    private Color highlightColor = null;
+
     public JEditor() {
         this(new DefaultEditorModel());
     }
@@ -234,12 +236,29 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         return line;
     }
 
+    public int getCursorLine() {
+        return currentLine;
+    }
+
+    public int getCursorColumn() {
+        return currentColumn;
+    }
+
     private int getX(int column) {
         return column * charWidth + offsetX;
     }
 
     private int getY(int line) {
         return line * charHeight + fontMetrics.getAscent() + offsetY;
+    }
+
+    public void setHighlightColor(Color color) {
+        highlightColor = color;
+        repaint();
+    }
+
+    public Color getHighlightColor() {
+        return highlightColor;
     }
 
     @Override
@@ -265,6 +284,12 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
         for (int y = startY; y < endY; y++) {
             Line line = getLine(y);
+
+            if (y == currentLine && highlightColor != null) {
+                g.setColor(highlightColor);
+                g.fillRect(0, offsetY + y * charHeight, getWidth(), charHeight);
+            }
+
             int x = offsetX;
             if (line != null) {
                 List<Element> elements = line.getElements();
