@@ -233,6 +233,16 @@ public class DatabaseTraceAnalyzer implements TraceAnalyzer {
     }
 
     @Override
+    public short getI16(long address, long insn) throws MemoryNotMappedException {
+        return (short) memory.getWord(address, insn);
+    }
+
+    @Override
+    public int getI32(long address, long insn) throws MemoryNotMappedException {
+        return (int) memory.getWord(address, insn);
+    }
+
+    @Override
     public long getI64(long address, long insn) throws MemoryNotMappedException {
         return memory.getWord(address, insn);
     }

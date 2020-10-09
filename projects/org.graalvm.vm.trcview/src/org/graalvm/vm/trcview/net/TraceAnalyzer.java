@@ -88,6 +88,10 @@ public interface TraceAnalyzer {
     // memory
     byte getI8(long address, long insn) throws MemoryNotMappedException;
 
+    short getI16(long address, long insn) throws MemoryNotMappedException;
+
+    int getI32(long address, long insn) throws MemoryNotMappedException;
+
     long getI64(long address, long insn) throws MemoryNotMappedException;
 
     MemoryRead getLastRead(long address, long insn) throws MemoryNotMappedException;

@@ -408,6 +408,16 @@ public class TextDump {
         }
 
         @Override
+        public short getI16(long address, long insn) throws MemoryNotMappedException {
+            return 0;
+        }
+
+        @Override
+        public int getI32(long address, long insn) throws MemoryNotMappedException {
+            return 0;
+        }
+
+        @Override
         public long getI64(long address, long insn) throws MemoryNotMappedException {
             return 0;
         }

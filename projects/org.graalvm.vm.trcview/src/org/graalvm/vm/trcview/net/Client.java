@@ -389,6 +389,24 @@ public class Client implements TraceAnalyzer, Closeable {
     }
 
     @Override
+    public short getI16(long address, long insn) throws MemoryNotMappedException {
+        GetI64Result i64 = execute(new GetI64(address, insn));
+        if (i64.getError() != 0) {
+            throw new MemoryNotMappedException("no memory mapped");
+        }
+        return (short) i64.getValue();
+    }
+
+    @Override
+    public int getI32(long address, long insn) throws MemoryNotMappedException {
+        GetI64Result i64 = execute(new GetI64(address, insn));
+        if (i64.getError() != 0) {
+            throw new MemoryNotMappedException("no memory mapped");
+        }
+        return (int) i64.getValue();
+    }
+
+    @Override
     public long getI64(long address, long insn) throws MemoryNotMappedException {
         GetI64Result i64 = execute(new GetI64(address, insn));
         if (i64.getError() != 0) {
