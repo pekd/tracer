@@ -28,13 +28,14 @@ import org.graalvm.vm.trcview.ui.event.StepListener;
 public class DataView extends JPanel implements StepListener {
     private static final Color HIGHLIGHT_COLOR = new Color(232, 242, 254);
 
+    private JEditor editor;
     private DataViewModel model;
     private TraceAnalyzer trc;
     private StepEvent step;
 
     public DataView() {
         super(new BorderLayout());
-        JEditor editor = new JEditor(model = new DataViewModel());
+        editor = new JEditor(model = new DataViewModel());
         editor.setHighlightColor(HIGHLIGHT_COLOR);
         add(BorderLayout.CENTER, new JScrollPane(editor));
 
@@ -52,9 +53,7 @@ public class DataView extends JPanel implements StepListener {
                             Expression expr = p.parseExpression();
                             ExpressionContext ctx = new ExpressionContext(step.getState(), trc);
                             long addr = expr.evaluate(ctx);
-                            long line = model.getLineByAddress(addr);
-                            editor.setCursorLine((int) line);
-                            editor.scrollToCursor();
+                            setAddress(addr);
                         } catch (ParseException ex) {
                             JOptionPane.showMessageDialog(DataView.this, ex.getMessage(), "Parse error", JOptionPane.ERROR_MESSAGE);
                         } catch (EvaluationException ex) {
@@ -80,11 +79,18 @@ public class DataView extends JPanel implements StepListener {
         });
     }
 
+    public void setAddress(long addr) {
+        long line = model.getLineByAddress(addr);
+        editor.setCursorLine((int) line);
+        editor.scrollToCursor();
+    }
+
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
         model.setTraceAnalyzer(trc);
     }
 
+    @Override
     public void setStep(StepEvent step) {
         this.step = step;
         model.setStep(step.getStep());

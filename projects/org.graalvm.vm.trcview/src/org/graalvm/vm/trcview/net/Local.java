@@ -22,6 +22,7 @@ import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
+import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
@@ -305,6 +306,11 @@ public class Local implements TraceAnalyzer {
     @Override
     public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
         return memory.getMapNode(address, insn);
+    }
+
+    @Override
+    public List<MemorySegment> getMemorySegments(long insn) {
+        return memory.getRegions(insn);
     }
 
     @Override

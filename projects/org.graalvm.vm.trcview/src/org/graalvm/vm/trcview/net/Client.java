@@ -23,6 +23,7 @@ import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
+import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
@@ -470,6 +471,11 @@ public class Client implements TraceAnalyzer, Closeable {
     public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
         GetMapNodeResult node = execute(new GetMapNode(address, insn));
         return node.getNode();
+    }
+
+    @Override
+    public List<MemorySegment> getMemorySegments(long insn) {
+        return Collections.emptyList();
     }
 
     @Override

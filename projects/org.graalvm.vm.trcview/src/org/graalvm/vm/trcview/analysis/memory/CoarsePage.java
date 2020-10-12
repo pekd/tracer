@@ -8,32 +8,19 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.Endianess;
 
-public class CoarsePage implements Page {
-    private final long firstPC;
-    private final long firstInstructionCount;
-    private final Node firstNode;
-
-    private final long address;
-    private final byte[] data = new byte[4096]; // initial data
+public class CoarsePage extends Page {
+    private final byte[] data = new byte[SIZE]; // initial data
     private final List<MemoryUpdate> updates = new ArrayList<>();
     private final List<MemoryRead> reads = new ArrayList<>();
 
-    public CoarsePage(long address, long pc, long instructionCount, Node node) {
-        this.address = address;
-        this.firstPC = pc;
-        this.firstInstructionCount = instructionCount;
-        this.firstNode = node;
+    public CoarsePage(long address, long pc, long instructionCount, Node node, Protection prot) {
+        super(address, pc, instructionCount, node, prot);
     }
 
-    public CoarsePage(long address, byte[] data, long pc, long instructionCount, Node node) {
-        this(address, pc, instructionCount, node);
+    public CoarsePage(long address, byte[] data, long pc, long instructionCount, Node node, Protection prot) {
+        this(address, pc, instructionCount, node, prot);
         assert data.length == 4096;
         System.arraycopy(data, 0, this.data, 0, 4096);
-    }
-
-    @Override
-    public long getAddress() {
-        return address;
     }
 
     @Override
@@ -411,27 +398,12 @@ public class CoarsePage implements Page {
         return Collections.emptyList();
     }
 
-    @Override
-    public long getInitialPC() {
-        return firstPC;
-    }
-
-    @Override
-    public long getInitialInstruction() {
-        return firstInstructionCount;
-    }
-
-    @Override
-    public Node getInitialNode() {
-        return firstNode;
-    }
-
     public int getSize() {
         return (updates.size() + reads.size()) / 2;
     }
 
     public FinePage transformToFine() {
-        FinePage cell = new FinePage(address, data, firstPC, firstInstructionCount, firstNode);
+        FinePage cell = new FinePage(address, data, firstPC, firstInstructionCount, firstNode, firstProtection);
         for (MemoryUpdate update : updates) {
             cell.addUpdate(update);
         }

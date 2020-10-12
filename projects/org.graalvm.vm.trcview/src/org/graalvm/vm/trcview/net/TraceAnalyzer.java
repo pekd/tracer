@@ -13,6 +13,7 @@ import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
+import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
@@ -109,6 +110,8 @@ public interface TraceAnalyzer {
     List<MemoryUpdate> getPreviousWrites(long address, long insn, long count) throws MemoryNotMappedException;
 
     Node getMapNode(long address, long insn) throws MemoryNotMappedException;
+
+    List<MemorySegment> getMemorySegments(long insn);
 
     // files
     long getBase(long pc);

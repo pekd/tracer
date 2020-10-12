@@ -9,53 +9,24 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.Endianess;
 
-public class FinePage implements Page {
-    private final long firstPC;
-    private final long firstInstructionCount;
-    private final Node firstNode;
-
-    private final long address;
+public class FinePage extends Page {
     @SuppressWarnings("unchecked") private final List<MemoryUpdate>[] updates = new ArrayList[4096];
     @SuppressWarnings("unchecked") private final List<MemoryRead>[] reads = new ArrayList[4096];
-    private final byte[] data = new byte[4096]; // initial data
+    private final byte[] data = new byte[SIZE]; // initial data
 
-    public FinePage(long address, long pc, long instructionCount, Node node) {
-        assert (address & 0xFFF) == 0;
-        this.address = address;
-        this.firstPC = pc;
-        this.firstInstructionCount = instructionCount;
-        this.firstNode = node;
+    public FinePage(long address, long pc, long instructionCount, Node node, Protection prot) {
+        super(address, pc, instructionCount, node, prot);
     }
 
-    public FinePage(long address, byte[] data, long pc, long instructionCount, Node node) {
-        this(address, pc, instructionCount, node);
+    public FinePage(long address, byte[] data, long pc, long instructionCount, Node node, Protection prot) {
+        this(address, pc, instructionCount, node, prot);
         assert data.length == 4096;
         System.arraycopy(data, 0, this.data, 0, 4096);
     }
 
     @Override
-    public long getAddress() {
-        return address;
-    }
-
-    @Override
     public byte[] getData() {
         return data;
-    }
-
-    @Override
-    public long getInitialPC() {
-        return firstPC;
-    }
-
-    @Override
-    public long getInitialInstruction() {
-        return firstInstructionCount;
-    }
-
-    @Override
-    public Node getInitialNode() {
-        return firstNode;
     }
 
     @Override

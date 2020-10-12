@@ -52,12 +52,14 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.memory.vector.Vector128;
+import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.posix.elf.DefaultSymbolResolver;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.device.RegisterValue;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.trcview.analysis.memory.Protection;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
@@ -77,6 +79,7 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.SymbolTableEvent;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
+import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
@@ -218,11 +221,13 @@ public class Analysis {
                 insn = lastStep.getStep();
             }
             if (mmap.getResult() >= 0) {
+                int rawprot = mmap.getProtection();
+                Protection prot = new Protection(BitTest.test(rawprot, Mman.PROT_READ), BitTest.test(rawprot, Mman.PROT_WRITE), BitTest.test(rawprot, Mman.PROT_EXEC));
                 mappedFiles.put(mmap.getResult(), new MappedFile(mmap.getFileDescriptor(), mmap.getResult(), mmap.getLength(), mmap.getOffset(), mmap.getFilename(), -1));
                 if (mmap.getData() != null) {
-                    memory.mmap(mmap.getResult(), mmap.getLength(), mmap.getData(), pc, insn, node, lastStep);
+                    memory.mmap(mmap.getResult(), mmap.getLength(), prot, mmap.getFilename(), mmap.getData(), pc, insn, node, lastStep);
                 } else {
-                    memory.mmap(mmap.getResult(), mmap.getLength(), pc, insn, node, lastStep);
+                    memory.mmap(mmap.getResult(), mmap.getLength(), prot, mmap.getFilename(), pc, insn, node, lastStep);
                 }
             }
         } else if (event instanceof MemoryEvent) {

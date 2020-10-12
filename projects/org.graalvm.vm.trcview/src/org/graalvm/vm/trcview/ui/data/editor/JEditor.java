@@ -153,9 +153,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             this.model.removeChangeListener(this);
         }
         this.model = model;
-        Dimension size = new Dimension(charWidth * model.getMaximumLineLength() + 2 * offsetX, charHeight * model.getLineCount() + 2 * offsetY);
-        setMinimumSize(size);
-        setPreferredSize(size);
+        updateSize();
         currentLine = 0;
         currentColumn = 0;
         model.addChangeListener(this);
@@ -164,7 +162,14 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     @Override
     public void valueChanged() {
         lineCache.clear();
+        updateSize();
         repaint();
+    }
+
+    private void updateSize() {
+        Dimension size = new Dimension(charWidth * model.getMaximumLineLength() + 2 * offsetX, charHeight * model.getLineCount() + 2 * offsetY);
+        setMinimumSize(size);
+        setPreferredSize(size);
     }
 
     public void setCursorToPoint(int x, int y) {
