@@ -35,6 +35,10 @@ public class MemorySegment {
 
     @Override
     public String toString() {
-        return String.format("%x-%x %s %s", start, end, permission, name);
+        if (name != null) {
+            return String.format("%x-%x %s %s", start, end, permission, name);
+        } else {
+            return String.format("%x-%x %s", start, end, permission);
+        }
     }
 }
