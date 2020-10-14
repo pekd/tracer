@@ -27,6 +27,9 @@ public class MemoryAccessView extends JPanel {
     public static final Color READ_BG = new Color(0xE0, 0xFF, 0xE0);
     public static final Color WRITE_BG = new Color(0xFF, 0xE0, 0xE0);
 
+    private static final int MAX_READS = 1000;
+    private static final int MAX_WRITES = 1000;
+
     private MemoryView mem;
 
     private List<MemoryEvent> accesses;
@@ -74,15 +77,17 @@ public class MemoryAccessView extends JPanel {
         accesses.clear();
 
         // reads
+        int n = 0;
         MemoryEvent evt = step.getRead();
-        while (evt != null) {
+        while (evt != null && n++ < MAX_READS) {
             accesses.add(evt);
             evt = evt.getNext();
         }
 
         // writes
+        n = 0;
         evt = step.getWrite();
-        while (evt != null) {
+        while (evt != null && n++ < MAX_WRITES) {
             accesses.add(evt);
             evt = evt.getNext();
         }
