@@ -32,6 +32,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     public static final Font TEXT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public static final Font KEYWORD_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public static final Color CURSOR_COLOR = Color.GRAY;
+    private static final Color HIGHLIGHT_COLOR = new Color(232, 242, 254);
 
     private static final int MAX_CACHE_SIZE = 10_000;
 
@@ -39,6 +40,10 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     private int currentLine;
     private int currentColumn;
+
+    private boolean selection;
+    private int selectionLine;
+    private int selectionColumn;
 
     private EditorModel model;
 
@@ -53,7 +58,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     private Map<Integer, Line> lineCache = new HashMap<>();
 
-    private Color highlightColor = null;
+    private Color highlightColor = HIGHLIGHT_COLOR;
 
     public JEditor() {
         this(new DefaultEditorModel());
@@ -73,6 +78,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                selection = false;
                 setCursorToPoint(e.getX(), e.getY());
                 requestFocusInWindow();
             }
@@ -81,6 +87,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
+                selection = true;
                 setCursorToPoint(e.getX(), e.getY());
             }
         });
@@ -90,18 +97,22 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_LEFT:
+                        selection = e.isShiftDown();
                         setCursor(currentLine, currentColumn - 1);
                         scrollToCursor();
                         break;
                     case KeyEvent.VK_RIGHT:
+                        selection = e.isShiftDown();
                         setCursor(currentLine, currentColumn + 1);
                         scrollToCursor();
                         break;
                     case KeyEvent.VK_UP:
+                        selection = e.isShiftDown();
                         setCursor(currentLine - 1, currentColumn);
                         scrollToCursor();
                         break;
                     case KeyEvent.VK_DOWN:
+                        selection = e.isShiftDown();
                         setCursor(currentLine + 1, currentColumn);
                         scrollToCursor();
                         break;
@@ -195,6 +206,10 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             currentLine = line;
         }
 
+        if (!selection) {
+            selectionLine = currentLine;
+        }
+
         setCursorColumn(currentColumn);
     }
 
@@ -211,6 +226,10 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             }
         } else {
             currentColumn = column;
+        }
+
+        if (!selection) {
+            selectionColumn = currentColumn;
         }
 
         repaint();
@@ -287,12 +306,52 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             endY = model.getLineCount();
         }
 
+        int selectionStartLine;
+        int selectionEndLine;
+        int selectionStartColumn;
+        int selectionEndColumn;
+
+        if (selectionLine == currentLine) {
+            selectionStartLine = currentLine;
+            selectionEndLine = currentLine;
+            if (selectionColumn < currentColumn) {
+                selectionStartColumn = selectionColumn;
+                selectionEndColumn = currentColumn;
+            } else {
+                selectionStartColumn = currentColumn;
+                selectionEndColumn = selectionColumn;
+            }
+        } else if (selectionLine < currentLine) {
+            selectionStartLine = selectionLine;
+            selectionEndLine = currentLine;
+            selectionStartColumn = selectionColumn;
+            selectionEndColumn = currentColumn;
+        } else {
+            selectionStartLine = currentLine;
+            selectionEndLine = selectionLine;
+            selectionStartColumn = currentColumn;
+            selectionEndColumn = selectionColumn;
+        }
+
         for (int y = startY; y < endY; y++) {
             Line line = getLine(y);
 
-            if (y == currentLine && highlightColor != null) {
+            if (y >= selectionStartLine && y <= selectionEndLine && highlightColor != null) {
                 g.setColor(highlightColor);
-                g.fillRect(0, offsetY + y * charHeight, getWidth(), charHeight);
+                if (y == selectionStartLine) {
+                    int sx = getX(selectionStartColumn);
+                    if (y == selectionEndLine) {
+                        int ex = getX(selectionEndColumn);
+                        g.fillRect(sx, offsetY + y * charHeight, ex - sx - 1, charHeight);
+                    } else {
+                        g.fillRect(sx, offsetY + y * charHeight, getWidth(), charHeight);
+                    }
+                } else if (y == selectionEndLine) {
+                    int ex = getX(selectionEndColumn);
+                    g.fillRect(offsetX, offsetY + y * charHeight, ex - offsetX - 1, charHeight);
+                } else if (y > selectionStartLine && y < selectionEndLine) {
+                    g.fillRect(offsetX, offsetY + y * charHeight, getWidth(), charHeight);
+                }
             }
 
             int x = offsetX;
