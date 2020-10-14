@@ -36,8 +36,6 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     private static final int MAX_CACHE_SIZE = 10_000;
 
-    private int maxUnitIncrement = 1;
-
     private int currentLine;
     private int currentColumn;
 
@@ -403,10 +401,13 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
         // get the current position
         int currentPosition = 0;
+        int maxUnitIncrement;
         if (orientation == SwingConstants.HORIZONTAL) {
             currentPosition = visibleRect.x;
+            maxUnitIncrement = charWidth;
         } else {
             currentPosition = visibleRect.y;
+            maxUnitIncrement = charHeight;
         }
 
         // return the number of pixels between currentPosition and the nearest tick mark in the
@@ -422,9 +423,9 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
         if (orientation == SwingConstants.HORIZONTAL) {
-            return visibleRect.width - maxUnitIncrement;
+            return visibleRect.width - charWidth;
         } else {
-            return visibleRect.height - maxUnitIncrement;
+            return visibleRect.height - charHeight;
         }
     }
 }
