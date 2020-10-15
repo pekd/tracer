@@ -30,6 +30,7 @@ import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
@@ -624,7 +625,14 @@ public class Client implements TraceAnalyzer, Closeable {
         // TODO Auto-generated method stub
     }
 
+    @Override
     public UserTypeDatabase getTypeDatabase() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public TypedMemory getTypedMemory() {
         // TODO Auto-generated method stub
         return null;
     }

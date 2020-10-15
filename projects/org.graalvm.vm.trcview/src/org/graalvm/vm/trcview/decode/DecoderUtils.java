@@ -36,7 +36,11 @@ public class DecoderUtils {
     }
 
     public static String ptr(long x, TraceAnalyzer trc) {
-        return ptr(x, trc.getArchitecture().getFormat());
+        if (trc == null) {
+            return ptr(x, false);
+        } else {
+            return ptr(x, trc.getArchitecture().getFormat());
+        }
     }
 
     public static String ptr(long x, boolean oct) {
@@ -55,6 +59,8 @@ public class DecoderUtils {
                 return "\\0";
             case '"':
                 return "\\\"";
+            case '\'':
+                return "\\\'";
             case '\\':
                 return "\\\\";
             case '\r':
@@ -68,8 +74,8 @@ public class DecoderUtils {
             case '\b':
                 return "\\b";
             default:
-                if (b < 0x20) {
-                    return "\\x" + HexFormatter.tohex(b, 2);
+                if (b < 0x20 || b > Character.MAX_VALUE) {
+                    return "\\x" + HexFormatter.tohex(Integer.toUnsignedLong(b), 2);
                 } else {
                     return Character.toString((char) b);
                 }
@@ -82,6 +88,8 @@ public class DecoderUtils {
                 return "\\0";
             case '"':
                 return "\\\"";
+            case '\'':
+                return "\\\'";
             case '\\':
                 return "\\\\";
             case '\r':
@@ -184,19 +192,27 @@ public class DecoderUtils {
         return new ExpressionContext(state, trc, constants);
     }
 
+    public static String str(Type type, long val, TraceAnalyzer trc) {
+        return str(type, val, null, trc);
+    }
+
     public static String str(Type type, long val, CpuState state, TraceAnalyzer trc) {
         Representation repr = type.getRepresentation();
         switch (type.getType()) {
             case VOID:
                 return "";
             case PTR:
-                if (repr == Representation.STRING) {
+                if (state != null && trc != null && repr == Representation.STRING) {
                     return cstr(val, state.getStep(), trc);
                 } else {
                     return ptr(val, trc);
                 }
             case STRING:
-                return cstr(val, state.getStep(), trc);
+                if (state != null && trc != null) {
+                    return cstr(val, state.getStep(), trc);
+                } else {
+                    return ptr(val, trc);
+                }
             case U8:
                 switch (repr) {
                     case CHAR:
@@ -242,12 +258,13 @@ public class DecoderUtils {
                         return "FX16_CONST(" + Fx16.toDouble((short) val) + ")";
                 }
             case S16:
+            case FX16:
                 switch (repr) {
                     case CHAR:
                         if (Short.toUnsignedInt((short) val) < 0x100) {
                             return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
                         } else {
-                            return Short.toString((short) val);
+                            return "'" + DecoderUtils.encode((int) ((val >> 8) & 0xFF)) + DecoderUtils.encode((int) (val & 0xFF)) + "'";
                         }
                     default:
                     case DEC:
@@ -267,7 +284,7 @@ public class DecoderUtils {
                         if (Short.toUnsignedInt((short) val) < 0x100) {
                             return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
                         } else {
-                            return Short.toString((short) val);
+                            return "'" + DecoderUtils.encode((int) ((val >> 8) & 0xFF)) + DecoderUtils.encode((int) (val & 0xFF)) + "'";
                         }
                     default:
                     case DEC:
@@ -284,12 +301,14 @@ public class DecoderUtils {
                         return Float.intBitsToFloat((int) val) + "f";
                 }
             case S32:
+            case FX32:
                 switch (repr) {
                     case CHAR:
                         if (Short.toUnsignedInt((short) val) < 0x100) {
                             return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
                         } else {
-                            return Short.toString((short) val);
+                            return "'" + DecoderUtils.encode((int) ((val >> 24) & 0xFF)) + DecoderUtils.encode((int) (val >> 16) & 0xFF) + DecoderUtils.encode((int) (val >> 8) & 0xFF) +
+                                            DecoderUtils.encode((int) (val & 0xFF)) + "'";
                         }
                     default:
                     case DEC:
@@ -311,7 +330,8 @@ public class DecoderUtils {
                         if (Short.toUnsignedInt((short) val) < 0x100) {
                             return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
                         } else {
-                            return Short.toString((short) val);
+                            return "'" + DecoderUtils.encode((int) ((val >> 24) & 0xFF)) + DecoderUtils.encode((int) (val >> 16) & 0xFF) + DecoderUtils.encode((int) (val >> 8) & 0xFF) +
+                                            DecoderUtils.encode((int) (val & 0xFF)) + "'";
                         }
                     default:
                     case DEC:
@@ -347,7 +367,8 @@ public class DecoderUtils {
                         if (Short.toUnsignedInt((short) val) < 0x100) {
                             return "'" + DecoderUtils.encode(Short.toUnsignedInt((short) val)) + "'";
                         } else {
-                            return Short.toString((short) val);
+                            return "'" + DecoderUtils.encode((int) ((val >> 24) & 0xFF)) + DecoderUtils.encode((int) (val >> 16) & 0xFF) + DecoderUtils.encode((int) (val >> 8) & 0xFF) +
+                                            DecoderUtils.encode((int) (val & 0xFF)) + "'";
                         }
                     case DEC:
                         return Integer.toString((int) val);

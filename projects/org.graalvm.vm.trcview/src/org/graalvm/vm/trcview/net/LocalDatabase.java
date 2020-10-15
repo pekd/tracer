@@ -32,6 +32,7 @@ import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Expressions;
@@ -62,6 +63,7 @@ public class LocalDatabase implements TraceAnalyzer {
     private List<SymbolRenameListener> symbolRenameListeners;
     private Expressions expressions;
     private UserTypeDatabase types;
+    private TypedMemory typedMemory;
 
     public LocalDatabase(Architecture arch, BlockNode root, Analysis analysis) {
         this.arch = arch;
@@ -90,6 +92,7 @@ public class LocalDatabase implements TraceAnalyzer {
         commentChangeListeners = new ArrayList<>();
         expressions = new Expressions();
         types = new UserTypeDatabase(arch.getTypeInfo());
+        typedMemory = new TypedMemory();
     }
 
     @Override
@@ -460,5 +463,10 @@ public class LocalDatabase implements TraceAnalyzer {
     @Override
     public UserTypeDatabase getTypeDatabase() {
         return types;
+    }
+
+    @Override
+    public TypedMemory getTypedMemory() {
+        return typedMemory;
     }
 }

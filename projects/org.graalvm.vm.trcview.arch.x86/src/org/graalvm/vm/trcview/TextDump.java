@@ -78,6 +78,7 @@ import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64FullCpuState;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
@@ -590,6 +591,11 @@ public class TextDump {
 
         @Override
         public UserTypeDatabase getTypeDatabase() {
+            return null;
+        }
+
+        @Override
+        public TypedMemory getTypedMemory() {
             return null;
         }
     }

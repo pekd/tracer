@@ -1,29 +1,19 @@
-package org.graalvm.vm.trcview.storage;
+package org.graalvm.vm.x86.trcview.test.mock;
 
 import java.awt.Color;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.logging.Logger;
 
 import org.graalvm.vm.posix.elf.Symbol;
-import org.graalvm.vm.posix.elf.SymbolResolver;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
-import org.graalvm.vm.trcview.analysis.MappedFiles;
-import org.graalvm.vm.trcview.analysis.Search;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
-import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.device.Device;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
-import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
@@ -33,411 +23,334 @@ import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
-import org.graalvm.vm.trcview.info.Comments;
-import org.graalvm.vm.trcview.info.Expressions;
-import org.graalvm.vm.trcview.info.FormattedExpression;
-import org.graalvm.vm.trcview.info.Highlighter;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
-import org.graalvm.vm.util.log.Trace;
 
-public class DatabaseTraceAnalyzer implements TraceAnalyzer {
-    private static final Logger log = Trace.create(DatabaseTraceAnalyzer.class);
-
-    private Architecture arch;
-    private SymbolResolver resolver;
-    private SymbolTable symbols;
-    private BlockNode root;
-    private MemoryTrace memory;
-    private MappedFiles files;
-    private long steps;
-    private List<ChangeListener> symbolChangeListeners;
-    private List<ChangeListener> commentChangeListeners;
-    private Comments comments;
-    private Expressions expressions;
-    private Highlighter highlighter;
-
-    public DatabaseTraceAnalyzer(StorageBackend backend) {
-        this.arch = Architecture.getArchitecture(backend.getArchitecture());
-        resolver = null;
-        symbols = new SymbolTable(arch.getFormat());
-        memory = new MemoryTrace();
-        files = new MappedFiles(new TreeMap<>());
-        steps = 0;
-        symbolChangeListeners = new ArrayList<>();
-        commentChangeListeners = new ArrayList<>();
-        comments = new Comments();
-        expressions = new Expressions();
-        highlighter = new Highlighter();
-    }
-
+public class MockTraceAnalyzer implements TraceAnalyzer {
     @Override
     public Symbol getSymbol(long pc) {
-        return resolver.getSymbol(pc);
+        return null;
     }
 
     @Override
     public ComputedSymbol getComputedSymbol(long pc) {
-        return symbols.get(pc);
+        return null;
     }
 
     @Override
     public void renameSymbol(ComputedSymbol sym, String name) {
-        symbols.renameSubroutine(sym, name);
+
     }
 
     @Override
     public void setPrototype(ComputedSymbol sym, Prototype prototype) {
-        symbols.setPrototype(sym, prototype);
+
     }
 
     @Override
     public Set<ComputedSymbol> getSubroutines() {
-        return symbols.getSubroutines();
+        return null;
     }
 
     @Override
     public Set<ComputedSymbol> getLocations() {
-        return symbols.getLocations();
+        return null;
     }
 
     @Override
     public Collection<ComputedSymbol> getSymbols() {
-        return symbols.getSymbols();
+        return null;
     }
 
     @Override
     public Map<String, List<ComputedSymbol>> getNamedSymbols() {
-        return symbols.getNamedSymbols();
+        return null;
     }
 
     @Override
     public void addSymbolRenameListener(SymbolRenameListener listener) {
-        symbols.addSymbolRenameListener(listener);
+
     }
 
     @Override
     public void removeSymbolRenameListener(SymbolRenameListener listener) {
-        symbols.removeSymbolRenameListener(listener);
+
     }
 
     @Override
     public void addSymbolChangeListener(ChangeListener listener) {
-        symbolChangeListeners.add(listener);
+
     }
 
     @Override
     public void removeSymbolChangeListener(ChangeListener listener) {
-        symbolChangeListeners.remove(listener);
+
     }
 
     @Override
     public void addSubroutine(long pc, String name, Prototype prototype) {
-        symbols.addSubroutine(pc, name);
-        ComputedSymbol sym = symbols.get(pc);
-        sym.prototype = prototype;
-    }
 
-    private void analyzeBlock(BlockNode block) {
-        for (Node node : block.getNodes()) {
-            symbols.visit(node);
-            if (node instanceof BlockNode) {
-                analyzeBlock((BlockNode) node);
-            }
-        }
     }
 
     @Override
     public void reanalyze() {
-        getSymbols().forEach(ComputedSymbol::resetVisits);
-        analyzeBlock(root);
-        symbols.cleanup();
-        for (ChangeListener l : symbolChangeListeners) {
-            try {
-                l.valueChanged();
-            } catch (Throwable t) {
-                log.warning("Error while executing listener: " + l);
-            }
-        }
+
     }
 
     @Override
     public void refresh() {
-        // nothing
+
     }
 
     @Override
     public long getInstructionCount() {
-        return steps;
+        return 0;
     }
 
     @Override
     public Set<Integer> getThreadIds() {
-        return Collections.singleton(0);
+        return null;
     }
 
     @Override
     public Map<Integer, Long> getThreadStarts() {
-        Map<Integer, Long> result = new HashMap<>();
-        result.put(0, 0L);
-        return result;
+        return null;
     }
 
     @Override
     public BlockNode getRoot() {
-        return root;
+        return null;
     }
 
     @Override
     public BlockNode getParent(Node node) {
-        return node.getParent();
+        return null;
     }
 
     @Override
     public BlockNode getChildren(BlockNode node) {
-        return node;
+        return null;
     }
 
     @Override
     public Node getNode(Node node) {
-        return node;
+        return null;
     }
 
     @Override
     public List<Node> getSyscalls() {
-        return Collections.emptyList();
+        return null;
     }
 
     @Override
     public Map<Integer, List<IoEvent>> getIo() {
-        return Collections.emptyMap();
+        return null;
     }
 
+    @Override
     public Map<Integer, Device> getDevices() {
-        return Collections.emptyMap();
+        return null;
     }
 
     @Override
     public Node getInstruction(long insn) {
-        return Search.instruction(root, insn);
+        return null;
     }
 
     @Override
     public Node getNextStep(Node node) {
-        return Search.nextStep(node);
+        return null;
     }
 
     @Override
     public Node getPreviousStep(Node node) {
-        return Search.previousStep(node);
+        return null;
     }
 
     @Override
     public Node getNextPC(Node node, long pc) {
-        return Search.nextPC(node, pc);
+        return null;
     }
 
     @Override
     public byte getI8(long address, long insn) throws MemoryNotMappedException {
-        return memory.getByte(address, insn);
+        return 0;
     }
 
     @Override
     public short getI16(long address, long insn) throws MemoryNotMappedException {
-        return (short) memory.getWord(address, insn);
+        return 0;
     }
 
     @Override
     public int getI32(long address, long insn) throws MemoryNotMappedException {
-        return (int) memory.getWord(address, insn);
+        return 0;
     }
 
     @Override
     public long getI64(long address, long insn) throws MemoryNotMappedException {
-        return memory.getWord(address, insn);
+        return 0;
     }
 
     @Override
     public MemoryRead getLastRead(long address, long insn) throws MemoryNotMappedException {
-        return memory.getLastRead(address, insn);
+        return null;
     }
 
     @Override
     public MemoryRead getNextRead(long address, long insn) throws MemoryNotMappedException {
-        return memory.getNextRead(address, insn);
+        return null;
     }
 
     @Override
     public MemoryUpdate getLastWrite(long address, long insn) throws MemoryNotMappedException {
-        return memory.getLastWrite(address, insn);
+        return null;
     }
 
     @Override
     public MemoryUpdate getNextWrite(long address, long insn) throws MemoryNotMappedException {
-        return memory.getNextWrite(address, insn);
+        return null;
     }
 
     @Override
     public List<MemoryUpdate> getPreviousWrites(long address, long insn, long count) throws MemoryNotMappedException {
-        return memory.getPreviousWrites(address, insn, count);
+        return null;
     }
 
     @Override
     public Node getMapNode(long address, long insn) throws MemoryNotMappedException {
-        return memory.getMapNode(address, insn);
+        return null;
     }
 
     @Override
     public List<MemorySegment> getMemorySegments(long insn) {
-        return Collections.emptyList();
+        return null;
     }
 
     @Override
     public long getBase(long pc) {
-        return files.getBase(pc);
+        return 0;
     }
 
     @Override
     public long getLoadBias(long pc) {
-        return files.getLoadBias(pc);
+        return 0;
     }
 
     @Override
     public long getOffset(long pc) {
-        return files.getOffset(pc);
+        return 0;
     }
 
     @Override
     public long getFileOffset(long pc) {
-        return files.getFileOffset(pc);
+        return 0;
     }
 
     @Override
     public String getFilename(long pc) {
-        return files.getFilename(pc);
+        return null;
     }
 
     @Override
     public Architecture getArchitecture() {
-        return arch;
+        return null;
     }
 
     @Override
     public void addCommentChangeListener(ChangeListener l) {
-        commentChangeListeners.add(l);
+
     }
 
     @Override
     public void removeCommentChangeListener(ChangeListener l) {
-        commentChangeListeners.remove(l);
-    }
 
-    protected void fireCommentChanged() {
-        for (ChangeListener l : commentChangeListeners) {
-            try {
-                l.valueChanged();
-            } catch (Throwable t) {
-                log.warning("Error while executing listener: " + l);
-            }
-        }
     }
 
     @Override
     public void setCommentForPC(long pc, String comment) {
-        comments.setCommentForPC(pc, comment);
-        fireCommentChanged();
+
     }
 
     @Override
     public String getCommentForPC(long pc) {
-        return comments.getCommentForPC(pc);
+        return null;
     }
 
     @Override
     public void setCommentForInsn(long insn, String comment) {
-        comments.setCommentForInsn(insn, comment);
-        fireCommentChanged();
+
     }
 
     @Override
     public String getCommentForInsn(long insn) {
-        return comments.getCommentForInsn(insn);
+        return null;
     }
 
     @Override
     public Map<Long, String> getCommentsForInsns() {
-        return comments.getCommentsForInsns();
+        return null;
     }
 
     @Override
     public Map<Long, String> getCommentsForPCs() {
-        return comments.getCommentsForPCs();
+        return null;
     }
 
     @Override
     public void setExpression(long pc, String expression) throws ParseException {
-        expressions.setExpression(pc, arch.getFormat(), expression);
-        fireCommentChanged();
+
     }
 
     @Override
     public String getExpression(long pc) {
-        FormattedExpression expr = expressions.getExpression(pc);
-        if (expr == null) {
-            return null;
-        } else {
-            return expr.getExpression();
-        }
+        return null;
     }
 
     @Override
     public String evaluateExpression(CpuState state) throws EvaluationException {
-        return expressions.evaluate(state, this);
+        return null;
     }
 
     @Override
     public Map<Long, String> getExpressions() {
-        return expressions.getExpressions();
+        return null;
     }
 
     @Override
     public void setColor(long pc, Color color) {
-        highlighter.setColor(pc, color);
-        fireCommentChanged();
+
     }
 
     @Override
     public Color getColor(CpuState state) {
-        return highlighter.getColor(state, this);
+        return null;
     }
 
     @Override
     public Map<Long, Color> getColors() {
-        return highlighter.getColors();
+        return null;
     }
 
     @Override
     public ABI getABI() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public void addABIChangeListener(ChangeListener l) {
-        // TODO Auto-generated method stub
+
     }
 
     @Override
     public UserTypeDatabase getTypeDatabase() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public TypedMemory getTypedMemory() {
-        // TODO Auto-generated method stub
         return null;
     }
 }

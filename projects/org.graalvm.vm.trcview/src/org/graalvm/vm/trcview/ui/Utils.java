@@ -49,6 +49,8 @@ import javax.swing.JOptionPane;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
@@ -168,6 +170,30 @@ public class Utils {
             }
         } else if (input != null) {
             trc.setPrototype(selected, null);
+        }
+    }
+
+    public static void setDataType(long addr, TraceAnalyzer trc, Component parent) {
+        Variable var = trc.getTypedMemory().get(addr);
+        String type = "";
+        if (var != null) {
+            Type t = var.getType();
+            if (t != null) {
+                type = t.toString();
+            }
+        }
+        String input = JOptionPane.showInputDialog("Enter type:", type);
+        if (input != null && input.trim().length() > 0) {
+            try {
+                Parser parser = new Parser(input.trim(), trc.getTypeDatabase());
+                Type t = parser.parseType();
+                trc.getTypedMemory().set(addr, t);
+            } catch (ParseException ex) {
+                JOptionPane.showMessageDialog(parent, "Error: " + ex.getMessage(), "Set type...", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } else if (input != null) {
+            trc.getTypedMemory().set(addr, null);
         }
     }
 

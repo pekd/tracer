@@ -228,6 +228,13 @@ public class Parser {
         return prototype;
     }
 
+    public Type parseType() throws ParseException {
+        scan();
+        Type type = type();
+        check(TokenType.EOF);
+        return type;
+    }
+
     private Function prototype() throws ParseException {
         Type returnType = type();
         check(TokenType.IDENT);

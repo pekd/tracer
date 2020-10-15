@@ -20,6 +20,7 @@ import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.BlockNode;
@@ -162,4 +163,6 @@ public interface TraceAnalyzer {
     void addABIChangeListener(ChangeListener l);
 
     UserTypeDatabase getTypeDatabase();
+
+    TypedMemory getTypedMemory();
 }

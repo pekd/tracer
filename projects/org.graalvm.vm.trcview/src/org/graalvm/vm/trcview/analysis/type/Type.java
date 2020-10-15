@@ -136,7 +136,7 @@ public class Type {
         throw new AssertionError("this should be unreachable");
     }
 
-    private Representation getDefaultRepresentation() {
+    public Representation getDefaultRepresentation() {
         switch (type) {
             case PTR:
                 return Representation.HEX;

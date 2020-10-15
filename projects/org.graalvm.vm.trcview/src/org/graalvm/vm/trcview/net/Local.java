@@ -30,6 +30,7 @@ import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.info.Comments;
@@ -62,6 +63,7 @@ public class Local implements TraceAnalyzer {
     private Highlighter highlighter;
     private ABI abi;
     private UserTypeDatabase types;
+    private TypedMemory typedMemory;
 
     public Local(Architecture arch, BlockNode root, Map<Integer, BlockNode> threads, Analysis analysis) {
         this.arch = arch;
@@ -82,6 +84,7 @@ public class Local implements TraceAnalyzer {
         expressions = new Expressions();
         highlighter = new Highlighter();
         types = new UserTypeDatabase(arch.getTypeInfo());
+        typedMemory = new TypedMemory();
     }
 
     @Override
@@ -452,5 +455,10 @@ public class Local implements TraceAnalyzer {
     @Override
     public UserTypeDatabase getTypeDatabase() {
         return types;
+    }
+
+    @Override
+    public TypedMemory getTypedMemory() {
+        return typedMemory;
     }
 }

@@ -11,6 +11,8 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.data.TypedMemory;
+import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.data.editor.DefaultElement;
 import org.graalvm.vm.trcview.ui.data.editor.DefaultLine;
@@ -21,6 +23,7 @@ import org.graalvm.vm.trcview.ui.event.ChangeListener;
 
 public class DataViewModel extends EditorModel implements ChangeListener, SymbolRenameListener {
     public static final int NAME_WIDTH = 40;
+    public static final int DATA_WIDTH = 32;
     private static final Element HEADER_SEPARATOR = new DefaultElement("================================================================================", Element.TYPE_COMMENT);
 
     private TraceAnalyzer trc;
@@ -31,8 +34,8 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
     private List<MemorySegment> segments = Collections.emptyList();
     private long lineCount;
 
-    private NavigableMap<Long, TextSegment> memorySegments = new TreeMap<>();
-    private NavigableMap<Long, TextSegment> lineSegments = new TreeMap<>();
+    private NavigableMap<Long, TextSegment> memorySegments = new TreeMap<>(); // addr to segment
+    private NavigableMap<Long, TextSegment> lineSegments = new TreeMap<>(); // line to segment
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         if (this.trc != null) {
@@ -66,10 +69,22 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
         lineSegments.clear();
         long line = 0;
         for (MemorySegment seg : segments) {
-            TextSegment s = new TextSegment(seg, line);
+            TextSegment s = new TextSegment(seg, line, trc.getTypedMemory());
             memorySegments.put(s.address, s);
             lineSegments.put(s.firstLine, s);
-            line += seg.getSize() + s.metainfo;
+            line += s.getLineCount();
+        }
+        lineCount = line;
+        fireChangeEvent();
+    }
+
+    public void update() {
+        long line = 0;
+        lineSegments.clear();
+        for (TextSegment s : memorySegments.values()) {
+            s.recompute(line);
+            lineSegments.put(s.firstLine, s);
+            line += s.getLineCount();
         }
         lineCount = line;
         fireChangeEvent();
@@ -131,35 +146,89 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
         return maxlen;
     }
 
+    private class Var {
+        public final Variable var;
+        public long line;
+
+        public Var(Variable var, long line) {
+            this.var = var;
+            this.line = line;
+        }
+
+        public boolean contains(long ln) {
+            return line == ln;
+        }
+    }
+
     private class TextSegment {
         public final long address;
         public long firstLine;
         public long content;
+
+        public final MemorySegment segment;
+        public final TypedMemory mem;
 
         public final int metainfo;
 
         public final List<Line> header;
         public final List<Line> footer;
 
-        public TextSegment(MemorySegment segment, long line) {
+        public final NavigableMap<Long, Var> vars; // address to var
+        public final NavigableMap<Long, Var> invvars; // line to var
+
+        public TextSegment(MemorySegment segment, long line, TypedMemory mem) {
             this.address = segment.getStart();
             this.firstLine = line;
+            this.segment = segment;
+            this.mem = mem;
 
             content = segment.getSize();
 
             StepFormat fmt = trc.getArchitecture().getFormat();
 
+            String name = segment.getName() == null ? "" : " \"" + segment.getName() + "\"";
+
             Element addrelement = new DefaultElement(fmt.formatAddress(segment.getStart()) + " ", Element.TYPE_COMMENT);
             header = new ArrayList<>();
             header.add(new DefaultLine(addrelement, HEADER_SEPARATOR));
-            header.add(new DefaultLine(addrelement, new DefaultElement("SEGMENT [name=" + segment.getName() + ", protection=" + segment.getProtection() + "]", Element.TYPE_COMMENT)));
+            header.add(new DefaultLine(addrelement, new DefaultElement("SEGMENT" + name + " protection=\"" + segment.getProtection() + "\"", Element.TYPE_COMMENT)));
             header.add(new DefaultLine(addrelement, HEADER_SEPARATOR));
 
             Element endaddrelement = new DefaultElement(fmt.formatAddress(segment.getEnd()) + " ", Element.TYPE_COMMENT);
             footer = new ArrayList<>();
+            footer.add(new DefaultLine(endaddrelement, new DefaultElement("END OF SEGMENT" + name, Element.TYPE_COMMENT)));
             footer.add(new DefaultLine(endaddrelement));
 
             metainfo = header.size() + footer.size();
+
+            vars = new TreeMap<>();
+            invvars = new TreeMap<>();
+            recompute(line);
+        }
+
+        public void recompute(long line) {
+            firstLine = line;
+
+            vars.clear();
+            invvars.clear();
+
+            long lastAddr = address;
+            long lastLine = line + header.size();
+            for (Variable var : mem.getTypes(segment.getStart(), segment.getEnd())) {
+                long off = var.getAddress() - lastAddr;
+                long ln = lastLine + off;
+                lastLine = ln + 1;
+                lastAddr = var.getAddress() + var.getSize();
+                Var v = new Var(var, ln);
+                vars.put(var.getAddress(), v);
+                invvars.put(ln, v);
+            }
+
+            content = getLineByAddress(segment.getEnd()) - getLineByAddress(segment.getStart()) + 1;
+        }
+
+        public long getLineCount() {
+            return metainfo + content;
         }
 
         public boolean isHeader(long line) {
@@ -180,7 +249,12 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
 
         public Line getData(long line) {
             long addr = getAddress(line);
-            return new DataLine(addr, 1, step, trc);
+            Var var = vars.get(addr);
+            if (var != null) {
+                return new DataLine(addr, var.var.getType(), step, trc);
+            } else {
+                return new DataLine(addr, null, step, trc);
+            }
         }
 
         public Line getLine(long line) {
@@ -198,13 +272,31 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
             if (delta < header.size()) {
                 return address;
             } else {
-                return address + delta - header.size();
+                Entry<Long, Var> var = invvars.floorEntry(line);
+                if (var == null) {
+                    return address + delta - header.size();
+                } else if (var.getValue().contains(line)) {
+                    return var.getValue().var.getAddress();
+                } else {
+                    Var v = var.getValue();
+                    delta = line - v.line;
+                    return v.var.getAddress() + v.var.getSize() - 1 + delta;
+                }
             }
         }
 
         public long getLineByAddress(long addr) {
-            long delta = addr - address;
-            return firstLine + header.size() + delta;
+            Entry<Long, Var> var = vars.floorEntry(addr);
+            if (var == null) {
+                long delta = addr - address;
+                return firstLine + header.size() + delta;
+            } else if (var.getValue().var.contains(addr)) {
+                return var.getValue().line;
+            } else {
+                Var v = var.getValue();
+                long off = addr - (v.var.getAddress() + v.var.getSize()) + 1;
+                return v.line + off;
+            }
         }
     }
 }

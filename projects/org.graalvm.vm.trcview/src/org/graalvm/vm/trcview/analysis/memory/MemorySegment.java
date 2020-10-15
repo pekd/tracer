@@ -3,13 +3,13 @@ package org.graalvm.vm.trcview.analysis.memory;
 public class MemorySegment {
     private final long start;
     private final long end;
-    private final Protection permission;
+    private final Protection protection;
     private String name;
 
-    public MemorySegment(long start, long end, Protection permission, String name) {
+    public MemorySegment(long start, long end, Protection protection, String name) {
         this.start = start;
         this.end = end;
-        this.permission = permission;
+        this.protection = protection;
         this.name = name;
     }
 
@@ -22,7 +22,7 @@ public class MemorySegment {
     }
 
     public Protection getProtection() {
-        return permission;
+        return protection;
     }
 
     public String getName() {
@@ -36,9 +36,9 @@ public class MemorySegment {
     @Override
     public String toString() {
         if (name != null) {
-            return String.format("%x-%x %s %s", start, end, permission, name);
+            return String.format("%x-%x %s %s", start, end, protection, name);
         } else {
-            return String.format("%x-%x %s", start, end, permission);
+            return String.format("%x-%x %s", start, end, protection);
         }
     }
 }

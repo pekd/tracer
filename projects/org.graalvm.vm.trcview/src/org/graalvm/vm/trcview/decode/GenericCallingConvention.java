@@ -100,7 +100,7 @@ public class GenericCallingConvention extends CallingConvention {
                 } else {
                     vars.put("arg_totalsize", totalsize);
                     vars.put("arg_id", id++);
-                    vars.put("arg_size", (long) arg.getSize());
+                    vars.put("arg_size", arg.getSize());
                     Expression expr = stackArguments.materialize(vars);
                     totalsize += arg.getSize();
                     result.add(expr);
