@@ -54,6 +54,11 @@ public class DataLine extends Line {
             case CHAR:
             case RAD50:
                 return new DefaultElement(s, Element.TYPE_STRING);
+            case FX16:
+            case FX32:
+            case FLOAT:
+                // you cannot follow a float value
+                return new DefaultElement(s, Element.TYPE_NUMBER);
             default:
                 if (isaddr) {
                     return new AddressElement(s, Element.TYPE_NUMBER, val);
