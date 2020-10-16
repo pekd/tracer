@@ -426,10 +426,8 @@ public class MainWindow extends JFrame {
         refresh.setEnabled(false);
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
-        exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, KeyEvent.ALT_DOWN_MASK));
-        exit.addActionListener(e ->
-
-        exit());
+        exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK));
+        exit.addActionListener(e -> exit());
 
         if (master == null) {
             fileMenu.add(open);
