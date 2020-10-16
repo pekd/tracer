@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.text.ParseException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -13,11 +15,13 @@ import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.NameValidator;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.expression.EvaluationException;
@@ -26,6 +30,7 @@ import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Utils;
+import org.graalvm.vm.trcview.ui.data.editor.Element;
 import org.graalvm.vm.trcview.ui.data.editor.JEditor;
 import org.graalvm.vm.trcview.ui.event.StepListener;
 
@@ -35,6 +40,8 @@ public class DataView extends JPanel implements StepListener {
     private DataViewModel model;
     private TraceAnalyzer trc;
     private StepEvent step;
+
+    private Deque<Long> addressStack = new ArrayDeque<>();
 
     public DataView() {
         super(new BorderLayout());
@@ -55,7 +62,7 @@ public class DataView extends JPanel implements StepListener {
                             Expression expr = p.parseExpression();
                             ExpressionContext ctx = new ExpressionContext(step.getState(), trc);
                             long addr = expr.evaluate(ctx);
-                            setAddress(addr);
+                            jump(addr);
                         } catch (ParseException ex) {
                             JOptionPane.showMessageDialog(DataView.this, ex.getMessage(), "Parse error", JOptionPane.ERROR_MESSAGE);
                         } catch (EvaluationException ex) {
@@ -72,8 +79,21 @@ public class DataView extends JPanel implements StepListener {
         getActionMap().put(n, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int line = editor.getCursorLine();
-                long addr = model.getAddressByLine(line);
+                Element element = editor.getCurrentElement();
+                long addr;
+                if (element instanceof AddressElement) {
+                    AddressElement ae = (AddressElement) element;
+                    long a = ae.getAddress();
+                    if (trc.getComputedSymbol(a) != null || trc.getTypedMemory().get(a) != null) {
+                        addr = a;
+                    } else {
+                        int line = editor.getCursorLine();
+                        addr = model.getAddressByLine(line);
+                    }
+                } else {
+                    int line = editor.getCursorLine();
+                    addr = model.getAddressByLine(line);
+                }
                 ComputedSymbol sym = trc.getComputedSymbol(addr);
                 if (sym != null) {
                     Utils.rename(sym, trc, DataView.this);
@@ -150,6 +170,27 @@ public class DataView extends JPanel implements StepListener {
             }
         });
 
+        KeyStroke o = KeyStroke.getKeyStroke(KeyEvent.VK_O, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(o, o);
+        getActionMap().put(o, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int line = editor.getCursorLine();
+                long addr = model.getAddressByLine(line);
+                TypedMemory mem = trc.getTypedMemory();
+                Variable var = mem.get(addr);
+                if (var != null) {
+                    Type type = var.getType();
+                    Type next = togglePointer(type);
+                    mem.set(addr, next, var.getName());
+                } else {
+                    mem.set(addr, new Type(new Type(DataType.VOID), trc.getArchitecture().getTypeInfo()));
+                }
+                model.update();
+                editor.requestFocus();
+            }
+        });
+
         KeyStroke r = KeyStroke.getKeyStroke(KeyEvent.VK_R, 0);
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(r, r);
         getActionMap().put(r, new AbstractAction() {
@@ -168,37 +209,66 @@ public class DataView extends JPanel implements StepListener {
                     }
                     model.update();
                 } else {
-                    Type type = new Type(DataType.S8);
-                    type.setRepresentation(Representation.CHAR);
-                    mem.set(addr, type);
+                    mem.set(addr, new Type(DataType.S8, Representation.CHAR));
                     model.update();
                 }
                 editor.requestFocus();
             }
         });
+
+        KeyStroke esc = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(esc, esc);
+        getActionMap().put(esc, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (addressStack.isEmpty()) {
+                    return;
+                } else {
+                    long addr = addressStack.pop();
+                    setAddress(addr);
+                }
+            }
+        });
+
+        editor.addActionListener(e -> {
+            Element element = editor.getCurrentElement();
+            if (element instanceof AddressElement) {
+                jump(((AddressElement) element).getAddress());
+            } else if (element instanceof NumberElement) {
+                jump(((NumberElement) element).getValue());
+            }
+        });
+    }
+
+    private Representation getArchRepresentation() {
+        StepFormat fmt = trc.getArchitecture().getFormat();
+        return fmt.numberfmt == StepFormat.NUMBERFMT_OCT ? Representation.OCT : Representation.HEX;
     }
 
     public Type getNextType(Type type) {
         if (type == null) {
-            return new Type(DataType.U8);
+            Representation repr = getArchRepresentation();
+            return new Type(DataType.U8, repr);
         }
+
+        Representation repr = type.getRepresentation();
         switch (type.getType()) {
             case U8:
-                return new Type(DataType.U16, type.isConst());
+                return new Type(DataType.U16, type.isConst(), repr);
             case S8:
-                return new Type(DataType.S16, type.isConst());
+                return new Type(DataType.S16, type.isConst(), repr);
             case U16:
-                return new Type(DataType.U32, type.isConst());
+                return new Type(DataType.U32, type.isConst(), repr);
             case S16:
-                return new Type(DataType.S32, type.isConst());
+                return new Type(DataType.S32, type.isConst(), repr);
             case U32:
-                return new Type(DataType.U64, type.isConst());
+                return new Type(DataType.U64, type.isConst(), repr);
             case S32:
-                return new Type(DataType.S64, type.isConst());
+                return new Type(DataType.S64, type.isConst(), repr);
             case U64:
-                return new Type(DataType.U8, type.isConst());
+                return new Type(DataType.U8, type.isConst(), repr);
             case S64:
-                return new Type(DataType.S8, type.isConst());
+                return new Type(DataType.S8, type.isConst(), repr);
             case FX16:
                 return new Type(DataType.FX32, type.isConst());
             case FX32:
@@ -219,10 +289,48 @@ public class DataView extends JPanel implements StepListener {
         }
     }
 
-    public void setAddress(long addr) {
-        long line = model.getLineByAddress(addr);
-        editor.setCursorLine((int) line);
-        editor.scrollToCursor();
+    public Type togglePointer(Type type) {
+        ArchitectureTypeInfo info = trc.getArchitecture().getTypeInfo();
+        if (type == null) {
+            return new Type(new Type(DataType.VOID), info);
+        }
+
+        Representation repr = getArchRepresentation();
+        if (type.getType() == DataType.PTR || type.getType() == DataType.STRING) {
+            switch (info.getPointerSize()) {
+                default:
+                case 1:
+                    return new Type(DataType.U8, repr);
+                case 2:
+                    return new Type(DataType.U16, repr);
+                case 4:
+                    return new Type(DataType.U32, repr);
+                case 8:
+                    return new Type(DataType.U64, repr);
+            }
+        } else {
+            return new Type(new Type(DataType.VOID), info);
+        }
+    }
+
+    public void jump(long address) {
+        long oldaddr = model.getAddressByLine(editor.getCursorLine());
+        if (setAddress(address)) {
+            addressStack.push(oldaddr);
+        }
+    }
+
+    public boolean setAddress(long addr) {
+        StepFormat fmt = trc.getArchitecture().getFormat();
+        try {
+            long line = model.getLineByAddress(addr);
+            editor.setCursorLine((int) line);
+            editor.setCursorColumn(fmt.addrwidth + 1);
+            editor.scrollToCursor();
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {

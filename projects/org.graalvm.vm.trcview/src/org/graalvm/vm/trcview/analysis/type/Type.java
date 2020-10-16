@@ -18,17 +18,33 @@ public class Type {
         this(type, false);
     }
 
+    public Type(DataType type, Representation repr) {
+        this(type, false, repr);
+    }
+
     public Type(DataType type, boolean isConst) {
-        this(type, isConst, -1);
+        this(type, isConst, -1, null);
+    }
+
+    public Type(DataType type, boolean isConst, Representation repr) {
+        this(type, isConst, -1, repr);
     }
 
     public Type(DataType type, boolean isConst, int elements) {
+        this(type, isConst, elements, null);
+    }
+
+    public Type(DataType type, boolean isConst, int elements, Representation repr) {
         this.type = type;
         this.pointee = null;
         this.struct = null;
         this.info = null;
         this.isConst = isConst;
-        this.representation = getDefaultRepresentation();
+        if (repr != null) {
+            this.representation = repr;
+        } else {
+            this.representation = getDefaultRepresentation();
+        }
         this.elements = elements;
     }
 

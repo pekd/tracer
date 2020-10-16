@@ -335,8 +335,8 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     public void scrollToCursor() {
         int x = getX(currentLine, currentColumn);
-        int y = getY(currentLine);
-        scrollRectToVisible(new Rectangle(x, y, maxCharWidth, charHeight));
+        int y = getY(currentLine) - charHeight;
+        scrollRectToVisible(new Rectangle(x, y, 2 * maxCharWidth, 2 * charHeight));
     }
 
     private Line getLine(int y) {

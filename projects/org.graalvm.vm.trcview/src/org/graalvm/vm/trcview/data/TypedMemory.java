@@ -41,6 +41,7 @@ public class TypedMemory {
         if (var == null) {
             types.remove(addr);
         } else {
+            clean(addr, var.getSize());
             types.put(addr, new Variable(addr, var));
         }
     }
@@ -49,7 +50,30 @@ public class TypedMemory {
         if (var == null) {
             types.remove(addr);
         } else {
+            clean(addr, var.getSize());
             types.put(addr, new Variable(addr, var, name));
+        }
+    }
+
+    private void clean(long addr, long size) {
+        Entry<Long, Variable> var = types.floorEntry(addr);
+        if (var != null) {
+            if (var.getValue().contains(addr)) {
+                types.remove(var.getKey());
+            }
+        }
+
+        for (long ptr = addr; ptr < addr + size;) {
+            var = types.ceilingEntry(ptr);
+            if (var == null) {
+                break;
+            }
+            Variable v = var.getValue();
+            if (v.getAddress() >= addr + size) {
+                break;
+            }
+            types.remove(v.getAddress());
+            ptr = v.getAddress();
         }
     }
 

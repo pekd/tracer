@@ -50,6 +50,7 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -174,9 +175,12 @@ public class Utils {
     }
 
     public static void setDataType(long addr, TraceAnalyzer trc, Component parent) {
-        Variable var = trc.getTypedMemory().get(addr);
+        TypedMemory mem = trc.getTypedMemory();
+        Variable var = mem.get(addr);
+        String name = null;
         String type = "";
         if (var != null) {
+            name = var.getRawName();
             Type t = var.getType();
             if (t != null) {
                 type = t.toString();
@@ -187,13 +191,13 @@ public class Utils {
             try {
                 Parser parser = new Parser(input.trim(), trc.getTypeDatabase());
                 Type t = parser.parseType();
-                trc.getTypedMemory().set(addr, t);
+                mem.set(addr, t, name);
             } catch (ParseException ex) {
                 JOptionPane.showMessageDialog(parent, "Error: " + ex.getMessage(), "Set type...", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         } else if (input != null) {
-            trc.getTypedMemory().set(addr, null);
+            mem.set(addr, null);
         }
     }
 

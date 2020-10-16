@@ -48,14 +48,18 @@ public class DataLine extends Line {
         this.trc = trc;
     }
 
-    private Element encode(long val) {
+    private Element encode(long val, boolean isaddr) {
         String s = DecoderUtils.str(type, val, trc);
         switch (type.getRepresentation()) {
             case CHAR:
             case RAD50:
                 return new DefaultElement(s, Element.TYPE_STRING);
             default:
-                return new DefaultElement(s, Element.TYPE_NUMBER);
+                if (isaddr) {
+                    return new AddressElement(s, Element.TYPE_NUMBER, val);
+                } else {
+                    return new NumberElement(s, Element.TYPE_NUMBER, val);
+                }
         }
     }
 
@@ -86,17 +90,17 @@ public class DataLine extends Line {
             long address = trunc(val);
             Symbol sym = trc.getSymbol(address);
             if (sym != null && sym.getName() != null) {
-                data = new DefaultElement(sym.getName(), Element.TYPE_IDENTIFIER);
+                data = new AddressElement(sym.getName(), Element.TYPE_IDENTIFIER, address);
             } else {
                 Variable var = trc.getTypedMemory().get(address);
                 if (var != null && var.getAddress() == address) {
-                    data = new DefaultElement(var.getName(), Element.TYPE_IDENTIFIER);
+                    data = new AddressElement(var.getName(), Element.TYPE_IDENTIFIER, address);
                 } else {
-                    data = encode(val);
+                    data = encode(val, true);
                 }
             }
         } else {
-            data = encode(val);
+            data = encode(val, false);
         }
 
         result.add(data);
@@ -167,7 +171,7 @@ public class DataLine extends Line {
                     data(result, val);
                     break;
                 default:
-                    result.add(new DefaultElement("DC", Element.TYPE_KEYWORD));
+                    result.add(new DefaultElement("DC?", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ??? ", Element.TYPE_PLAIN));
                     result.add(new DefaultElement("; unknown size " + size, Element.TYPE_COMMENT));
                     break;

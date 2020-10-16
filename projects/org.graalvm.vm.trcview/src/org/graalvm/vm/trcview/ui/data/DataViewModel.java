@@ -116,7 +116,9 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
     public long getLineByAddress(long addr) {
         Entry<Long, TextSegment> s = memorySegments.floorEntry(addr);
         if (s == null) {
-            throw new IllegalArgumentException("unknown line");
+            throw new IllegalArgumentException("unknown address");
+        } else if (!s.getValue().contains(addr)) {
+            throw new IllegalArgumentException("unknown address");
         } else {
             return s.getValue().getLineByAddress(addr);
         }
@@ -304,6 +306,10 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                 long off = addr - (v.var.getAddress() + v.var.getSize()) + 1;
                 return v.line + off;
             }
+        }
+
+        public boolean contains(long addr) {
+            return addr >= segment.getStart() && addr <= segment.getEnd();
         }
     }
 }
