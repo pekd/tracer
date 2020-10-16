@@ -30,6 +30,7 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
     private long step;
 
     private int maxlen = 80;
+    private Line maxline = null;
 
     private List<MemorySegment> segments = Collections.emptyList();
     private long lineCount;
@@ -134,6 +135,7 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
         if (l != null) {
             int len = l.getLength();
             if (len > maxlen) {
+                maxline = l;
                 maxlen = len;
             }
         }
@@ -144,6 +146,11 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
     @Override
     public int getMaximumLineLength() {
         return maxlen;
+    }
+
+    @Override
+    public Line getLongestLine() {
+        return maxline;
     }
 
     private class Var {

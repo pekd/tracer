@@ -6,35 +6,48 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JViewport;
+import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 
 @SuppressWarnings("serial")
 public class JEditor extends JComponent implements Scrollable, ChangeListener {
     public static final Font TEXT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public static final Font KEYWORD_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public static final Color CURSOR_COLOR = Color.GRAY;
-    private static final Color HIGHLIGHT_COLOR = new Color(232, 242, 254);
+    private static final Color SELECTION_COLOR = new Color(232, 242, 254);
+    private static final Color HIGHLIGHT_COLOR = new Color(242, 242, 242);
 
     private static final int MAX_CACHE_SIZE = 10_000;
+
+    private static final Logger log = Trace.create(JEditor.class);
 
     private int currentLine;
     private int currentColumn;
@@ -46,7 +59,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     private EditorModel model;
 
     private FontMetrics fontMetrics;
-    private int charWidth;
+    private int maxCharWidth;
     private int charHeight;
 
     private int offsetX = 10;
@@ -56,7 +69,10 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     private Map<Integer, Line> lineCache = new HashMap<>();
 
+    private Color selectionColor = SELECTION_COLOR;
     private Color highlightColor = HIGHLIGHT_COLOR;
+
+    private List<ActionListener> actionListeners = new ArrayList<>();
 
     public JEditor() {
         this(new DefaultEditorModel());
@@ -66,7 +82,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         fontMetrics = getFontMetrics(TEXT_FONT);
         charHeight = fontMetrics.getHeight();
         Rectangle2D charsize = TEXT_FONT.getMaxCharBounds(fontMetrics.getFontRenderContext());
-        charWidth = charsize.getBounds().width;
+        maxCharWidth = charsize.getBounds().width;
 
         setBackground(Color.WHITE);
         setModel(model);
@@ -79,6 +95,13 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
                 selection = false;
                 setCursorToPoint(e.getX(), e.getY());
                 requestFocusInWindow();
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    doubleClick();
+                }
             }
         });
 
@@ -155,6 +178,15 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
                 }
             }
         });
+
+        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(enter, enter);
+        getActionMap().put(enter, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enter();
+            }
+        });
     }
 
     public void setModel(EditorModel model) {
@@ -176,7 +208,20 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     }
 
     private void updateSize() {
-        Dimension size = new Dimension(charWidth * model.getMaximumLineLength() + 2 * offsetX, charHeight * model.getLineCount() + 2 * offsetY);
+        Line maxline = model.getLongestLine();
+        Dimension size;
+        int height = charHeight * model.getLineCount() + 2 * offsetY;
+        if (maxline == null) {
+            size = new Dimension(maxCharWidth * model.getMaximumLineLength() + 2 * offsetX, height);
+        } else {
+            int width = 0;
+            for (Element e : maxline.getElements()) {
+                Font fnt = e.getFont();
+                FontRenderContext ctx = getFontMetrics(fnt).getFontRenderContext();
+                width += fnt.getStringBounds(e.getText(), ctx).getBounds().width;
+            }
+            size = new Dimension(width + 2 * offsetX, height);
+        }
         setMinimumSize(size);
         setPreferredSize(size);
     }
@@ -186,8 +231,41 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             return;
         }
 
-        int posX = (x - offsetX + (charWidth / 2)) / charWidth;
         int posY = (y - offsetY) / charHeight;
+
+        int posX = 0;
+        Line line = getLine(posY);
+        if (x <= offsetX) {
+            posX = 0;
+        } else if (line != null) {
+            StringBuilder buf = new StringBuilder();
+            for (Element e : line.getElements()) {
+                buf.append(e.getText());
+            }
+
+            FontRenderContext ctx = fontMetrics.getFontRenderContext();
+            String s = buf.toString();
+            int lastWidth = 0;
+            int lastCX = offsetX;
+
+            for (int i = 1; i <= s.length(); i++) {
+                Rectangle2D bounds = TEXT_FONT.getStringBounds(s, 0, i, ctx);
+                int width = bounds.getBounds().width;
+                int cx = offsetX + (width + lastWidth) / 2;
+                lastWidth = width;
+                if (x >= lastCX && x <= cx) {
+                    // found
+                    posX = i - 1;
+                    lastCX = cx;
+                    break;
+                }
+                lastCX = cx;
+            }
+
+            if (x > lastCX) {
+                posX = s.length();
+            }
+        }
 
         setCursor(posY, posX);
     }
@@ -239,9 +317,9 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     }
 
     public void scrollToCursor() {
-        int x = getX(currentColumn);
+        int x = getX(currentLine, currentColumn);
         int y = getY(currentLine);
-        scrollRectToVisible(new Rectangle(x, y, charWidth, charHeight));
+        scrollRectToVisible(new Rectangle(x, y, maxCharWidth, charHeight));
     }
 
     private Line getLine(int y) {
@@ -266,8 +344,31 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         return currentColumn;
     }
 
-    private int getX(int column) {
-        return column * charWidth + offsetX;
+    public boolean hasSelection() {
+        return selection;
+    }
+
+    private int getX(int line, int column) {
+        return getX(line, column, TEXT_FONT);
+    }
+
+    private int getX(int line, int column, Font fnt) {
+        Line ln = getLine(line);
+        if (ln == null) {
+            return column * maxCharWidth + offsetX;
+        } else {
+            StringBuilder buf = new StringBuilder();
+            for (Element e : ln.getElements()) {
+                buf.append(e.getText());
+            }
+            int col = column;
+            if (col > buf.length()) {
+                col = buf.length();
+            }
+            FontRenderContext ctx = getFontMetrics(fnt).getFontRenderContext();
+            Rectangle2D bounds = fnt.getStringBounds(buf.toString(), 0, col, ctx);
+            return bounds.getBounds().width + offsetX;
+        }
     }
 
     private int getY(int line) {
@@ -281,6 +382,52 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
     public Color getHighlightColor() {
         return highlightColor;
+    }
+
+    public Element getCurrentElement() {
+        Line line = getLine(currentLine);
+
+        if (line == null) {
+            return null;
+        }
+
+        int i = 0;
+        for (Element e : line.getElements()) {
+            int next = i + e.getLength();
+            if (currentColumn >= i && currentColumn < next) {
+                return e;
+            }
+            i = next;
+        }
+
+        return null;
+    }
+
+    private void doubleClick() {
+        fireActionEvent();
+    }
+
+    private void enter() {
+        fireActionEvent();
+    }
+
+    private void fireActionEvent() {
+        ActionEvent evt = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "enter");
+        for (ActionListener l : actionListeners) {
+            try {
+                l.actionPerformed(evt);
+            } catch (Throwable t) {
+                log.log(Levels.ERROR, "Uncaught exception: " + t, t);
+            }
+        }
+    }
+
+    public void addActionListener(ActionListener listener) {
+        actionListeners.add(listener);
+    }
+
+    public void removeActionListener(ActionListener listener) {
+        actionListeners.remove(listener);
     }
 
     @Override
@@ -331,27 +478,68 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             selectionEndColumn = selectionColumn;
         }
 
+        // render elements
+        FontRenderContext ctx = ((Graphics2D) g).getFontRenderContext();
         for (int y = startY; y < endY; y++) {
             Line line = getLine(y);
 
-            if (y >= selectionStartLine && y <= selectionEndLine && highlightColor != null) {
-                g.setColor(highlightColor);
+            // highlight current element
+            if (line != null && highlightColor != null && y == currentLine && !selection) {
+                int off = 0;
+                int posX = 0;
+                for (Element element : line.getElements()) {
+                    int next = off + element.getLength();
+                    String text = element.getText();
+                    Font fnt = element.getFont();
+                    Rectangle2D bounds = fnt.getStringBounds(text, ctx);
+                    int width = bounds.getBounds().width;
+                    if (off <= currentColumn && next > currentColumn) {
+                        if (!text.trim().isEmpty()) { // don't highlight white space
+                            String trimmed = text.trim();
+                            int w = fnt.getStringBounds(trimmed, ctx).getBounds().width;
+                            int skip = 0;
+                            for (int i = 0; i < text.length(); i++) {
+                                if (!Character.isWhitespace(text.charAt(i))) {
+                                    String space = text.substring(0, i);
+                                    skip = fnt.getStringBounds(space, ctx).getBounds().width;
+                                    off += i;
+                                    next = off + trimmed.length();
+                                    break;
+                                }
+                            }
+                            // check again because the element was stripped in between
+                            if (off <= currentColumn && next > currentColumn) {
+                                g.setColor(highlightColor);
+                                g.fillRect(offsetX + posX + skip, offsetY + y * charHeight, w, charHeight);
+                            }
+                        }
+                        break;
+                    }
+                    off = next;
+                    posX += width;
+                }
+            }
+
+            // draw selection
+            if (y >= selectionStartLine && y <= selectionEndLine && selectionColor != null) {
+                g.setColor(selectionColor);
                 if (y == selectionStartLine) {
-                    int sx = getX(selectionStartColumn);
+                    int sx = getX(selectionStartLine, selectionStartColumn);
                     if (y == selectionEndLine) {
-                        int ex = getX(selectionEndColumn);
+                        int ex = getX(selectionStartLine, selectionEndColumn);
                         g.fillRect(sx, offsetY + y * charHeight, ex - sx - 1, charHeight);
                     } else {
                         g.fillRect(sx, offsetY + y * charHeight, getWidth(), charHeight);
                     }
                 } else if (y == selectionEndLine) {
-                    int ex = getX(selectionEndColumn);
+                    int ex = getX(selectionEndLine, selectionEndColumn);
                     g.fillRect(offsetX, offsetY + y * charHeight, ex - offsetX - 1, charHeight);
                 } else if (y > selectionStartLine && y < selectionEndLine) {
                     g.fillRect(offsetX, offsetY + y * charHeight, getWidth(), charHeight);
                 }
             }
 
+            // draw element text
             int x = offsetX;
             if (line != null) {
                 List<Element> elements = line.getElements();
@@ -366,7 +554,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
 
         // draw cursor crosshair
         int cursorY = getY(currentLine) + 1;
-        int cursorX = getX(currentColumn) - 1;
+        int cursorX = getX(currentLine, currentColumn) - 1;
         g.setColor(CURSOR_COLOR);
         g.drawLine(0, cursorY, getWidth(), cursorY);
         g.drawLine(cursorX, 0, cursorX, getHeight());
@@ -404,7 +592,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         int maxUnitIncrement;
         if (orientation == SwingConstants.HORIZONTAL) {
             currentPosition = visibleRect.x;
-            maxUnitIncrement = charWidth;
+            maxUnitIncrement = maxCharWidth;
         } else {
             currentPosition = visibleRect.y;
             maxUnitIncrement = charHeight;
@@ -423,7 +611,7 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
     @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
         if (orientation == SwingConstants.HORIZONTAL) {
-            return visibleRect.width - charWidth;
+            return visibleRect.width - maxCharWidth;
         } else {
             return visibleRect.height - charHeight;
         }

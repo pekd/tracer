@@ -19,6 +19,8 @@ public abstract class EditorModel {
 
     public abstract int getMaximumLineLength();
 
+    public abstract Line getLongestLine();
+
     public void addChangeListener(ChangeListener l) {
         listeners.add(l);
     }

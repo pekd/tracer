@@ -25,6 +25,11 @@ public class DefaultEditorModel extends EditorModel {
     }
 
     @Override
+    public Line getLongestLine() {
+        return null;
+    }
+
+    @Override
     public Line getLine(int line) {
         if (line >= getLineCount()) {
             return null;
