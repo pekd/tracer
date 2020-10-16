@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.CpuState;
@@ -196,6 +197,25 @@ public class DecoderUtils {
         return str(type, val, null, trc);
     }
 
+    private static long truncptr(long ptr, TraceAnalyzer trc) {
+        ArchitectureTypeInfo info = trc.getArchitecture().getTypeInfo();
+        if (info != null) {
+            switch (info.getPointerSize()) {
+                case 1:
+                    return ptr & 0xFF;
+                case 2:
+                    return ptr & 0xFFFF;
+                case 4:
+                    return ptr & 0xFFFFFFFFL;
+                case 8:
+                default:
+                    return ptr;
+            }
+        } else {
+            return ptr;
+        }
+    }
+
     public static String str(Type type, long val, CpuState state, TraceAnalyzer trc) {
         Representation repr = type.getRepresentation();
         switch (type.getType()) {
@@ -203,15 +223,15 @@ public class DecoderUtils {
                 return "";
             case PTR:
                 if (state != null && trc != null && repr == Representation.STRING) {
-                    return cstr(val, state.getStep(), trc);
+                    return cstr(truncptr(val, trc), state.getStep(), trc);
                 } else {
-                    return ptr(val, trc);
+                    return ptr(truncptr(val, trc), trc);
                 }
             case STRING:
                 if (state != null && trc != null) {
-                    return cstr(val, state.getStep(), trc);
+                    return cstr(truncptr(val, trc), state.getStep(), trc);
                 } else {
-                    return ptr(val, trc);
+                    return ptr(truncptr(val, trc), trc);
                 }
             case U8:
                 switch (repr) {

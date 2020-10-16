@@ -85,7 +85,7 @@ public class DataLine extends Line {
     private void data(List<Element> result, long val) {
         String comment = null;
         if ((type.getType() == DataType.PTR && type.getRepresentation() == Representation.STRING) || (type.getType() == DataType.STRING)) {
-            comment = "; " + DecoderUtils.cstr(val, step, trc);
+            comment = "; " + DecoderUtils.cstr(trunc(val), step, trc);
         } else if (type.getType() == DataType.U8 || type.getType() == DataType.S8) {
             comment = "; '" + DecoderUtils.encode((int) val & 0xFF) + "'";
         }
