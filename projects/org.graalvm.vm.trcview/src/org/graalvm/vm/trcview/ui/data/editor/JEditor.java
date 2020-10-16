@@ -10,6 +10,9 @@ import java.awt.Graphics2D;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -185,6 +188,20 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 enter();
+            }
+        });
+
+        KeyStroke ctrlc = KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlc, ctrlc);
+        getActionMap().put(ctrlc, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String text = getSelectedText();
+                if (text != null) {
+                    StringSelection value = new StringSelection(text);
+                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    clipboard.setContents(value, value);
+                }
             }
         });
     }
@@ -401,6 +418,81 @@ public class JEditor extends JComponent implements Scrollable, ChangeListener {
         }
 
         return null;
+    }
+
+    public String getSelectedText() {
+        if (!selection) {
+            return null;
+        }
+
+        int selectionStartLine;
+        int selectionEndLine;
+        int selectionStartColumn;
+        int selectionEndColumn;
+
+        if (selectionLine == currentLine) {
+            selectionStartLine = currentLine;
+            selectionEndLine = currentLine;
+            if (selectionColumn < currentColumn) {
+                selectionStartColumn = selectionColumn;
+                selectionEndColumn = currentColumn;
+            } else {
+                selectionStartColumn = currentColumn;
+                selectionEndColumn = selectionColumn;
+            }
+        } else if (selectionLine < currentLine) {
+            selectionStartLine = selectionLine;
+            selectionEndLine = currentLine;
+            selectionStartColumn = selectionColumn;
+            selectionEndColumn = currentColumn;
+        } else {
+            selectionStartLine = currentLine;
+            selectionEndLine = selectionLine;
+            selectionStartColumn = currentColumn;
+            selectionEndColumn = selectionColumn;
+        }
+
+        StringBuilder buf = new StringBuilder();
+        if (selectionStartLine == selectionEndLine) {
+            Line line = getLine(selectionStartLine);
+            if (line == null) {
+                return buf.toString(); // empty string
+            }
+            for (Element e : line.getElements()) {
+                buf.append(e.getText());
+            }
+            return buf.substring(selectionStartColumn, selectionEndColumn);
+        } else {
+            Line firstLine = getLine(selectionStartLine);
+            StringBuilder tmp = new StringBuilder();
+            if (firstLine != null) {
+                for (Element e : firstLine.getElements()) {
+                    tmp.append(e.getText());
+                }
+                buf.append(tmp.substring(selectionStartColumn));
+            }
+            buf.append('\n');
+
+            for (int line = selectionStartLine + 1; line < selectionEndLine; line++) {
+                Line ln = getLine(line);
+                if (ln != null) {
+                    for (Element e : ln.getElements()) {
+                        buf.append(e.getText());
+                    }
+                }
+                buf.append('\n');
+            }
+
+            Line lastLine = getLine(selectionEndLine);
+            tmp = new StringBuilder();
+            if (lastLine != null) {
+                for (Element e : lastLine.getElements()) {
+                    tmp.append(e.getText());
+                }
+                buf.append(tmp.substring(0, selectionEndColumn));
+            }
+        }
+        return buf.toString();
     }
 
     private void doubleClick() {
