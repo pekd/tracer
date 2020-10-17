@@ -1,14 +1,10 @@
 package org.graalvm.vm.trcview.arch.io;
 
-import java.io.IOException;
-
-import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.arch.none.None;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public class IncompleteTraceStep extends StepEvent implements CpuState {
     public IncompleteTraceStep(int tid) {
-        super(Elf.EM_NONE, tid);
+        super(tid);
     }
 
     @Override
@@ -84,10 +80,5 @@ public class IncompleteTraceStep extends StepEvent implements CpuState {
     @Override
     public StepFormat getFormat() {
         return None.FORMAT;
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        // nothing
     }
 }

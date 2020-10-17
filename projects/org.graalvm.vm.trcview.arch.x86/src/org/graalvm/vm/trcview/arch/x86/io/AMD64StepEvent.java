@@ -1,14 +1,10 @@
 package org.graalvm.vm.trcview.arch.x86.io;
 
-import java.io.IOException;
-
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
-import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
 import org.graalvm.vm.x86.isa.AMD64InstructionDecoder;
 import org.graalvm.vm.x86.isa.AMD64InstructionQuickInfo;
@@ -18,7 +14,7 @@ public abstract class AMD64StepEvent extends StepEvent {
     private final byte[] machinecode;
 
     protected AMD64StepEvent(int tid, byte[] machinecode) {
-        super(AMD64.ID, tid);
+        super(tid);
         this.machinecode = machinecode;
     }
 
@@ -142,11 +138,5 @@ public abstract class AMD64StepEvent extends StepEvent {
     @Override
     public StepFormat getFormat() {
         return AMD64.FORMAT;
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        IO.writeArray(out, getMachinecode());
-        getState().writeRecord(out);
     }
 }

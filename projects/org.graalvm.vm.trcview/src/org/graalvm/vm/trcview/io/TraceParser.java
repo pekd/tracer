@@ -75,6 +75,7 @@ public class TraceParser {
         }
 
         private void ret() {
+            parent.trim();
             if (parent.getNodes().isEmpty()) {
                 parent.add(new IncompleteTraceStep(tid));
             }
@@ -85,6 +86,7 @@ public class TraceParser {
 
         private void ret(BlockNode root) {
             while (parent != root) {
+                parent.trim();
                 if (parent.getNodes().isEmpty()) {
                     parent.add(new IncompleteTraceStep(tid));
                 }

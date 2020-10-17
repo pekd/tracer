@@ -8,7 +8,6 @@ import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.WordInputStream;
-import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.Flags;
 
 public abstract class AMD64CpuState extends AMD64StepEvent implements CpuState {
@@ -86,36 +85,6 @@ public abstract class AMD64CpuState extends AMD64StepEvent implements CpuState {
     public abstract long getGS();
 
     public abstract Vector128 getXMM(int i);
-
-    @Override
-    public void writeRecord(WordOutputStream out) throws IOException {
-        IO.writeArray(out, getMachinecode());
-        out.write64bit(getRAX());
-        out.write64bit(getRBX());
-        out.write64bit(getRCX());
-        out.write64bit(getRDX());
-        out.write64bit(getRSI());
-        out.write64bit(getRDI());
-        out.write64bit(getRBP());
-        out.write64bit(getRSP());
-        out.write64bit(getR8());
-        out.write64bit(getR9());
-        out.write64bit(getR10());
-        out.write64bit(getR11());
-        out.write64bit(getR12());
-        out.write64bit(getR13());
-        out.write64bit(getR14());
-        out.write64bit(getR15());
-        out.write64bit(getRIP());
-        out.write64bit(getFS());
-        out.write64bit(getGS());
-        out.write64bit(getRFL());
-        out.write64bit(step);
-        for (int i = 0; i < 16; i++) {
-            out.write64bit(getXMM(i).getI64(0));
-            out.write64bit(getXMM(i).getI64(1));
-        }
-    }
 
     public static AMD64CpuState readRecord(WordInputStream in, int tid) throws IOException {
         byte[] machinecode = IO.readArray(in);

@@ -7,8 +7,8 @@ public abstract class StepEvent extends Event {
     public MemoryEvent read;
     public MemoryEvent write;
 
-    protected StepEvent(short arch, int tid) {
-        super(arch, STEP, tid);
+    protected StepEvent(int tid) {
+        super(tid);
     }
 
     public abstract byte[] getMachinecode();

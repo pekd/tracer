@@ -15,7 +15,6 @@ import org.graalvm.vm.trcview.arch.custom.CustomArchitecture;
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
-import org.graalvm.vm.trcview.arch.none.None;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.x86.trcview.arch.custom.test.impl.MockStepEvent;
 import org.junit.Before;
@@ -68,9 +67,9 @@ public class AnalyzerTest {
     public void analyzer2() {
         CustomAnalyzer analyzer = new CustomAnalyzer(SCRIPT);
         analyzer.start(mem);
-        Event evt0 = new MockStepEvent(None.ID, 0, 0, 0xBEEE, new String[]{"salad"}, new byte[]{0x41});
-        Event evt1 = new MockStepEvent(None.ID, 0, 1, 0xBEEF, new String[]{"noodle"}, new byte[]{0x42}, "temp", 42L);
-        Event evt2 = new MockStepEvent(None.ID, 0, 2, 0xBEF0, new String[]{"tomatoe"}, new byte[]{0x43});
+        Event evt0 = new MockStepEvent(0, 0, 0xBEEE, new String[]{"salad"}, new byte[]{0x41});
+        Event evt1 = new MockStepEvent(0, 1, 0xBEEF, new String[]{"noodle"}, new byte[]{0x42}, "temp", 42L);
+        Event evt2 = new MockStepEvent(0, 2, 0xBEF0, new String[]{"tomatoe"}, new byte[]{0x43});
         Node node0 = evt0;
         Node node1 = evt1;
         Node node2 = evt2;

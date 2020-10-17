@@ -11,14 +11,19 @@ import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.BrkEvent;
 import org.graalvm.vm.trcview.arch.io.EofEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.GenericMemoryEvent;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI128;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI16;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI32;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI64;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI8;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.MprotectEvent;
 import org.graalvm.vm.trcview.arch.io.MunmapEvent;
 import org.graalvm.vm.trcview.arch.io.SymbolTableEvent;
-import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
 import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
@@ -113,7 +118,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             String s = str(addr, size, step);
                             if (s != null) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, true, s);
+                                return new IoEvent(state.getTid(), step, ch, true, s);
                             }
                         }
                     }
@@ -127,7 +132,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             String s = str(addr, size, step);
                             if (s != null) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, false, s);
+                                return new IoEvent(state.getTid(), step, ch, false, s);
                             }
                         }
                     }
@@ -157,7 +162,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                             if (buf.length() > 0) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, true, buf.toString());
+                                return new IoEvent(state.getTid(), step, ch, true, buf.toString());
                             }
                         }
                     }
@@ -187,7 +192,7 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
                             }
                             if (buf.length() > 0) {
                                 int ch = file == 2 ? 1 : 0;
-                                return new IoEvent(AMD64.ID, state.getTid(), step, ch, false, buf.toString());
+                                return new IoEvent(state.getTid(), step, ch, false, buf.toString());
                             }
                         }
                     }
@@ -209,13 +214,23 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
         } else if (record instanceof MemoryEventRecord) {
             MemoryEventRecord event = (MemoryEventRecord) record;
             if (event.hasData()) {
-                if (event.getSize() > 8) {
-                    return new MemoryEvent(false, event.getTid(), event.getAddress(), (byte) event.getSize(), event.isWrite(), event.getVector());
+                if (event.getSize() == 16) {
+                    return new MemoryEventI128(false, event.getTid(), event.getAddress(), event.isWrite(), event.getVector());
+                } else if (event.getSize() > 8) {
+                    return new GenericMemoryEvent(false, event.getTid(), event.getAddress(), (byte) event.getSize(), event.isWrite(), event.getVector());
+                } else if (event.getSize() == 8) {
+                    return new MemoryEventI64(false, event.getTid(), event.getAddress(), event.isWrite(), event.getValue());
+                } else if (event.getSize() == 4) {
+                    return new MemoryEventI32(false, event.getTid(), event.getAddress(), event.isWrite(), (int) event.getValue());
+                } else if (event.getSize() == 2) {
+                    return new MemoryEventI16(false, event.getTid(), event.getAddress(), event.isWrite(), (short) event.getValue());
+                } else if (event.getSize() == 1) {
+                    return new MemoryEventI8(false, event.getTid(), event.getAddress(), event.isWrite(), (byte) event.getValue());
                 } else {
-                    return new MemoryEvent(false, event.getTid(), event.getAddress(), (byte) event.getSize(), event.isWrite(), event.getValue());
+                    return new GenericMemoryEvent(false, event.getTid(), event.getAddress(), (byte) event.getSize(), event.isWrite(), event.getValue());
                 }
             } else {
-                return new MemoryEvent(false, event.getTid(), event.getAddress(), (byte) event.getSize(), event.isWrite());
+                return new GenericMemoryEvent(false, event.getTid(), event.getAddress(), (byte) event.getSize(), event.isWrite());
             }
         } else if (record instanceof MmapRecord) {
             MmapRecord mmap = (MmapRecord) record;

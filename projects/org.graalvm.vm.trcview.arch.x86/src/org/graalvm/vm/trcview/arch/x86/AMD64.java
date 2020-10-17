@@ -7,10 +7,8 @@ import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
-import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.x86.decode.AMD64SyscallDecoder;
-import org.graalvm.vm.trcview.arch.x86.io.AMD64EventParser;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64TraceReader;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
@@ -29,7 +27,6 @@ public class AMD64 extends Architecture {
 
     private static final SyscallDecoder syscallDecoder = new AMD64SyscallDecoder();
     private static final CallDecoder callDecoder = new GenericCallDecoder();
-    private static final EventParser eventParser = new AMD64EventParser();
 
     @Override
     public short getId() {
@@ -49,11 +46,6 @@ public class AMD64 extends Architecture {
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return new AMD64TraceReader(in);
-    }
-
-    @Override
-    public EventParser getEventParser() {
-        return eventParser;
     }
 
     @Override

@@ -1,7 +1,5 @@
 package org.graalvm.vm.trcview.arch.custom.io;
 
-import java.io.IOException;
-
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.DerivedStepEvent;
@@ -11,7 +9,6 @@ import org.graalvm.vm.trcview.script.rt.Pointer;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
 import org.graalvm.vm.trcview.script.type.Struct;
 import org.graalvm.vm.trcview.script.type.Struct.Member;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public class CustomStepEvent extends DerivedStepEvent implements CpuState {
     private final CustomAnalyzer analyzer;
@@ -22,8 +19,8 @@ public class CustomStepEvent extends DerivedStepEvent implements CpuState {
     private final Struct stateStruct;
     private final String pcName;
 
-    public CustomStepEvent(CustomAnalyzer analyzer, short arch, int tid, String pcName, Pointer data, Pointer state, long parentStep) {
-        super(arch, tid);
+    public CustomStepEvent(CustomAnalyzer analyzer, int tid, String pcName, Pointer data, Pointer state, long parentStep) {
+        super(tid);
         this.pcName = pcName;
         this.data = data;
         this.state = state;
@@ -155,11 +152,6 @@ public class CustomStepEvent extends DerivedStepEvent implements CpuState {
     @Override
     public StepFormat getFormat() {
         return analyzer.getArchitecture().getFormat();
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        // TODO Auto-generated method stub
     }
 
     @Override

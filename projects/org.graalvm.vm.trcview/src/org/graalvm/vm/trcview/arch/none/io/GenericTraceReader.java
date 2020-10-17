@@ -9,8 +9,12 @@ import java.util.TreeMap;
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.GenericMemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
-import org.graalvm.vm.trcview.arch.io.MemoryEvent;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI16;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI32;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI64;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI8;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.MprotectEvent;
 import org.graalvm.vm.trcview.arch.io.MunmapEvent;
@@ -126,9 +130,9 @@ public class GenericTraceReader extends ArchTraceReader {
                 boolean isbe = BitTest.test(flags, 1);
                 boolean hasvalue = BitTest.test(flags, 2);
                 if (hasvalue) {
-                    return new MemoryEvent(isbe, tid, address, size, false, value);
+                    return new GenericMemoryEvent(isbe, tid, address, size, false, value);
                 } else {
-                    return new MemoryEvent(isbe, tid, address, size, false);
+                    return new GenericMemoryEvent(isbe, tid, address, size, false);
                 }
             }
             case RECORD_WRITE: {
@@ -139,9 +143,9 @@ public class GenericTraceReader extends ArchTraceReader {
                 boolean isbe = BitTest.test(flags, 1);
                 boolean hasvalue = BitTest.test(flags, 2);
                 if (hasvalue) {
-                    return new MemoryEvent(isbe, tid, address, size, true, value);
+                    return new GenericMemoryEvent(isbe, tid, address, size, true, value);
                 } else {
-                    return new MemoryEvent(isbe, tid, address, size, true);
+                    return new GenericMemoryEvent(isbe, tid, address, size, true);
                 }
             }
             case RECORD_ENDIANESS:
@@ -150,42 +154,42 @@ public class GenericTraceReader extends ArchTraceReader {
             case RECORD_READ_8: {
                 long address = in.read64bit();
                 byte value = (byte) in.read8bit();
-                return new MemoryEvent(be, tid, address, (byte) 1, false, Byte.toUnsignedLong(value));
+                return new MemoryEventI8(be, tid, address, false, value);
             }
             case RECORD_READ_16: {
                 long address = in.read64bit();
                 short value = in.read16bit();
-                return new MemoryEvent(be, tid, address, (byte) 2, false, Short.toUnsignedLong(value));
+                return new MemoryEventI16(be, tid, address, false, value);
             }
             case RECORD_READ_32: {
                 long address = in.read64bit();
                 int value = in.read32bit();
-                return new MemoryEvent(be, tid, address, (byte) 4, false, Integer.toUnsignedLong(value));
+                return new MemoryEventI32(be, tid, address, false, value);
             }
             case RECORD_READ_64: {
                 long address = in.read64bit();
                 long value = in.read64bit();
-                return new MemoryEvent(be, tid, address, (byte) 8, false, value);
+                return new MemoryEventI64(be, tid, address, false, value);
             }
             case RECORD_WRITE_8: {
                 long address = in.read64bit();
                 byte value = (byte) in.read8bit();
-                return new MemoryEvent(be, tid, address, (byte) 1, true, Byte.toUnsignedLong(value));
+                return new MemoryEventI8(be, tid, address, true, value);
             }
             case RECORD_WRITE_16: {
                 long address = in.read64bit();
                 short value = in.read16bit();
-                return new MemoryEvent(be, tid, address, (byte) 2, true, Short.toUnsignedLong(value));
+                return new MemoryEventI16(be, tid, address, true, value);
             }
             case RECORD_WRITE_32: {
                 long address = in.read64bit();
                 int value = in.read32bit();
-                return new MemoryEvent(be, tid, address, (byte) 4, true, Integer.toUnsignedLong(value));
+                return new MemoryEventI32(be, tid, address, true, value);
             }
             case RECORD_WRITE_64: {
                 long address = in.read64bit();
                 long value = in.read64bit();
-                return new MemoryEvent(be, tid, address, (byte) 8, true, value);
+                return new MemoryEventI64(be, tid, address, true, value);
             }
             case RECORD_DUMP: {
                 long address = in.read64bit();

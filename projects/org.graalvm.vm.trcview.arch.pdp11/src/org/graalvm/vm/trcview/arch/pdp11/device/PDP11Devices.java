@@ -7,7 +7,6 @@ import org.graalvm.vm.trcview.analysis.device.FieldFormat;
 import org.graalvm.vm.trcview.analysis.device.FieldNumberType;
 import org.graalvm.vm.trcview.analysis.device.IntegerFieldFormat;
 import org.graalvm.vm.trcview.arch.io.DeviceDefinitionEvent;
-import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 
 public class PDP11Devices {
     public static final int CPU = 0;
@@ -29,7 +28,7 @@ public class PDP11Devices {
     public static final int DLV11J_XBUF = 3;
 
     public static DeviceDefinitionEvent createDevices() {
-        DeviceDefinitionEvent evt = new DeviceDefinitionEvent(PDP11.ID);
+        DeviceDefinitionEvent evt = new DeviceDefinitionEvent();
         Device cpu = new Device(CPU, "KD11-NA", DeviceType.PROCESSOR);
         Device qbus = new Device(QBUS, "QBUS", DeviceType.BUS);
         Device dlv11j = new Device(DLV11J, "DLV11-J", DeviceType.INTERFACE);

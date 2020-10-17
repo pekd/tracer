@@ -8,8 +8,8 @@ import org.graalvm.vm.trcview.analysis.device.RegisterValue;
 public abstract class DeviceEvent extends Event {
     private long step; // store step id here for memory efficiency reasons
 
-    protected DeviceEvent(short arch, int tid) {
-        super(arch, DEVICE, tid);
+    protected DeviceEvent(int tid) {
+        super(tid);
     }
 
     public void setStep(long step) {

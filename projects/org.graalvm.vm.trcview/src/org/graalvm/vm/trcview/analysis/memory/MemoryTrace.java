@@ -384,4 +384,10 @@ public class MemoryTrace {
 
         return result;
     }
+
+    public void trim() {
+        for (Page page : pages.values()) {
+            page.trim();
+        }
+    }
 }

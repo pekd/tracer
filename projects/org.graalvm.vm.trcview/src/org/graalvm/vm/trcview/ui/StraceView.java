@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +28,6 @@ import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.JumpListener;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 @SuppressWarnings("serial")
 public class StraceView extends JPanel {
@@ -117,7 +115,7 @@ public class StraceView extends JPanel {
     }
 
     private void update() {
-        Node target = new StepEvent(trc.getArchitecture().getId(), 0) {
+        Node target = new StepEvent(0) {
             @Override
             public byte[] getMachinecode() {
                 return null;
@@ -156,10 +154,6 @@ public class StraceView extends JPanel {
             @Override
             public StepFormat getFormat() {
                 return null;
-            }
-
-            @Override
-            protected void writeRecord(WordOutputStream out) throws IOException {
             }
         };
 

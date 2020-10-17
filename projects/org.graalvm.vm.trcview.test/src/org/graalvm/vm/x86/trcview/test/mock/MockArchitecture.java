@@ -4,15 +4,12 @@ import java.io.InputStream;
 
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
-import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
 
 public class MockArchitecture extends Architecture {
     public static final short ID = (short) 0xFFFE;
-
-    private static final MockEventParser eventParser = new MockEventParser();
 
     private final StepFormat format;
     private final boolean systemLevel;
@@ -40,11 +37,6 @@ public class MockArchitecture extends Architecture {
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return null;
-    }
-
-    @Override
-    public EventParser getEventParser() {
-        return eventParser;
     }
 
     @Override

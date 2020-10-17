@@ -6,9 +6,7 @@ import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.trcview.arch.none.None;
 import org.graalvm.vm.util.io.WordInputStream;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public abstract class GenericStepEvent extends StepEvent implements CpuState {
     public static final byte TYPE_OTHER = 0;
@@ -30,7 +28,7 @@ public abstract class GenericStepEvent extends StepEvent implements CpuState {
     private final GenericStateDescription description;
 
     protected GenericStepEvent(GenericStateDescription description, int tid, long step, long pc, byte type, byte[] machinecode, String[] disassembly) {
-        super(None.ID, tid);
+        super(tid);
         this.description = description;
         this.step = step;
         this.pc = pc;
@@ -128,11 +126,6 @@ public abstract class GenericStepEvent extends StepEvent implements CpuState {
     @Override
     public StepFormat getFormat() {
         return description.getFormat();
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        // TODO Auto-generated method stub
     }
 
     @Override

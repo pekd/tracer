@@ -102,6 +102,12 @@ public class BlockNode extends Node implements Block {
         child.setParent(this);
     }
 
+    public void trim() {
+        if (children != null && children instanceof ArrayList) {
+            ((ArrayList<?>) children).trimToSize();
+        }
+    }
+
     public boolean isInterrupt() {
         return interrupt != null;
     }

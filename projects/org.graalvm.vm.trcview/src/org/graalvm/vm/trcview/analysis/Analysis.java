@@ -347,6 +347,8 @@ public class Analysis {
     public void finish(BlockNode root) {
         add(root);
 
+        memory.trim();
+
         for (Analyzer analyzer : analyzers) {
             analyzer.finish();
         }

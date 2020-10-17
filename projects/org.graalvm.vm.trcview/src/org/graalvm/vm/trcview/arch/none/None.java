@@ -5,8 +5,6 @@ import java.io.InputStream;
 import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
-import org.graalvm.vm.trcview.arch.io.DefaultEventParser;
-import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.none.io.GenericTraceReader;
 import org.graalvm.vm.trcview.decode.ABI;
@@ -19,8 +17,6 @@ import org.graalvm.vm.trcview.decode.SyscallDecoder;
 public class None extends Architecture {
     public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, false);
     public static final short ID = Elf.EM_NONE;
-
-    private static final EventParser DEFAULT_PARSER = new DefaultEventParser();
 
     @Override
     public short getId() {
@@ -40,11 +36,6 @@ public class None extends Architecture {
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return new GenericTraceReader(in);
-    }
-
-    @Override
-    public EventParser getEventParser() {
-        return DEFAULT_PARSER;
     }
 
     @Override

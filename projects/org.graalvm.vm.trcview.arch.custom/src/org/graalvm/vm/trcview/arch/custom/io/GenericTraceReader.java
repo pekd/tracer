@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.GenericMemoryEvent;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
-import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.MunmapEvent;
 import org.graalvm.vm.trcview.net.protocol.IO;
@@ -162,9 +162,9 @@ public class GenericTraceReader extends ArchTraceReader {
                 boolean be = BitTest.test(flags, 1);
                 boolean hasvalue = BitTest.test(flags, 2);
                 if (hasvalue) {
-                    return new MemoryEvent(be, tid, address, size, false, value);
+                    return new GenericMemoryEvent(be, tid, address, size, false, value);
                 } else {
-                    return new MemoryEvent(be, tid, address, size, false);
+                    return new GenericMemoryEvent(be, tid, address, size, false);
                 }
             }
             case MEMW: {
@@ -175,9 +175,9 @@ public class GenericTraceReader extends ArchTraceReader {
                 boolean be = BitTest.test(flags, 1);
                 boolean hasvalue = BitTest.test(flags, 2);
                 if (hasvalue) {
-                    return new MemoryEvent(be, tid, address, size, true, value);
+                    return new GenericMemoryEvent(be, tid, address, size, true, value);
                 } else {
-                    return new MemoryEvent(be, tid, address, size, true);
+                    return new GenericMemoryEvent(be, tid, address, size, true);
                 }
             }
             case STRG: {

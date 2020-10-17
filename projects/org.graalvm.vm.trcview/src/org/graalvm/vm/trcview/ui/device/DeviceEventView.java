@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,6 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.MainWindow;
 import org.graalvm.vm.trcview.ui.event.JumpListener;
 import org.graalvm.vm.trcview.ui.event.StepListener;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 @SuppressWarnings("serial")
 public class DeviceEventView extends JPanel implements StepListener {
@@ -104,7 +102,7 @@ public class DeviceEventView extends JPanel implements StepListener {
     }
 
     private void update() {
-        DeviceEvent target = new DeviceEvent(trc.getArchitecture().getId(), 0) {
+        DeviceEvent target = new DeviceEvent(0) {
             @Override
             public long getStep() {
                 return insn;
@@ -118,10 +116,6 @@ public class DeviceEventView extends JPanel implements StepListener {
             @Override
             public String getMessage() {
                 return null;
-            }
-
-            @Override
-            protected void writeRecord(WordOutputStream out) throws IOException {
             }
         };
 

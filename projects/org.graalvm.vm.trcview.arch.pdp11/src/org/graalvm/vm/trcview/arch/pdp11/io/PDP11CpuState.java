@@ -1,9 +1,6 @@
 package org.graalvm.vm.trcview.arch.pdp11.io;
 
-import java.io.IOException;
-
 import org.graalvm.vm.trcview.arch.io.CpuState;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public abstract class PDP11CpuState extends PDP11StepEvent implements CpuState {
     protected PDP11CpuState(int tid) {
@@ -119,11 +116,6 @@ public abstract class PDP11CpuState extends PDP11StepEvent implements CpuState {
         psw(buf, 'C', 0x01);
         buf.append("]\n");
         return buf.toString();
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-
     }
 
     @Override

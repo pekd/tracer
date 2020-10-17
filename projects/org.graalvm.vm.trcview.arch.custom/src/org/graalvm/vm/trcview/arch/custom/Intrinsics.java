@@ -7,6 +7,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
+import org.graalvm.vm.trcview.arch.io.GenericMemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -390,11 +391,10 @@ public class Intrinsics {
             CustomArchitecture arch = analyzer.getArchitecture();
             String pcName = arch.getPCName();
             String stateName = arch.getStateName();
-            short id = arch.getId();
             Member statemember = ((Struct) type).getMember(stateName);
             Pointer state = data.add(statemember.type, statemember.offset);
             long parentStep = analyzer.getCurrentStep();
-            Event evt = new CustomStepEvent(analyzer, id, 0, pcName, data, state, parentStep);
+            Event evt = new CustomStepEvent(analyzer, 0, pcName, data, state, parentStep);
             analyzer.createEvent(evt);
             return 0;
         }
@@ -437,7 +437,7 @@ public class Intrinsics {
             long addr = (long) args[1];
             byte len = (byte) (long) args[2];
             long value = (long) args[3];
-            MemoryEvent evt = new MemoryEvent(be, 0, addr, len, true, value);
+            MemoryEvent evt = new GenericMemoryEvent(be, 0, addr, len, true, value);
             analyzer.createEvent(evt);
             return 0;
         }
@@ -457,7 +457,7 @@ public class Intrinsics {
             long addr = (long) args[1];
             byte len = (byte) (long) args[2];
             long value = (long) args[3];
-            MemoryEvent evt = new MemoryEvent(be, 0, addr, len, false, value);
+            MemoryEvent evt = new GenericMemoryEvent(be, 0, addr, len, false, value);
             analyzer.createEvent(evt);
             return 0;
         }

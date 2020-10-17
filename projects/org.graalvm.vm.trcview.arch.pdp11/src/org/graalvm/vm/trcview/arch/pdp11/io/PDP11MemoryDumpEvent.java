@@ -4,9 +4,7 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
-import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.util.io.WordInputStream;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public class PDP11MemoryDumpEvent extends Event {
     private final short address;
@@ -14,16 +12,11 @@ public class PDP11MemoryDumpEvent extends Event {
     private final byte[] data;
 
     public PDP11MemoryDumpEvent(WordInputStream in, int tid) throws IOException {
-        super(PDP11.ID, (byte) -1, tid);
+        super(tid);
         address = in.read16bit();
         length = in.read16bit();
         data = new byte[Short.toUnsignedInt(length)];
         in.read(data);
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        throw new AssertionError("this function should not be called");
     }
 
     public MemoryDumpEvent getMemoryDumpEvent() {

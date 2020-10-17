@@ -1,6 +1,5 @@
 package org.graalvm.vm.x86.trcview.arch.custom.test.impl;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +7,6 @@ import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MockStepEvent extends StepEvent implements CpuState {
     public byte[] machinecode = new byte[0];
@@ -20,12 +18,12 @@ public class MockStepEvent extends StepEvent implements CpuState {
 
     public Map<String, Long> values = new HashMap<>();
 
-    public MockStepEvent(short arch, int tid) {
-        super(arch, tid);
+    public MockStepEvent(int tid) {
+        super(tid);
     }
 
-    public MockStepEvent(short arch, int tid, long step, long pc, String[] disasm, byte[] code) {
-        super(arch, tid);
+    public MockStepEvent(int tid, long step, long pc, String[] disasm, byte[] code) {
+        super(tid);
         this.step = step;
         this.pc = pc;
         this.disassembly = disasm;
@@ -34,8 +32,8 @@ public class MockStepEvent extends StepEvent implements CpuState {
         this.pc = pc;
     }
 
-    public MockStepEvent(short arch, int tid, long step, long pc, String[] disasm, byte[] code, Object... values) {
-        super(arch, tid);
+    public MockStepEvent(int tid, long step, long pc, String[] disasm, byte[] code, Object... values) {
+        super(tid);
         this.step = step;
         this.pc = pc;
         this.disassembly = disasm;
@@ -95,10 +93,5 @@ public class MockStepEvent extends StepEvent implements CpuState {
     @Override
     public StepFormat getFormat() {
         return format;
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        // nothing
     }
 }

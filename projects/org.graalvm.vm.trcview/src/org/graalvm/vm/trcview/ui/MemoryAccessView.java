@@ -20,6 +20,8 @@ import javax.swing.KeyStroke;
 
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 
 @SuppressWarnings("serial")
@@ -36,6 +38,8 @@ public class MemoryAccessView extends JPanel {
 
     private final JList<MemoryEvent> memory;
     private final MemoryModel model;
+
+    private StepFormat format = new StepFormat(StepFormat.NUMBERFMT_HEX, 8, 8, 1, true);
 
     public MemoryAccessView(MemoryView mem) {
         super(new BorderLayout());
@@ -64,6 +68,10 @@ public class MemoryAccessView extends JPanel {
                 jump();
             }
         });
+    }
+
+    public void setTraceAnalyzer(TraceAnalyzer trc) {
+        format = trc.getArchitecture().getFormat();
     }
 
     private void jump() {
@@ -104,7 +112,7 @@ public class MemoryAccessView extends JPanel {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             MemoryEvent evt = (MemoryEvent) value;
-            String decoded = evt.info();
+            String decoded = evt.info(format);
             Component c = super.getListCellRendererComponent(list, decoded, index, isSelected, cellHasFocus);
             if (!isSelected) {
                 c.setBackground(evt.isWrite() ? WRITE_BG : READ_BG);

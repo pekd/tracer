@@ -3,17 +3,11 @@ package org.graalvm.vm.trcview.net.protocol;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
-import org.graalvm.vm.trcview.arch.io.Event;
-import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.expression.Parser;
-import org.graalvm.vm.trcview.io.BlockNode;
-import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
@@ -161,164 +155,6 @@ public class IO {
             out.write(1);
             writeString(out, proto.returnType.toString());
             writeString(out, proto.args.stream().map(Object::toString).collect(Collectors.joining(",")));
-        }
-    }
-
-    public static final ComputedSymbol readComputedSymbol(WordInputStream in) throws IOException {
-        int symtype = in.read();
-        if (symtype == 0) {
-            return null;
-        }
-        String name = readString(in);
-        long address = in.read64bit();
-        ComputedSymbol.Type type = in.read() == 1 ? ComputedSymbol.Type.SUBROUTINE : ComputedSymbol.Type.LOCATION;
-        ComputedSymbol sym = new ComputedSymbol(name, address, type);
-        int visits = in.read32bit();
-        for (int i = 0; i < visits; i++) {
-            sym.addVisit(new FakeNode(in.read64bit()));
-        }
-        if (in.read() == 1) {
-            Prototype proto = readPrototype(in);
-            sym.prototype = proto;
-        }
-        return sym;
-    }
-
-    private static final class FakeNode extends Node {
-        private FakeNode(long id) {
-            setId(id);
-        }
-
-        @Override
-        public int getTid() {
-            return 0;
-        }
-    }
-
-    public static final void writeComputedSymbol(WordOutputStream out, ComputedSymbol sym) throws IOException {
-        if (sym == null) {
-            out.write(0);
-            return;
-        }
-        out.write(1);
-        IO.writeString(out, sym.name);
-        out.write64bit(sym.address);
-        out.write(sym.type == ComputedSymbol.Type.SUBROUTINE ? 1 : 0);
-        out.write32bit(sym.visits.size());
-        for (Node visit : sym.visits) {
-            out.write64bit(visit.getId());
-        }
-        out.write(sym.prototype != null ? 1 : 0);
-        if (sym.prototype != null) {
-            IO.writePrototype(out, sym.prototype);
-        }
-    }
-
-    private static final StepEvent readStep(WordInputStream in) throws IOException {
-        return Event.read(in);
-    }
-
-    private static final void writeStep(WordOutputStream out, StepEvent step) throws IOException {
-        step.write(out);
-    }
-
-    public static final Node readNode(WordInputStream in) throws IOException {
-        if (in.read() == 0) {
-            return null;
-        }
-
-        long id = in.read64bit();
-        long parent = in.read64bit();
-        BlockNode parentNode;
-        if (parent == -1) {
-            parentNode = null;
-        } else if (parent == -2) {
-            parentNode = new FakeBlockNode(-1);
-        } else {
-            parentNode = new FakeBlockNode(parent);
-        }
-        int type = in.read();
-        Node node;
-        switch (type) {
-            case 0:
-                node = Event.read(in);
-                node.setParent(parentNode);
-                node.setId(id);
-                return node;
-            case 1:
-                node = readStep(in);
-                node.setParent(parentNode);
-                node.setId(id);
-                return node;
-            case 2: {
-                StepEvent head = null;
-                if (in.read() == 0) {
-                    // no head
-                } else {
-                    head = readStep(in);
-                }
-                in.read32bit(); // node count
-                StepEvent first = readStep(in);
-                node = new BlockNode(head, Arrays.asList(first));
-                node.setParent(parentNode);
-                node.setId(id);
-                return node;
-            }
-        }
-        return null;
-    }
-
-    public static final void writeNode(WordOutputStream out, Node node) throws IOException {
-        if (node == null) {
-            out.write(0);
-            return;
-        } else {
-            out.write(1);
-        }
-
-        out.write64bit(node.getId());
-        BlockNode parent = node.getParent();
-        if (parent == null) {
-            out.write64bit(-1);
-        } else if (parent.getHead() == null) {
-            out.write64bit(-2);
-        } else {
-            out.write64bit(parent.getHead().getStep());
-        }
-
-        if (node instanceof Event) {
-            Event r = (Event) node;
-            if (r instanceof StepEvent) {
-                out.write(1);
-                writeStep(out, (StepEvent) r);
-            } else {
-                out.write(0);
-                r.write(out);
-            }
-        } else {
-            BlockNode n = (BlockNode) node;
-            out.write(2);
-            if (n.getHead() != null) {
-                out.write(1);
-                writeStep(out, n.getHead());
-            } else {
-                out.write(0);
-            }
-            out.write32bit(n.getNodes().size());
-            writeStep(out, n.getFirstStep());
-        }
-    }
-
-    public static class FakeBlockNode extends BlockNode {
-        private final long insn;
-
-        public FakeBlockNode(long insn) {
-            super((StepEvent) null);
-            this.insn = insn;
-        }
-
-        public long getInstructionCount() {
-            return insn;
         }
     }
 }

@@ -44,7 +44,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -73,17 +72,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -114,13 +109,8 @@ import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.io.TextSerializer;
 import org.graalvm.vm.trcview.io.TraceParser;
-import org.graalvm.vm.trcview.net.Client;
 import org.graalvm.vm.trcview.net.Local;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
-import org.graalvm.vm.trcview.storage.DatabaseTraceAnalyzer;
-import org.graalvm.vm.trcview.storage.MemoryBackend;
-import org.graalvm.vm.trcview.storage.StorageBackend;
-import org.graalvm.vm.trcview.storage.TraceMetadata;
 import org.graalvm.vm.trcview.ui.TraceView.ThreadID;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.call.ABIEditor;
@@ -150,7 +140,6 @@ public class MainWindow extends JFrame {
     private TraceView view;
 
     private JMenuItem open;
-    private JMenuItem openDatabase;
     private JMenuItem loadPrototypes;
     private JMenuItem loadMap;
     private JMenuItem loadIdaMap;
@@ -222,9 +211,6 @@ public class MainWindow extends JFrame {
             };
             worker.execute();
         });
-        openDatabase = new JMenuItem("Connect to database...");
-        openDatabase.setMnemonic('C');
-        openDatabase.addActionListener(e -> connectToDatabase());
         loadSession = new JMenuItem("Load session...");
         loadSession.setMnemonic('l');
         loadSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -788,7 +774,6 @@ public class MainWindow extends JFrame {
     public void load(File file) throws IOException {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
-        openDatabase.setEnabled(false);
         long start = System.currentTimeMillis();
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
             long size = file.length();
@@ -799,7 +784,6 @@ public class MainWindow extends JFrame {
             throw t;
         } finally {
             open.setEnabled(true);
-            openDatabase.setEnabled(true);
         }
         long end = System.currentTimeMillis();
         long time = end - start;
@@ -835,7 +819,6 @@ public class MainWindow extends JFrame {
     public void load(TraceReader reader, long size, String file) throws IOException {
         log.info("Loading file " + file + "...");
         open.setEnabled(false);
-        openDatabase.setEnabled(false);
         try {
             String text = "Loading " + file;
             setStatus(text);
@@ -876,7 +859,6 @@ public class MainWindow extends JFrame {
             throw t;
         } finally {
             open.setEnabled(true);
-            openDatabase.setEnabled(true);
         }
     }
 
@@ -1569,102 +1551,6 @@ public class MainWindow extends JFrame {
         }
     }
 
-    public void connect(String host, int port) throws IOException {
-        log.info("Connecting to " + host + " on port " + port + "...");
-        setStatus("Connecting to " + host + " on port " + port + "...");
-        try {
-            trc = new Client(host, port);
-            log.info("Connected to " + host + " on port " + port);
-            setStatus("Connected to " + host + " on port " + port);
-            setTitle(host + ":" + port + " - " + WINDOW_TITLE);
-            EventQueue.invokeLater(() -> {
-                view.setTraceAnalyzer(trc);
-                loadPrototypes.setEnabled(true);
-                loadMap.setEnabled(true);
-                loadIdaMap.setEnabled(true);
-                generateIDC.setEnabled(true);
-                loadSymbols.setEnabled(true);
-                saveSymbols.setEnabled(true);
-                refresh.setEnabled(true);
-                renameSymbol.setEnabled(true);
-                setFunctionType.setEnabled(true);
-                setCommentInsn.setEnabled(true);
-                setCommentPC.setEnabled(true);
-                setExpression.setEnabled(true);
-                setColor.setEnabled(true);
-                gotoPC.setEnabled(true);
-                gotoInsn.setEnabled(true);
-                gotoNext.setEnabled(true);
-                exportMemory.setEnabled(true);
-                subviewMenu.setEnabled(true);
-                pluginLoader.traceLoaded(trc);
-            });
-        } catch (Throwable t) {
-            setStatus("Failed to connect to " + host + " on port " + port);
-            log.info("Failed to connect to " + host + " on port " + port);
-            throw t;
-        }
-    }
-
-    public void connectToDatabase() {
-        log.info("Opening database connection...");
-        connectToDatabase(new MemoryBackend());
-    }
-
-    public void connectToDatabase(StorageBackend storage) {
-        log.info("Connecting to database backend...");
-        List<TraceMetadata> traces = storage.list();
-        if (traces.isEmpty()) {
-            log.info("No traces available");
-            JOptionPane.showMessageDialog(this, "No traces available", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        JDialog dlg = new JDialog(this, "Select trace...", true);
-        String[] items = traces.stream().map(TraceMetadata::toString).toArray(String[]::new);
-        JList<String> traceList = new JList<>(items);
-        traceList.setSelectedIndex(0);
-        JPanel buttons = new JPanel(new FlowLayout());
-        JButton ok = new JButton("OK");
-        JButton cancel = new JButton("Cancel");
-        cancel.addActionListener(e -> {
-            dlg.dispose();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() throws Exception {
-                    try {
-                        storage.close();
-                    } catch (IOException ex) {
-                        log.log(Levels.WARNING, "Failed to close storage connection: " + ex.getMessage(), e);
-                    }
-                    return null;
-                }
-            };
-            worker.execute();
-        });
-        ok.addActionListener(e -> {
-            dlg.dispose();
-            TraceMetadata selected = traces.get(traceList.getSelectedIndex());
-            log.info("Loading trace " + selected.name + " from database");
-            setStatus("Loading trace " + selected.name + " from database");
-            storage.connect(selected.id);
-            loadTrace(storage);
-        });
-        buttons.add(ok);
-        buttons.add(cancel);
-        dlg.setLayout(new BorderLayout());
-        dlg.add(BorderLayout.CENTER, new JScrollPane(traceList));
-        dlg.add(BorderLayout.SOUTH, buttons);
-        dlg.setSize(600, 300);
-        dlg.setLocationRelativeTo(this);
-        dlg.setVisible(true);
-    }
-
-    public void loadTrace(StorageBackend storage) {
-        EventQueue.invokeLater(() -> {
-            setTrace(new DatabaseTraceAnalyzer(storage));
-        });
-    }
-
     private void exit() {
         dispose();
         System.exit(0);
@@ -1679,12 +1565,6 @@ public class MainWindow extends JFrame {
                 w.load(new File(args[0]));
             } catch (Throwable t) {
                 System.out.println("Failed to load the file specified by the argument \"" + args[0] + "\"");
-            }
-        } else if (args.length == 2) {
-            try {
-                w.connect(args[0], Integer.parseInt(args[1]));
-            } catch (Throwable t) {
-                System.out.println("Failed to connect to the specified server");
             }
         }
     }

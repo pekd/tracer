@@ -7,9 +7,7 @@ import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
-import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.trcview.arch.pdp11.io.PDP11EventParser;
 import org.graalvm.vm.trcview.arch.pdp11.io.PDP11TraceReader;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
@@ -29,7 +27,6 @@ public class PDP11 extends Architecture {
 
     private static final SyscallDecoder syscallDecoder = new GenericSyscallDecoder();
     private static final CallDecoder callDecoder = new GenericCallDecoder();
-    private static final EventParser eventParser = new PDP11EventParser();
 
     @Override
     public short getId() {
@@ -49,11 +46,6 @@ public class PDP11 extends Architecture {
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return new PDP11TraceReader(in);
-    }
-
-    @Override
-    public EventParser getEventParser() {
-        return eventParser;
     }
 
     @Override

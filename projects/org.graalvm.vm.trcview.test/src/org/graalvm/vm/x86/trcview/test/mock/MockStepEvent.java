@@ -8,7 +8,6 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.io.WordInputStream;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MockStepEvent extends StepEvent implements CpuState {
     private byte[] machinecode;
@@ -18,8 +17,8 @@ public class MockStepEvent extends StepEvent implements CpuState {
     public long pc;
     public byte[] data;
 
-    public MockStepEvent(short arch, int tid, byte[] machinecode, InstructionType type) {
-        super(arch, tid);
+    public MockStepEvent(int tid, byte[] machinecode, InstructionType type) {
+        super(tid);
         this.machinecode = machinecode;
         this.type = type;
     }
@@ -69,13 +68,8 @@ public class MockStepEvent extends StepEvent implements CpuState {
         return null;
     }
 
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        IO.writeArray(out, data);
-    }
-
     public static MockStepEvent create(int tid, long step, long pc, InstructionType type, byte[] machinecode, WordInputStream in) throws IOException {
-        MockStepEvent evt = new MockStepEvent(MockArchitecture.ID, tid, machinecode, type);
+        MockStepEvent evt = new MockStepEvent(tid, machinecode, type);
         evt.step = step;
         evt.pc = pc;
         evt.data = IO.readArray(in);

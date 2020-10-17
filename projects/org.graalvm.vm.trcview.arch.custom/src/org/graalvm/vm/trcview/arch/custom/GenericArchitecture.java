@@ -7,7 +7,6 @@ import org.graalvm.vm.trcview.arch.custom.decode.CustomCallDecoder;
 import org.graalvm.vm.trcview.arch.custom.decode.CustomSyscallDecoder;
 import org.graalvm.vm.trcview.arch.custom.io.GenericTraceReader;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
-import org.graalvm.vm.trcview.arch.io.EventParser;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
@@ -34,11 +33,6 @@ public class GenericArchitecture extends Architecture {
     @Override
     public ArchTraceReader getTraceReader(InputStream in) {
         return new GenericTraceReader(in);
-    }
-
-    @Override
-    public EventParser getEventParser() {
-        return null;
     }
 
     @Override

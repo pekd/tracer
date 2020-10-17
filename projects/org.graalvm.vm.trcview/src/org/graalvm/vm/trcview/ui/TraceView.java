@@ -454,6 +454,7 @@ public class TraceView extends JPanel implements StepListenable {
             insns.setTraceAnalyzer(trc);
             state.setTraceAnalyzer(trc);
             mem.setTraceAnalyzer(trc);
+            memaccess.setTraceAnalyzer(trc);
             memhistory.setTraceAnalyzer(trc);
             io.setTraceAnalyzer(trc);
             strace.setTraceAnalyzer(trc);

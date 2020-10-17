@@ -6,8 +6,8 @@ import java.util.List;
 import org.graalvm.vm.trcview.analysis.device.RegisterValue;
 
 public abstract class DeviceRegisterEvent extends Event {
-    protected DeviceRegisterEvent(short arch, int tid) {
-        super(arch, DEVICEREG, tid);
+    protected DeviceRegisterEvent(int tid) {
+        super(tid);
     }
 
     public abstract int getDeviceId();

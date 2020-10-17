@@ -10,8 +10,8 @@ import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.Endianess;
 
 public class FinePage extends Page {
-    @SuppressWarnings("unchecked") private final List<MemoryUpdate>[] updates = new ArrayList[4096];
-    @SuppressWarnings("unchecked") private final List<MemoryRead>[] reads = new ArrayList[4096];
+    @SuppressWarnings("unchecked") private final ArrayList<MemoryUpdate>[] updates = new ArrayList[4096];
+    @SuppressWarnings("unchecked") private final ArrayList<MemoryRead>[] reads = new ArrayList[4096];
     private final byte[] data = new byte[SIZE]; // initial data
 
     public FinePage(long address, long pc, long instructionCount, Node node, Protection prot) {
@@ -362,5 +362,19 @@ public class FinePage extends Page {
             result |= Byte.toUnsignedLong(getByte(addr + i, instructionCount)) << 56;
         }
         return result;
+    }
+
+    @Override
+    public void trim() {
+        for (ArrayList<MemoryUpdate> update : updates) {
+            if (update != null) {
+                update.trimToSize();
+            }
+        }
+        for (ArrayList<MemoryRead> read : reads) {
+            if (read != null) {
+                read.trimToSize();
+            }
+        }
     }
 }

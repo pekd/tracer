@@ -1,7 +1,5 @@
 package org.graalvm.vm.trcview.arch.custom.io;
 
-import java.io.IOException;
-
 import org.graalvm.vm.trcview.arch.custom.GenericArchitecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
@@ -10,7 +8,6 @@ import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
 import org.graalvm.vm.trcview.script.type.Struct.Member;
 import org.graalvm.vm.util.io.Endianess;
-import org.graalvm.vm.util.io.WordOutputStream;
 
 public class GenericStepEvent extends StepEvent implements CpuState {
     private final byte[] machinecode;
@@ -21,7 +18,7 @@ public class GenericStepEvent extends StepEvent implements CpuState {
     private final byte[] data;
 
     protected GenericStepEvent(int tid, StateDescription desc, byte[] data, byte[] code, String[] asm, InstructionType type) {
-        super(GenericArchitecture.ID, tid);
+        super(tid);
         this.desc = desc;
         this.data = data;
         this.machinecode = code;
@@ -134,11 +131,6 @@ public class GenericStepEvent extends StepEvent implements CpuState {
                     throw new IllegalStateException("invalid member type " + member.type);
                 }
         }
-    }
-
-    @Override
-    protected void writeRecord(WordOutputStream out) throws IOException {
-        // nothing for now
     }
 
     @Override

@@ -14,7 +14,7 @@ public abstract class PDP11StepEvent extends StepEvent {
     private byte[] machinecode = null;
 
     protected PDP11StepEvent(int tid) {
-        super(PDP11.ID, tid);
+        super(tid);
     }
 
     @Override
