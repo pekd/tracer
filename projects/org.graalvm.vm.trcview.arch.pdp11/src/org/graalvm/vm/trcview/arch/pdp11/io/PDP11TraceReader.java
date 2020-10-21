@@ -66,23 +66,27 @@ public class PDP11TraceReader extends ArchTraceReader {
         }
 
         if (mem != null) {
-            int addr = (int) mem.getAddress();
-            short value = (short) mem.getValue();
-            boolean write = mem.isWrite();
-            mem = null;
-            switch (addr) {
-                case 0177170:
-                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.RXV21, PDP11Devices.RXV21_RX2CS, value, write);
-                case 0177172:
-                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.RXV21, PDP11Devices.RXV21_RX2DB, value, write);
-                case 0177560:
-                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_RCSR, value, write);
-                case 0177562:
-                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_RBUF, value, write);
-                case 0177564:
-                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_XCSR, value, write);
-                case 0177566:
-                    return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_XBUF, value, write);
+            if (mem.hasData()) {
+                int addr = (int) mem.getAddress();
+                short value = (short) mem.getValue();
+                boolean write = mem.isWrite();
+                mem = null;
+                switch (addr) {
+                    case 0177170:
+                        return new PDP11DeviceRegisterEvent(0, PDP11Devices.RXV21, PDP11Devices.RXV21_RX2CS, value, write);
+                    case 0177172:
+                        return new PDP11DeviceRegisterEvent(0, PDP11Devices.RXV21, PDP11Devices.RXV21_RX2DB, value, write);
+                    case 0177560:
+                        return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_RCSR, value, write);
+                    case 0177562:
+                        return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_RBUF, value, write);
+                    case 0177564:
+                        return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_XCSR, value, write);
+                    case 0177566:
+                        return new PDP11DeviceRegisterEvent(0, PDP11Devices.DLV11J, PDP11Devices.DLV11J_XBUF, value, write);
+                }
+            } else {
+                mem = null;
             }
         }
 

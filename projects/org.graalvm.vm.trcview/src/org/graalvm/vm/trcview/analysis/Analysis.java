@@ -239,20 +239,22 @@ public class Analysis {
                 }
                 long addr = memevent.getAddress();
                 boolean be = memevent.isBigEndian();
-                if (memevent.getSize() <= 8) {
-                    long value = memevent.getValue();
-                    memory.write(addr, (byte) memevent.getSize(), value, insn, node, lastStep, be);
-                } else if (memevent.getSize() == 16) {
-                    Vector128 value = memevent.getVector();
-                    if (be) {
-                        memory.write(addr, (byte) 8, value.getI64(0), insn, node, lastStep, true);
-                        memory.write(addr + 8, (byte) 8, value.getI64(1), insn, node, lastStep, true);
+                if (memevent.hasData()) {
+                    if (memevent.getSize() <= 8) {
+                        long value = memevent.getValue();
+                        memory.write(addr, (byte) memevent.getSize(), value, insn, node, lastStep, be);
+                    } else if (memevent.getSize() == 16) {
+                        Vector128 value = memevent.getVector();
+                        if (be) {
+                            memory.write(addr, (byte) 8, value.getI64(0), insn, node, lastStep, true);
+                            memory.write(addr + 8, (byte) 8, value.getI64(1), insn, node, lastStep, true);
+                        } else {
+                            memory.write(addr, (byte) 8, value.getI64(1), insn, node, lastStep, false);
+                            memory.write(addr + 8, (byte) 8, value.getI64(0), insn, node, lastStep, false);
+                        }
                     } else {
-                        memory.write(addr, (byte) 8, value.getI64(1), insn, node, lastStep, false);
-                        memory.write(addr + 8, (byte) 8, value.getI64(0), insn, node, lastStep, false);
+                        throw new AssertionError("unknown size: " + memevent.getSize());
                     }
-                } else {
-                    throw new AssertionError("unknown size: " + memevent.getSize());
                 }
             } else { /* read */
                 long insn = 0;
