@@ -231,6 +231,20 @@ public class Parser {
     public Type parseType() throws ParseException {
         scan();
         Type type = type();
+
+        // optional variable name
+        if (sym == TokenType.IDENT) {
+            scan();
+        }
+
+        // optional array size
+        if (sym == TokenType.LBRACK) {
+            scan();
+            check(TokenType.NUMBER);
+            type.setElements(t.value);
+            check(TokenType.RBRACK);
+        }
+
         check(TokenType.EOF);
         return type;
     }
