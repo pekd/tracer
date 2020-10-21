@@ -14,7 +14,6 @@ import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.GenericMemoryEvent;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryDumpEvent;
-import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEventI128;
 import org.graalvm.vm.trcview.arch.io.MemoryEventI16;
 import org.graalvm.vm.trcview.arch.io.MemoryEventI32;
