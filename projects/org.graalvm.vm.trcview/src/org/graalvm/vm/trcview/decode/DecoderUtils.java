@@ -236,7 +236,7 @@ public class DecoderUtils {
             case U8:
                 switch (repr) {
                     case CHAR:
-                        return "'" + DecoderUtils.encode(Byte.toUnsignedInt((byte) val)) + "'";
+                        return "'" + DecoderUtils.encode((byte) val) + "'";
                     default:
                     case DEC:
                         return Integer.toString(Byte.toUnsignedInt((byte) val));
@@ -248,7 +248,7 @@ public class DecoderUtils {
             case S8:
                 switch (repr) {
                     case CHAR:
-                        return "'" + DecoderUtils.encode(Byte.toUnsignedInt((byte) val)) + "'";
+                        return "'" + DecoderUtils.encode((byte) val) + "'";
                     default:
                     case DEC:
                         return Byte.toString((byte) val);
