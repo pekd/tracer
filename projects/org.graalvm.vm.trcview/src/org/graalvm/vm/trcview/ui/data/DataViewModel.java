@@ -10,8 +10,6 @@ import java.util.TreeMap;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
-import org.graalvm.vm.trcview.analysis.type.DataType;
-import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.TypedMemory;
@@ -230,20 +228,20 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                 long off = var.getAddress() - lastAddr;
                 long ln = lastLine + off;
                 Type type = var.getType();
-                if (type != null && type.isStringData()) {
+                if (type != null && type.getElements() > 1) {
                     long ptr = var.getAddress();
-                    long rem = var.getSize();
-                    long lineSize = StringDataLine.MAX_LENGTH;
+                    long rem = var.getSize() / type.getElementSize();
+                    long lineSize = type.isStringData() ? StringDataLine.MAX_LENGTH : ArrayDataLine.MAX_LENGTH;
                     while (rem > 0) {
                         Var v = new Var(var, ln);
                         vars.put(ptr, v);
                         invvars.put(ln, v);
                         if (rem > lineSize) {
                             rem -= lineSize;
-                            ptr += lineSize;
+                            ptr += lineSize * type.getElementSize();
                         } else {
                             rem = 0;
-                            ptr += rem;
+                            ptr += rem * type.getElementSize();
                         }
                         ln++;
                     }
@@ -285,10 +283,16 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
             Var var = vars.get(addr);
             if (var != null) {
                 Type type = var.var.getType();
-                if (type != null && type.isStringData()) {
-                    long delta = line - var.line;
-                    long offset = delta * StringDataLine.MAX_LENGTH;
-                    return new StringDataLine(addr, offset, type, step, trc);
+                if (type != null && type.getElements() > 1) {
+                    if (type.isStringData()) {
+                        long delta = line - var.line;
+                        long offset = delta * StringDataLine.MAX_LENGTH;
+                        return new StringDataLine(addr, offset, type, step, trc);
+                    } else {
+                        long delta = line - var.line;
+                        long offset = delta * ArrayDataLine.MAX_LENGTH;
+                        return new ArrayDataLine(addr, offset, type, step, trc);
+                    }
                 } else {
                     return new ScalarDataLine(addr, type, step, trc);
                 }

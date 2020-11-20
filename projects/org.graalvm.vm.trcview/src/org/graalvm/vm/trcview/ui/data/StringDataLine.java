@@ -22,7 +22,7 @@ public class StringDataLine extends DataLine {
         omitLabel = start != 0;
     }
 
-    public static long getLength(Type type, long start) {
+    private static long getLength(Type type, long start) {
         long remainder = type.getElements() - start;
         long len;
         if (remainder > MAX_LENGTH) {
@@ -30,18 +30,25 @@ public class StringDataLine extends DataLine {
         } else {
             len = remainder;
         }
-        return len * type.getElementSize();
+        return len;
     }
 
     @Override
     protected void addData(List<Element> result) {
         StringBuilder buf = new StringBuilder();
         String val;
+        long sz = type.getElementSize();
         try {
-            long ptr = addr + start * type.getElementSize();
+            long ptr = addr + start * sz;
             buf.append('"');
             for (long i = 0; i < length; i++) {
-                int b = Byte.toUnsignedInt(trc.getI8(ptr++, step));
+                int b;
+                if (sz == 2) {
+                    b = Short.toUnsignedInt(trc.getI16(ptr, step));
+                } else {
+                    b = Byte.toUnsignedInt(trc.getI8(ptr, step));
+                }
+                ptr += sz;
                 buf.append(DecoderUtils.encode(b));
             }
             buf.append('"');
@@ -54,7 +61,11 @@ public class StringDataLine extends DataLine {
                 val = buf.substring(1);
             }
         }
-        result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
+        if (sz == 2) {
+            result.add(new DefaultElement("DCW", Element.TYPE_KEYWORD));
+        } else {
+            result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
+        }
         result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
         result.add(new DefaultElement(val, Element.TYPE_STRING));
     }
