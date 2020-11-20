@@ -262,6 +262,8 @@ public class TextSerializer {
             case HEX:
                 result.add(Long.toUnsignedString(number));
                 break;
+            case ZERO:
+                result.add("0");
             case START:
             case SEP:
                 break;
