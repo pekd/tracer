@@ -6,9 +6,15 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
+import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class TypedMemory {
+    private static final long MAX_STRING_LENGTH = 32768; // 32k
+
     private NavigableMap<Long, Variable> types;
 
     public TypedMemory() {
@@ -92,5 +98,26 @@ public class TypedMemory {
             result.add(next.getValue());
         }
         return result;
+    }
+
+    public Type findString(long addr, long step, TraceAnalyzer trc) {
+        long ptr = addr;
+        try {
+            // search end of string
+            while (trc.getI8(ptr++, step) != 0) {
+                if ((ptr - addr) > MAX_STRING_LENGTH) {
+                    break;
+                }
+            }
+            long len = ptr - addr;
+            return new Type(DataType.S8, false, (int) len, Representation.CHAR);
+        } catch (MemoryNotMappedException e) {
+            long len = ptr - addr;
+            if (len > 0) {
+                return new Type(DataType.S8, false, (int) len, Representation.CHAR);
+            } else {
+                return null;
+            }
+        }
     }
 }

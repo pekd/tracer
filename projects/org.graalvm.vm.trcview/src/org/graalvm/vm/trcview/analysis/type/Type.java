@@ -182,6 +182,10 @@ public class Type {
         return expr;
     }
 
+    public boolean isStringData() {
+        return (type == DataType.U8 || type == DataType.S8) && representation == Representation.CHAR && elements > 1;
+    }
+
     @Override
     public String toString() {
         String conststr = isConst ? "const " : "";
@@ -218,43 +222,47 @@ public class Type {
             // special handling for strings (char*) which were declared as $out
             reprstr = " $out";
         }
+        String arraystr = "";
+        if (elements > 1) {
+            arraystr = "[" + elements + "]";
+        }
         switch (type) {
             case VOID:
                 return "void";
             case STRING:
-                return conststr + "char*" + exprstr;
+                return conststr + "char*" + exprstr + arraystr;
             case U8:
-                return conststr + "u8" + exprstr + reprstr;
+                return conststr + "u8" + exprstr + reprstr + arraystr;
             case S8:
-                return conststr + "s8" + exprstr + reprstr;
+                return conststr + "s8" + exprstr + reprstr + arraystr;
             case U16:
-                return conststr + "u16" + exprstr + reprstr;
+                return conststr + "u16" + exprstr + reprstr + arraystr;
             case S16:
-                return conststr + "s16" + exprstr + reprstr;
+                return conststr + "s16" + exprstr + reprstr + arraystr;
             case U32:
-                return conststr + "u32" + exprstr + reprstr;
+                return conststr + "u32" + exprstr + reprstr + arraystr;
             case S32:
-                return conststr + "s32" + exprstr + reprstr;
+                return conststr + "s32" + exprstr + reprstr + arraystr;
             case U64:
-                return conststr + "u64" + exprstr + reprstr;
+                return conststr + "u64" + exprstr + reprstr + arraystr;
             case S64:
-                return conststr + "s64" + exprstr + reprstr;
+                return conststr + "s64" + exprstr + reprstr + arraystr;
             case F32:
-                return conststr + "f32" + exprstr + reprstr;
+                return conststr + "f32" + exprstr + reprstr + arraystr;
             case F64:
-                return conststr + "f64" + exprstr + reprstr;
+                return conststr + "f64" + exprstr + reprstr + arraystr;
             case FX16:
-                return conststr + "fx16" + exprstr + reprstr;
+                return conststr + "fx16" + exprstr + reprstr + arraystr;
             case FX32:
-                return conststr + "fx32" + exprstr + reprstr;
+                return conststr + "fx32" + exprstr + reprstr + arraystr;
             case PTR:
                 if (isConst) {
-                    return pointee.toString() + "* const" + exprstr + reprstr;
+                    return pointee.toString() + "* const" + exprstr + reprstr + arraystr;
                 } else {
-                    return pointee.toString() + "*" + exprstr + reprstr;
+                    return pointee.toString() + "*" + exprstr + reprstr + arraystr;
                 }
             case STRUCT:
-                return conststr + struct.getName();
+                return conststr + struct.getName() + arraystr;
             default:
                 return "/* unknown */";
         }

@@ -10,6 +10,9 @@ import java.util.TreeMap;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
+import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Representation;
+import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
@@ -226,11 +229,32 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
             for (Variable var : mem.getTypes(segment.getStart(), segment.getEnd())) {
                 long off = var.getAddress() - lastAddr;
                 long ln = lastLine + off;
-                lastLine = ln + 1;
+                Type type = var.getType();
+                if (type != null && type.isStringData()) {
+                    long ptr = var.getAddress();
+                    long rem = var.getSize();
+                    long lineSize = StringDataLine.MAX_LENGTH;
+                    while (rem > 0) {
+                        Var v = new Var(var, ln);
+                        vars.put(ptr, v);
+                        invvars.put(ln, v);
+                        if (rem > lineSize) {
+                            rem -= lineSize;
+                            ptr += lineSize;
+                        } else {
+                            rem = 0;
+                            ptr += rem;
+                        }
+                        ln++;
+                    }
+                    lastLine = ln;
+                } else {
+                    Var v = new Var(var, ln);
+                    vars.put(var.getAddress(), v);
+                    invvars.put(ln, v);
+                    lastLine = ln + 1;
+                }
                 lastAddr = var.getAddress() + var.getSize();
-                Var v = new Var(var, ln);
-                vars.put(var.getAddress(), v);
-                invvars.put(ln, v);
             }
 
             content = getLineByAddress(segment.getEnd()) - getLineByAddress(segment.getStart()) + 1;
@@ -260,9 +284,16 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
             long addr = getAddress(line);
             Var var = vars.get(addr);
             if (var != null) {
-                return new DataLine(addr, var.var.getType(), step, trc);
+                Type type = var.var.getType();
+                if (type != null && type.isStringData()) {
+                    long delta = line - var.line;
+                    long offset = delta * StringDataLine.MAX_LENGTH;
+                    return new StringDataLine(addr, offset, type, step, trc);
+                } else {
+                    return new ScalarDataLine(addr, type, step, trc);
+                }
             } else {
-                return new DataLine(addr, null, step, trc);
+                return new ScalarDataLine(addr, null, step, trc);
             }
         }
 
