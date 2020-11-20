@@ -110,7 +110,7 @@ public class DataView extends JPanel implements StepListener {
                             } else {
                                 JOptionPane.showMessageDialog(DataView.this, "Invalid name", "Error", JOptionPane.ERROR_MESSAGE);
                             }
-                        } else {
+                        } else if (input != null) {
                             var.setName(null);
                             model.update();
                         }
