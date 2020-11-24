@@ -127,6 +127,10 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
 
     @Override
     public Line getLine(int line) {
+        if (line > getLineCount()) {
+            return null;
+        }
+
         Entry<Long, TextSegment> tse = lineSegments.floorEntry((long) line);
         if (tse == null) {
             return null;
