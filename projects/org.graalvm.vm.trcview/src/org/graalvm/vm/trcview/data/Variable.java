@@ -9,9 +9,9 @@ public class Variable {
     private long address;
 
     public Variable(long address, Type type, String name) {
-        this.name = name;
         this.type = type;
         this.address = address;
+        setName(name);
     }
 
     public Variable(long address, Type type) {
@@ -28,7 +28,11 @@ public class Variable {
 
     public String getName() {
         if (name == null) {
-            return "unk_" + HexFormatter.tohex(address);
+            if (type != null && type.isStringData()) {
+                return "asc_" + HexFormatter.tohex(address);
+            } else {
+                return "unk_" + HexFormatter.tohex(address);
+            }
         } else {
             return name;
         }
@@ -39,6 +43,22 @@ public class Variable {
     }
 
     public void setName(String name) {
+        // clear name?
+        if (name == null) {
+            this.name = null;
+            return;
+        }
+
+        // same name?
+        if (getName().equals(name)) {
+            return;
+        }
+
+        // cannot set name to unk_ or asc_ since these are reserved prefixes
+        if (name.startsWith("unk_") || name.startsWith("asc_")) {
+            return;
+        }
+
         this.name = name;
     }
 

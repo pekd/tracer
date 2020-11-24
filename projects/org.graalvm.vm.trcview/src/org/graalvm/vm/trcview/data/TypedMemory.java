@@ -83,6 +83,10 @@ public class TypedMemory {
         }
     }
 
+    public List<Variable> getTypes() {
+        return new ArrayList<>(types.values());
+    }
+
     public List<Variable> getTypes(long addrStart, long addrEnd) {
         List<Variable> result = new ArrayList<>();
         long addr = addrStart;

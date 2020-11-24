@@ -99,6 +99,8 @@ import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
+import org.graalvm.vm.trcview.data.TypedMemory;
+import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.decode.GenericABI;
@@ -1317,6 +1319,32 @@ public class MainWindow extends JFrame {
                         String name = address.substring(5);
                         String value = data[0];
                         types.put(name, value);
+                    } else if (everything && address.startsWith("VAR:")) {
+                        // memory variable
+                        if (data.length != 2) {
+                            log.info("Syntax error in line " + lineno + ": invalid variable definition");
+                            setStatus("Syntax error in line " + lineno + ": invalid variable definition");
+                            ok = false;
+                            continue;
+                        }
+                        // flush all pending types
+                        defineTypes(types);
+                        try {
+                            TypedMemory mem = trc.getTypedMemory();
+                            long addr = Long.parseUnsignedLong(address.substring(4), 16);
+                            String name = data[0];
+                            mem.set(addr, new Parser(data[1], trc.getTypeDatabase()).parseType(), name);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid address");
+                            setStatus("Syntax error in line " + lineno + ": invalid address");
+                            ok = false;
+                            continue;
+                        } catch (ParseException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid type");
+                            setStatus("Syntax error in line " + lineno + ": invalid type");
+                            ok = false;
+                            continue;
+                        }
                     } else {
                         // symbol
                         // first, flush all pending types
@@ -1496,6 +1524,11 @@ public class MainWindow extends JFrame {
                 }
             });
             if (everything) {
+                List<Variable> vars = trc.getTypedMemory().getTypes();
+                for (Variable var : vars) {
+                    String t = var.getType() == null ? null : var.getType().toString();
+                    out.printf("VAR:%x=%s\n", var.getAddress(), TextSerializer.encode(var.getRawName(), t));
+                }
                 List<Watch> watches = view.getWatches();
                 for (Watch watch : watches) {
                     out.printf("WATCH=%s\n", TextSerializer.encode(watch.name, watch.type, watch.str));
