@@ -2,9 +2,11 @@ package org.graalvm.vm.trcview.ui.data;
 
 import java.util.List;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.data.editor.DefaultElement;
@@ -36,6 +38,24 @@ public class ArrayDataLine extends DataLine {
 
     private Element encode(long val) {
         boolean isaddr = type.getType() == DataType.PTR;
+        if (isaddr) {
+            long address = trunc(val);
+            if (address == 0) {
+                // special handling for NULL, even if 0 is a valid address
+                return new DefaultElement("NULL", Element.TYPE_NUMBER);
+            } else {
+                Symbol sym = trc.getSymbol(address);
+                if (sym != null && sym.getName() != null) {
+                    return new AddressElement(sym.getName(), Element.TYPE_IDENTIFIER, address);
+                } else {
+                    Variable var = trc.getTypedMemory().get(address);
+                    if (var != null && var.getAddress() == address) {
+                        return new AddressElement(var.getName(), Element.TYPE_IDENTIFIER, address);
+                    }
+                }
+            }
+        }
+
         String s = DecoderUtils.str(type, val, trc);
         switch (type.getRepresentation()) {
             case CHAR:

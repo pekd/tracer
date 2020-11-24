@@ -58,20 +58,6 @@ public class ScalarDataLine extends DataLine {
         }
     }
 
-    private long trunc(long val) {
-        switch ((int) type.getSize()) {
-            case 1:
-                return val & 0xFF;
-            case 2:
-                return val & 0xFFFF;
-            case 4:
-                return val & 0xFFFFFFFFL;
-            case 8:
-            default:
-                return val;
-        }
-    }
-
     private void data(List<Element> result, long val) {
         String comment = null;
         if ((type.getType() == DataType.PTR && type.getRepresentation() == Representation.STRING) || (type.getType() == DataType.STRING)) {

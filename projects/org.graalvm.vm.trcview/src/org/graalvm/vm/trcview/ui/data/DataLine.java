@@ -29,6 +29,20 @@ public abstract class DataLine extends Line {
         this.trc = trc;
     }
 
+    protected long trunc(long val) {
+        switch ((int) type.getElementSize()) {
+            case 1:
+                return val & 0xFF;
+            case 2:
+                return val & 0xFFFF;
+            case 4:
+                return val & 0xFFFFFFFFL;
+            case 8:
+            default:
+                return val;
+        }
+    }
+
     protected abstract void addData(List<Element> result);
 
     private List<Element> createElements() {
