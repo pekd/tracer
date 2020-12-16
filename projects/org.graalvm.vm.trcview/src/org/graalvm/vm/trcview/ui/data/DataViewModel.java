@@ -270,7 +270,7 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                     if (type.getElements() > 1) {
                         for (long i = 0; i < type.getElements(); i++) {
                             String n = p + "[" + i + "]";
-                            ln = add(ln, var, type.getStruct(), n, offset + i * type.getElementSize());
+                            ln = add(ln, var, type.getStruct(), n, offset + field.getOffset() + i * type.getElementSize());
                         }
                     } else {
                         ln = add(ln, var, type.getStruct(), p, offset + field.getOffset());
