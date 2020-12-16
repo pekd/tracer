@@ -35,11 +35,11 @@ public class ScalarDataLine extends DataLine {
     }
 
     public ScalarDataLine(long addr, Type type, long step, TraceAnalyzer trc) {
-        this(addr, 0, null, type, step, trc);
+        this(addr, 0, null, -1, type, step, trc);
     }
 
-    public ScalarDataLine(long addr, long offset, String name, Type type, long step, TraceAnalyzer trc) {
-        super(addr, offset, name, getType(type, trc), step, trc);
+    public ScalarDataLine(long addr, long offset, String name, long index, Type type, long step, TraceAnalyzer trc) {
+        super(addr, offset, name, index, getType(type, trc), step, trc);
     }
 
     private Element encode(long val, boolean isaddr) {

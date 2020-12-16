@@ -20,21 +20,23 @@ public abstract class DataLine extends Line {
     protected final Type type;
     protected final long offset;
     protected final String label;
+    protected final long index;
     private List<Element> elements;
 
     protected boolean omitLabel = false;
 
     protected DataLine(long addr, Type type, long step, TraceAnalyzer trc) {
-        this(addr, 0, null, type, step, trc);
+        this(addr, 0, null, -1, type, step, trc);
     }
 
-    protected DataLine(long addr, long offset, String label, Type type, long step, TraceAnalyzer trc) {
+    protected DataLine(long addr, long offset, String label, long index, Type type, long step, TraceAnalyzer trc) {
         this.addr = addr;
         this.type = type;
         this.step = step;
         this.trc = trc;
         this.label = label;
         this.offset = offset;
+        this.index = index;
     }
 
     protected long trunc(long val) {
@@ -63,14 +65,20 @@ public abstract class DataLine extends Line {
         if (omitLabel) {
             lbl = StringUtils.repeat(" ", DataViewModel.NAME_WIDTH);
         } else {
+            String array;
+            if (index != -1) {
+                array = "[" + index + "]";
+            } else {
+                array = "";
+            }
             Symbol sym = trc.getSymbol(addr);
             if (sym != null && sym.getValue() == addr) {
                 String name = sym.getName();
                 if (name != null) {
                     if (label != null) {
-                        lbl = StringUtils.pad(name + "." + label, DataViewModel.NAME_WIDTH);
+                        lbl = StringUtils.pad(name + array + "." + label, DataViewModel.NAME_WIDTH);
                     } else {
-                        lbl = StringUtils.pad(name, DataViewModel.NAME_WIDTH);
+                        lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
                     }
                 }
             } else {
@@ -78,9 +86,9 @@ public abstract class DataLine extends Line {
                 if (var != null && var.getAddress() == addr) {
                     String name = var.getName();
                     if (label != null) {
-                        lbl = StringUtils.pad(name + "." + label, DataViewModel.NAME_WIDTH);
+                        lbl = StringUtils.pad(name + array + "." + label, DataViewModel.NAME_WIDTH);
                     } else {
-                        lbl = StringUtils.pad(name, DataViewModel.NAME_WIDTH);
+                        lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
                     }
                 }
             }
