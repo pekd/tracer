@@ -188,6 +188,18 @@ public class Type {
 
     @Override
     public String toString() {
+        return toString(true);
+    }
+
+    public String toString(String name) {
+        if (elements > 1) {
+            return toString(false) + " " + name + " [" + elements + "]";
+        } else {
+            return toString(false) + " " + name;
+        }
+    }
+
+    public String toString(boolean array) {
         String conststr = isConst ? "const " : "";
         String reprstr = "";
         String exprstr = expr == null ? "" : ("<" + expr + ">");
@@ -223,7 +235,7 @@ public class Type {
             reprstr = " $out";
         }
         String arraystr = "";
-        if (elements > 1) {
+        if (array && elements > 1) {
             arraystr = "[" + elements + "]";
         }
         switch (type) {

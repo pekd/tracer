@@ -60,7 +60,7 @@ public class Struct extends UserDefinedType {
         for (Field field : fields.values()) {
             Type type = field.getType();
             fielddef.append(' ');
-            fielddef.append(type);
+            fielddef.append(type.toString(false));
             fielddef.append(' ');
             fielddef.append(field.getName());
             if (type.getElements() != -1) {
@@ -78,7 +78,7 @@ public class Struct extends UserDefinedType {
         for (Field field : fields.values()) {
             Type type = field.getType();
             fielddef.append('\t');
-            fielddef.append(type);
+            fielddef.append(type.toString(false));
             fielddef.append(' ');
             fielddef.append(field.getName());
             if (type.getElements() != -1) {
