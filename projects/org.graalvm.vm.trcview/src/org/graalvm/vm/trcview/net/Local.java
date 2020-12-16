@@ -25,6 +25,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
 import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.memory.MemoryUpdate;
+import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
@@ -85,6 +86,9 @@ public class Local implements TraceAnalyzer {
         highlighter = new Highlighter();
         types = new UserTypeDatabase(arch.getTypeInfo());
         typedMemory = new TypedMemory();
+
+        // populate default types
+        DefaultTypes.populate(types, arch.getTypeInfo());
     }
 
     @Override
