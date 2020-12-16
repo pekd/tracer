@@ -35,7 +35,11 @@ public class ScalarDataLine extends DataLine {
     }
 
     public ScalarDataLine(long addr, Type type, long step, TraceAnalyzer trc) {
-        super(addr, getType(type, trc), step, trc);
+        this(addr, 0, null, type, step, trc);
+    }
+
+    public ScalarDataLine(long addr, long offset, String name, Type type, long step, TraceAnalyzer trc) {
+        super(addr, offset, name, getType(type, trc), step, trc);
     }
 
     private Element encode(long val, boolean isaddr) {
@@ -151,25 +155,25 @@ public class ScalarDataLine extends DataLine {
                 case 1:
                     result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI8(addr, step);
+                    val = trc.getI8(addr + offset, step);
                     data(result, val);
                     break;
                 case 2:
                     result.add(new DefaultElement("DCW", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI16(addr, step);
+                    val = trc.getI16(addr + offset, step);
                     data(result, val);
                     break;
                 case 4:
                     result.add(new DefaultElement("DCD", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI32(addr, step);
+                    val = trc.getI32(addr + offset, step);
                     data(result, val);
                     break;
                 case 8:
                     result.add(new DefaultElement("DCQ", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI64(addr, step);
+                    val = trc.getI64(addr + offset, step);
                     data(result, val);
                     break;
                 default:

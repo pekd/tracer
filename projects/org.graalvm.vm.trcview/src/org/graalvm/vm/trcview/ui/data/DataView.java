@@ -252,6 +252,16 @@ public class DataView extends JPanel implements StepListener {
             }
         });
 
+        KeyStroke f9 = KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f9, f9);
+        getActionMap().put(f9, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                model.update();
+                editor.requestFocus();
+            }
+        });
+
         editor.addActionListener(e -> {
             Element element = editor.getCurrentElement();
             if (element instanceof AddressElement) {

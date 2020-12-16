@@ -19,7 +19,11 @@ public class ArrayDataLine extends DataLine {
     private final long length;
 
     public ArrayDataLine(long addr, long start, Type type, long step, TraceAnalyzer trc) {
-        super(addr, type, step, trc);
+        this(addr, 0, null, start, type, step, trc);
+    }
+
+    public ArrayDataLine(long addr, long offset, String name, long start, Type type, long step, TraceAnalyzer trc) {
+        super(addr, offset, name, type, step, trc);
         this.start = start;
         this.length = getLength(type, start);
         omitLabel = start != 0;
@@ -79,7 +83,7 @@ public class ArrayDataLine extends DataLine {
     protected void addData(List<Element> result) {
         try {
             int size = (int) type.getElementSize();
-            long ptr = addr + start * type.getElementSize();
+            long ptr = addr + offset + start * type.getElementSize();
             boolean comma = false;
             switch (size) {
                 case 1:

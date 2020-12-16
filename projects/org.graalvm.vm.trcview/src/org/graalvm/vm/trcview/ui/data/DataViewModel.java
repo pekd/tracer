@@ -10,6 +10,9 @@ import java.util.TreeMap;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.analysis.memory.MemorySegment;
+import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Field;
+import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.TypedMemory;
@@ -162,11 +165,37 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
 
     private class Var {
         public final Variable var;
+        public final Field field;
+        public final String parent;
+        public final long offset;
+        public final long delta;
         public long line;
 
         public Var(Variable var, long line) {
             this.var = var;
             this.line = line;
+            this.parent = null;
+            this.field = null;
+            this.offset = 0;
+            this.delta = 0;
+        }
+
+        public Var(Variable var, long line, String parent, Field field, long offset) {
+            this.var = var;
+            this.line = line;
+            this.parent = parent;
+            this.field = field;
+            this.offset = offset;
+            this.delta = 0;
+        }
+
+        public Var(Variable var, long line, String parent, Field field, long offset, long delta) {
+            this.var = var;
+            this.line = line;
+            this.parent = parent;
+            this.field = field;
+            this.offset = offset;
+            this.delta = delta;
         }
 
         public boolean contains(long ln) {
@@ -220,6 +249,68 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
             recompute(line);
         }
 
+        private long add(long line, Variable var, Struct struct) {
+            return add(line, var, struct, null, 0);
+        }
+
+        private long add(long line, Variable var, Struct struct, String parent, long offset) {
+            List<Field> fields = new ArrayList<>(struct.getFields());
+            Collections.sort(fields, (a, b) -> Long.compareUnsigned(a.getOffset(), b.getOffset()));
+            long ptr = var.getAddress();
+            long ln = line;
+            for (Field field : fields) {
+                Type type = field.getType();
+                if (type.getType() == DataType.STRUCT) {
+                    String p;
+                    if (parent == null) {
+                        p = field.getName();
+                    } else {
+                        p = parent + "." + field.getName();
+                    }
+                    if (type.getElements() > 1) {
+                        for (long i = 0; i < type.getElements(); i++) {
+                            String n = p + "[" + i + "]";
+                            ln = add(ln, var, type.getStruct(), n, offset + i * type.getElementSize());
+                        }
+                    } else {
+                        ln = add(ln, var, type.getStruct(), p, offset + field.getOffset());
+                    }
+                    ptr += field.getSize();
+                } else {
+                    if (type.getElements() > 1) {
+                        long rem = type.getSize() / type.getElementSize();
+                        long lineSize = type.isStringData() ? StringDataLine.MAX_LENGTH : ArrayDataLine.MAX_LENGTH;
+                        long delta = 0;
+                        long idx = 0;
+                        while (rem > 0) {
+                            Var v = new Var(var, ln, parent, field, offset + field.getOffset(), idx);
+                            assert delta == idx * type.getElementSize();
+                            assert v.var.getAddress() + v.offset + v.delta * type.getElementSize() == ptr + offset + delta;
+                            vars.put(ptr + offset + delta, v);
+                            invvars.put(ln, v);
+                            if (rem > lineSize) {
+                                rem -= lineSize;
+                                idx += lineSize;
+                                delta += lineSize * type.getElementSize();
+                                ln++;
+                            } else {
+                                idx += rem;
+                                delta += rem * type.getElementSize();
+                                rem = 0;
+                            }
+                        }
+                    } else {
+                        Var v = new Var(var, ln, parent, field, offset + field.getOffset());
+                        vars.put(ptr + offset, v);
+                        invvars.put(ln, v);
+                    }
+                    ptr += field.getSize();
+                    ln++;
+                }
+            }
+            return ln;
+        }
+
         public void recompute(long line) {
             firstLine = line;
 
@@ -232,7 +323,10 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                 long off = var.getAddress() - lastAddr;
                 long ln = lastLine + off;
                 Type type = var.getType();
-                if (type != null && type.getElements() > 1) {
+                if (type != null && type.getType() == DataType.STRUCT) {
+                    Struct struct = type.getStruct();
+                    lastLine = add(ln, var, struct);
+                } else if (type != null && type.getElements() > 1) {
                     long ptr = var.getAddress();
                     long rem = var.getSize() / type.getElementSize();
                     long lineSize = type.isStringData() ? StringDataLine.MAX_LENGTH : ArrayDataLine.MAX_LENGTH;
@@ -244,8 +338,8 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                             rem -= lineSize;
                             ptr += lineSize * type.getElementSize();
                         } else {
-                            rem = 0;
                             ptr += rem * type.getElementSize();
+                            rem = 0;
                         }
                         ln++;
                     }
@@ -287,7 +381,24 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
             Var var = vars.get(addr);
             if (var != null) {
                 Type type = var.var.getType();
-                if (type != null && type.getElements() > 1) {
+                if (type != null && type.getType() == DataType.STRUCT) {
+                    Var v = invvars.get(line);
+                    String name;
+                    if (v.parent != null) {
+                        name = v.parent + "." + v.field.getName();
+                    } else {
+                        name = v.field.getName();
+                    }
+                    if (v.field.getType().getElements() > 1) {
+                        if (v.field.getType().isStringData()) {
+                            return new StringDataLine(addr, v.offset, name, v.delta, v.field.getType(), step, trc);
+                        } else {
+                            return new ArrayDataLine(addr, v.offset, name, v.delta, v.field.getType(), step, trc);
+                        }
+                    } else {
+                        return new ScalarDataLine(addr, v.offset, name, v.field.getType(), step, trc);
+                    }
+                } else if (type != null && type.getElements() > 1) {
                     if (type.isStringData()) {
                         long delta = line - var.line;
                         long offset = delta * StringDataLine.MAX_LENGTH;

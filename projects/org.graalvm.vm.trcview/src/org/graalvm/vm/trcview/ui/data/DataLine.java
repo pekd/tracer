@@ -18,15 +18,23 @@ public abstract class DataLine extends Line {
     protected final long step;
     protected final long addr;
     protected final Type type;
+    protected final long offset;
+    protected final String label;
     private List<Element> elements;
 
     protected boolean omitLabel = false;
 
     protected DataLine(long addr, Type type, long step, TraceAnalyzer trc) {
+        this(addr, 0, null, type, step, trc);
+    }
+
+    protected DataLine(long addr, long offset, String label, Type type, long step, TraceAnalyzer trc) {
         this.addr = addr;
         this.type = type;
         this.step = step;
         this.trc = trc;
+        this.label = label;
+        this.offset = offset;
     }
 
     protected long trunc(long val) {
@@ -49,30 +57,38 @@ public abstract class DataLine extends Line {
         StepFormat fmt = trc.getArchitecture().getFormat();
 
         List<Element> result = new ArrayList<>();
-        String label = "";
-        String address = fmt.formatAddress(addr);
+        String lbl = "";
+        String address = fmt.formatAddress(addr + offset);
 
         if (omitLabel) {
-            label = StringUtils.repeat(" ", DataViewModel.NAME_WIDTH);
+            lbl = StringUtils.repeat(" ", DataViewModel.NAME_WIDTH);
         } else {
             Symbol sym = trc.getSymbol(addr);
             if (sym != null && sym.getValue() == addr) {
                 String name = sym.getName();
                 if (name != null) {
-                    label = StringUtils.pad(name, DataViewModel.NAME_WIDTH);
+                    if (label != null) {
+                        lbl = StringUtils.pad(name + "." + label, DataViewModel.NAME_WIDTH);
+                    } else {
+                        lbl = StringUtils.pad(name, DataViewModel.NAME_WIDTH);
+                    }
                 }
             } else {
                 Variable var = trc.getTypedMemory().get(addr);
                 if (var != null && var.getAddress() == addr) {
                     String name = var.getName();
-                    label = StringUtils.pad(name, DataViewModel.NAME_WIDTH);
+                    if (label != null) {
+                        lbl = StringUtils.pad(name + "." + label, DataViewModel.NAME_WIDTH);
+                    } else {
+                        lbl = StringUtils.pad(name, DataViewModel.NAME_WIDTH);
+                    }
                 }
             }
         }
 
         result.add(new DefaultElement(address, Element.TYPE_COMMENT));
         result.add(new DefaultElement(" ", Element.TYPE_PLAIN));
-        result.add(new DefaultElement(StringUtils.pad(label, DataViewModel.NAME_WIDTH), Element.TYPE_IDENTIFIER));
+        result.add(new DefaultElement(StringUtils.pad(lbl, DataViewModel.NAME_WIDTH), Element.TYPE_IDENTIFIER));
         result.add(new DefaultElement(" ", Element.TYPE_PLAIN));
 
         addData(result);

@@ -16,7 +16,11 @@ public class StringDataLine extends DataLine {
     private final long length;
 
     public StringDataLine(long addr, long start, Type type, long step, TraceAnalyzer trc) {
-        super(addr, type, step, trc);
+        this(addr, 0, null, start, type, step, trc);
+    }
+
+    public StringDataLine(long addr, long offset, String name, long start, Type type, long step, TraceAnalyzer trc) {
+        super(addr, offset, name, type, step, trc);
         this.start = start;
         this.length = getLength(type, start);
         omitLabel = start != 0;
@@ -39,7 +43,7 @@ public class StringDataLine extends DataLine {
         String val;
         long sz = type.getElementSize();
         try {
-            long ptr = addr + start * sz;
+            long ptr = addr + offset + start * sz;
             buf.append('"');
             for (long i = 0; i < length; i++) {
                 int b;
