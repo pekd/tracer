@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -16,13 +17,24 @@ public class TypedMemory {
     private static final long MAX_STRING_LENGTH = 32768; // 32k
 
     private NavigableMap<Long, Variable> types;
+    private NavigableMap<Long, Variable> derivedTypes;
 
     public TypedMemory() {
         types = new TreeMap<>();
+        derivedTypes = new TreeMap<>();
     }
 
     public Variable get(long addr) {
-        Entry<Long, Variable> entry = types.floorEntry(addr);
+        Variable var = get(addr, types);
+        if (var != null) {
+            return var;
+        } else {
+            return get(addr, derivedTypes);
+        }
+    }
+
+    private static Variable get(long addr, NavigableMap<Long, Variable> map) {
+        Entry<Long, Variable> entry = map.floorEntry(addr);
         if (entry == null) {
             return null;
         }
@@ -52,6 +64,22 @@ public class TypedMemory {
         }
     }
 
+    public Variable setDerivedType(long addr, Type var) {
+        if (var == null) {
+            derivedTypes.remove(addr);
+            return null;
+        } else {
+            Variable v = new Variable(addr, var);
+            clean(addr, var.getSize(), derivedTypes);
+            derivedTypes.put(addr, v);
+            return v;
+        }
+    }
+
+    public void clearDerivedTypes() {
+        derivedTypes.clear();
+    }
+
     public void set(long addr, Type var, String name) {
         if (var == null) {
             types.remove(addr);
@@ -62,15 +90,20 @@ public class TypedMemory {
     }
 
     private void clean(long addr, long size) {
-        Entry<Long, Variable> var = types.floorEntry(addr);
+        clean(addr, size, types);
+        clean(addr, size, derivedTypes);
+    }
+
+    private static void clean(long addr, long size, NavigableMap<Long, Variable> map) {
+        Entry<Long, Variable> var = map.floorEntry(addr);
         if (var != null) {
             if (var.getValue().contains(addr)) {
-                types.remove(var.getKey());
+                map.remove(var.getKey());
             }
         }
 
         for (long ptr = addr; ptr < addr + size;) {
-            var = types.ceilingEntry(ptr);
+            var = map.ceilingEntry(ptr);
             if (var == null) {
                 break;
             }
@@ -78,7 +111,7 @@ public class TypedMemory {
             if (v.getAddress() >= addr + size) {
                 break;
             }
-            types.remove(v.getAddress());
+            map.remove(v.getAddress());
             ptr = v.getAddress();
         }
     }
@@ -89,6 +122,8 @@ public class TypedMemory {
 
     public List<Variable> getTypes(long addrStart, long addrEnd) {
         List<Variable> result = new ArrayList<>();
+
+        // known types
         long addr = addrStart;
         while (addr <= addrEnd) {
             Entry<Long, Variable> next = types.ceilingEntry(addr);
@@ -101,6 +136,24 @@ public class TypedMemory {
             addr = next.getKey() + size;
             result.add(next.getValue());
         }
+
+        // derived types
+        addr = addrStart;
+        while (addr <= addrEnd) {
+            Entry<Long, Variable> next = derivedTypes.ceilingEntry(addr);
+            if (next == null) {
+                break;
+            }
+            long size = next.getValue().getSize();
+            assert size > 0;
+            assert addr <= next.getKey();
+            addr = next.getKey() + size;
+            result.add(next.getValue());
+        }
+
+        // sort result
+        Collections.sort(result, (a, b) -> Long.compareUnsigned(a.getAddress(), b.getAddress()));
+
         return result;
     }
 

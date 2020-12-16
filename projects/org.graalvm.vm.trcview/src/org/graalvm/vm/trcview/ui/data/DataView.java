@@ -22,6 +22,7 @@ import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.data.StaticTypePropagation;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.expression.EvaluationException;
@@ -249,6 +250,18 @@ public class DataView extends JPanel implements StepListener {
                     long addr = addressStack.pop();
                     setAddress(addr);
                 }
+            }
+        });
+
+        KeyStroke f5 = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f5, f5);
+        getActionMap().put(f5, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StaticTypePropagation prop = new StaticTypePropagation(trc);
+                prop.propagate(step.getStep());
+                model.update();
+                editor.requestFocus();
             }
         });
 

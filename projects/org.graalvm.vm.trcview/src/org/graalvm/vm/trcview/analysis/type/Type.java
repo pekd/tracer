@@ -92,8 +92,20 @@ public class Type {
         this.elements = elements;
     }
 
+    public void clearElements() {
+        this.elements = -1;
+    }
+
     public long getElements() {
         return elements;
+    }
+
+    public Type getElementType() {
+        if (getType() == DataType.PTR) {
+            return new Type(pointee, isConst, info);
+        } else {
+            return new Type(type, isConst, representation);
+        }
     }
 
     public void setRepresentation(Representation representation) {
