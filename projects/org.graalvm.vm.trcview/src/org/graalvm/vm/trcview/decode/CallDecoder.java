@@ -2,8 +2,6 @@ package org.graalvm.vm.trcview.decode;
 
 import static org.graalvm.vm.trcview.decode.DecoderUtils.str;
 
-import java.util.List;
-
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Type;
@@ -14,12 +12,12 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public abstract class CallDecoder {
     @SuppressWarnings("unused")
-    public long getArgument(CpuState state, int id, List<Type> types, TraceAnalyzer trc) {
-        return getArgument(state, id, types);
+    public long getArgument(CpuState state, int id, Prototype prototype, TraceAnalyzer trc) {
+        return getArgument(state, id, prototype);
     }
 
     @SuppressWarnings("unused")
-    public long getArgument(CpuState state, int id, List<Type> types) {
+    public long getArgument(CpuState state, int id, Prototype prototype) {
         return 0;
     }
 
@@ -52,7 +50,7 @@ public abstract class CallDecoder {
                     val = 0;
                 }
             } else {
-                val = getArgument(state, arg++, prototype.args, trc);
+                val = getArgument(state, arg++, prototype, trc);
             }
             if (i > 0) {
                 buf.append(", ");

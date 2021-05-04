@@ -25,6 +25,7 @@ public class CallNode extends Expression {
         long tmp;
         switch (name) {
             case "if":
+            case "ite":
                 if (args.size() != 3) {
                     throw new ArityException(3, args.size());
                 }

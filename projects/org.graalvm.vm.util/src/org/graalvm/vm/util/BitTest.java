@@ -48,4 +48,12 @@ public class BitTest {
     public static boolean test(long x, long flag) {
         return (x & flag) == flag;
     }
+
+    public static boolean testBit(int x, int bit) {
+        return test(x, 1 << bit);
+    }
+
+    public static boolean testBit(long x, int bit) {
+        return test(x, 1L << bit);
+    }
 }

@@ -259,7 +259,20 @@ public class DataView extends JPanel implements StepListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 StaticTypePropagation prop = new StaticTypePropagation(trc);
+                trc.getTypedMemory().clearDerivedTypes();
                 prop.propagate(step.getStep());
+                model.update();
+                editor.requestFocus();
+            }
+        });
+
+        KeyStroke f6 = KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f6, f6);
+        getActionMap().put(f6, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StaticTypePropagation prop = new StaticTypePropagation(trc);
+                prop.propagateTypes();
                 model.update();
                 editor.requestFocus();
             }

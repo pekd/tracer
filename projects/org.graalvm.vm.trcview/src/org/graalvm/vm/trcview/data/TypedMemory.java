@@ -120,6 +120,16 @@ public class TypedMemory {
         return new ArrayList<>(types.values());
     }
 
+    public List<Variable> getDerivedTypes() {
+        return new ArrayList<>(derivedTypes.values());
+    }
+
+    public List<Variable> getAllTypes() {
+        List<Variable> result = new ArrayList<>(types.values());
+        result.addAll(derivedTypes.values());
+        return result;
+    }
+
     public List<Variable> getTypes(long addrStart, long addrEnd) {
         List<Variable> result = new ArrayList<>();
 
@@ -164,6 +174,42 @@ public class TypedMemory {
             while (trc.getI8(ptr++, step) != 0) {
                 if ((ptr - addr) > MAX_STRING_LENGTH) {
                     break;
+                }
+            }
+            long len = ptr - addr;
+            return new Type(DataType.S8, false, (int) len, Representation.CHAR);
+        } catch (MemoryNotMappedException e) {
+            long len = ptr - addr;
+            if (len > 0) {
+                return new Type(DataType.S8, false, (int) len, Representation.CHAR);
+            } else {
+                return null;
+            }
+        }
+    }
+
+    private static boolean isASCII(byte val) {
+        if (val < 0) {
+            return false;
+        }
+        if (val < 32) {
+            return val == '\r' || val == '\n' || val == '\t' || val == 0x1B;
+        }
+        return true;
+    }
+
+    public Type guessString(long addr, long step, TraceAnalyzer trc) {
+        long ptr = addr;
+        try {
+            // search end of string
+            while (true) {
+                byte val = trc.getI8(ptr++, step);
+                if (val == 0) {
+                    break;
+                } else if ((ptr - addr) > MAX_STRING_LENGTH) {
+                    break;
+                } else if (!isASCII(val)) {
+                    return null;
                 }
             }
             long len = ptr - addr;

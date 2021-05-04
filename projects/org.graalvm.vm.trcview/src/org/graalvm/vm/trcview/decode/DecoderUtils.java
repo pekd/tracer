@@ -200,19 +200,45 @@ public class DecoderUtils {
     private static long truncptr(long ptr, TraceAnalyzer trc) {
         ArchitectureTypeInfo info = trc.getArchitecture().getTypeInfo();
         if (info != null) {
-            switch (info.getPointerSize()) {
-                case 1:
-                    return ptr & 0xFF;
-                case 2:
-                    return ptr & 0xFFFF;
-                case 4:
-                    return ptr & 0xFFFFFFFFL;
-                case 8:
-                default:
-                    return ptr;
-            }
+            return truncptr(ptr, info.getPointerSize());
         } else {
             return ptr;
+        }
+    }
+
+    private static long truncptr(long ptr, int size) {
+        switch (size) {
+            case 1:
+                return ptr & 0xFF;
+            case 2:
+                return ptr & 0xFFFF;
+            case 4:
+                return ptr & 0xFFFFFFFFL;
+            case 8:
+            default:
+                return ptr;
+        }
+    }
+
+    public static long truncate(Type type, long value) {
+        switch (type.getType()) {
+            case PTR:
+            case STRING:
+                return truncptr(value, (int) type.getElementSize());
+            case U8:
+            case S8:
+                return value & 0xFF;
+            case U16:
+            case S16:
+            case FX16:
+                return value & 0xFFFF;
+            case U32:
+            case S32:
+            case FX32:
+            case F32:
+                return value & 0xFFFFFFFFL;
+            default:
+                return value;
         }
     }
 

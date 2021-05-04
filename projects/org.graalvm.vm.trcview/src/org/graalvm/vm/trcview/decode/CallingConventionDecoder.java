@@ -92,4 +92,35 @@ public class CallingConventionDecoder {
         }
         return buf.toString();
     }
+
+    public static long get(Prototype prototype, CpuState state, TraceAnalyzer trc, CallingConvention cc, int i) {
+        ExpressionContext ctx = DecoderUtils.getExpressionContext(state, trc);
+        if (cc == null) {
+            Type type = prototype.args.get(i);
+            if (type.getExpression() != null) {
+                try {
+                    long val = type.getExpression().evaluate(ctx);
+                    return DecoderUtils.truncate(type, val);
+                } catch (EvaluationException e) {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        } else {
+            List<Expression> args = cc.getArguments(prototype);
+            Type type = prototype.args.get(i);
+            Expression expr = args.get(i);
+            if (expr != null) {
+                try {
+                    long val = expr.evaluate(ctx);
+                    return DecoderUtils.truncate(type, val);
+                } catch (EvaluationException e) {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        }
+    }
 }
