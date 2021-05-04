@@ -620,6 +620,27 @@ suite = {
       "license" : "UPL",
     },
 
+    "TRCVIEW_MINIMAL" : {
+      "path" : "build/trcview-minimal.jar",
+      "sourcesPath" : "build/trcview-minimal.src.zip",
+      "subDir" : "vmx86",
+      "mainClass" : "org.graalvm.vm.trcview.ui.MainWindow",
+      "dependencies" : [
+        "org.graalvm.vm.trcview",
+      ],
+      "strip" : [
+        "trcview"
+      ],
+      "overlaps" : [
+        "CORE",
+        "POSIX",
+        "sdk:GRAAL_SDK",
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_NFI",
+      ],
+      "license" : "UPL",
+    },
+
     "LIBTRC" : {
       "path" : "build/libtrc.jar",
       "subDir" : "core",
