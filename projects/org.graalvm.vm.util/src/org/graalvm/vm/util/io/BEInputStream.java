@@ -77,6 +77,18 @@ public class BEInputStream extends WordInputStream {
     }
 
     @Override
+    public int read24bit() throws IOException {
+        byte[] buf = new byte[3];
+        read(buf);
+        if (debug) {
+            int r = Endianess.get24bitBE(buf);
+            System.out.println("u24: " + Integer.toUnsignedString(r) + " (s24: " + (r << 8 >> 8) + "; bin: " + Integer.toUnsignedString(r, 2) + ")");
+            return r;
+        }
+        return Endianess.get24bitBE(buf);
+    }
+
+    @Override
     public int read32bit() throws IOException {
         byte[] buf = new byte[4];
         read(buf);

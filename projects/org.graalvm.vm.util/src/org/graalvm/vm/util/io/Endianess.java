@@ -57,6 +57,15 @@ public class Endianess {
         return Short.toUnsignedInt(get16bitBE(data, offset));
     }
 
+    public static int get24bitBE(byte[] data) {
+        return get24bitBE(data, 0);
+    }
+
+    public static int get24bitBE(byte[] data, int offset) {
+        return Byte.toUnsignedInt(data[offset]) << 16 | Byte.toUnsignedInt(data[offset + 1]) << 8 |
+                        Byte.toUnsignedInt(data[offset + 2]);
+    }
+
     public static int get32bitBE(byte[] data) {
         return get32bitBE(data, 0);
     }
@@ -71,6 +80,29 @@ public class Endianess {
 
     public static long get32bitBEu(byte[] data, int offset) {
         return Integer.toUnsignedLong(get32bitBE(data, offset));
+    }
+
+    public static long get48bitBE(byte[] data) {
+        return get48bitBE(data, 0);
+    }
+
+    public static long get48bitBE(byte[] data, int offset) {
+        return Byte.toUnsignedLong(data[offset]) << 40 | Byte.toUnsignedLong(data[offset + 1]) << 32 | Byte.toUnsignedLong(data[offset + 2]) << 24 | Byte.toUnsignedLong(data[offset + 3]) << 16 |
+                        Byte.toUnsignedLong(data[offset + 4]) << 8 | Byte.toUnsignedLong(data[offset + 5]);
+    }
+
+    public static long get56bitBE(byte[] data) {
+        return get56bitBE(data, 0);
+    }
+
+    public static long get56bitBE(byte[] data, int offset) {
+        return Byte.toUnsignedLong(data[offset]) << 48 |
+                        Byte.toUnsignedLong(data[offset + 1]) << 40 |
+                        Byte.toUnsignedLong(data[offset + 2]) << 32 |
+                        Byte.toUnsignedLong(data[offset + 3]) << 24 |
+                        Byte.toUnsignedLong(data[offset + 4]) << 16 |
+                        Byte.toUnsignedLong(data[offset + 5]) << 8 |
+                        Byte.toUnsignedLong(data[offset + 6]);
     }
 
     public static long get64bitBE(byte[] data) {
@@ -96,12 +128,50 @@ public class Endianess {
         return (short) (Byte.toUnsignedInt(data[offset]) | Byte.toUnsignedInt(data[offset + 1]) << 8);
     }
 
+    public static int get24bitLE(byte[] data) {
+        return get24bitLE(data, 0);
+    }
+
+    public static int get24bitLE(byte[] data, int offset) {
+        return Byte.toUnsignedInt(data[offset]) | Byte.toUnsignedInt(data[offset + 1]) << 8 |
+                        Byte.toUnsignedInt(data[offset + 2]) << 16;
+    }
+
+    public static int gets24bitLE(byte[] data, int offset) {
+        int sign = data[offset + 2] << 23 >> 7;
+        return Byte.toUnsignedInt(data[offset]) | Byte.toUnsignedInt(data[offset + 1]) << 8 |
+                        Byte.toUnsignedInt(data[offset + 2]) << 16 | sign;
+    }
+
     public static int get32bitLE(byte[] data) {
         return get32bitLE(data, 0);
     }
 
     public static int get32bitLE(byte[] data, int offset) {
         return Byte.toUnsignedInt(data[offset]) | Byte.toUnsignedInt(data[offset + 1]) << 8 | Byte.toUnsignedInt(data[offset + 2]) << 16 | Byte.toUnsignedInt(data[offset + 3]) << 24;
+    }
+
+    public static long get48bitLE(byte[] data) {
+        return get48bitLE(data, 0);
+    }
+
+    public static long get48bitLE(byte[] data, int offset) {
+        return Byte.toUnsignedLong(data[offset]) | Byte.toUnsignedLong(data[offset + 1]) << 8 | Byte.toUnsignedLong(data[offset + 2]) << 16 | Byte.toUnsignedLong(data[offset + 3]) << 24 |
+                        Byte.toUnsignedLong(data[offset + 4]) << 32 | Byte.toUnsignedLong(data[offset + 5]) << 40;
+    }
+
+    public static long get56bitLE(byte[] data) {
+        return get56bitLE(data, 0);
+    }
+
+    public static long get56bitLE(byte[] data, int offset) {
+        return Byte.toUnsignedLong(data[offset]) |
+                        Byte.toUnsignedLong(data[offset + 1]) << 8 |
+                        Byte.toUnsignedLong(data[offset + 2]) << 16 |
+                        Byte.toUnsignedLong(data[offset + 3]) << 24 |
+                        Byte.toUnsignedLong(data[offset + 4]) << 32 |
+                        Byte.toUnsignedLong(data[offset + 5]) << 40 |
+                        Byte.toUnsignedLong(data[offset + 6]) << 48;
     }
 
     public static long get64bitLE(byte[] data) {

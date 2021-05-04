@@ -157,6 +157,8 @@ public abstract class WordInputStream extends InputStream {
 
     public abstract short read16bit() throws IOException;
 
+    public abstract int read24bit() throws IOException;
+
     public abstract int read32bit() throws IOException;
 
     public abstract long read64bit() throws IOException;
