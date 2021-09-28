@@ -131,7 +131,9 @@ public class Cpuid extends AMD64Instruction {
                 a = PROCESSOR_INFO;
                 b = BRAND_INDEX | (CLFLUSH_LINE_SIZE << 8);
                 c = CpuidBits.SSE3 | CpuidBits.SSE41 | CpuidBits.POPCNT | CpuidBits.RDRND;
-                d = CpuidBits.TSC | CpuidBits.CMOV | CpuidBits.CLFSH | CpuidBits.FXSR | CpuidBits.SSE | CpuidBits.SSE2;
+                d = CpuidBits.TSC | CpuidBits.CMOV | CpuidBits.CLFSH | CpuidBits.FXSR | CpuidBits.SSE | CpuidBits.SSE2 |
+                                // for ISA V1 compatibility
+                                CpuidBits.FPU | CpuidBits.CX8 | CpuidBits.MMX;
                 break;
             case 7:
                 // Extended Features (FIXME: assumption is ECX=0)
