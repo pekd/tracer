@@ -689,6 +689,38 @@ public class Posix {
         return 0;
     }
 
+    public int fstatat(int fd, String path, Stat buf, int flags) throws PosixException {
+        if (strace) {
+            log.log(Levels.INFO, () -> String.format("fstatat(%d, %s, %s, %s)", fd, str(path), buf, Fcntl.statx(flags)));
+        }
+        if (path == null) {
+            throw new PosixException(Errno.EFAULT);
+        }
+        VFSEntry entry;
+        boolean followSymlinks = !BitTest.test(flags, Fcntl.AT_SYMLINK_NOFOLLOW);
+        if (fd == Fcntl.AT_FDCWD) {
+            entry = vfs.get(path, followSymlinks);
+        } else if (BitTest.test(flags, Fcntl.AT_EMPTY_PATH)) {
+            if (path == null || path.length() == 0) {
+                Stream stream = fds.getStream(fd);
+                stream.stat(buf);
+                return 0;
+            } else {
+                FileDescriptor dirfd = fds.getFileDescriptor(fd);
+                entry = vfs.get(dirfd.name, followSymlinks);
+            }
+        } else {
+            FileDescriptor dirfd = fds.getFileDescriptor(fd);
+            if (!(dirfd.stream instanceof DirectoryStream)) {
+                throw new PosixException(Errno.ENOTDIR);
+            }
+            String resolved = VFS.resolve(path, dirfd.name);
+            entry = vfs.get(resolved, followSymlinks);
+        }
+        entry.stat(buf);
+        return 0;
+    }
+
     public int statx(int dir, String pathname, int flags, int mask, Statx statxbuf) throws PosixException {
         if (strace) {
             log.log(Levels.INFO, () -> String.format("statx(%s, %s, %s, %s, %s)", Fcntl.fd(dir), str(pathname), Fcntl.statx(flags), Stat.mask(mask), statxbuf));
@@ -701,8 +733,14 @@ public class Posix {
         if (dir == Fcntl.AT_FDCWD) {
             entry = vfs.get(pathname, followSymlinks);
         } else if (BitTest.test(flags, Fcntl.AT_EMPTY_PATH)) {
-            FileDescriptor dirfd = fds.getFileDescriptor(dir);
-            entry = vfs.get(dirfd.name, followSymlinks);
+            if (pathname == null || pathname.length() == 0) {
+                Stream stream = fds.getStream(dir);
+                stream.statx(mask, statxbuf);
+                return 0;
+            } else {
+                FileDescriptor dirfd = fds.getFileDescriptor(dir);
+                entry = vfs.get(dirfd.name, followSymlinks);
+            }
         } else {
             FileDescriptor dirfd = fds.getFileDescriptor(dir);
             if (!(dirfd.stream instanceof DirectoryStream)) {

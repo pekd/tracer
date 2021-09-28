@@ -285,6 +285,8 @@ public class AMD64SyscallDecoder extends SyscallDecoder {
                 return "tgkill(" + a1 + ", " + a2 + ", " + Signal.toString((int) a3) + ")";
             case Syscalls.SYS_openat:
                 return "openat(" + (int) a1 + ", " + cstr(a2, state.getStep(), trc) + ", " + Fcntl.flags((int) a3) + ", " + Stat.mode((int) a4) + ")";
+            case Syscalls.SYS_newfstatat:
+                return "newfstatat(" + (int) a1 + ", " + cstr(a2, state.getStep(), trc) + ", " + ptr(a3) + ", " + Fcntl.statx((int) a4) + ")";
             case Syscalls.SYS_dup3:
                 return "dup3(" + a1 + ", " + a2 + ", " + a3 + ")";
             case Syscalls.SYS_prlimit64:

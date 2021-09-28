@@ -337,6 +337,8 @@ public class SyscallWrapper extends AMD64Node {
                 throw new ProcessExitException(128 + (int) a3);
             case Syscalls.SYS_openat:
                 return posix.openat((int) a1, a2, (int) a3, (int) a4);
+            case Syscalls.SYS_newfstatat:
+                return posix.fstatat((int) a1, a2, a3, (int) a4);
             case Syscalls.SYS_set_robust_list:
                 return posix.set_robust_list(a1, a2);
             case Syscalls.SYS_dup3:

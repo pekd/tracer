@@ -616,6 +616,21 @@ public class PosixEnvironment {
         }
     }
 
+    public long fstatat(int fd, long path, long buf, int flags) throws SyscallException {
+        PosixPointer ptr = posixPointer(buf);
+        Stat stat = new Stat();
+        try {
+            int result = posix.fstatat(fd, cstr(path), stat, flags);
+            stat.write64(ptr);
+            return result;
+        } catch (PosixException e) {
+            if (strace) {
+                log.log(Level.INFO, "fstatat failed: " + Errno.toString(e.getErrno()));
+            }
+            throw new SyscallException(e.getErrno());
+        }
+    }
+
     public long statx(int dirfd, long pathname, int flags, int mask, long statxbuf) throws SyscallException {
         PosixPointer ptr = posixPointer(statxbuf);
         Statx statx = new Statx();
