@@ -186,7 +186,16 @@ public class StraceView extends JPanel {
             if (cache.containsKey(index)) {
                 decoded = cache.get(index);
             } else {
-                StepEvent next = (StepEvent) trc.getNextStep((Node) value);
+                Node nn = trc.getNextStep((Node) value);
+                StepEvent next = null;
+                if (nn instanceof StepEvent) {
+                    next = (StepEvent) nn;
+                } else if (nn instanceof BlockNode) {
+                    next = ((BlockNode) nn).getHead();
+                    if (next == null) {
+                        next = ((BlockNode) nn).getFirstStep();
+                    }
+                }
                 CpuState ns = next == null ? null : next.getState();
                 decoded = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
                 if (decoded == null) {

@@ -161,7 +161,7 @@ public class InstructionView extends JPanel {
             }
 
             Node node = instructions.get(selected);
-            StepEvent step = getStep(node);
+            StepEvent step = Utils.getStep(node);
             if (step == null) {
                 log.warning("step is null!");
                 return;
@@ -209,24 +209,6 @@ public class InstructionView extends JPanel {
                 trace();
             }
         });
-    }
-
-    private static StepEvent getStep(Node node) {
-        StepEvent step;
-        if (node instanceof BlockNode) {
-            BlockNode block = (BlockNode) node;
-            step = block.getHead();
-            if (step == null && block.isInterrupt()) {
-                step = block.getInterrupt().getStep();
-            }
-            if (step == null) {
-                // this might happen if the first instruction on root level is an irq
-                step = block.getFirstStep();
-            }
-        } else {
-            step = (StepEvent) node;
-        }
-        return step;
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
@@ -363,7 +345,7 @@ public class InstructionView extends JPanel {
         InterruptEvent irq = block.getInterrupt();
         StepEvent step = irq.getStep();
         if (step == null) {
-            step = getStep(block);
+            step = Utils.getStep(block);
         }
         StepFormat fmt = step.getFormat();
         Location loc = Location.getLocation(trc, step);
@@ -592,7 +574,12 @@ public class InstructionView extends JPanel {
                 }
             } else if (n instanceof BlockNode) {
                 StepEvent step = ((BlockNode) n).getHead();
-                Location loc = Location.getLocation(trc, ((BlockNode) n).getFirstStep());
+                StepEvent firstStep = ((BlockNode) n).getFirstStep();
+                if (firstStep == null) { // happens if program crashed in call
+                    // TODO: provide correct address of call target
+                    firstStep = step;
+                }
+                Location loc = Location.getLocation(trc, firstStep);
                 StringBuilder buf = new StringBuilder();
                 StepEvent next = null;
                 if (((BlockNode) n).isInterrupt()) {

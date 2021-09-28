@@ -50,9 +50,12 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.expression.Parser;
+import org.graalvm.vm.trcview.io.BlockNode;
+import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class Utils {
@@ -248,5 +251,23 @@ public class Utils {
                 }
             }
         }
+    }
+
+    public static StepEvent getStep(Node node) {
+        StepEvent step;
+        if (node instanceof BlockNode) {
+            BlockNode block = (BlockNode) node;
+            step = block.getHead();
+            if (step == null && block.isInterrupt()) {
+                step = block.getInterrupt().getStep();
+            }
+            if (step == null) {
+                // this might happen if the first instruction on root level is an irq
+                step = block.getFirstStep();
+            }
+        } else {
+            step = (StepEvent) node;
+        }
+        return step;
     }
 }
