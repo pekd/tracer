@@ -44,6 +44,7 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -91,14 +92,70 @@ public class JavaVirtualMemory extends VirtualMemory {
     @TruffleBoundary
     @Override
     public void add(MemoryPage page) {
+        checkConsistency();
+        if (DEBUG) {
+            CompilerDirectives.transferToInterpreter();
+            System.out.printf("add(MemoryPage): Adding page at 0x%016X-0x%016X\n", page.base, page.end);
+            printLayout();
+        }
         boolean ok = Long.compareUnsigned(page.end, pointerBase) <= 0 || Long.compareUnsigned(page.end, pointerEnd) > 0;
         if (!ok) {
+            if (DEBUG) {
+                CompilerDirectives.transferToInterpreter();
+                System.out.printf("Allocating memory at 0x%016X (0x%x bytes)\n", page.base, page.size);
+            }
             allocator.allocat(page.base, page.size);
         }
         try {
             MemoryPage oldPage = get(page.base);
             if (page.contains(oldPage.base) && page.contains(oldPage.end - 1)) {
+                if (DEBUG) {
+                    CompilerDirectives.transferToInterpreter();
+                    System.out.printf("Removing old page: 0x%016X-0x%016X, new page is 0x%016X-0x%016X\n", oldPage.base, oldPage.end, page.base, page.end);
+                }
                 pages.remove(oldPage.base);
+                cache = null;
+                cache2 = null;
+
+                // check if more pages have to be deleted
+                long addr = oldPage.end;
+                while (true) {
+                    Long pageaddr = pages.ceilingKey(addr);
+                    if (DEBUG) {
+                        CompilerDirectives.transferToInterpreter();
+                        if (pageaddr == null) {
+                            System.out.println("no more pages");
+                        } else {
+                            System.out.printf("Examining page at 0x%016X\n", pageaddr);
+                        }
+                    }
+                    if (pageaddr == null) {
+                        break;
+                    } else {
+                        if (pageaddr > page.end) {
+                            if (DEBUG) {
+                                CompilerDirectives.transferToInterpreter();
+                                System.out.printf("Page at 0x%016X does not overlap\n", pageaddr);
+                            }
+                            break;
+                        } else {
+                            MemoryPage p = pages.get(pageaddr);
+                            if (page.contains(p.end - 1)) {
+                                // fully contained
+                                if (DEBUG) {
+                                    CompilerDirectives.transferToInterpreter();
+                                    System.out.printf("Page fully contained, removing page 0x%016X-0x%016X\n", p.base, p.end);
+                                }
+                                pages.remove(p.base);
+                            } else if (page.contains(p.base)) {
+                                // split
+                                CompilerDirectives.transferToInterpreter();
+                                throw new RuntimeException("split not implemented");
+                            }
+                            addr = p.end;
+                        }
+                    }
+                }
             } else {
                 if (DEBUG) {
                     CompilerDirectives.transferToInterpreter();
@@ -134,6 +191,10 @@ public class JavaVirtualMemory extends VirtualMemory {
                 }
             }
         } catch (SegmentationViolation e) {
+            if (DEBUG) {
+                CompilerDirectives.transferToInterpreter();
+                System.out.println("Segmentation violation: " + e);
+            }
         }
         pages.put(page.base, page);
         cache = null;
@@ -158,8 +219,10 @@ public class JavaVirtualMemory extends VirtualMemory {
             }
         }
         if (DEBUG) {
+            CompilerDirectives.transferToInterpreter();
             printLayout();
         }
+        checkConsistency();
     }
 
     @TruffleBoundary
@@ -691,6 +754,9 @@ public class JavaVirtualMemory extends VirtualMemory {
                 pages.remove(page.base);
                 pages.put(p1.base, p1);
                 pages.put(p2.base, p2);
+                cache = null;
+                cache2 = null;
+                checkConsistency();
                 return;
             } else {
                 // split, modify second part
@@ -704,10 +770,13 @@ public class JavaVirtualMemory extends VirtualMemory {
                 pages.remove(page.base);
                 pages.put(p1.base, p1);
                 pages.put(p2.base, p2);
+                cache = null;
+                cache2 = null;
                 p = page.end;
                 remaining -= page.size;
             }
         }
+        checkConsistency();
     }
 
     @Override
@@ -752,5 +821,30 @@ public class JavaVirtualMemory extends VirtualMemory {
     public Collection<MemorySegment> getSegments() {
         CompilerAsserts.neverPartOfCompilation();
         return pages.entrySet().stream().map(x -> getSegment(x.getValue())).sorted((x, y) -> Long.compareUnsigned(x.start, y.start)).collect(Collectors.toList());
+    }
+
+    @TruffleBoundary
+    public void checkConsistency() {
+        for (long addr : pages.keySet()) {
+            MemoryPage page = pages.get(addr);
+            Entry<Long, MemoryPage> before = pages.floorEntry(addr - 1);
+            Entry<Long, MemoryPage> after = pages.ceilingEntry(addr + 1);
+            if (before != null) {
+                // check overlap
+                MemoryPage p = before.getValue();
+                if (p.getEnd() > addr) {
+                    printLayout();
+                    throw new RuntimeException("violation at " + p + " vs " + page);
+                }
+            }
+            if (after != null) {
+                // check overlap
+                MemoryPage p = after.getValue();
+                if (p.getBase() < page.getEnd()) {
+                    printLayout();
+                    throw new RuntimeException("violation at " + p + " vs " + page);
+                }
+            }
+        }
     }
 }
