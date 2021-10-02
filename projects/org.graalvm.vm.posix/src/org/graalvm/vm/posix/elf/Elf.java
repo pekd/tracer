@@ -490,7 +490,8 @@ public class Elf {
                 throw new IOException("String table section has wrong name: '" + shstrtabName + "'");
             }
         } catch (IndexOutOfBoundsException e) {
-            throw new IOException("Invalid section id " + e_shstrndx);
+            // throw new IOException("Invalid section id " + e_shstrndx);
+            stringTable = null;
         }
     }
 
