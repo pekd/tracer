@@ -282,6 +282,9 @@ public class ElfLoader {
             }
         }
 
+        // initialize phoff with data from Ehdr
+        phoff = load_bias + elf.e_phoff;
+
         for (ProgramHeader hdr : elf.getProgramHeaders()) {
             if (hdr.getType() == Elf.PT_LOAD || hdr.getType() == Elf.PT_PHDR) {
                 long size = hdr.getMemorySize();
