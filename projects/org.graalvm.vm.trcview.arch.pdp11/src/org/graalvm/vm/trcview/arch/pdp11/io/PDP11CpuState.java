@@ -23,6 +23,15 @@ public abstract class PDP11CpuState extends PDP11StepEvent implements CpuState {
     }
 
     @Override
+    public long getRegisterById(int id) {
+        if (id < 8) {
+            return Short.toUnsignedLong(getRegister(id));
+        } else {
+            return Short.toUnsignedLong(getPSW());
+        }
+    }
+
+    @Override
     public long get(String name) {
         switch (name) {
             case "r0":

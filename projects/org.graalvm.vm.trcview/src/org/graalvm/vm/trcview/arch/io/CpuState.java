@@ -8,4 +8,8 @@ public interface CpuState {
     long get(String name);
 
     int getTid();
+
+    default long getRegisterById(@SuppressWarnings("unused") int id) {
+        return 0;
+    }
 }

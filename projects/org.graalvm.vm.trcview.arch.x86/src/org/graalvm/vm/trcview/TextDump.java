@@ -78,6 +78,7 @@ import org.graalvm.vm.trcview.arch.io.IoEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64FullCpuState;
+import org.graalvm.vm.trcview.data.DynamicTypePropagation;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
@@ -596,6 +597,10 @@ public class TextDump {
 
         @Override
         public TypedMemory getTypedMemory() {
+            return null;
+        }
+
+        public DynamicTypePropagation getTypeRecovery() {
             return null;
         }
     }

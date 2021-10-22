@@ -89,6 +89,11 @@ public class PDP11 extends Architecture {
     }
 
     @Override
+    public int getRegisterCount() {
+        return 8;
+    }
+
+    @Override
     public ABI createABI() {
         GenericABI abi = new GenericABI();
         abi.getCall().setArguments(Arrays.asList(new VariableNode("r0"), new VariableNode("r1"), new VariableNode("r2"), new VariableNode("r3")));

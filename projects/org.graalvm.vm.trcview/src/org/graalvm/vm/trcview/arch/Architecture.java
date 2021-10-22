@@ -64,6 +64,10 @@ public abstract class Architecture {
         return null;
     }
 
+    public int getRegisterCount() {
+        return 0;
+    }
+
     public static void register(Architecture arch) {
         log.info("Registering architecture support for " + ElfStrings.getElfMachine(arch.getId()) + " [" + arch.getName() + "]");
         architectures.put(arch.getId(), arch);

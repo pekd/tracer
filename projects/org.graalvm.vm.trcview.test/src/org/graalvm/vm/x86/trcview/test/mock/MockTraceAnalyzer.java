@@ -20,6 +20,7 @@ import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.data.DynamicTypePropagation;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.expression.EvaluationException;
@@ -351,6 +352,10 @@ public class MockTraceAnalyzer implements TraceAnalyzer {
 
     @Override
     public TypedMemory getTypedMemory() {
+        return null;
+    }
+
+    public DynamicTypePropagation getTypeRecovery() {
         return null;
     }
 }

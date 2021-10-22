@@ -77,6 +77,7 @@ import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.SymbolTableEvent;
+import org.graalvm.vm.trcview.data.DynamicTypePropagation;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.BitTest;
@@ -109,6 +110,8 @@ public class Analysis {
 
     private boolean leightweight = true;
 
+    private DynamicTypePropagation typeRecovery;
+
     private List<Analyzer> analyzers;
 
     public Analysis(Architecture arch) {
@@ -129,6 +132,9 @@ public class Analysis {
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
         info = arch.getTypeInfo();
+        if (arch.getRegisterCount() != 0) {
+            typeRecovery = new DynamicTypePropagation(arch, info);
+        }
     }
 
     public void start() {
@@ -160,6 +166,9 @@ public class Analysis {
         if (event instanceof StepEvent) {
             steps++;
             StepEvent step = (StepEvent) event;
+            if (typeRecovery != null) {
+                typeRecovery.step(step);
+            }
             if (step.isSyscall()) {
                 syscalls.add(node);
             }
@@ -416,6 +425,10 @@ public class Analysis {
             }
         }
 
+        if (typeRecovery != null) {
+            typeRecovery.finish();
+        }
+
         log.log(Levels.INFO, "The trace contains " + steps + " step events");
         memory.printStats();
     }
@@ -460,5 +473,9 @@ public class Analysis {
 
     public List<Node> getNodes() {
         return nodes;
+    }
+
+    public DynamicTypePropagation getTypeRecovery() {
+        return typeRecovery;
     }
 }

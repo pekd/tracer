@@ -3,6 +3,8 @@ package org.graalvm.vm.trcview.arch.io;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.graalvm.vm.trcview.data.Semantics;
+
 public abstract class StepEvent extends Event {
     public MemoryEvent read;
     public MemoryEvent write;
@@ -51,6 +53,10 @@ public abstract class StepEvent extends Event {
     public abstract CpuState getState();
 
     public abstract StepFormat getFormat();
+
+    public void getSemantics(@SuppressWarnings("unused") Semantics s) {
+        // override this in subclasses to supply semantic information
+    }
 
     public final void setRead(MemoryEvent evt) {
         assert !evt.isWrite();

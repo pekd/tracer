@@ -8,6 +8,8 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Disassembler;
+import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Semantics;
+import org.graalvm.vm.trcview.data.Semantics;
 import org.graalvm.vm.util.io.Endianess;
 
 public abstract class PDP11StepEvent extends StepEvent {
@@ -50,6 +52,11 @@ public abstract class PDP11StepEvent extends StepEvent {
     @Override
     public String getMnemonic() {
         return getDisassemblyComponents()[0];
+    }
+
+    @Override
+    public void getSemantics(Semantics semantics) {
+        PDP11Semantics.getSemantics(semantics, getState().getMachinecodeWords(), (short) getPC());
     }
 
     @Override

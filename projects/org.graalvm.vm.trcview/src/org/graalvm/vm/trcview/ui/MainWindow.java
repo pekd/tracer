@@ -118,6 +118,7 @@ import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.call.ABIEditor;
 import org.graalvm.vm.trcview.ui.data.DataDialog;
 import org.graalvm.vm.trcview.ui.data.DatatypeDialog;
+import org.graalvm.vm.trcview.ui.data.TypeRecoveryDialog;
 import org.graalvm.vm.trcview.ui.device.DeviceDialog;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
@@ -590,10 +591,18 @@ public class MainWindow extends JFrame {
             DataDialog dlg = new DataDialog(this, trc, view);
             dlg.setVisible(true);
         });
+        JMenuItem typeRecoveryWindow = new JMenuItem("Type Recovery");
+        typeRecoveryWindow.setMnemonic('r');
+        typeRecoveryWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, KeyEvent.SHIFT_DOWN_MASK));
+        typeRecoveryWindow.addActionListener(e -> {
+            TypeRecoveryDialog dlg = new TypeRecoveryDialog(this, trc, view);
+            dlg.setVisible(true);
+        });
         subviewMenu.add(datatypeWindow);
         subviewMenu.add(abiWindow);
         subviewMenu.add(dataWindow);
         subviewMenu.add(deviceWindow);
+        subviewMenu.add(typeRecoveryWindow);
         subviewMenu.setEnabled(false);
         viewMenu.add(subviewMenu);
 
