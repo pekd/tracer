@@ -112,96 +112,78 @@ public class Search {
     }
 
     public static Node nextPC(Node startNode, long pc) {
-        Node start = next(startNode);
-        if (start == null) {
-            return null;
-        }
-        Node c = nextPCChildren(start, pc);
-        if (c == null) {
-            // follow parents until reaching root
-            c = start;
-            BlockNode block = c.getParent();
-            while (block != null) {
-                boolean started = false;
-                for (Node n : block.getNodes()) {
-                    if (n == c) {
-                        started = true;
-                    } else if (started && (n instanceof BlockNode || (n instanceof StepEvent))) {
-                        Node ret = nextPCChildren(n, pc);
-                        if (ret != null) {
-                            return ret;
-                        }
-                        break;
-                    }
-                }
-                c = block;
-                block = c.getParent();
-            }
-            return null;
-        } else {
-            return c;
-        }
+        // start at next instruction
+        long insn = getInstruction(startNode);
+        return nextPC(startNode, pc, insn, true);
     }
 
-    private static Node nextPCChildren(Node start, long pc) {
-        if (start instanceof BlockNode) {
-            BlockNode block = (BlockNode) start;
-            if (block.getHead().getPC() == pc) {
-                return block;
+    public static Node nextPC(Node startNode, long pc, long insn, boolean up) {
+        BlockNode block = startNode instanceof BlockNode ? (BlockNode) startNode : startNode.getParent();
+        long search = getInstruction(block);
+
+        while (block != null) {
+            // step 1: check block head
+            if (block.getHead() != null && block.getHead().getStep() > insn && block.getHead().getPC() == pc) {
+                return block.getHead();
+            } else if (block.getInterrupt() != null && block.getInterrupt().getStep().getStep() > insn && block.getInterrupt().getStep().getPC() == pc) {
+                return block.getInterrupt().getStep();
             }
+
+            // step 2: iterate current child nodes
             for (Node n : block.getNodes()) {
                 if (n instanceof StepEvent) {
-                    StepEvent step = (StepEvent) n;
-                    if (step.getPC() == pc) {
-                        return n;
+                    // is a StepEvent
+                    StepEvent e = (StepEvent) n;
+                    if (e.getStep() > insn && e.getPC() == pc) {
+                        return e;
                     }
                 } else if (n instanceof BlockNode) {
-                    Node next = nextPCChildren(n, pc);
-                    if (next != null) {
-                        return next;
-                    }
-                }
-            }
-            return null;
-        } else if (start instanceof StepEvent) {
-            if (((StepEvent) start).getPC() == pc) {
-                return start;
-            }
-            BlockNode parent = start.getParent();
-            boolean started = false;
-            for (Node n : parent.getNodes()) {
-                if (started) {
-                    if (n instanceof StepEvent) {
-                        StepEvent step = (StepEvent) n;
-                        if (step.getPC() == pc) {
-                            return n;
-                        }
-                    } else if (n instanceof BlockNode) {
-                        Node next = nextPCChildren(n, pc);
-                        if (next != null) {
-                            return next;
+                    // is a BlockNode, check head
+                    BlockNode b = (BlockNode) n;
+                    if (b.getHead() != null && b.getHead().getStep() > insn && b.getHead().getPC() == pc) {
+                        return b.getHead();
+                    } else if (b.isInterrupt() && b.getInterrupt().getStep().getStep() > insn && b.getInterrupt().getStep().getPC() == pc) {
+                        return b.getInterrupt().getStep();
+                    } else {
+                        // recurse?
+                        long first = getInstruction(b);
+
+                        // first instruction in this block is after search value
+                        if (first > search || (b.isInterrupt() && first >= search)) {
+                            // recurse
+                            Node next = nextPC(b, pc, insn, false);
+                            if (next != null) {
+                                return next;
+                            }
                         }
                     }
-                } else if (n == start) {
-                    started = true;
                 }
+                search = getInstruction(n);
             }
-            return null;
-        } else {
-            if (start instanceof Event) {
-                throw new IllegalArgumentException("invalid start node type: " + start.getClass().getCanonicalName() + " [" + start.getClass() + "]");
-            } else {
-                throw new IllegalArgumentException("invalid start node type: " + start.getClass().getCanonicalName());
+
+            // step 3: go up one level
+            block = block.getParent();
+
+            if (!up) {
+                return null;
             }
         }
+
+        // nothing found
+        return null;
     }
 
     private static long getInstruction(Node node) {
         if (node instanceof BlockNode) {
-            if (((BlockNode) node).getHead() == null) {
-                return ((BlockNode) node).getFirstStep().getStep();
+            BlockNode b = (BlockNode) node;
+            if (b.getHead() == null) {
+                if (b.isInterrupt()) {
+                    return b.getInterrupt().getStep().getStep();
+                } else {
+                    return b.getFirstStep().getStep();
+                }
             } else {
-                return ((BlockNode) node).getHead().getStep();
+                return b.getHead().getStep();
             }
         } else if (node instanceof StepEvent) {
             return ((StepEvent) node).getStep();
