@@ -119,6 +119,7 @@ public class TraceParser {
 
                     if (!system || stackedTraps || !parent.isInterrupt()) {
                         // RET can only return from traps if stacked traps are enabled
+                        analysis.processBlock(step, parent);
                         ret();
                     }
                 } else if (system && step.isReturnFromSyscall()) {
@@ -126,6 +127,7 @@ public class TraceParser {
                     analysis.process(step, step);
 
                     if (stackedTraps) {
+                        analysis.processBlock(step, parent);
                         ret();
                     } else {
                         BlockNode irq = parent;
@@ -134,9 +136,11 @@ public class TraceParser {
                         }
                         if (irq == null) {
                             // act as if it was a ret
+                            analysis.processBlock(step, parent);
                             ret();
                         } else {
                             // return to trap
+                            analysis.processBlock(step, irq);
                             ret(irq);
                         }
                     }

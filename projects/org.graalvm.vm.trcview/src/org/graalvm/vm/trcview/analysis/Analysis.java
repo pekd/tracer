@@ -42,6 +42,7 @@ package org.graalvm.vm.trcview.analysis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -106,6 +107,7 @@ public class Analysis {
 
     private List<Node> nodes;
     private boolean system;
+    private Architecture arch;
     private ArchitectureTypeInfo info;
 
     private boolean leightweight = true;
@@ -114,12 +116,16 @@ public class Analysis {
 
     private List<Analyzer> analyzers;
 
+    private BlockNode lastCall;
+    private StepEvent lastRet;
+
     public Analysis(Architecture arch) {
         this(arch, Collections.emptyList());
     }
 
     public Analysis(Architecture arch, List<Analyzer> analyzers) {
         this.analyzers = analyzers;
+        this.arch = arch;
         symbols = new SymbolTable(arch.getFormat());
         symbolTable = new TreeMap<>();
         mappedFiles = new TreeMap<>();
@@ -166,6 +172,13 @@ public class Analysis {
         if (event instanceof StepEvent) {
             steps++;
             StepEvent step = (StepEvent) event;
+
+            if (lastCall != null) {
+                processCallRet(lastCall, lastRet, step);
+                lastCall = null;
+                lastRet = null;
+            }
+
             if (typeRecovery != null) {
                 typeRecovery.step(step);
             }
@@ -355,6 +368,84 @@ public class Analysis {
         }
     }
 
+    public void processBlock(StepEvent ret, BlockNode block) {
+        lastCall = block;
+        lastRet = ret;
+    }
+
+    public void processCallRet(BlockNode block, StepEvent ret, StepEvent next) {
+        StepEvent call;
+        if (block.getHead() != null) {
+            call = block.getHead();
+        } else if (block.isInterrupt()) {
+            call = block.getInterrupt().getStep();
+        } else {
+            call = block.getFirstStep();
+        }
+
+        System.out.println("Block: " + Long.toString(block.getFirstStep().getPC(), 8));
+        if (ret.isReturn()) {
+            // try to detect unmodified arguments
+
+            ComputedSymbol sym = symbols.get(block.getFirstStep().getPC());
+
+            for (int i = 0; i < arch.getRegisterCount(); i++) {
+                long before = call.getState().getRegisterById(i);
+                long after = next.getState().getRegisterById(i);
+                if (before == after) {
+                    sym.savedRegisters.set(i);
+                } else {
+                    sym.destroyedRegisters.set(i);
+                }
+            }
+        }
+    }
+
+    private static String getR(int r) {
+        return "r" + r;
+    }
+
+    private static String list(BitSet registers, int count) {
+        if (registers.isEmpty()) {
+            return "{}";
+        }
+
+        StringBuilder buf = new StringBuilder();
+        buf.append('{');
+
+        boolean first = true;
+        int start = -1;
+
+        for (int i = 0; i < count; i++) {
+            if (registers.get(i)) {
+                // current register is set
+                if (start == -1) {
+                    // start new range
+                    if (!first) {
+                        buf.append(',');
+                    } else {
+                        first = false;
+                    }
+                    buf.append(getR(i));
+                    start = i;
+                } else {
+                    // nothing
+                }
+            } else if (start != -1) {
+                if (start < i - 1) {
+                    buf.append('-');
+                    buf.append(getR(i - 1));
+                }
+                start = -1;
+            }
+        }
+
+        assert start == -1;
+        assert buf.length() > 1;
+
+        return buf.append('}').toString();
+    }
+
     public void finish(BlockNode root) {
         add(root);
 
@@ -390,6 +481,9 @@ public class Analysis {
 
         // compute j_sub names
         for (ComputedSymbol sym : symbols.getSubroutines()) {
+            sym.computeUnusedRegisters(arch.getRegisterCount());
+            System.out.println("Subroutine " + sym.name + ": " + list(sym.getUnusedRegisters(), arch.getRegisterCount()));
+
             for (Node visit : sym.visits) {
                 InstructionType type;
                 if (visit instanceof BlockNode) {

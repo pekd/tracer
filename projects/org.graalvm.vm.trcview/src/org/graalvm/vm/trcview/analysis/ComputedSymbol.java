@@ -41,6 +41,7 @@
 package org.graalvm.vm.trcview.analysis;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import org.graalvm.vm.trcview.analysis.type.Prototype;
@@ -62,6 +63,10 @@ public class ComputedSymbol {
 
     public Prototype prototype;
 
+    public final BitSet savedRegisters = new BitSet(); // these registers stayed the same
+    public final BitSet destroyedRegisters = new BitSet(); // these registers changed
+    private BitSet unusedRegisters = null; // derived set of "unused registers"
+
     public ComputedSymbol(String name, long address, Type type) {
         if (name == null) {
             throw new NullPointerException("name is null");
@@ -79,6 +84,25 @@ public class ComputedSymbol {
 
     public void resetVisits() {
         visits.clear();
+    }
+
+    public void computeUnusedRegisters(int regcount) {
+        unusedRegisters = (BitSet) savedRegisters.clone();
+        BitSet inverse = new BitSet(regcount);
+        inverse.set(0, regcount);
+        inverse.xor(destroyedRegisters); // invert destroyedRegisters
+        unusedRegisters.and(inverse);
+    }
+
+    public boolean isRegisterUnused(int r) {
+        if (unusedRegisters == null) {
+            throw new IllegalStateException("register set not yet computed");
+        }
+        return unusedRegisters.get(r);
+    }
+
+    public BitSet getUnusedRegisters() {
+        return (BitSet) unusedRegisters.clone();
     }
 
     @Override
