@@ -114,16 +114,16 @@ public class TraceParser {
                     analysis.process(step, block);
                 } else if (step.isReturn()) {
                     // return
-                    analysis.process(step, step);
                     parent.add(step);
+                    analysis.process(step, step);
 
                     if (!system || stackedTraps || !parent.isInterrupt()) {
                         // RET can only return from traps if stacked traps are enabled
                         ret();
                     }
                 } else if (system && step.isReturnFromSyscall()) {
-                    analysis.process(step, step);
                     parent.add(step);
+                    analysis.process(step, step);
 
                     if (stackedTraps) {
                         ret();
@@ -142,17 +142,17 @@ public class TraceParser {
                     }
                 } else {
                     // normal step event
-                    analysis.process(step, step);
                     parent.add(step);
+                    analysis.process(step, step);
                 }
                 lastStep = step;
             } else if (evt instanceof InterruptEvent) {
                 InterruptEvent trap = (InterruptEvent) evt;
                 if (lastStep != null && lastStep.getType() != InstructionType.SYSCALL) {
                     BlockNode block = new BlockNode(trap);
-                    analysis.process(trap, block);
                     parent.add(block);
                     parent = block;
+                    analysis.process(trap, block);
                 } else if (lastStep == null) {
                     // like a call
                     BlockNode block = new BlockNode(lastStep);

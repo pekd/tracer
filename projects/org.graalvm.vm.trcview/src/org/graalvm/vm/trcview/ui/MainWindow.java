@@ -97,6 +97,7 @@ import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.DerivedStepEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
 import org.graalvm.vm.trcview.data.TypedMemory;
@@ -612,18 +613,27 @@ public class MainWindow extends JFrame {
         gotoPC.addActionListener(e -> {
             StepEvent step = view.getSelectedInstruction();
             String input;
+
+            StepFormat fmt = trc.getArchitecture().getFormat();
+            int base = 10;
+            if (fmt.numberfmt == StepFormat.NUMBERFMT_OCT) {
+                base = 8;
+            } else if (fmt.numberfmt == StepFormat.NUMBERFMT_HEX) {
+                base = 16;
+            }
+
             if (step != null) {
                 long loc = step.getPC();
-                input = JOptionPane.showInputDialog("Enter address:", HexFormatter.tohex(loc));
+                input = JOptionPane.showInputDialog("Enter address:", fmt.formatAddress(loc));
                 if (input != null && input.trim().length() > 0) {
                     try {
-                        long pc = Long.parseLong(input.trim(), 16);
+                        long pc = Long.parseLong(input.trim(), base);
                         Node n = trc.getNextPC(view.getSelectedNode(), pc);
                         if (n != null) {
-                            log.info("Jumping to next occurence of PC=0x" + HexFormatter.tohex(pc));
+                            log.info("Jumping to next occurence of PC=" + fmt.formatAddress(pc));
                             view.jump(n);
                         } else {
-                            JOptionPane.showMessageDialog(this, "Error: cannot find a next instruction at 0x" + HexFormatter.tohex(pc), "Goto...", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(this, "Error: cannot find a next instruction at " + fmt.formatAddress(pc), "Goto...", JOptionPane.ERROR_MESSAGE);
                         }
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this, "Error: invalid number", "Goto PC...", JOptionPane.ERROR_MESSAGE);
@@ -632,19 +642,19 @@ public class MainWindow extends JFrame {
             } else {
                 Optional<ComputedSymbol> first = trc.getSymbols().stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).findFirst();
                 if (first.isPresent()) {
-                    input = JOptionPane.showInputDialog("Enter address:", HexFormatter.tohex(first.get().address));
+                    input = JOptionPane.showInputDialog("Enter address:", fmt.formatAddress(first.get().address));
                 } else {
                     input = JOptionPane.showInputDialog("Enter address:", "0");
                 }
                 if (input != null && input.trim().length() > 0) {
                     try {
-                        long pc = Long.parseLong(input.trim(), 16);
+                        long pc = Long.parseLong(input.trim(), base);
                         Node n = trc.getNextPC(trc.getRoot(), pc);
                         if (n != null) {
-                            log.info("Jumping to next occurence of PC=0x" + HexFormatter.tohex(pc));
+                            log.info("Jumping to next occurence of PC=" + fmt.formatAddress(pc));
                             view.jump(n);
                         } else {
-                            JOptionPane.showMessageDialog(this, "Error: cannot find a next instruction at 0x" + HexFormatter.tohex(pc), "Goto...", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(this, "Error: cannot find a next instruction at " + fmt.formatAddress(pc), "Goto...", JOptionPane.ERROR_MESSAGE);
                         }
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this, "Error: invalid number", "Goto PC...", JOptionPane.ERROR_MESSAGE);
