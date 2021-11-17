@@ -89,16 +89,16 @@ import org.graalvm.vm.util.log.Trace;
 public class Analysis {
     private static final Logger log = Trace.create(Analysis.class);
 
-    private SymbolTable symbols;
+    private final SymbolTable symbols;
     private StepEvent lastStep;
 
-    private NavigableMap<Long, Symbol> symbolTable;
-    private NavigableMap<Long, MappedFile> mappedFiles;
-    private SymbolResolver resolver;
-    private SymbolResolver augmentedResolver;
-    private List<Node> syscalls;
-    private Map<Integer, List<IoEvent>> io;
-    private Map<Integer, Device> devices;
+    private final NavigableMap<Long, Symbol> symbolTable;
+    private final NavigableMap<Long, MappedFile> mappedFiles;
+    private final SymbolResolver resolver;
+    private final SymbolResolver augmentedResolver;
+    private final List<Node> syscalls;
+    private final Map<Integer, List<IoEvent>> io;
+    private final Map<Integer, Device> devices;
 
     private long steps;
     private long idcnt;
@@ -119,6 +119,8 @@ public class Analysis {
     private BlockNode lastCall;
     private StepEvent lastRet;
 
+    private final int regcnt;
+
     public Analysis(Architecture arch) {
         this(arch, Collections.emptyList());
     }
@@ -138,7 +140,8 @@ public class Analysis {
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
         info = arch.getTypeInfo();
-        if (arch.getRegisterCount() != 0) {
+        regcnt = arch.getRegisterCount();
+        if (regcnt != 0) {
             typeRecovery = new DynamicTypePropagation(arch, info, symbols);
         }
     }
@@ -369,11 +372,17 @@ public class Analysis {
     }
 
     public void processBlock(StepEvent ret, BlockNode block) {
-        lastCall = block;
-        lastRet = ret;
+        if (regcnt != 0) {
+            lastCall = block;
+            lastRet = ret;
+        }
     }
 
     public void processCallRet(BlockNode block, StepEvent ret, StepEvent next) {
+        if (regcnt == 0) {
+            return;
+        }
+
         StepEvent call;
         if (block.getHead() != null) {
             call = block.getHead();
@@ -383,7 +392,6 @@ public class Analysis {
             call = block.getFirstStep();
         }
 
-        System.out.println("Block: " + Long.toString(block.getFirstStep().getPC(), 8));
         if (ret.isReturn() || ret.isReturnFromSyscall()) {
             // try to detect unmodified arguments
 
@@ -481,8 +489,10 @@ public class Analysis {
 
         // compute j_sub names
         for (ComputedSymbol sym : symbols.getSubroutines()) {
-            sym.computeUnusedRegisters(arch.getRegisterCount());
-            System.out.println("Subroutine " + sym.name + ": " + list(sym.getUnusedRegisters(), arch.getRegisterCount()));
+            if (regcnt != 0) {
+                sym.computeUnusedRegisters(arch.getRegisterCount());
+                System.out.println("Subroutine " + sym.name + ": " + list(sym.getUnusedRegisters(), arch.getRegisterCount()));
+            }
 
             for (Node visit : sym.visits) {
                 InstructionType type;
