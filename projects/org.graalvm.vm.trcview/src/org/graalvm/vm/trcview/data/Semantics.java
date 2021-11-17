@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
+import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.data.ir.IndexedMemoryOperand;
 import org.graalvm.vm.trcview.data.ir.MemoryOperand;
@@ -17,12 +19,14 @@ import org.graalvm.vm.util.BitTest;
 public class Semantics {
     private final CodeTypeMap codeMap;
     private final MemoryTypeMap memoryMap;
+    private final SymbolTable symbols;
     private long pc;
     private StepEvent step;
 
-    public Semantics(CodeTypeMap codeMap, MemoryTypeMap memoryMap) {
+    public Semantics(CodeTypeMap codeMap, MemoryTypeMap memoryMap, SymbolTable symbols) {
         this.codeMap = codeMap;
         this.memoryMap = memoryMap;
+        this.symbols = symbols;
     }
 
     public void setPC(long pc) {
@@ -195,6 +199,18 @@ public class Semantics {
         return memoryMap.getForwardChain(addr);
     }
 
+    public void finish() {
+        for (ComputedSymbol sym : symbols.getSubroutines()) {
+            // TODO
+            // cut all links at sym.address if the registers are saved according to
+            // sym.getUnusedRegisters()
+
+            codeMap.breakChain(sym.address, sym.getUnusedRegisters());
+
+            // TODO: cut all the forward links at the return instructions too
+        }
+    }
+
     // new function to resolve registers
     public long resolve(@SuppressWarnings("hiding") long pc, RegisterOperand op) {
         return resolve(pc, op, null);
@@ -240,14 +256,14 @@ public class Semantics {
                     }
 
                     long last = map.getChain();
-                    if (last != -1) {
+                    if (last != -1 && BitTest.test(value, VariableType.CHAIN_BIT) && !BitTest.test(value, VariableType.BREAK_BIT)) {
                         todo.add(new RegisterChainTarget(get(last), reg.getRegister()));
                     }
                 }
 
                 // decide if forward chain is used
                 for (RegisterTypeMap r : map.getForwardChain()) {
-                    if (BitTest.test(r.get(reg), VariableType.CHAIN_BIT)) {
+                    if (BitTest.test(r.get(reg), VariableType.CHAIN_BIT) && !BitTest.test(r.get(reg), VariableType.BREAK_BIT)) {
                         todo.add(new RegisterChainTarget(r, reg.getRegister()));
                     }
                 }

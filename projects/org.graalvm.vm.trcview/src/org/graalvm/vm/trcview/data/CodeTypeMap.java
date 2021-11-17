@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.data;
 
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -141,6 +142,10 @@ public class CodeTypeMap {
 
     public ChainTarget getChainTarget(long pc, RegisterOperand op) {
         return new RegisterChainTarget(get(pc), op.getRegister());
+    }
+
+    public void breakChain(long addr, BitSet registers) {
+        getMap(addr).breakChain(getOffset(addr), registers);
     }
 
     public String getStatistics() {

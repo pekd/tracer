@@ -139,7 +139,7 @@ public class Analysis {
         system = arch.isSystemLevel();
         info = arch.getTypeInfo();
         if (arch.getRegisterCount() != 0) {
-            typeRecovery = new DynamicTypePropagation(arch, info);
+            typeRecovery = new DynamicTypePropagation(arch, info, symbols);
         }
     }
 
@@ -384,7 +384,7 @@ public class Analysis {
         }
 
         System.out.println("Block: " + Long.toString(block.getFirstStep().getPC(), 8));
-        if (ret.isReturn()) {
+        if (ret.isReturn() || ret.isReturnFromSyscall()) {
             // try to detect unmodified arguments
 
             ComputedSymbol sym = symbols.get(block.getFirstStep().getPC());

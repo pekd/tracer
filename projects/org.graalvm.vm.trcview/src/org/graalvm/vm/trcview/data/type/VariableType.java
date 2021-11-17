@@ -49,6 +49,7 @@ public class VariableType {
     public static final VariableType UNKNOWN = new VariableType(62, "UNKNOWN");
 
     public static final long CHAIN_BIT = 0x80000000_00000000L;
+    public static final long BREAK_BIT = 0x40000000_00000000L;
 
     private final long mask;
     private final String name;

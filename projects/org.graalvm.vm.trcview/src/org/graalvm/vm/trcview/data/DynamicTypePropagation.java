@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.data;
 
+import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -12,12 +13,12 @@ public class DynamicTypePropagation {
 
     private long last;
 
-    public DynamicTypePropagation(Architecture arch, ArchitectureTypeInfo info) {
+    public DynamicTypePropagation(Architecture arch, ArchitectureTypeInfo info, SymbolTable symbols) {
         this.info = info;
         this.call = arch.getCallDecoder();
         CodeTypeMap codeMap = new CodeTypeMap(arch.getRegisterCount());
         MemoryTypeMap memoryMap = new MemoryTypeMap();
-        this.semantics = new Semantics(codeMap, memoryMap);
+        this.semantics = new Semantics(codeMap, memoryMap, symbols);
         last = -1;
     }
 
@@ -35,6 +36,7 @@ public class DynamicTypePropagation {
     }
 
     public void finish() {
+        semantics.finish();
         System.out.println("DynamicTypePropagation result: " + semantics.getStatistics());
     }
 

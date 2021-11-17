@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.data;
 
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -169,5 +170,17 @@ public class RegisterTypeMap {
 
     public long get(RegisterOperand op) {
         return registerTypes[op.getRegister()];
+    }
+
+    public void breakChain(BitSet registers) {
+        for (int i = 0; i < registerTypes.length; i++) {
+            if (registers.get(i)) {
+                registerTypes[i] &= ~VariableType.CHAIN_BIT;
+                registerTypes[i] |= VariableType.BREAK_BIT;
+                if (reverseChainTargets[i] != null) {
+                    reverseChainTargets[i].clear();
+                }
+            }
+        }
     }
 }

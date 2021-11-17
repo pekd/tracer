@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.data;
 
+import java.util.BitSet;
 import java.util.Set;
 
 import org.graalvm.vm.trcview.data.ir.RegisterOperand;
@@ -73,5 +74,9 @@ public class CodePageTypeMap {
 
     public void forwardChain(int offset, RegisterOperand reg, ChainTarget target) {
         memory[offset].forwardChain(reg, target);
+    }
+
+    public void breakChain(int offset, BitSet registers) {
+        memory[offset].breakChain(registers);
     }
 }
