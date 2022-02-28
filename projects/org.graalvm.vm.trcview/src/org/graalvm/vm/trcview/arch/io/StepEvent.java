@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.arch.io;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,6 +73,16 @@ public abstract class StepEvent extends Event {
 
     public final MemoryEvent getRead() {
         return read;
+    }
+
+    public List<MemoryEvent> getDataReads() {
+        List<MemoryEvent> result = new ArrayList<>();
+        MemoryEvent evt = getRead();
+        while (evt != null) {
+            result.add(evt);
+            evt = evt.getNext();
+        }
+        return result;
     }
 
     public final void setWrite(MemoryEvent evt) {

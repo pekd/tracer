@@ -1,9 +1,12 @@
 package org.graalvm.vm.trcview.arch.pdp11.io;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.pdp11.PDP11;
@@ -90,6 +93,21 @@ public abstract class PDP11StepEvent extends StepEvent {
     @Override
     public StepFormat getFormat() {
         return PDP11.FORMAT;
+    }
+
+    @Override
+    public List<MemoryEvent> getDataReads() {
+        List<MemoryEvent> reads = super.getDataReads();
+        List<MemoryEvent> data = new ArrayList<>();
+        for (MemoryEvent evt : reads) {
+            long addr = evt.getAddress();
+            // PC = instruction, PC+n = operands (offsets or immediate)
+            // TODO: filter offsets without filtering immediate
+            if (addr != getState().getPC()) {
+                data.add(evt);
+            }
+        }
+        return data;
     }
 
     @Override

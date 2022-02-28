@@ -90,7 +90,7 @@ public class VariableType {
     }
 
     public static VariableType resolve(long bitmask, int addrsize) {
-        long bits = bitmask & ~(CHAIN_BIT | UNKNOWN.mask | CONFLICT.mask | PC.mask | SP.mask | PC.mask);
+        long bits = bitmask & ~(CHAIN_BIT | BREAK_BIT | UNKNOWN.mask | CONFLICT.mask | PC.mask | SP.mask | PC.mask);
         long ptrbits = GENERIC_POINTER.mask | POINTER_I8.mask | POINTER_I16.mask | POINTER_I32.mask | POINTER_I64.mask | POINTER_U8.mask | POINTER_U16.mask | POINTER_U32.mask | POINTER_U64.mask |
                         POINTER_S8.mask | POINTER_S16.mask | POINTER_S32.mask | POINTER_S64.mask | POINTER_F32.mask | POINTER_F64.mask | POINTER_FX16.mask | POINTER_FX32.mask | POINTER_CODE.mask;
 
@@ -156,6 +156,43 @@ public class VariableType {
             } else {
                 return UNKNOWN;
             }
+        }
+
+        if (I8.test(bits) && (bits & ~I8.mask) == 0) {
+            return I8;
+        }
+
+        // S16:
+        if (S16.test(bits)) {
+            if (U16.test(bits)) {
+                long m = U16.mask | S16.mask | I16.mask;
+                if ((bits & ~m) == 0) {
+                    return I16;
+                } else {
+                    return UNKNOWN;
+                }
+            } else {
+                long m = S16.mask | I16.mask;
+                if ((bits & ~m) == 0) {
+                    return S16;
+                } else {
+                    return UNKNOWN;
+                }
+            }
+        }
+
+        // U16:
+        if (U16.test(bits)) {
+            long m = U16.mask | I16.mask;
+            if ((bits & ~m) == 0) {
+                return U16;
+            } else {
+                return UNKNOWN;
+            }
+        }
+
+        if (I16.test(bits) && (bits & ~I16.mask) == 0) {
+            return I16;
         }
 
         // precise pointer types for f32/f64/fx16/fx32

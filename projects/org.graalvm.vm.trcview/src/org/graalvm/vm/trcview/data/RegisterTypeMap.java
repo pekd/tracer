@@ -172,14 +172,18 @@ public class RegisterTypeMap {
         return registerTypes[op.getRegister()];
     }
 
+    public void breakChain(int reg) {
+        registerTypes[reg] &= ~VariableType.CHAIN_BIT;
+        registerTypes[reg] |= VariableType.BREAK_BIT;
+        if (reverseChainTargets[reg] != null) {
+            reverseChainTargets[reg].clear();
+        }
+    }
+
     public void breakChain(BitSet registers) {
         for (int i = 0; i < registerTypes.length; i++) {
             if (registers.get(i)) {
-                registerTypes[i] &= ~VariableType.CHAIN_BIT;
-                registerTypes[i] |= VariableType.BREAK_BIT;
-                if (reverseChainTargets[i] != null) {
-                    reverseChainTargets[i].clear();
-                }
+                breakChain(i);
             }
         }
     }

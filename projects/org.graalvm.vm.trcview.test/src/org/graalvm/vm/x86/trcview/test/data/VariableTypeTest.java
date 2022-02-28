@@ -21,4 +21,12 @@ public class VariableTypeTest {
         VariableType result = VariableType.resolve(bits, 2);
         assertSame(VariableType.POINTER_I16, result);
     }
+
+    @Test
+    public void testI8on16bit() {
+        long bits = VariableType.I8.getMask() | VariableType.CHAIN_BIT;
+
+        VariableType result = VariableType.resolve(bits, 2);
+        assertSame(VariableType.I8, result);
+    }
 }

@@ -68,6 +68,7 @@ public class Semantics {
         if (dst instanceof RegisterOperand) {
             RegisterOperand rdst = (RegisterOperand) dst;
             codeMap.set(pc, rdst, get(src));
+            codeMap.breakChain(pc, rdst.getRegister());
         } else if (dst instanceof MemoryOperand) {
             MemoryOperand mdst = (MemoryOperand) dst;
             memoryMap.set(mdst, get(src));
@@ -95,6 +96,7 @@ public class Semantics {
         if (op instanceof RegisterOperand) {
             RegisterOperand rop = (RegisterOperand) op;
             codeMap.set(pc, rop, type);
+            codeMap.breakChain(pc, rop.getRegister());
         } else if (op instanceof MemoryOperand) {
             MemoryOperand mop = (MemoryOperand) op;
             memoryMap.set(mop, type);
@@ -108,6 +110,7 @@ public class Semantics {
         if (op instanceof RegisterOperand) {
             RegisterOperand rop = (RegisterOperand) op;
             codeMap.set(pc, rop, 0);
+            codeMap.breakChain(pc, rop.getRegister());
         } else if (op instanceof MemoryOperand) {
             MemoryOperand mop = (MemoryOperand) op;
             memoryMap.set(mop, 0);
@@ -201,13 +204,12 @@ public class Semantics {
 
     public void finish() {
         for (ComputedSymbol sym : symbols.getSubroutines()) {
-            // TODO
             // cut all links at sym.address if the registers are saved according to
             // sym.getUnusedRegisters()
-
             codeMap.breakChain(sym.address, sym.getUnusedRegisters());
 
             // TODO: cut all the forward links at the return instructions too
+            // the hard part here is finding all the return instructions of the subroutine
         }
     }
 

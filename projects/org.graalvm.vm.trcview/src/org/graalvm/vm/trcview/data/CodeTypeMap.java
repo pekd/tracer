@@ -144,6 +144,10 @@ public class CodeTypeMap {
         return new RegisterChainTarget(get(pc), op.getRegister());
     }
 
+    public void breakChain(long addr, int register) {
+        getMap(addr).breakChain(getOffset(addr), register);
+    }
+
     public void breakChain(long addr, BitSet registers) {
         getMap(addr).breakChain(getOffset(addr), registers);
     }

@@ -110,9 +110,10 @@ public class PDP11Semantics {
         if (src == null) {
             semantics.set(dst, type);
         } else {
-            semantics.constraint(src, type);
-            semantics.set(dst, type);
-            semantics.unify(src, dst);
+            if (type != VariableType.I16 || !(src instanceof RegisterOperand) || !(dst instanceof RegisterOperand)) {
+                semantics.constraint(src, type);
+            }
+            semantics.move(dst, src);
         }
     }
 
@@ -311,7 +312,7 @@ public class PDP11Semantics {
                 // op1(opcd, code, semantics, false);
                 return;
             case 0077000: /* SOB */
-                // semantics.constraint(new RegisterOperand(JSR_R.get(opcd)), VariableType.U16);
+                semantics.constraint(new RegisterOperand(JSR_R.get(opcd)), VariableType.U16);
                 return;
             case 0070000: /* MUL */
                 // TODO

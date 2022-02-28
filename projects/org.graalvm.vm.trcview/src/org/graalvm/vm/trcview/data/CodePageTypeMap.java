@@ -76,6 +76,10 @@ public class CodePageTypeMap {
         memory[offset].forwardChain(reg, target);
     }
 
+    public void breakChain(int offset, int register) {
+        memory[offset].breakChain(register);
+    }
+
     public void breakChain(int offset, BitSet registers) {
         memory[offset].breakChain(registers);
     }
