@@ -57,6 +57,7 @@ import javax.swing.JTextPane;
 import javax.swing.JToolTip;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
+import javax.swing.UIManager;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
 import javax.swing.text.StyledDocument;
@@ -111,6 +112,7 @@ public class StateView extends JPanel {
         text = new JTextPane();
         text.setEditorKit(new HTMLEditorKit());
         text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        text.setBackground(UIManager.getColor("TextField.background"));
         text.setEditable(false);
         text.setContentType("text/html");
 

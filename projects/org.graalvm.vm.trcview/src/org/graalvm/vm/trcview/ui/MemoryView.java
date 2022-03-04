@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.UIManager;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryRead;
@@ -86,6 +87,7 @@ public class MemoryView extends JPanel {
 
         text = new JTextPane();
         text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        text.setBackground(UIManager.getColor("TextField.background"));
         text.setEditable(false);
         text.setContentType("text/html");
         add(BorderLayout.CENTER, new JScrollPane(text));
