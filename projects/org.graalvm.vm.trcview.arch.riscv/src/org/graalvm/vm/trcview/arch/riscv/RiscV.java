@@ -70,7 +70,7 @@ public class RiscV extends Architecture {
 
     @Override
     public boolean isSystemLevel() {
-        return true;
+        return false; // not system-level for now
     }
 
     @Override

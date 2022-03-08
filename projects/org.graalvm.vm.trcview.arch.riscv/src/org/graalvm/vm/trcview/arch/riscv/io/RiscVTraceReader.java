@@ -96,33 +96,33 @@ public class RiscVTraceReader extends ArchTraceReader {
                 RiscVExceptionEvent trap = new RiscVExceptionEvent(in, tid, lastStep);
                 return trap;
             case TYPE_READ_8: {
+                long address = in.read64bit();
                 byte value = (byte) in.read8bit();
-                long address = Integer.toUnsignedLong(in.read32bit());
                 return new MemoryEventI8(false, tid, address, false, value);
             }
             case TYPE_READ_16: {
+                long address = in.read64bit();
                 short value = in.read16bit();
-                long address = Integer.toUnsignedLong(in.read32bit());
                 return new MemoryEventI16(false, tid, address, false, value);
             }
             case TYPE_READ_32: {
+                long address = in.read64bit();
                 int value = in.read32bit();
-                long address = Integer.toUnsignedLong(in.read32bit());
                 return new MemoryEventI32(false, tid, address, false, value);
             }
             case TYPE_WRITE_8: {
+                long address = in.read64bit();
                 byte value = (byte) in.read8bit();
-                long address = Integer.toUnsignedLong(in.read32bit());
                 return new MemoryEventI8(false, tid, address, true, value);
             }
             case TYPE_WRITE_16: {
+                long address = in.read64bit();
                 short value = in.read16bit();
-                long address = Integer.toUnsignedLong(in.read32bit());
                 return new MemoryEventI16(false, tid, address, true, value);
             }
             case TYPE_WRITE_32: {
+                long address = in.read64bit();
                 int value = in.read32bit();
-                long address = Integer.toUnsignedLong(in.read32bit());
                 return new MemoryEventI32(false, tid, address, true, value);
             }
             case TYPE_MEMR: {

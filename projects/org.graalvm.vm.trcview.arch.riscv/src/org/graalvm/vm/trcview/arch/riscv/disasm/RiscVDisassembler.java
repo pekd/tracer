@@ -26,6 +26,11 @@ public class RiscVDisassembler {
                 }
             case Opcode.OP_BRANCH:
                 return InstructionType.JCC;
+            case Opcode.OP_SYSTEM:
+                if (opcd == Opcode.OP_SYSTEM) {
+                    // ecall
+                    return InstructionType.SYSCALL;
+                }
             default:
                 return InstructionType.OTHER;
         }
