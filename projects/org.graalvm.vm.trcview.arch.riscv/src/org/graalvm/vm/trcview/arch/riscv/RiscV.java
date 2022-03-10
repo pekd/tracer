@@ -95,6 +95,13 @@ public class RiscV extends Architecture {
                                         new MulNode(new SubNode(new VariableNode("arg_id"), new ValueNode(4)),
                                                         new ValueNode(8))))));
         abi.getCall().setReturn(new VariableNode("a0"));
+
+        abi.setSyscallId(new VariableNode("a7"));
+        abi.getSyscall().setArguments(Arrays.asList(new VariableNode("a0"), new VariableNode("a1"),
+                        new VariableNode("a2"), new VariableNode("a3"), new VariableNode("a4"),
+                        new VariableNode("a5"), new VariableNode("a6")));
+        abi.getSyscall().setReturn(new VariableNode("a0"));
+
         return abi;
     }
 }
