@@ -43,6 +43,15 @@ public class PDP11Disassembler {
         buf.append(Integer.toOctalString(Short.toUnsignedInt(val)));
     }
 
+    private static void writeO(StringBuilder buf, short val) {
+        if (val < 0 && val > -128) {
+            buf.append('-');
+            writeN(buf, (short) -val);
+        } else {
+            writeN(buf, val);
+        }
+    }
+
     private static void writeRN(StringBuilder buf, int r) {
         if (r < 0 || r > 7) {
             throw new IllegalArgumentException("invalid register");
@@ -116,7 +125,7 @@ public class PDP11Disassembler {
                 buf.append('@');
             case 6:
                 code.pc += 2;
-                writeN(buf, code.next());
+                writeO(buf, code.next());
                 buf.append('(');
                 writeRN(buf, rn);
                 buf.append(')');
