@@ -2,9 +2,10 @@ package org.graalvm.vm.trcview.arch.pdp11.io;
 
 import java.io.IOException;
 
+import org.graalvm.vm.trcview.arch.io.CpuDeltaState;
 import org.graalvm.vm.util.io.WordInputStream;
 
-public class PDP11CpuDeltaState extends PDP11CpuState {
+public class PDP11CpuDeltaState extends PDP11CpuState implements CpuDeltaState<PDP11CpuState> {
     // bits 0-6 = r0 - r6
     private static final int BIT_PSW = 7;
 
@@ -62,24 +63,32 @@ public class PDP11CpuDeltaState extends PDP11CpuState {
         }
     }
 
-    @Override
-    public short getRegister(int id) {
+    private short getRegister(PDP11CpuState last, int id) {
         if (id == 7) {
             return pc;
         } else if (has(id)) {
             return data[offset(id)];
         } else {
-            return previous.getRegister(id);
+            return last.getRegister(id);
+        }
+    }
+
+    @Override
+    public short getRegister(int id) {
+        return getRegister(previous, id);
+    }
+
+    private short getPSW(PDP11CpuState last) {
+        if (has(BIT_PSW)) {
+            return data[offset(BIT_PSW)];
+        } else {
+            return last.getPSW();
         }
     }
 
     @Override
     public short getPSW() {
-        if (has(BIT_PSW)) {
-            return data[offset(BIT_PSW)];
-        } else {
-            return previous.getPSW();
-        }
+        return getPSW(previous);
     }
 
     @Override
@@ -90,5 +99,14 @@ public class PDP11CpuDeltaState extends PDP11CpuState {
     @Override
     public short[] getMachinecodeWords() {
         return insn;
+    }
+
+    @Override
+    public PDP11CpuState resolve(PDP11CpuState last) {
+        short[] registers = new short[8];
+        for (int i = 0; i < 8; i++) {
+            registers[i] = getRegister(last, i);
+        }
+        return new PDP11CpuFullState(getTid(), registers, getPSW(last), step, insn);
     }
 }

@@ -34,6 +34,14 @@ public class PDP11CpuFullState extends PDP11CpuState {
         step = state.getStep();
     }
 
+    public PDP11CpuFullState(int tid, short[] registers, short psw, long step, short[] insn) {
+        super(tid);
+        System.arraycopy(registers, 0, this.registers, 0, 8);
+        this.psw = psw;
+        this.step = step;
+        this.insn = insn;
+    }
+
     @Override
     public long getStep() {
         return step;

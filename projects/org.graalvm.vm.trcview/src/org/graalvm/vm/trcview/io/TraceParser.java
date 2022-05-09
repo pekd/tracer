@@ -8,6 +8,8 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.Analysis;
+import org.graalvm.vm.trcview.arch.io.CpuDeltaState;
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.DeviceDefinitionEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.IncompleteTraceStep;
@@ -36,6 +38,8 @@ public class TraceParser {
     private final Map<Integer, ThreadContext> threadsHigh;
 
     private long cnt = 0;
+
+    private CpuState lastState = null;
 
     @SuppressWarnings("unchecked")
     private TraceParser(TraceReader in, Analysis analysis, ProgressListener progress) {
@@ -97,6 +101,18 @@ public class TraceParser {
             ret();
         }
 
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        private CpuState getState(StepEvent event) {
+            CpuState state = event.getState();
+            if (state instanceof CpuDeltaState) {
+                CpuDeltaState delta = (CpuDeltaState) state;
+                lastState = delta.resolve(lastState);
+            } else {
+                lastState = state;
+            }
+            return lastState;
+        }
+
         private void process(Event evt) {
             cnt++;
             if (cnt >= THRESHOLD && progress != null) {
@@ -106,16 +122,18 @@ public class TraceParser {
 
             if (evt instanceof StepEvent) {
                 StepEvent step = (StepEvent) evt;
+                CpuState state = getState(step);
                 if (step.getMachinecode() != null && (step.isCall() || (system && step.isSyscall()))) {
                     // call or syscall
                     BlockNode block = new BlockNode(step);
+                    block.setHeadState(state);
                     parent.add(block);
                     parent = block;
-                    analysis.process(step, block);
+                    analysis.process(step, block, state);
                 } else if (step.isReturn()) {
                     // return
                     parent.add(step);
-                    analysis.process(step, step);
+                    analysis.process(step, step, state);
 
                     if (!system || stackedTraps || !parent.isInterrupt()) {
                         // RET can only return from traps if stacked traps are enabled
@@ -124,7 +142,7 @@ public class TraceParser {
                     }
                 } else if (system && step.isReturnFromSyscall()) {
                     parent.add(step);
-                    analysis.process(step, step);
+                    analysis.process(step, step, state);
 
                     if (stackedTraps) {
                         analysis.processBlock(step, parent);
@@ -147,27 +165,29 @@ public class TraceParser {
                 } else {
                     // normal step event
                     parent.add(step);
-                    analysis.process(step, step);
+                    analysis.process(step, step, state);
                 }
                 lastStep = step;
             } else if (evt instanceof InterruptEvent) {
                 InterruptEvent trap = (InterruptEvent) evt;
                 if (lastStep != null && lastStep.getType() != InstructionType.SYSCALL) {
                     BlockNode block = new BlockNode(trap);
+                    block.setHeadState(lastState);
                     parent.add(block);
                     parent = block;
-                    analysis.process(trap, block);
-                } else if (lastStep == null) {
+                    analysis.process(trap, block, lastState);
+                } else if (lastStep != null) {
                     // like a call
                     BlockNode block = new BlockNode(lastStep);
+                    block.setHeadState(lastState);
                     parent.add(block);
                     parent = block;
-                    analysis.process(lastStep, block);
+                    analysis.process(lastStep, block, lastState);
                 }
             } else if (evt instanceof DeviceDefinitionEvent) {
-                analysis.process(evt, evt);
+                analysis.process(evt, evt, lastState);
             } else { // memory events, device register events, ...
-                analysis.process(evt, evt);
+                analysis.process(evt, evt, lastState);
             }
         }
 

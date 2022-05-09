@@ -67,6 +67,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.BrkEvent;
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.DeviceDefinitionEvent;
 import org.graalvm.vm.trcview.arch.io.DeviceEvent;
 import org.graalvm.vm.trcview.arch.io.DeviceRegisterEvent;
@@ -121,11 +122,11 @@ public class Analysis {
 
     private final int regcnt;
 
-    public Analysis(Architecture arch) {
-        this(arch, Collections.emptyList());
+    public Analysis(Architecture arch, boolean typeAnalysis) {
+        this(arch, Collections.emptyList(), typeAnalysis);
     }
 
-    public Analysis(Architecture arch, List<Analyzer> analyzers) {
+    public Analysis(Architecture arch, List<Analyzer> analyzers, boolean typeAnalysis) {
         this.analyzers = analyzers;
         this.arch = arch;
         symbols = new SymbolTable(arch.getFormat());
@@ -140,7 +141,11 @@ public class Analysis {
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
         info = arch.getTypeInfo();
-        regcnt = arch.getRegisterCount();
+        if (typeAnalysis) {
+            regcnt = arch.getRegisterCount();
+        } else {
+            regcnt = 0;
+        }
         if (regcnt != 0) {
             typeRecovery = new DynamicTypePropagation(arch, info, symbols);
         }
@@ -165,7 +170,7 @@ public class Analysis {
         }
     }
 
-    public void process(Event event, Node node) {
+    public void process(Event event, Node node, CpuState state) {
         add(node);
 
         for (Analyzer analyzer : analyzers) {
@@ -177,19 +182,19 @@ public class Analysis {
             StepEvent step = (StepEvent) event;
 
             if (lastCall != null) {
-                processCallRet(lastCall, lastRet, step);
+                processCallRet(lastCall, lastRet, state);
                 lastCall = null;
                 lastRet = null;
             }
 
             if (typeRecovery != null) {
-                typeRecovery.step(step);
+                typeRecovery.step(step, state);
             }
             if (step.isSyscall()) {
                 syscalls.add(node);
             }
             if (lastStep != null) {
-                long pc = step.getPC();
+                long pc = state.getPC();
                 Symbol sym;
                 switch (lastStep.getType()) {
                     case JMP:
@@ -378,18 +383,22 @@ public class Analysis {
         }
     }
 
-    public void processCallRet(BlockNode block, StepEvent ret, StepEvent next) {
+    public void processCallRet(BlockNode block, StepEvent ret, CpuState next) {
         if (regcnt == 0) {
             return;
         }
 
-        StepEvent call;
-        if (block.getHead() != null) {
-            call = block.getHead();
-        } else if (block.isInterrupt()) {
-            call = block.getInterrupt().getStep();
+        CpuState call;
+        if (block.getHeadState() == null) {
+            if (block.getHead() != null) {
+                call = block.getHead().getState();
+            } else if (block.isInterrupt()) {
+                call = block.getInterrupt().getStep().getState();
+            } else {
+                call = block.getFirstStep().getState();
+            }
         } else {
-            call = block.getFirstStep();
+            call = block.getHeadState();
         }
 
         if (ret.isReturn() || ret.isReturnFromSyscall()) {
@@ -397,9 +406,13 @@ public class Analysis {
 
             ComputedSymbol sym = symbols.get(block.getFirstStep().getPC());
 
+            if (sym == null) {
+                return;
+            }
+
             for (int i = 0; i < arch.getRegisterCount(); i++) {
-                long before = call.getState().getRegisterById(i);
-                long after = next.getState().getRegisterById(i);
+                long before = call.getRegisterById(i);
+                long after = next.getRegisterById(i);
                 if (before == after) {
                     sym.savedRegisters.set(i);
                 } else {

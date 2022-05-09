@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.InterruptEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.util.log.Levels;
@@ -56,6 +57,8 @@ public class BlockNode extends Node implements Block {
     private StepEvent head;
     private List<Node> children;
     private InterruptEvent interrupt;
+
+    private CpuState headState;
 
     public BlockNode(StepEvent head) {
         this(head, null);
@@ -76,6 +79,18 @@ public class BlockNode extends Node implements Block {
         } else {
             this.children = new ArrayList<>();
         }
+    }
+
+    public void setHeadState(CpuState state) {
+        headState = state;
+    }
+
+    public CpuState getHeadState() {
+        return headState;
+    }
+
+    public void clearHeadState() {
+        headState = null;
     }
 
     public void setChildren(List<Node> children) {
