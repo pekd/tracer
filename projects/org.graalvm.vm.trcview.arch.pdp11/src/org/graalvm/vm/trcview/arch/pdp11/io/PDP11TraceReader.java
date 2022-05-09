@@ -30,7 +30,7 @@ public class PDP11TraceReader extends ArchTraceReader {
     public static final int MAGIC_RX2S = 0x52583253;
     public static final int MAGIC_DLV1 = 0x444C5631;
 
-    private static final int STEP_LIMIT = 5_000;
+    private static final int STEP_LIMIT = 2_000;
 
     private final WordInputStream in;
     private int init = 0;

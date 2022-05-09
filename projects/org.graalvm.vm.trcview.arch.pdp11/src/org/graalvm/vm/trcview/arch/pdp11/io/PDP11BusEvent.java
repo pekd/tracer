@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.graalvm.vm.trcview.arch.io.DeviceEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MemoryEventI16;
+import org.graalvm.vm.trcview.arch.io.MemoryEventI8;
 import org.graalvm.vm.trcview.arch.pdp11.device.PDP11Devices;
 import org.graalvm.vm.util.io.WordInputStream;
 
@@ -14,6 +15,10 @@ public class PDP11BusEvent extends DeviceEvent {
     public static final int BUS_RDFAIL = 2;
     public static final int BUS_WRFAIL = 3;
     public static final int BUS_RESET = 4;
+    public static final int BUS_RD8 = 5;
+    public static final int BUS_WR8 = 6;
+    public static final int BUS_RD8FAIL = 7;
+    public static final int BUS_WR8FAIL = 8;
 
     private final short addr;
     private final short value;
@@ -37,6 +42,14 @@ public class PDP11BusEvent extends DeviceEvent {
                 return new MemoryEventI16(false, getTid(), Short.toUnsignedLong(addr), false);
             case BUS_WRFAIL:
                 return new MemoryEventI16(false, getTid(), Short.toUnsignedLong(addr), true);
+            case BUS_RD8:
+                return new MemoryEventI8(false, getTid(), Short.toUnsignedLong(addr), false, (byte) value);
+            case BUS_WR8:
+                return new MemoryEventI8(false, getTid(), Short.toUnsignedLong(addr), true, (byte) value);
+            case BUS_RD8FAIL:
+                return new MemoryEventI8(false, getTid(), Short.toUnsignedLong(addr), false);
+            case BUS_WR8FAIL:
+                return new MemoryEventI8(false, getTid(), Short.toUnsignedLong(addr), true);
             default:
                 return null;
         }
@@ -65,6 +78,14 @@ public class PDP11BusEvent extends DeviceEvent {
                 return String.format("write %06o = %06o", uaddr, uval);
             case BUS_WRFAIL:
                 return String.format("write %06o = %06o timed out", uaddr, uval);
+            case BUS_RD8:
+                return String.format("read %06o = %03o", uaddr, uval);
+            case BUS_RD8FAIL:
+                return String.format("read %06o timed out", uaddr);
+            case BUS_WR8:
+                return String.format("write %06o = %03o", uaddr, uval);
+            case BUS_WR8FAIL:
+                return String.format("write %06o = %03o timed out", uaddr, uval);
             case BUS_RESET:
                 return "reset";
             default:
