@@ -38,7 +38,7 @@ public class LSIRunner {
 
     protected Analysis load(InputStream in) throws IOException {
         TraceFileReader reader = new TraceFileReader(in);
-        Analysis analysis = new Analysis(reader.getArchitecture(), Collections.emptyList());
+        Analysis analysis = new Analysis(reader.getArchitecture(), Collections.emptyList(), true);
         analysis.start();
 
         Map<Integer, BlockNode> threads = TraceParser.parse(reader, analysis, null);
