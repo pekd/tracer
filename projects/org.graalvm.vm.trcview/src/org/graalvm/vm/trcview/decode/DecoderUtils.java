@@ -450,6 +450,8 @@ public class DecoderUtils {
                 }
             case STRUCT:
                 return "/* struct */";
+            case CODE:
+                return "/* code */";
         }
         throw new AssertionError("this should be unreachable");
     }

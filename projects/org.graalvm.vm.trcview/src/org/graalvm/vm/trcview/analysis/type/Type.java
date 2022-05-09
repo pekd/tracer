@@ -97,7 +97,11 @@ public class Type {
     }
 
     public long getElements() {
-        return elements;
+        if (getType() == DataType.CODE) {
+            return 1;
+        } else {
+            return elements;
+        }
     }
 
     public Type getElementType() {
@@ -131,8 +135,12 @@ public class Type {
     }
 
     public long getSize() {
-        long cnt = elements < 0 ? 1 : elements;
-        return getElementSize() * cnt;
+        if (getType() == DataType.CODE) {
+            return getElementSize();
+        } else {
+            long cnt = elements < 0 ? 1 : elements;
+            return getElementSize() * cnt;
+        }
     }
 
     public long getElementSize() {
@@ -160,6 +168,8 @@ public class Type {
                 return 8;
             case STRUCT:
                 return struct.getSize();
+            case CODE:
+                return elements;
         }
         throw new AssertionError("this should be unreachable");
     }

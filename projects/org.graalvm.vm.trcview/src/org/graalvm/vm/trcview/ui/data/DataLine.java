@@ -24,6 +24,7 @@ public abstract class DataLine extends Line {
     private List<Element> elements;
 
     protected boolean omitLabel = false;
+    protected boolean omitUnknownLabel = false;
 
     protected DataLine(long addr, Type type, long step, TraceAnalyzer trc) {
         this(addr, 0, null, -1, type, step, trc);
@@ -81,7 +82,7 @@ public abstract class DataLine extends Line {
                         lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
                     }
                 }
-            } else {
+            } else if (!omitUnknownLabel) {
                 Variable var = trc.getTypedMemory().get(addr);
                 if (var != null && var.getAddress() == addr) {
                     String name = var.getName();
@@ -91,6 +92,8 @@ public abstract class DataLine extends Line {
                         lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
                     }
                 }
+            } else {
+                lbl = StringUtils.repeat(" ", DataViewModel.NAME_WIDTH);
             }
         }
 

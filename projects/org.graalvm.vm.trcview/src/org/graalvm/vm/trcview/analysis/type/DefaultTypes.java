@@ -1,6 +1,22 @@
 package org.graalvm.vm.trcview.analysis.type;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DefaultTypes {
+    public static final Type CODE_TYPE = new Type(DataType.CODE);
+
+    private static final Map<Integer, Type> DEFAULT_CODE_TYPES = new HashMap<>();
+
+    public static Type getCodeType(int length) {
+        Type type = DEFAULT_CODE_TYPES.get(length);
+        if (type == null) {
+            type = new Type(DataType.CODE, true, length);
+            DEFAULT_CODE_TYPES.put(length, type);
+        }
+        return type;
+    }
+
     public static void populate(UserTypeDatabase db, ArchitectureTypeInfo info) {
         // ELF32
         Struct elf32_ehdr = new Struct("Elf32_Ehdr");

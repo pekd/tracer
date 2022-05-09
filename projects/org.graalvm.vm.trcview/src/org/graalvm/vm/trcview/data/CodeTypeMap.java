@@ -152,6 +152,10 @@ public class CodeTypeMap {
         getMap(addr).breakChain(getOffset(addr), registers);
     }
 
+    public void setBit(long addr, RegisterOperand op, long bit) {
+        getMap(addr).setBit(getOffset(addr), op, bit);
+    }
+
     public String getStatistics() {
         return "CodeTypeMap has " + pages.size() + " pages for " + size + " registers";
     }

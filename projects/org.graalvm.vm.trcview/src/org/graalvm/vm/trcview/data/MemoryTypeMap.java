@@ -79,4 +79,12 @@ public class MemoryTypeMap {
     public void reverseChain(long addr, ChainTarget target) {
         getMap(addr).reverseChain(getOffset(addr), target);
     }
+
+    public void setBit(MemoryOperand op, long bit) {
+        setBit(op.getAddress(), bit);
+    }
+
+    public void setBit(long addr, long bit) {
+        getMap(addr).setBit(getOffset(addr), bit);
+    }
 }

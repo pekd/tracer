@@ -106,6 +106,12 @@ public class PDP11Semantics {
         }
     }
 
+    private static void set(Semantics semantics, Operand op, VariableType type) {
+        if (op != null) {
+            semantics.set(op, type);
+        }
+    }
+
     public static void move(Semantics semantics, Operand src, Operand dst, VariableType type) {
         if (src == null) {
             semantics.set(dst, type);
@@ -125,10 +131,10 @@ public class PDP11Semantics {
 
         switch (opcd & 0177700) {
             case 0005000: /* CLR */
-                add(semantics, op1(opcd, code, semantics, false), VariableType.I16);
+                set(semantics, op1(opcd, code, semantics, false), VariableType.I16);
                 return;
             case 0105000: /* CLRB */
-                add(semantics, op1(opcd, code, semantics, true), VariableType.I8);
+                set(semantics, op1(opcd, code, semantics, true), VariableType.I8);
                 return;
             case 0005100: /* COM */
                 add(semantics, op1(opcd, code, semantics, false), VariableType.I16);
@@ -167,10 +173,12 @@ public class PDP11Semantics {
                 add(semantics, op1(opcd, code, semantics, true), VariableType.S8);
                 return;
             case 0006300: /* ASL */
-                add(semantics, op1(opcd, code, semantics, false), VariableType.S16);
+                add(semantics, op1(opcd, code, semantics, false), VariableType.I16);
+                semantics.arithmetic(op1(opcd, code, semantics, false), true);
                 return;
             case 0106300: /* ASLB */
-                add(semantics, op1(opcd, code, semantics, true), VariableType.S8);
+                add(semantics, op1(opcd, code, semantics, true), VariableType.I8);
+                semantics.arithmetic(op1(opcd, code, semantics, false), true);
                 return;
             case 0006000: /* ROR */
                 add(semantics, op1(opcd, code, semantics, false), VariableType.I16);
@@ -248,6 +256,7 @@ public class PDP11Semantics {
                     semantics.constraint(operands[0], VariableType.I16);
                     semantics.constraint(operands[1], VariableType.I16);
                     semantics.unify(operands[0], operands[1]);
+                    semantics.arithmetic(operands[1], false);
                 }
                 return;
             case 0160000: /* SUB */
@@ -256,6 +265,7 @@ public class PDP11Semantics {
                     semantics.constraint(operands[0], VariableType.I16);
                     semantics.constraint(operands[1], VariableType.I16);
                     semantics.unify(operands[0], operands[1]);
+                    semantics.arithmetic(operands[1], false);
                 }
                 return;
             case 0030000: /* BIT */
@@ -317,6 +327,7 @@ public class PDP11Semantics {
             case 0070000: /* MUL */
                 // TODO
                 add(semantics, op1(opcd, code, semantics, false), VariableType.S16);
+                semantics.arithmetic(op1(opcd, code, semantics, false), true);
                 semantics.constraint(new RegisterOperand(JSR_R.get(opcd)), VariableType.S16);
                 return;
             case 0071000: /* DIV */
@@ -327,11 +338,13 @@ public class PDP11Semantics {
             case 0072000: /* ASH */
                 // TODO
                 add(semantics, op1(opcd, code, semantics, false), VariableType.S16);
+                semantics.arithmetic(op1(opcd, code, semantics, false), true);
                 // writeRN(buf, (short) JSR_R.get(opcd));
                 return;
             case 0073000: /* ASHC */
                 // TODO
                 add(semantics, op1(opcd, code, semantics, false), VariableType.S16);
+                semantics.arithmetic(op1(opcd, code, semantics, false), true);
                 // writeRN(buf, (short) JSR_R.get(opcd));
                 return;
         }

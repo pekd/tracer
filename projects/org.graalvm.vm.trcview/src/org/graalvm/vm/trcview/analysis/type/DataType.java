@@ -18,5 +18,6 @@ public enum DataType {
     FX32,
     STRUCT,
     UNION,
-    USER
+    USER,
+    CODE
 }

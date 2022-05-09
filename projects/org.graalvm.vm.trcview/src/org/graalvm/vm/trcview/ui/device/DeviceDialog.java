@@ -27,6 +27,8 @@ import org.graalvm.vm.trcview.analysis.device.DeviceType;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.JumpListener;
 import org.graalvm.vm.trcview.ui.event.StepListenable;
+import org.graalvm.vm.trcview.ui.event.TraceListenable;
+import org.graalvm.vm.trcview.ui.event.TraceListener;
 
 @SuppressWarnings("serial")
 public class DeviceDialog extends JDialog {
@@ -34,7 +36,7 @@ public class DeviceDialog extends JDialog {
     private DefaultMutableTreeNode root;
     private DefaultTreeModel model;
 
-    public DeviceDialog(JFrame owner, TraceAnalyzer trc, JumpListener jump, StepListenable step) {
+    public DeviceDialog(JFrame owner, TraceAnalyzer trc, JumpListener jump, StepListenable step, TraceListenable trace) {
         super(owner, "Device", false);
 
         setLayout(new BorderLayout());
@@ -58,6 +60,8 @@ public class DeviceDialog extends JDialog {
         });
 
         step.addStepListener(deviceView);
+        TraceListener listener = this::setTraceAnalyzer;
+        trace.addTraceListener(listener);
 
         add(BorderLayout.CENTER, split);
 
@@ -82,6 +86,7 @@ public class DeviceDialog extends JDialog {
             @Override
             public void windowClosing(WindowEvent e) {
                 step.removeStepListener(deviceView);
+                trace.removeTraceListener(listener);
                 dispose();
             }
         });

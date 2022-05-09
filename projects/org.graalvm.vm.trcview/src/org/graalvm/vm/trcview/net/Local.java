@@ -92,6 +92,10 @@ public class Local implements TraceAnalyzer {
 
         // populate default types
         DefaultTypes.populate(types, arch.getTypeInfo());
+
+        if (typeRecovery != null) {
+            typeRecovery.transfer(this);
+        }
     }
 
     @Override

@@ -85,6 +85,16 @@ public abstract class StepEvent extends Event {
         return result;
     }
 
+    public List<MemoryEvent> getDataWrites() {
+        List<MemoryEvent> result = new ArrayList<>();
+        MemoryEvent evt = getWrite();
+        while (evt != null) {
+            result.add(evt);
+            evt = evt.getNext();
+        }
+        return result;
+    }
+
     public final void setWrite(MemoryEvent evt) {
         assert evt.isWrite();
         write = evt;
@@ -98,5 +108,23 @@ public abstract class StepEvent extends Event {
 
     public final MemoryEvent getWrite() {
         return write;
+    }
+
+    @Override
+    public int hashCode() {
+        long hash = (getStep() ^ getPC());
+        return (int) (hash ^ (hash >>> 32));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof StepEvent)) {
+            return false;
+        }
+        StepEvent s = (StepEvent) o;
+        return s.getStep() == getStep() && s.getPC() == getPC();
     }
 }

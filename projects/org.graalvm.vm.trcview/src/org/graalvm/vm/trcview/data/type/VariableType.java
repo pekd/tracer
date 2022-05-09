@@ -45,11 +45,14 @@ public class VariableType {
     public static final VariableType SP = new VariableType(35, "SP");
     public static final VariableType FLAGS = new VariableType(36, "FLAGS");
 
-    public static final VariableType CONFLICT = new VariableType(61, "CONFLICT");
-    public static final VariableType UNKNOWN = new VariableType(62, "UNKNOWN");
+    public static final VariableType CONFLICT = new VariableType(58, "CONFLICT");
+    public static final VariableType UNKNOWN = new VariableType(59, "UNKNOWN");
 
     public static final long CHAIN_BIT = 0x80000000_00000000L;
     public static final long BREAK_BIT = 0x40000000_00000000L;
+
+    public static final long ADDSUB_BIT = 0x20000000_00000000L;
+    public static final long MUL_BIT = 0x10000000_00000000L;
 
     private final long mask;
     private final String name;
@@ -90,7 +93,7 @@ public class VariableType {
     }
 
     public static VariableType resolve(long bitmask, int addrsize) {
-        long bits = bitmask & ~(CHAIN_BIT | BREAK_BIT | UNKNOWN.mask | CONFLICT.mask | PC.mask | SP.mask | PC.mask);
+        long bits = bitmask & ~(CHAIN_BIT | BREAK_BIT | ADDSUB_BIT | MUL_BIT | UNKNOWN.mask | CONFLICT.mask | PC.mask | SP.mask | PC.mask);
         long ptrbits = GENERIC_POINTER.mask | POINTER_I8.mask | POINTER_I16.mask | POINTER_I32.mask | POINTER_I64.mask | POINTER_U8.mask | POINTER_U16.mask | POINTER_U32.mask | POINTER_U64.mask |
                         POINTER_S8.mask | POINTER_S16.mask | POINTER_S32.mask | POINTER_S64.mask | POINTER_F32.mask | POINTER_F64.mask | POINTER_FX16.mask | POINTER_FX32.mask | POINTER_CODE.mask;
 

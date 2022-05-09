@@ -83,4 +83,9 @@ public class CodePageTypeMap {
     public void breakChain(int offset, BitSet registers) {
         memory[offset].breakChain(registers);
     }
+
+    // similar to constraint, but used for things unrelated to types
+    public void setBit(int offset, RegisterOperand op, long bit) {
+        memory[offset].setBit(op, bit);
+    }
 }

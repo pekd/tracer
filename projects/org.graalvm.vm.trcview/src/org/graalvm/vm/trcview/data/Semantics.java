@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolTable;
+import org.graalvm.vm.trcview.arch.io.CpuState;
+import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.data.ir.IndexedMemoryOperand;
 import org.graalvm.vm.trcview.data.ir.MemoryOperand;
@@ -21,20 +23,23 @@ public class Semantics {
     private final MemoryTypeMap memoryMap;
     private final SymbolTable symbols;
     private long pc;
-    private StepEvent step;
+    private CpuState state;
 
-    public Semantics(CodeTypeMap codeMap, MemoryTypeMap memoryMap, SymbolTable symbols) {
+    private final MemoryAccessMap memory;
+
+    public Semantics(CodeTypeMap codeMap, MemoryTypeMap memoryMap, SymbolTable symbols, MemoryAccessMap memory) {
         this.codeMap = codeMap;
         this.memoryMap = memoryMap;
         this.symbols = symbols;
+        this.memory = memory;
     }
 
     public void setPC(long pc) {
         this.pc = pc;
     }
 
-    public void setStepEvent(StepEvent step) {
-        this.step = step;
+    public void setState(CpuState state) {
+        this.state = state;
     }
 
     private Operand resolve(Operand op) {
@@ -46,10 +51,20 @@ public class Semantics {
     }
 
     private MemoryOperand resolve(IndexedMemoryOperand op) {
-        long reg = step.getState().getRegisterById(op.getRegister());
+        long reg = state.getRegisterById(op.getRegister());
         long offset = op.getOffset();
         long address = reg + offset;
         return new MemoryOperand(address);
+    }
+
+    private RegisterOperand getRegister(Operand op) {
+        if (op instanceof RegisterOperand) {
+            return (RegisterOperand) op;
+        } else if (op instanceof IndexedMemoryOperand) {
+            return new RegisterOperand(((IndexedMemoryOperand) op).getRegister());
+        } else {
+            return null;
+        }
     }
 
     private long get(Operand op) {
@@ -61,6 +76,18 @@ public class Semantics {
             return memoryMap.get(resolve((IndexedMemoryOperand) op));
         } else {
             return 0;
+        }
+    }
+
+    public void arithmetic(Operand op, boolean mul) {
+        long bits = mul ? VariableType.MUL_BIT : VariableType.ADDSUB_BIT;
+        if (op instanceof RegisterOperand) {
+            codeMap.setBit(pc, (RegisterOperand) op, bits);
+        } else if (op instanceof MemoryOperand) {
+            memoryMap.setBit((MemoryOperand) op, bits);
+        } else if (op instanceof IndexedMemoryOperand) {
+            MemoryOperand mdst = resolve((IndexedMemoryOperand) op);
+            memoryMap.setBit(mdst, bits);
         }
     }
 
@@ -289,5 +316,72 @@ public class Semantics {
         }
 
         return bits;
+    }
+
+    public long resolveData(@SuppressWarnings("hiding") long pc, RegisterOperand op) {
+        long bits = 0;
+
+        Set<ChainTarget> visited = new HashSet<>();
+        Deque<ChainTarget> todo = new LinkedList<>();
+
+        // all back links
+        todo.add(new RegisterChainTarget(get(pc), op.getRegister()));
+
+        while (!todo.isEmpty()) {
+            // fetch next target
+            ChainTarget target = todo.remove();
+
+            if (visited.contains(target)) {
+                continue;
+            }
+
+            visited.add(target);
+
+            if (target instanceof RegisterChainTarget) {
+                RegisterChainTarget tgt = (RegisterChainTarget) target;
+
+                RegisterOperand reg = new RegisterOperand(tgt.register);
+                RegisterTypeMap map = tgt.map;
+
+                // process target
+                long value = map.get(reg);
+                bits |= value;
+
+                // decide if reverse chain is used
+                if (BitTest.test(value, VariableType.CHAIN_BIT)) {
+                    for (RegisterTypeMap t : map.getExtraChain()) {
+                        todo.add(new RegisterChainTarget(t, reg.getRegister()));
+                    }
+
+                    long last = map.getChain();
+                    if (last != -1 && BitTest.test(value, VariableType.CHAIN_BIT) && !BitTest.test(value, VariableType.BREAK_BIT)) {
+                        todo.add(new RegisterChainTarget(get(last), reg.getRegister()));
+                    }
+                }
+            } else if (target instanceof MemoryChainTarget) {
+                MemoryChainTarget tgt = (MemoryChainTarget) target;
+
+                // process target
+                long value = getMemory(tgt.address);
+                bits |= value;
+
+                // follow reverse chain
+                todo.addAll(getMemoryReverseChain(tgt.address));
+            }
+        }
+
+        return bits;
+    }
+
+    public Set<StepEvent> getSteps(long addr) {
+        return memory.getSteps(addr);
+    }
+
+    public long[] getDataReads(long addr) {
+        return getSteps(addr).stream().flatMap(x -> x.getDataReads().stream()).mapToLong(MemoryEvent::getAddress).distinct().toArray();
+    }
+
+    public long[] getDataWrites(long addr) {
+        return getSteps(addr).stream().flatMap(x -> x.getDataWrites().stream()).mapToLong(MemoryEvent::getAddress).distinct().toArray();
     }
 }

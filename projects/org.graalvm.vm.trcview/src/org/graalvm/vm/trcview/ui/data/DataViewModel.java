@@ -421,6 +421,8 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                         long offset = delta * ArrayDataLine.MAX_LENGTH;
                         return new ArrayDataLine(addr, offset, type, step, trc);
                     }
+                } else if (type != null && type.getType() == DataType.CODE) {
+                    return new CodeDataLine(addr, type, step, trc);
                 } else {
                     return new ScalarDataLine(addr, type, step, trc);
                 }

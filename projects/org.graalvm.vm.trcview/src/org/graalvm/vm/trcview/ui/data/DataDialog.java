@@ -11,6 +11,8 @@ import javax.swing.JTabbedPane;
 
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.StepListenable;
+import org.graalvm.vm.trcview.ui.event.TraceListenable;
+import org.graalvm.vm.trcview.ui.event.TraceListener;
 
 @SuppressWarnings("serial")
 public class DataDialog extends JDialog {
@@ -18,7 +20,7 @@ public class DataDialog extends JDialog {
     private DatatypeView types;
     private MemorySegmentView segments;
 
-    public DataDialog(JFrame owner, TraceAnalyzer trc, StepListenable step) {
+    public DataDialog(JFrame owner, TraceAnalyzer trc, StepListenable step, TraceListenable trace) {
         super(owner, "Data", false);
 
         setLayout(new BorderLayout());
@@ -45,11 +47,15 @@ public class DataDialog extends JDialog {
         step.addStepListener(data);
         step.addStepListener(segments);
 
+        TraceListener listener = this::setTraceAnalyzer;
+        trace.addTraceListener(listener);
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 step.removeStepListener(data);
                 step.removeStepListener(segments);
+                trace.removeTraceListener(listener);
                 dispose();
             }
         });

@@ -2,14 +2,19 @@ package org.graalvm.vm.trcview.data;
 
 import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
+import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.decode.CallDecoder;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class DynamicTypePropagation {
     private final ArchitectureTypeInfo info;
     private final CallDecoder call;
     private final Semantics semantics;
+
+    private final MemoryAccessMap memory;
 
     private long last;
 
@@ -18,21 +23,26 @@ public class DynamicTypePropagation {
         this.call = arch.getCallDecoder();
         CodeTypeMap codeMap = new CodeTypeMap(arch.getRegisterCount());
         MemoryTypeMap memoryMap = new MemoryTypeMap();
-        this.semantics = new Semantics(codeMap, memoryMap, symbols);
+        memory = new MemoryAccessMap();
+        this.semantics = new Semantics(codeMap, memoryMap, symbols, memory);
         last = -1;
     }
 
-    public void step(StepEvent event) {
-        semantics.setPC(event.getPC());
-        semantics.setStepEvent(event);
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void step(StepEvent event, CpuState state) {
+        long pc = state.getPC();
+        semantics.setPC(pc);
+        semantics.setState(state);
 
         // chain registers?
         if (last != -1) {
             semantics.chain(last);
         }
-        last = event.getPC();
+        last = pc;
 
         event.getSemantics(semantics);
+
+        memory.access(pc, event);
     }
 
     public void finish() {
@@ -42,5 +52,14 @@ public class DynamicTypePropagation {
 
     public Semantics getSemantics() {
         return semantics;
+    }
+
+    public void transfer(TraceAnalyzer trc) {
+        TypedMemory mem = trc.getTypedMemory();
+
+        // update code fields
+        for (StepEvent evt : memory.getCode()) {
+            mem.setDerivedType(evt.getPC(), DefaultTypes.getCodeType(evt.getMachinecode().length));
+        }
     }
 }

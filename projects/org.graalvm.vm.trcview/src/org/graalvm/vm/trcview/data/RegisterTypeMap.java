@@ -187,4 +187,9 @@ public class RegisterTypeMap {
             }
         }
     }
+
+    // similar to constraint, but used for things unrelated to types
+    public void setBit(RegisterOperand op, long bit) {
+        registerTypes[op.getRegister()] |= bit;
+    }
 }

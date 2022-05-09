@@ -66,4 +66,8 @@ public class MemoryPageTypeMap {
         }
         reverseChain[offset].add(target);
     }
+
+    public void setBit(int offset, long bit) {
+        memory[offset] |= bit;
+    }
 }

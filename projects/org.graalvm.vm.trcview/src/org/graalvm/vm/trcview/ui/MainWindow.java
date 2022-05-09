@@ -72,6 +72,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -121,6 +122,8 @@ import org.graalvm.vm.trcview.ui.data.DataDialog;
 import org.graalvm.vm.trcview.ui.data.DatatypeDialog;
 import org.graalvm.vm.trcview.ui.data.TypeRecoveryDialog;
 import org.graalvm.vm.trcview.ui.device.DeviceDialog;
+import org.graalvm.vm.trcview.ui.event.TraceListenable;
+import org.graalvm.vm.trcview.ui.event.TraceListener;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
@@ -128,7 +131,7 @@ import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.util.ui.MessageBox;
 
 @SuppressWarnings("serial")
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements TraceListenable {
     private static final String WINDOW_TITLE = "TRCView";
     private static final String ABOUT_TEXT = "<html><body><i>TRCView - Interactive Execution Trace Analyzer</i><br/><br/>" +
                     "Supported architectures:<br/>" +
@@ -163,11 +166,14 @@ public class MainWindow extends JFrame {
     private JMenuItem gotoInsn;
     private JMenuItem gotoNext;
     private JMenuItem exportMemory;
+    private JCheckBoxMenuItem typeRecovery;
     private JMenu subviewMenu;
 
     private TraceAnalyzer trc;
 
     private UIPluginLoader pluginLoader;
+
+    private List<TraceListener> traceListeners;
 
     public MainWindow() {
         this(null);
@@ -175,6 +181,8 @@ public class MainWindow extends JFrame {
 
     public MainWindow(MainWindow master) {
         super(WINDOW_TITLE);
+
+        traceListeners = new ArrayList<>();
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
         FileDialog loadSyms = new FileDialog(this, "Load symbols...", FileDialog.LOAD);
@@ -568,7 +576,7 @@ public class MainWindow extends JFrame {
         deviceWindow.setMnemonic('D');
         deviceWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK));
         deviceWindow.addActionListener(e -> {
-            DeviceDialog dlg = new DeviceDialog(this, trc, view::jump, view);
+            DeviceDialog dlg = new DeviceDialog(this, trc, view::jump, view, this);
             dlg.setVisible(true);
         });
         JMenuItem datatypeWindow = new JMenuItem("Datatypes");
@@ -589,14 +597,14 @@ public class MainWindow extends JFrame {
         dataWindow.setMnemonic('i');
         dataWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.SHIFT_DOWN_MASK));
         dataWindow.addActionListener(e -> {
-            DataDialog dlg = new DataDialog(this, trc, view);
+            DataDialog dlg = new DataDialog(this, trc, view, this);
             dlg.setVisible(true);
         });
         JMenuItem typeRecoveryWindow = new JMenuItem("Type Recovery");
         typeRecoveryWindow.setMnemonic('r');
         typeRecoveryWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, KeyEvent.SHIFT_DOWN_MASK));
         typeRecoveryWindow.addActionListener(e -> {
-            TypeRecoveryDialog dlg = new TypeRecoveryDialog(this, trc, view);
+            TypeRecoveryDialog dlg = new TypeRecoveryDialog(this, trc, view, this);
             dlg.setVisible(true);
         });
         subviewMenu.add(datatypeWindow);
@@ -710,6 +718,11 @@ public class MainWindow extends JFrame {
         JMenu toolsMenu = new JMenu("Tools");
         toolsMenu.setMnemonic('t');
 
+        typeRecovery = new JCheckBoxMenuItem("Perform type recovery");
+        typeRecovery.setMnemonic('t');
+        typeRecovery.setSelected(true);
+        toolsMenu.add(typeRecovery);
+
         exportMemory = new JMenuItem("Export memory region");
         exportMemory.setMnemonic('e');
         exportMemory.addActionListener(e -> {
@@ -762,6 +775,24 @@ public class MainWindow extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 600);
         setLocationRelativeTo(null);
+    }
+
+    public synchronized void addTraceListener(TraceListener l) {
+        traceListeners.add(l);
+    }
+
+    public synchronized void removeTraceListener(TraceListener l) {
+        traceListeners.remove(l);
+    }
+
+    protected synchronized void setTraceAnalyzer(TraceAnalyzer trc) {
+        for (TraceListener l : traceListeners) {
+            try {
+                l.setTraceAnalyzer(trc);
+            } catch (Throwable t) {
+                log.log(Levels.ERROR, "Error setting trace", t);
+            }
+        }
     }
 
     public boolean jump(long insn) {
@@ -835,6 +866,8 @@ public class MainWindow extends JFrame {
         exportMemory.setEnabled(true);
         subviewMenu.setEnabled(true);
         pluginLoader.traceLoaded(trc);
+
+        setTraceAnalyzer(trc);
     }
 
     public void load(TraceReader reader, long size, String file) throws IOException {
@@ -849,7 +882,7 @@ public class MainWindow extends JFrame {
             if (analyzer != null) {
                 analyzers.add(analyzer);
             }
-            Analysis analysis = new Analysis(reader.getArchitecture(), analyzers);
+            Analysis analysis = new Analysis(reader.getArchitecture(), analyzers, typeRecovery.isSelected());
             analysis.start();
             Map<Integer, BlockNode> threads = TraceParser.parse(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
             BlockNode root = null;
