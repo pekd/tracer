@@ -54,6 +54,7 @@ public class DynamicTypePropagation {
         return semantics;
     }
 
+    // transfer recovered data to typed memory model
     public void transfer(TraceAnalyzer trc) {
         TypedMemory mem = trc.getTypedMemory();
 

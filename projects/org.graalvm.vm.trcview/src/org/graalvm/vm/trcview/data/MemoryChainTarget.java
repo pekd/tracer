@@ -1,10 +1,12 @@
 package org.graalvm.vm.trcview.data;
 
 public class MemoryChainTarget extends ChainTarget {
+    public final long step;
     public final long address;
 
-    public MemoryChainTarget(long address) {
+    public MemoryChainTarget(long address, long step) {
         this.address = address;
+        this.step = step;
     }
 
     @Override

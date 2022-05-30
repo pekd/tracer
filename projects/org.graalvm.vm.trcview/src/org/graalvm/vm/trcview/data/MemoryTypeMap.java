@@ -32,12 +32,28 @@ public class MemoryTypeMap {
         return map;
     }
 
+    public void step(MemoryOperand op, long step) {
+        step(op.getAddress(), step);
+    }
+
+    public void step(long addr, long step) {
+        getMap(addr).step(getOffset(addr), step);
+    }
+
+    public long getStep(long addr) {
+        return getMap(addr).getStep(getOffset(addr));
+    }
+
     public long get(MemoryOperand op) {
         return get(op.getAddress());
     }
 
     public long get(long addr) {
         return getMap(addr).get(getOffset(addr));
+    }
+
+    public long get(long addr, long step) {
+        return getMap(addr).get(getOffset(addr), step);
     }
 
     public void set(MemoryOperand addr, VariableType type) {
@@ -64,12 +80,12 @@ public class MemoryTypeMap {
         getMap(addr).constrain(getOffset(addr), bits);
     }
 
-    public Set<ChainTarget> getReverseChain(long addr) {
-        return getMap(addr).getReverseChain(getOffset(addr));
+    public Set<ChainTarget> getReverseChain(long addr, long step) {
+        return getMap(addr).getReverseChain(getOffset(addr), step);
     }
 
-    public Set<ChainTarget> getForwardChain(long addr) {
-        return getMap(addr).getForwardChain(getOffset(addr));
+    public Set<ChainTarget> getForwardChain(long addr, long step) {
+        return getMap(addr).getForwardChain(getOffset(addr), step);
     }
 
     public void forwardChain(long addr, ChainTarget target) {

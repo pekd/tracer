@@ -84,9 +84,11 @@ public class Semantics {
         if (op instanceof RegisterOperand) {
             codeMap.setBit(pc, (RegisterOperand) op, bits);
         } else if (op instanceof MemoryOperand) {
+            memoryMap.step((MemoryOperand) op, state.getStep());
             memoryMap.setBit((MemoryOperand) op, bits);
         } else if (op instanceof IndexedMemoryOperand) {
             MemoryOperand mdst = resolve((IndexedMemoryOperand) op);
+            memoryMap.step(mdst, state.getStep());
             memoryMap.setBit(mdst, bits);
         }
     }
@@ -98,9 +100,11 @@ public class Semantics {
             codeMap.breakChain(pc, rdst.getRegister());
         } else if (dst instanceof MemoryOperand) {
             MemoryOperand mdst = (MemoryOperand) dst;
+            memoryMap.step(mdst, state.getStep());
             memoryMap.set(mdst, get(src));
         } else if (dst instanceof IndexedMemoryOperand) {
             MemoryOperand mdst = resolve((IndexedMemoryOperand) dst);
+            memoryMap.step(mdst, state.getStep());
             memoryMap.set(mdst, get(src));
         }
         unify(src, dst);
@@ -126,9 +130,11 @@ public class Semantics {
             codeMap.breakChain(pc, rop.getRegister());
         } else if (op instanceof MemoryOperand) {
             MemoryOperand mop = (MemoryOperand) op;
+            memoryMap.step(mop, state.getStep());
             memoryMap.set(mop, type);
         } else if (op instanceof IndexedMemoryOperand) {
             MemoryOperand mop = resolve((IndexedMemoryOperand) op);
+            memoryMap.step(mop, state.getStep());
             memoryMap.set(mop, type);
         }
     }
@@ -180,10 +186,10 @@ public class Semantics {
             return codeMap.getChainTarget(pc, reg);
         } else if (op instanceof MemoryOperand) {
             MemoryOperand mem = (MemoryOperand) op;
-            return new MemoryChainTarget(mem.getAddress());
+            return new MemoryChainTarget(mem.getAddress(), memoryMap.getStep(mem.getAddress()));
         } else if (op instanceof IndexedMemoryOperand) {
             MemoryOperand mem = resolve((IndexedMemoryOperand) op);
-            return new MemoryChainTarget(mem.getAddress());
+            return new MemoryChainTarget(mem.getAddress(), memoryMap.getStep(mem.getAddress()));
         } else {
             throw new IllegalArgumentException("not a valid operand");
         }
@@ -217,16 +223,16 @@ public class Semantics {
         return codeMap.get(pc, op);
     }
 
-    public long getMemory(long addr) {
-        return memoryMap.get(addr);
+    public long getMemory(long addr, long step) {
+        return memoryMap.get(addr, step);
     }
 
-    public Set<ChainTarget> getMemoryReverseChain(long addr) {
-        return memoryMap.getReverseChain(addr);
+    public Set<ChainTarget> getMemoryReverseChain(long addr, long step) {
+        return memoryMap.getReverseChain(addr, step);
     }
 
-    public Set<ChainTarget> getMemoryForwardChain(long addr) {
-        return memoryMap.getForwardChain(addr);
+    public Set<ChainTarget> getMemoryForwardChain(long addr, long step) {
+        return memoryMap.getForwardChain(addr, step);
     }
 
     public void finish() {
@@ -304,14 +310,14 @@ public class Semantics {
                 MemoryChainTarget tgt = (MemoryChainTarget) target;
 
                 // process target
-                long value = getMemory(tgt.address);
+                long value = getMemory(tgt.address, tgt.step);
                 bits |= value;
 
                 // follow reverse chain
-                todo.addAll(getMemoryReverseChain(tgt.address));
+                todo.addAll(getMemoryReverseChain(tgt.address, tgt.step));
 
                 // follow forward chain
-                todo.addAll(getMemoryForwardChain(tgt.address));
+                todo.addAll(getMemoryForwardChain(tgt.address, tgt.step));
             }
         }
 
@@ -362,11 +368,11 @@ public class Semantics {
                 MemoryChainTarget tgt = (MemoryChainTarget) target;
 
                 // process target
-                long value = getMemory(tgt.address);
+                long value = getMemory(tgt.address, tgt.step);
                 bits |= value;
 
                 // follow reverse chain
-                todo.addAll(getMemoryReverseChain(tgt.address));
+                todo.addAll(getMemoryReverseChain(tgt.address, tgt.step));
             }
         }
 
