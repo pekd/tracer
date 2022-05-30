@@ -15,7 +15,9 @@ import org.graalvm.vm.trcview.decode.GenericABI;
 import org.graalvm.vm.trcview.decode.GenericCallDecoder;
 import org.graalvm.vm.trcview.decode.GenericSyscallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
+import org.graalvm.vm.trcview.expression.ast.AddNode;
 import org.graalvm.vm.trcview.expression.ast.CallNode;
+import org.graalvm.vm.trcview.expression.ast.MulNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.graalvm.vm.trcview.expression.ast.XorNode;
@@ -96,7 +98,9 @@ public class PDP11 extends Architecture {
     @Override
     public ABI createABI() {
         GenericABI abi = new GenericABI();
-        abi.getCall().setArguments(Arrays.asList(new VariableNode("r0"), new VariableNode("r1"), new VariableNode("r2"), new VariableNode("r3")));
+        // abi.getCall().setArguments(Arrays.asList(new VariableNode("r0"), new VariableNode("r1"),
+        // new VariableNode("r2"), new VariableNode("r3")));
+        abi.getCall().setStack(new CallNode("getMem", Arrays.asList(new AddNode(new VariableNode("sp"), new MulNode(new VariableNode("arg_id"), new ValueNode(2))), new VariableNode("arg_size"))));
         abi.getCall().setReturn(new VariableNode("r0"));
         // use getU16(pc) ^ 0104000 to return the ID embedded in EMT instructions without making it
         // indistinguishable from BPT/IOT/TRAP
