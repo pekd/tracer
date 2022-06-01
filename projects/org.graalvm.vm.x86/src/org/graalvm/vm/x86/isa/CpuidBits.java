@@ -117,6 +117,15 @@ public class CpuidBits {
     // FN=80000001h: ECX
     public static final int LAHF = 1;
 
+    // FN=80000006h
+    public static final int CACHE_DISABLED = 0;
+    public static final int CACHE_DIRECT_MAPPED = 1;
+    public static final int CACHE_2WAY_ASSOC = 2;
+    public static final int CACHE_4WAY_ASSOC = 4;
+    public static final int CACHE_8WAY_ASSOC = 6;
+    public static final int CACHE_16WAY_ASSOC = 8;
+    public static final int CACHE_FULLY_ASSOC = 15;
+
     public static int[] getI32(String s, int len) {
         CompilerAsserts.neverPartOfCompilation();
         int[] i32 = new int[len];
@@ -159,5 +168,13 @@ public class CpuidBits {
             cpuidExtendedFamily = family - 15;
         }
         return cpuidStepping | (cpuidModel << 4) | (cpuidFamily << 8) | (cpuidProcessorType << 12) | (cpuidExtendedModel << 16) | (cpuidExtendedFamily << 20);
+    }
+
+    public static int getCacheLineInfo(int cacheLineSize, int assoc, int cacheSize) {
+        return (cacheSize << 16) | (cacheLineSize & 0xFF) | (assoc << 12);
+    }
+
+    public static int getMemorySizes(int physicalBits, int virtualBits) {
+        return physicalBits | (virtualBits << 8);
     }
 }

@@ -41,7 +41,9 @@
 package org.graalvm.vm.x86.isa.instruction;
 
 import static org.graalvm.vm.x86.Options.getString;
+import static org.graalvm.vm.x86.isa.CpuidBits.getCacheLineInfo;
 import static org.graalvm.vm.x86.isa.CpuidBits.getI32;
+import static org.graalvm.vm.x86.isa.CpuidBits.getMemorySizes;
 import static org.graalvm.vm.x86.isa.CpuidBits.getProcessorInfo;
 
 import org.graalvm.vm.x86.ArchitecturalState;
@@ -66,6 +68,16 @@ public class Cpuid extends AMD64Instruction {
     public static final String VENDOR_ID = getString(Options.VENDOR_ID);
 
     public static final int PROCESSOR_INFO = getProcessorInfo(0, 6, 1, 1);
+
+    public static final int CACHE_LINE_INFO = getCacheLineInfo(64, CpuidBits.CACHE_8WAY_ASSOC, 256);
+
+    public static final int MEMORY_SIZES = getMemorySizes(0x28, 0x30);
+
+    // Intel(R) Core(TM) i7-8550U CPU
+    public static final int CACHE_TLB_INFO_A = 0x76036301;
+    public static final int CACHE_TLB_INFO_B = 0x00F0B5FF;
+    public static final int CACHE_TLB_INFO_C = 0x00000000;
+    public static final int CACHE_TLB_INFO_D = 0x00C30000;
 
     @CompilationFinal(dimensions = 1) public static final int[] BRAND_I32 = getI32(BRAND, 12);
     @CompilationFinal(dimensions = 1) public static final int[] VENDOR_ID_I32 = getI32(VENDOR_ID, 3);
@@ -135,6 +147,49 @@ public class Cpuid extends AMD64Instruction {
                                 // for ISA V1 compatibility
                                 CpuidBits.FPU | CpuidBits.CX8 | CpuidBits.MMX;
                 break;
+            case 2:
+                // Cache and TLB Descriptor Information
+                a = CACHE_TLB_INFO_A;
+                b = CACHE_TLB_INFO_B;
+                c = CACHE_TLB_INFO_C;
+                d = CACHE_TLB_INFO_D;
+                break;
+            case 4:
+                // Intel Thread/Core and Cache Topology
+                switch (readECX.executeI32(frame)) {
+                    case 0:
+                        a = 0x1C004121;
+                        b = 0x01C0003F;
+                        c = 0x0000003F;
+                        d = 0x00000000;
+                        break;
+                    case 1:
+                        a = 0x1C004122;
+                        b = 0x01C0003F;
+                        c = 0x0000003F;
+                        d = 0x00000000;
+                        break;
+                    case 2:
+                        a = 0x1C004143;
+                        b = 0x00C0003F;
+                        c = 0x000003FF;
+                        d = 0x00000000;
+                        break;
+                    case 3:
+                        a = 0x1C03C163;
+                        b = 0x03C0003F;
+                        c = 0x00001FFF;
+                        d = 0x00000006;
+                        break;
+                    case 4:
+                    default:
+                        a = 0x00000000;
+                        b = 0x00000000;
+                        c = 0x00000000;
+                        d = 0x00000000;
+                        break;
+                }
+                break;
             case 7:
                 // Extended Features (FIXME: assumption is ECX=0)
                 a = 0;
@@ -144,7 +199,7 @@ public class Cpuid extends AMD64Instruction {
                 break;
             case 0x80000000:
                 // Get Highest Extended Function Supported
-                a = 0x80000004;
+                a = 0x80000008;
                 b = 0;
                 c = 0;
                 d = 0;
@@ -176,6 +231,20 @@ public class Cpuid extends AMD64Instruction {
                 b = BRAND_I32[9];
                 c = BRAND_I32[10];
                 d = BRAND_I32[11];
+                break;
+            case 0x80000006:
+                // Cache Line Information
+                a = 0;
+                b = 0;
+                c = CACHE_LINE_INFO;
+                d = 0;
+                break;
+            case 0x80000008:
+                // Virtual and Physical Memory Sizes
+                a = MEMORY_SIZES;
+                b = 0;
+                c = 0;
+                d = 0;
                 break;
             default:
                 // Fallback: bits cleared = feature(s) not available
