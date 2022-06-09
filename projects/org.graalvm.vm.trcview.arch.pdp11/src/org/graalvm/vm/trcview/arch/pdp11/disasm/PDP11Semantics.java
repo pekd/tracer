@@ -57,6 +57,7 @@ public class PDP11Semantics {
         if (rn == 7 && ((mode & 6) == 2 || (mode & 6) == 6)) {
             return getPCOperand(mode, code);
         }
+        int size = is8bit ? 1 : 2;
         switch (mode) {
             case 0: // Rn
                 return new RegisterOperand(rn);
@@ -72,7 +73,11 @@ public class PDP11Semantics {
                 return null;
             case 4: // -(Rn)
                 semantics.constraint(new RegisterOperand(rn), ptrType);
-                return new IndexedMemoryOperand(rn, 0);
+                if (rn == 6 && size == 1) {
+                    return new IndexedMemoryOperand(rn, -2);
+                } else {
+                    return new IndexedMemoryOperand(rn, -size);
+                }
             case 5: // @-(Rn)
                 semantics.constraint(new RegisterOperand(rn), ptrType);
                 // TODO
