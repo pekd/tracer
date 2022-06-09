@@ -323,7 +323,10 @@ public class PDP11Semantics {
                 add(semantics, op1(opcd, code, semantics, false), VariableType.I16);
                 return;
             case 0004000: /* JSR */
+                // JSR R,tgt does MOV R,-(SP); MOV PC,R; JMP tgt
                 semantics.constraint(new RegisterOperand(JSR_R.get(opcd)), VariableType.POINTER_I16);
+                semantics.move(new IndexedMemoryOperand(6, -2), new RegisterOperand(JSR_R.get(opcd)));
+                semantics.move(new RegisterOperand(JSR_R.get(opcd)), new RegisterOperand(7));
                 // op1(opcd, code, semantics, false);
                 return;
             case 0077000: /* SOB */
