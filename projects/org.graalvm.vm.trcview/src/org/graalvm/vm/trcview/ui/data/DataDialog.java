@@ -19,6 +19,7 @@ public class DataDialog extends JDialog {
     private DataView data;
     private DatatypeView types;
     private MemorySegmentView segments;
+    private DynamicDataView dynamic;
 
     public DataDialog(JFrame owner, TraceAnalyzer trc, StepListenable step, TraceListenable trace) {
         super(owner, "Data", false);
@@ -34,6 +35,7 @@ public class DataDialog extends JDialog {
             tabs.setSelectedIndex(0);
         }));
         tabs.addTab("Types", types = new DatatypeView(trc.getTypeDatabase(), status::setText));
+        tabs.addTab("Dynamic", dynamic = new DynamicDataView(trc, status::setText));
         add(BorderLayout.CENTER, tabs);
         add(BorderLayout.SOUTH, status);
 
@@ -46,6 +48,7 @@ public class DataDialog extends JDialog {
 
         step.addStepListener(data);
         step.addStepListener(segments);
+        step.addStepListener(dynamic);
 
         TraceListener listener = this::setTraceAnalyzer;
         trace.addTraceListener(listener);
@@ -55,6 +58,7 @@ public class DataDialog extends JDialog {
             public void windowClosing(WindowEvent e) {
                 step.removeStepListener(data);
                 step.removeStepListener(segments);
+                step.removeStepListener(dynamic);
                 trace.removeTraceListener(listener);
                 dispose();
             }
@@ -65,5 +69,6 @@ public class DataDialog extends JDialog {
         data.setTraceAnalyzer(trc);
         types.setTypeDatabase(trc.getTypeDatabase());
         segments.setTraceAnalyzer(trc);
+        dynamic.setTraceAnalyzer(trc);
     }
 }

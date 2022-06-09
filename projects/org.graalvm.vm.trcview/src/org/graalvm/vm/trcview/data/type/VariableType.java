@@ -7,46 +7,46 @@ import java.util.List;
 import org.graalvm.vm.util.BitTest;
 
 public class VariableType {
-    public static final VariableType GENERIC_POINTER = new VariableType(0, "void*");
-    public static final VariableType POINTER_I8 = new VariableType(1, "I8*");
-    public static final VariableType POINTER_I16 = new VariableType(2, "I16*");
-    public static final VariableType POINTER_I32 = new VariableType(3, "I32*");
-    public static final VariableType POINTER_I64 = new VariableType(4, "I64*");
-    public static final VariableType POINTER_U8 = new VariableType(5, "U8*");
-    public static final VariableType POINTER_U16 = new VariableType(6, "U16*");
-    public static final VariableType POINTER_U32 = new VariableType(7, "U32*");
-    public static final VariableType POINTER_U64 = new VariableType(8, "U64*");
-    public static final VariableType POINTER_S8 = new VariableType(9, "S8*");
-    public static final VariableType POINTER_S16 = new VariableType(10, "S16*");
-    public static final VariableType POINTER_S32 = new VariableType(11, "S32*");
-    public static final VariableType POINTER_S64 = new VariableType(12, "S64*");
-    public static final VariableType POINTER_F32 = new VariableType(13, "F32*");
-    public static final VariableType POINTER_F64 = new VariableType(14, "F64*");
-    public static final VariableType POINTER_FX16 = new VariableType(15, "FX16*");
-    public static final VariableType POINTER_FX32 = new VariableType(16, "FX32*");
-    public static final VariableType POINTER_CODE = new VariableType(17, "CODE*");
-    public static final VariableType I8 = new VariableType(18, "I8");
-    public static final VariableType I16 = new VariableType(19, "I16");
-    public static final VariableType I32 = new VariableType(20, "I32");
-    public static final VariableType I64 = new VariableType(21, "I64");
-    public static final VariableType U8 = new VariableType(22, "U8");
-    public static final VariableType U16 = new VariableType(23, "U16");
-    public static final VariableType U32 = new VariableType(24, "U32");
-    public static final VariableType U64 = new VariableType(25, "U64");
-    public static final VariableType S8 = new VariableType(26, "S8");
-    public static final VariableType S16 = new VariableType(27, "S16");
-    public static final VariableType S32 = new VariableType(28, "S32");
-    public static final VariableType S64 = new VariableType(29, "S64");
-    public static final VariableType F32 = new VariableType(30, "F32");
-    public static final VariableType F64 = new VariableType(31, "F64");
-    public static final VariableType FX16 = new VariableType(32, "FX16");
-    public static final VariableType FX32 = new VariableType(33, "FX32");
-    public static final VariableType PC = new VariableType(34, "PC");
-    public static final VariableType SP = new VariableType(35, "SP");
-    public static final VariableType FLAGS = new VariableType(36, "FLAGS");
+    public static final VariableType GENERIC_POINTER = new VariableType(0, 0, "void*");
+    public static final VariableType POINTER_I8 = new VariableType(1, 0, "I8*");
+    public static final VariableType POINTER_I16 = new VariableType(2, 0, "I16*");
+    public static final VariableType POINTER_I32 = new VariableType(3, 0, "I32*");
+    public static final VariableType POINTER_I64 = new VariableType(4, 0, "I64*");
+    public static final VariableType POINTER_U8 = new VariableType(5, 0, "U8*");
+    public static final VariableType POINTER_U16 = new VariableType(6, 0, "U16*");
+    public static final VariableType POINTER_U32 = new VariableType(7, 0, "U32*");
+    public static final VariableType POINTER_U64 = new VariableType(8, 0, "U64*");
+    public static final VariableType POINTER_S8 = new VariableType(9, 0, "S8*");
+    public static final VariableType POINTER_S16 = new VariableType(10, 0, "S16*");
+    public static final VariableType POINTER_S32 = new VariableType(11, 0, "S32*");
+    public static final VariableType POINTER_S64 = new VariableType(12, 0, "S64*");
+    public static final VariableType POINTER_F32 = new VariableType(13, 0, "F32*");
+    public static final VariableType POINTER_F64 = new VariableType(14, 0, "F64*");
+    public static final VariableType POINTER_FX16 = new VariableType(15, 0, "FX16*");
+    public static final VariableType POINTER_FX32 = new VariableType(16, 0, "FX32*");
+    public static final VariableType POINTER_CODE = new VariableType(17, 0, "CODE*");
+    public static final VariableType I8 = new VariableType(18, 1, "I8");
+    public static final VariableType I16 = new VariableType(19, 2, "I16");
+    public static final VariableType I32 = new VariableType(20, 4, "I32");
+    public static final VariableType I64 = new VariableType(21, 8, "I64");
+    public static final VariableType U8 = new VariableType(22, 1, "U8");
+    public static final VariableType U16 = new VariableType(23, 2, "U16");
+    public static final VariableType U32 = new VariableType(24, 4, "U32");
+    public static final VariableType U64 = new VariableType(25, 8, "U64");
+    public static final VariableType S8 = new VariableType(26, 1, "S8");
+    public static final VariableType S16 = new VariableType(27, 2, "S16");
+    public static final VariableType S32 = new VariableType(28, 4, "S32");
+    public static final VariableType S64 = new VariableType(29, 8, "S64");
+    public static final VariableType F32 = new VariableType(30, 4, "F32");
+    public static final VariableType F64 = new VariableType(31, 8, "F64");
+    public static final VariableType FX16 = new VariableType(32, 2, "FX16");
+    public static final VariableType FX32 = new VariableType(33, 4, "FX32");
+    public static final VariableType PC = new VariableType(34, 0, "PC");
+    public static final VariableType SP = new VariableType(35, 0, "SP");
+    public static final VariableType FLAGS = new VariableType(36, 0, "FLAGS");
 
-    public static final VariableType CONFLICT = new VariableType(58, "CONFLICT");
-    public static final VariableType UNKNOWN = new VariableType(59, "UNKNOWN");
+    public static final VariableType CONFLICT = new VariableType(58, 1, "CONFLICT");
+    public static final VariableType UNKNOWN = new VariableType(59, 1, "UNKNOWN");
 
     public static final long CHAIN_BIT = 0x80000000_00000000L;
     public static final long BREAK_BIT = 0x40000000_00000000L;
@@ -54,7 +54,10 @@ public class VariableType {
     public static final long ADDSUB_BIT = 0x20000000_00000000L;
     public static final long MUL_BIT = 0x10000000_00000000L;
 
+    public static final long BIT_MASK = ~0xF0000000_00000000L;
+
     private final long mask;
+    private final int size;
     private final String name;
 
     private static final List<VariableType> TYPES = Collections.unmodifiableList(
@@ -62,13 +65,22 @@ public class VariableType {
                                     POINTER_S32, POINTER_S64, POINTER_F32, POINTER_F64, POINTER_FX16, POINTER_FX32, POINTER_CODE, I8, I16, I32, I64, U8, U16, U32, U64, S8, S16, S32, S64, F32, F64,
                                     FX16, FX32, PC, SP, FLAGS));
 
-    public VariableType(int bit, String name) {
+    public VariableType(int bit, int size, String name) {
         mask = 1L << bit;
+        this.size = size;
         this.name = name;
     }
 
     public long getMask() {
         return mask;
+    }
+
+    public int getSize(int ptrSize) {
+        if (size == 0) {
+            return ptrSize;
+        } else {
+            return size;
+        }
     }
 
     public long combine(long bits) {

@@ -304,8 +304,8 @@ public class Semantics {
                 }
 
                 // add all precise chain elements
-                todo.addAll(map.getReverseChain(op));
-                todo.addAll(map.getForwardChain(op));
+                todo.addAll(map.getReverseChain(reg)); // op or reg?
+                todo.addAll(map.getForwardChain(reg));
             } else if (target instanceof MemoryChainTarget) {
                 MemoryChainTarget tgt = (MemoryChainTarget) target;
 
@@ -373,6 +373,83 @@ public class Semantics {
 
                 // follow reverse chain
                 todo.addAll(getMemoryReverseChain(tgt.address, tgt.step));
+            }
+        }
+
+        return bits;
+    }
+
+    public long resolveMemory(long addr, long step) {
+        return resolveMemory(addr, step, null);
+    }
+
+    public long resolveMemory(long addr, long step, Collection<ChainTarget> result) {
+        long bits = 0;
+
+        Set<ChainTarget> visited = new HashSet<>();
+        Deque<ChainTarget> todo = new LinkedList<>();
+
+        // all back links
+        todo.add(new MemoryChainTarget(addr, step));
+
+        while (!todo.isEmpty()) {
+            // fetch next target
+            ChainTarget target = todo.remove();
+
+            if (visited.contains(target)) {
+                continue;
+            }
+
+            visited.add(target);
+
+            if (result != null) {
+                result.add(target);
+            }
+
+            if (target instanceof RegisterChainTarget) {
+                RegisterChainTarget tgt = (RegisterChainTarget) target;
+
+                RegisterOperand reg = new RegisterOperand(tgt.register);
+                RegisterTypeMap map = tgt.map;
+
+                // process target
+                long value = map.get(reg);
+                bits |= value;
+
+                // decide if reverse chain is used
+                if (BitTest.test(value, VariableType.CHAIN_BIT)) {
+                    for (RegisterTypeMap t : map.getExtraChain()) {
+                        todo.add(new RegisterChainTarget(t, reg.getRegister()));
+                    }
+
+                    long last = map.getChain();
+                    if (last != -1 && BitTest.test(value, VariableType.CHAIN_BIT) && !BitTest.test(value, VariableType.BREAK_BIT)) {
+                        todo.add(new RegisterChainTarget(get(last), reg.getRegister()));
+                    }
+                }
+
+                // decide if forward chain is used
+                for (RegisterTypeMap r : map.getForwardChain()) {
+                    if (BitTest.test(r.get(reg), VariableType.CHAIN_BIT) && !BitTest.test(r.get(reg), VariableType.BREAK_BIT)) {
+                        todo.add(new RegisterChainTarget(r, reg.getRegister()));
+                    }
+                }
+
+                // add all precise chain elements
+                todo.addAll(map.getReverseChain(reg));
+                todo.addAll(map.getForwardChain(reg));
+            } else if (target instanceof MemoryChainTarget) {
+                MemoryChainTarget tgt = (MemoryChainTarget) target;
+
+                // process target
+                long value = getMemory(tgt.address, tgt.step);
+                bits |= value;
+
+                // follow reverse chain
+                todo.addAll(getMemoryReverseChain(tgt.address, tgt.step));
+
+                // follow forward chain
+                todo.addAll(getMemoryForwardChain(tgt.address, tgt.step));
             }
         }
 
