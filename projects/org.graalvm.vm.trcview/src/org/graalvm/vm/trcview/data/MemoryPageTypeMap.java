@@ -48,8 +48,12 @@ public class MemoryPageTypeMap {
         if (idx >= 0) {
             return memory[offset].get(idx);
         } else {
-            int off = ~idx;
-            return memory[offset].get(off);
+            int off = ~idx - 1;
+            if (off >= memory[offset].size() || off < 0) {
+                return new TypedMemoryCell();
+            } else {
+                return memory[offset].get(off);
+            }
         }
     }
 
