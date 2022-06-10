@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.data;
 
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.util.HexFormatter;
 
 public class Variable {
@@ -30,8 +31,24 @@ public class Variable {
         if (name == null) {
             if (type != null && type.isStringData()) {
                 return "asc_" + HexFormatter.tohex(address);
+            } else if (type != null) {
+                return "data_" + HexFormatter.tohex(address);
             } else {
                 return "unk_" + HexFormatter.tohex(address);
+            }
+        } else {
+            return name;
+        }
+    }
+
+    public String getName(StepFormat format) {
+        if (name == null) {
+            if (type != null && type.isStringData()) {
+                return "asc_" + format.formatShortAddress(address);
+            } else if (type != null) {
+                return "data_" + format.formatShortAddress(address);
+            } else {
+                return "unk_" + format.formatShortAddress(address);
             }
         } else {
             return name;
@@ -55,7 +72,7 @@ public class Variable {
         }
 
         // cannot set name to unk_ or asc_ since these are reserved prefixes
-        if (name.startsWith("unk_") || name.startsWith("asc_")) {
+        if (name.startsWith("unk_") || name.startsWith("data_") || name.startsWith("asc_")) {
             return;
         }
 

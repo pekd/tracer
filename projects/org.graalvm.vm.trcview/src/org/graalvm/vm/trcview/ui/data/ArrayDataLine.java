@@ -54,7 +54,7 @@ public class ArrayDataLine extends DataLine {
                 } else {
                     Variable var = trc.getTypedMemory().get(address);
                     if (var != null && var.getAddress() == address) {
-                        return new AddressElement(var.getName(), Element.TYPE_IDENTIFIER, address);
+                        return new AddressElement(var.getName(trc.getArchitecture().getFormat()), Element.TYPE_IDENTIFIER, address);
                     }
                 }
             }

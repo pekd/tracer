@@ -85,7 +85,7 @@ public abstract class DataLine extends Line {
             } else if (!omitUnknownLabel) {
                 Variable var = trc.getTypedMemory().get(addr);
                 if (var != null && var.getAddress() == addr) {
-                    String name = var.getName();
+                    String name = var.getName(trc.getArchitecture().getFormat());
                     if (label != null) {
                         lbl = StringUtils.pad(name + array + "." + label, DataViewModel.NAME_WIDTH);
                     } else {

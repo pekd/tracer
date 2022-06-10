@@ -123,7 +123,7 @@ public class ScalarDataLine extends DataLine {
                 } else {
                     Variable var = trc.getTypedMemory().get(address);
                     if (var != null && var.getAddress() == address) {
-                        data = new AddressElement(var.getName(), Element.TYPE_IDENTIFIER, address);
+                        data = new AddressElement(var.getName(trc.getArchitecture().getFormat()), Element.TYPE_IDENTIFIER, address);
                     } else {
                         data = encode(val, true);
                     }

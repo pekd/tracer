@@ -162,7 +162,7 @@ public class DataView extends JPanel implements StepListener {
                 if (var != null) {
                     Type type = var.getType();
                     Type next = getNextType(type);
-                    mem.set(addr, next, var.getName());
+                    mem.set(addr, next, var.getName(trc.getArchitecture().getFormat()));
                 } else {
                     mem.set(addr, getNextType(null));
                 }
@@ -183,7 +183,7 @@ public class DataView extends JPanel implements StepListener {
                 if (var != null) {
                     Type type = var.getType();
                     Type next = togglePointer(type);
-                    mem.set(addr, next, var.getName());
+                    mem.set(addr, next, var.getName(trc.getArchitecture().getFormat()));
                 } else {
                     mem.set(addr, new Type(new Type(DataType.VOID), trc.getArchitecture().getTypeInfo()));
                 }
