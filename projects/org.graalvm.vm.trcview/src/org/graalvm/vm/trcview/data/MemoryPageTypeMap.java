@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -105,5 +106,22 @@ public class MemoryPageTypeMap {
 
     public void setBit(int offset, long bit) {
         last(offset).setBit(bit);
+    }
+
+    public int[] getUsedOffsets() {
+        int n = 0;
+        int[] used = new int[memory.length];
+
+        for (int i = 0; i < memory.length; i++) {
+            if (memory[i] != null && !memory[i].isEmpty()) {
+                used[n++] = i;
+            }
+        }
+
+        if (n == 0) {
+            return new int[0];
+        } else {
+            return Arrays.copyOf(used, n);
+        }
     }
 }

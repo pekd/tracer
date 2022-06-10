@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
+import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.util.BitTest;
 
 public class VariableType {
@@ -56,6 +59,7 @@ public class VariableType {
 
     public static final long BIT_MASK = ~0xF0000000_00000000L;
 
+    private final int bit;
     private final long mask;
     private final int size;
     private final String name;
@@ -66,6 +70,7 @@ public class VariableType {
                                     FX16, FX32, PC, SP, FLAGS));
 
     public VariableType(int bit, int size, String name) {
+        this.bit = bit;
         mask = 1L << bit;
         this.size = size;
         this.name = name;
@@ -93,6 +98,25 @@ public class VariableType {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof VariableType)) {
+            return false;
+        }
+
+        VariableType t = (VariableType) o;
+
+        return t.mask == mask;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (mask ^ (mask >> 32));
     }
 
     @Override
@@ -284,5 +308,62 @@ public class VariableType {
         }
 
         return UNKNOWN;
+    }
+
+    public Type toType(ArchitectureTypeInfo info) {
+        if (bit == GENERIC_POINTER.bit) {
+            return new Type(new Type(DataType.VOID), info);
+        } else if (bit == POINTER_I8.bit || bit == POINTER_U8.bit) {
+            return new Type(new Type(DataType.U8), info);
+        } else if (bit == POINTER_S8.bit) {
+            return new Type(new Type(DataType.S8), info);
+        } else if (bit == POINTER_I16.bit || bit == POINTER_U16.bit) {
+            return new Type(new Type(DataType.U16), info);
+        } else if (bit == POINTER_S16.bit) {
+            return new Type(new Type(DataType.S16), info);
+        } else if (bit == POINTER_I32.bit || bit == POINTER_U32.bit) {
+            return new Type(new Type(DataType.U32), info);
+        } else if (bit == POINTER_S32.bit) {
+            return new Type(new Type(DataType.S32), info);
+        } else if (bit == POINTER_I64.bit || bit == POINTER_U64.bit) {
+            return new Type(new Type(DataType.U64), info);
+        } else if (bit == POINTER_S64.bit) {
+            return new Type(new Type(DataType.S64), info);
+        } else if (bit == POINTER_F32.bit) {
+            return new Type(new Type(DataType.F32), info);
+        } else if (bit == POINTER_F64.bit) {
+            return new Type(new Type(DataType.F64), info);
+        } else if (bit == POINTER_FX16.bit) {
+            return new Type(new Type(DataType.FX16), info);
+        } else if (bit == POINTER_FX32.bit) {
+            return new Type(new Type(DataType.FX32), info);
+        } else if (bit == POINTER_CODE.bit) {
+            return new Type(new Type(DataType.CODE), info);
+        } else if (bit == I8.bit || bit == U8.bit) {
+            return new Type(DataType.U8);
+        } else if (bit == S8.bit) {
+            return new Type(DataType.S8);
+        } else if (bit == I16.bit || bit == U16.bit) {
+            return new Type(DataType.U16);
+        } else if (bit == S16.bit) {
+            return new Type(DataType.S16);
+        } else if (bit == I32.bit || bit == U32.bit) {
+            return new Type(DataType.U32);
+        } else if (bit == S32.bit) {
+            return new Type(DataType.S32);
+        } else if (bit == I64.bit || bit == U64.bit) {
+            return new Type(DataType.U64);
+        } else if (bit == S64.bit) {
+            return new Type(DataType.S64);
+        } else if (bit == F32.bit) {
+            return new Type(DataType.F32);
+        } else if (bit == F64.bit) {
+            return new Type(DataType.F64);
+        } else if (bit == FX16.bit) {
+            return new Type(DataType.FX16);
+        } else if (bit == FX32.bit) {
+            return new Type(DataType.FX32);
+        }
+        return null;
     }
 }

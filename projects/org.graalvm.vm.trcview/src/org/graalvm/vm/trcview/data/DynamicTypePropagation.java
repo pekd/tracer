@@ -3,9 +3,11 @@ package org.graalvm.vm.trcview.data;
 import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
+import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
@@ -17,6 +19,7 @@ public class DynamicTypePropagation {
     private final MemoryAccessMap memory;
 
     private long last;
+    private long laststep;
 
     public DynamicTypePropagation(Architecture arch, ArchitectureTypeInfo info, SymbolTable symbols) {
         this.info = info;
@@ -33,6 +36,8 @@ public class DynamicTypePropagation {
         long pc = state.getPC();
         semantics.setPC(pc);
         semantics.setState(state);
+
+        laststep = event.getStep();
 
         // chain registers?
         if (last != -1) {
@@ -61,6 +66,18 @@ public class DynamicTypePropagation {
         // update code fields
         for (StepEvent evt : memory.getCode()) {
             mem.setDerivedType(evt.getPC(), DefaultTypes.getCodeType(evt.getMachinecode().length));
+        }
+
+        // transfer final data types in memory
+        for (long addr : semantics.getUsedAddresses()) {
+            long bits = semantics.getMemory(addr, laststep);
+            VariableType vartype = VariableType.resolve(bits, info.getPointerSize());
+            if (vartype != null && !VariableType.UNKNOWN.equals(vartype) && !VariableType.CONFLICT.equals(vartype)) {
+                Type type = vartype.toType(info);
+                if (type != null) {
+                    mem.setDerivedType(addr, type);
+                }
+            }
         }
     }
 }

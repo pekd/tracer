@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.data;
 
+import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
@@ -102,5 +104,17 @@ public class MemoryTypeMap {
 
     public void setBit(long addr, long bit) {
         getMap(addr).setBit(getOffset(addr), bit);
+    }
+
+    public Set<Long> getUsedAddresses() {
+        Set<Long> result = new HashSet<>();
+        for (Entry<Long, MemoryPageTypeMap> entry : pages.entrySet()) {
+            int[] offsets = entry.getValue().getUsedOffsets();
+            long base = entry.getKey();
+            for (int offset : offsets) {
+                result.add(base + offset);
+            }
+        }
+        return result;
     }
 }

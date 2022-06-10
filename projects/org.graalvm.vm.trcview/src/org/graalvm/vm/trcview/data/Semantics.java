@@ -402,4 +402,8 @@ public class Semantics {
     public long[] getDataWrites(long addr) {
         return getSteps(addr).stream().flatMap(x -> x.getDataWrites().stream()).mapToLong(MemoryEvent::getAddress).distinct().toArray();
     }
+
+    public Set<Long> getUsedAddresses() {
+        return memoryMap.getUsedAddresses();
+    }
 }
