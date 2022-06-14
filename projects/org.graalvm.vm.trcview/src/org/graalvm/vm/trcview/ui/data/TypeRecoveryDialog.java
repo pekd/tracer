@@ -161,7 +161,7 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
         buf.append("\n=> W: ");
         buf.append(LongStream.of(semantics.getDataWrites(pc)).sorted().mapToObj(HexFormatter::tohex).collect(Collectors.joining(" ")));
         buf.append("\n\nARRAY: ");
-        buf.append(ArrayStructRecovery.recoverArray(semantics, pc));
+        buf.append(ArrayStructRecovery.recoverArray(semantics, pc, true));
 
         // debugging feature: show data per position
         buf.append("\n\nDEBUG:\n");

@@ -7,6 +7,7 @@ import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -63,19 +64,56 @@ public class DynamicTypePropagation {
     public void transfer(TraceAnalyzer trc) {
         TypedMemory mem = trc.getTypedMemory();
 
-        // update code fields
-        for (StepEvent evt : memory.getCode()) {
-            mem.setDerivedType(evt.getPC(), DefaultTypes.getCodeType(evt.getMachinecode().length));
-        }
-
         // transfer final data types in memory
         for (long addr : semantics.getUsedAddresses()) {
-            long bits = semantics.getMemory(addr, laststep);
+            long bits = semantics.resolveMemory(addr, laststep);
             VariableType vartype = VariableType.resolve(bits, info.getPointerSize());
             if (vartype != null && !VariableType.UNKNOWN.equals(vartype) && !VariableType.CONFLICT.equals(vartype)) {
                 Type type = vartype.toType(info);
                 if (type != null) {
-                    mem.setDerivedType(addr, type);
+                    mem.setRecoveredType(addr, type);
+                }
+            }
+        }
+
+        // update code fields
+        loop: for (StepEvent evt : memory.getCode()) {
+            long pc = evt.getPC();
+
+            mem.setRecoveredType(pc, DefaultTypes.getCodeType(evt.getMachinecode().length));
+
+            ArrayInfo array = ArrayStructRecovery.recoverArray(semantics, pc, true);
+            if (array != null) {
+                long[] addresses = array.getAddresses();
+                if (addresses.length == 0) {
+                    continue;
+                }
+
+                Type lasttype = null;
+                for (long addr : addresses) {
+                    Variable var = mem.getRecoveredType(addr);
+                    if (var != null && var.getAddress() == addr) {
+                        if (lasttype != null && !lasttype.equals(var.getType())) {
+                            System.out.println("array inconsistency at " + trc.getArchitecture().getFormat().formatShortAddress(addr));
+                            continue loop;
+                        }
+                    }
+                }
+
+                int lastidx = 0;
+                for (int i = 0; i < addresses.length - 1; i++) {
+                    if (addresses[i + 1] - addresses[i] != array.getElementSize()) {
+                        // split here
+                        if (lastidx != -1) {
+                            StepFormat fmt = trc.getArchitecture().getFormat();
+                            System.out.println("array: " + fmt.formatShortAddress(addresses[lastidx]) + "-" + fmt.formatShortAddress(addresses[i]));
+                        }
+                        lastidx = i;
+                    }
+                }
+                if (lastidx != -1 && lastidx != addresses.length - 1) {
+                    StepFormat fmt = trc.getArchitecture().getFormat();
+                    System.out.println("array: " + fmt.formatShortAddress(addresses[lastidx]) + "-" + fmt.formatShortAddress(addresses[addresses.length - 1]));
                 }
             }
         }

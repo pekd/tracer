@@ -17,11 +17,13 @@ public class TypedMemory {
     private static final long MAX_STRING_LENGTH = 32768; // 32k
 
     private NavigableMap<Long, Variable> types;
+    private NavigableMap<Long, Variable> recoveredTypes;
     private NavigableMap<Long, Variable> derivedTypes;
 
     public TypedMemory() {
         types = new TreeMap<>();
         derivedTypes = new TreeMap<>();
+        recoveredTypes = new TreeMap<>();
     }
 
     public Variable get(long addr) {
@@ -29,7 +31,12 @@ public class TypedMemory {
         if (var != null) {
             return var;
         } else {
-            return get(addr, derivedTypes);
+            var = get(addr, recoveredTypes);
+            if (var != null) {
+                return var;
+            } else {
+                return get(addr, derivedTypes);
+            }
         }
     }
 
@@ -44,6 +51,10 @@ public class TypedMemory {
         } else {
             return null;
         }
+    }
+
+    public Variable getRecoveredType(long addr) {
+        return get(addr, recoveredTypes);
     }
 
     public Variable getNext(long addr) {
@@ -76,8 +87,24 @@ public class TypedMemory {
         }
     }
 
+    public Variable setRecoveredType(long addr, Type var) {
+        if (var == null) {
+            recoveredTypes.remove(addr);
+            return null;
+        } else {
+            Variable v = new Variable(addr, var);
+            clean(addr, var.getSize(), recoveredTypes);
+            recoveredTypes.put(addr, v);
+            return v;
+        }
+    }
+
     public void clearDerivedTypes() {
         derivedTypes.clear();
+    }
+
+    public void clearRecoveredTypes() {
+        recoveredTypes.clear();
     }
 
     public void set(long addr, Type var, String name) {
@@ -124,8 +151,13 @@ public class TypedMemory {
         return new ArrayList<>(derivedTypes.values());
     }
 
+    public List<Variable> getRecoveredTypes() {
+        return new ArrayList<>(recoveredTypes.values());
+    }
+
     public List<Variable> getAllTypes() {
         List<Variable> result = new ArrayList<>(types.values());
+        result.addAll(recoveredTypes.values());
         result.addAll(derivedTypes.values());
         return result;
     }
@@ -133,22 +165,11 @@ public class TypedMemory {
     public List<Variable> getTypes(long addrStart, long addrEnd) {
         List<Variable> result = new ArrayList<>();
 
-        // known types
-        long addr = addrStart;
-        while (addr <= addrEnd) {
-            Entry<Long, Variable> next = types.ceilingEntry(addr);
-            if (next == null) {
-                break;
-            }
-            long size = next.getValue().getSize();
-            assert size > 0;
-            assert addr <= next.getKey();
-            addr = next.getKey() + size;
-            result.add(next.getValue());
-        }
+        // TODO: deal with overlapping entries in different layers
+        NavigableMap<Long, Variable> vars = new TreeMap<>();
 
         // derived types
-        addr = addrStart;
+        long addr = addrStart;
         while (addr <= addrEnd) {
             Entry<Long, Variable> next = derivedTypes.ceilingEntry(addr);
             if (next == null) {
@@ -158,8 +179,42 @@ public class TypedMemory {
             assert size > 0;
             assert addr <= next.getKey();
             addr = next.getKey() + size;
-            result.add(next.getValue());
+            clean(next.getKey(), size, vars);
+            vars.put(next.getKey(), next.getValue());
         }
+
+        // recovered types
+        addr = addrStart;
+        while (addr <= addrEnd) {
+            Entry<Long, Variable> next = recoveredTypes.ceilingEntry(addr);
+            if (next == null) {
+                break;
+            }
+            long size = next.getValue().getSize();
+            assert size > 0;
+            assert addr <= next.getKey();
+            addr = next.getKey() + size;
+            clean(next.getKey(), size, vars);
+            vars.put(next.getKey(), next.getValue());
+        }
+
+        // known types
+        addr = addrStart;
+        while (addr <= addrEnd) {
+            Entry<Long, Variable> next = types.ceilingEntry(addr);
+            if (next == null) {
+                break;
+            }
+            long size = next.getValue().getSize();
+            assert size > 0;
+            assert addr <= next.getKey();
+            addr = next.getKey() + size;
+            clean(next.getKey(), size, vars);
+            vars.put(next.getKey(), next.getValue());
+        }
+
+        // collect types
+        result.addAll(vars.values());
 
         // sort result
         Collections.sort(result, (a, b) -> Long.compareUnsigned(a.getAddress(), b.getAddress()));
