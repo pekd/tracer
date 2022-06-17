@@ -2,12 +2,12 @@ package org.graalvm.vm.trcview.data;
 
 import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
+import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
-import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -97,7 +97,33 @@ public class DynamicTypePropagation {
                             System.out.println("array inconsistency at " + trc.getArchitecture().getFormat().formatShortAddress(addr));
                             continue loop;
                         }
+                        lasttype = var.getType();
                     }
+                }
+
+                if (lasttype == null) {
+                    switch (array.getElementSize()) {
+                        case 1:
+                            lasttype = new Type(DataType.S8);
+                            break;
+                        case 2:
+                            lasttype = new Type(DataType.S16);
+                            break;
+                        case 4:
+                            lasttype = new Type(DataType.S32);
+                            break;
+                        case 8:
+                            lasttype = new Type(DataType.S64);
+                            break;
+                    }
+                }
+
+                if (lasttype == null) {
+                    continue loop;
+                }
+
+                if (lasttype.getSize() != array.getElementSize()) {
+                    continue loop;
                 }
 
                 int lastidx = 0;
@@ -105,17 +131,22 @@ public class DynamicTypePropagation {
                     if (addresses[i + 1] - addresses[i] != array.getElementSize()) {
                         // split here
                         if (lastidx != -1) {
-                            StepFormat fmt = trc.getArchitecture().getFormat();
-                            System.out.println("array: " + fmt.formatShortAddress(addresses[lastidx]) + "-" + fmt.formatShortAddress(addresses[i]));
+                            defineArray(mem, lasttype, addresses[lastidx], addresses[i]);
                         }
-                        lastidx = i;
+                        lastidx = i + 1;
                     }
                 }
                 if (lastidx != -1 && lastidx != addresses.length - 1) {
-                    StepFormat fmt = trc.getArchitecture().getFormat();
-                    System.out.println("array: " + fmt.formatShortAddress(addresses[lastidx]) + "-" + fmt.formatShortAddress(addresses[addresses.length - 1]));
+                    defineArray(mem, lasttype, addresses[lastidx], addresses[addresses.length - 1]);
                 }
             }
         }
+    }
+
+    private static void defineArray(TypedMemory mem, Type type, long first, long last) {
+        System.out.printf("defining array at %x-%x\n", first, last);
+        int elements = (int) ((last - first) / type.getSize()) + 1;
+        Type t = new Type(type.getType(), false, elements, type.getRepresentation());
+        mem.setRecoveredType(first, t);
     }
 }

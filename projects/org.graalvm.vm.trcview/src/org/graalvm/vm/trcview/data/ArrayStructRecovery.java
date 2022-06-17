@@ -61,29 +61,27 @@ public class ArrayStructRecovery {
                     if (getAddresses) {
                         int n = 0;
                         long d = hist.getValue(i);
-                        long[] addresses = new long[deltas.length + 2];
-                        for (int j = 0; j < readDeltaCnt; j++) {
-                            long delta = reads[j + 1] - reads[j];
+
+                        // combine reads and writes into single sorted array
+                        long[] all = new long[reads.length + writes.length];
+                        System.arraycopy(reads, 0, all, 0, reads.length);
+                        System.arraycopy(writes, 0, all, reads.length, writes.length);
+                        Arrays.sort(all);
+
+                        // find array accesses
+                        long[] addresses = new long[reads.length + writes.length];
+                        for (int j = 0; j < all.length - 1; j++) {
+                            long delta = all[j + 1] - all[j];
                             if (delta == d || delta == 2 * d) {
-                                if (n > 0 && addresses[n - 1] != reads[j]) {
-                                    addresses[n++] = reads[j];
+                                if (n > 0 && addresses[n - 1] != all[j]) {
+                                    addresses[n++] = all[j];
                                 } else if (n == 0) {
-                                    addresses[n++] = reads[j];
+                                    addresses[n++] = all[j];
                                 }
-                                addresses[n++] = reads[j + 1];
+                                addresses[n++] = all[j + 1];
                             }
                         }
-                        for (int j = 0; j < writeDeltaCnt; j++) {
-                            long delta = writes[j + 1] - writes[j];
-                            if (delta == d || delta == 2 * d) {
-                                if (n > 0 && addresses[n - 1] != writes[j]) {
-                                    addresses[n++] = writes[j];
-                                } else if (n == 0) {
-                                    addresses[n++] = writes[j];
-                                }
-                                addresses[n++] = writes[j + 1];
-                            }
-                        }
+
                         addresses = Arrays.copyOf(addresses, n);
                         Arrays.sort(addresses);
                         return new ArrayInfo((int) d, addresses);
