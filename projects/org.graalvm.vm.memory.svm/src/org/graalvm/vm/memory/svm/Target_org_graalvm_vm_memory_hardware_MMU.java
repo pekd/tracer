@@ -42,6 +42,7 @@ package org.graalvm.vm.memory.svm;
 
 import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.Platforms;
+import org.graalvm.vm.memory.svm.headers.Mman;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.word.PointerBase;
 import org.graalvm.word.WordFactory;
@@ -49,7 +50,6 @@ import org.graalvm.word.WordFactory;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import com.oracle.svm.core.headers.Errno;
-import com.oracle.svm.core.posix.headers.Mman;
 
 @Platforms(Platform.LINUX.class)
 @TargetClass(org.graalvm.vm.memory.hardware.MMU.class)
