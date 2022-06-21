@@ -47,8 +47,6 @@ import org.graalvm.vm.posix.api.Errno;
 import org.graalvm.vm.util.StringUtils;
 import org.graalvm.vm.util.exception.ExceptionId;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-
 public class Messages {
     private static final Map<Integer, ExceptionId> posixErrors;
 
@@ -69,7 +67,6 @@ public class Messages {
         return exc;
     }
 
-    @TruffleBoundary
     public static ExceptionId errno(int errno) {
         ExceptionId err = posixErrors.get(errno);
         if (err == null) {

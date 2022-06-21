@@ -40,10 +40,7 @@
  */
 package org.graalvm.vm.util;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-
 public class OctFormatter {
-    @TruffleBoundary
     public static String tooct(long val, int len) {
         String oct = Long.toOctalString(val);
         if (oct.length() >= len) {
@@ -56,7 +53,6 @@ public class OctFormatter {
         return buf.append(oct).toString();
     }
 
-    @TruffleBoundary
     public static String tooct(long val) {
         return Long.toOctalString(val);
     }
