@@ -41,6 +41,7 @@
 package org.graalvm.vm.x86.isa.instruction;
 
 import org.graalvm.vm.math.LongDivision;
+import org.graalvm.vm.math.LongDivision.Result;
 import org.graalvm.vm.x86.ArchitecturalState;
 import org.graalvm.vm.x86.isa.AMD64Instruction;
 import org.graalvm.vm.x86.isa.Operand;
@@ -51,6 +52,7 @@ import org.graalvm.vm.x86.node.ReadNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public abstract class Idiv extends AMD64Instruction {
@@ -198,6 +200,11 @@ public abstract class Idiv extends AMD64Instruction {
             createChildNodes(Register.RAX, Register.RDX);
         }
 
+        @TruffleBoundary
+        private static Result divs128by64(long a1, long a0, long b) {
+            return LongDivision.divs128by64(a1, a0, b);
+        }
+
         @Override
         public long executeInstruction(VirtualFrame frame) {
             long divisor = readOperand.executeI64(frame);
@@ -207,7 +214,7 @@ public abstract class Idiv extends AMD64Instruction {
             }
             long dividendLow = readA.executeI64(frame);
             long dividendHigh = readD.executeI64(frame);
-            LongDivision.Result result = LongDivision.divs128by64(dividendHigh, dividendLow, divisor);
+            LongDivision.Result result = divs128by64(dividendHigh, dividendLow, divisor);
             if (result.isInvalid()) {
                 CompilerDirectives.transferToInterpreter();
                 throw new ArithmeticException(DIV_RANGE);

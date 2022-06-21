@@ -52,6 +52,7 @@ import org.graalvm.vm.x86.node.ReadNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public abstract class Div extends AMD64Instruction {
@@ -219,6 +220,11 @@ public abstract class Div extends AMD64Instruction {
             writeRDX = state.getRegisters().getRegister(Register.RDX).createWrite();
         }
 
+        @TruffleBoundary
+        private static Result divu128by64(long a1, long a0, long b) {
+            return LongDivision.divu128by64(a1, a0, b);
+        }
+
         @Override
         public long executeInstruction(VirtualFrame frame) {
             long rax = readRAX.executeI64(frame);
@@ -231,7 +237,7 @@ public abstract class Div extends AMD64Instruction {
             long q;
             long r;
             if (rdx != 0) {
-                Result result = LongDivision.divu128by64(rdx, rax, op);
+                Result result = divu128by64(rdx, rax, op);
                 if (result.isInvalid()) {
                     CompilerDirectives.transferToInterpreter();
                     throw new ArithmeticException(DIV_RANGE); // TODO: #DE
