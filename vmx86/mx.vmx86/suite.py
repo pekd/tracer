@@ -66,17 +66,15 @@ suite = {
       {
         "name" : "utils",
         "subdir" : True,
-        "version" : "00e0018db91b66ebaec939f6cd7fa5f90f46ef30",
         "urls" : [
-          {"url" : "https://github.com/pekd/vmx86", "kind" : "git"},
+          {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
         ]
       },
       {
         "name" : "trcview",
         "subdir" : True,
-        "version" : "00e0018db91b66ebaec939f6cd7fa5f90f46ef30",
         "urls" : [
-          {"url" : "https://github.com/pekd/vmx86", "kind" : "git"},
+          {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
         ]
       }
     ]
@@ -388,7 +386,6 @@ suite = {
       "subDir" : "vmx86",
       "mainClass" : "org.graalvm.vm.trcview.ui.MainWindow",
       "dependencies" : [
-        "trcview:TRCVIEW",
         "org.graalvm.vm.trcview.arch.x86",
       ],
       "strip" : [
@@ -399,6 +396,7 @@ suite = {
         "utils:CORE",
         "utils:POSIX",
         "trcview:TRCVIEW",
+        "trcview:LIBTRC",
         "sdk:GRAAL_SDK",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",

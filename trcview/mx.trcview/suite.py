@@ -8,9 +8,8 @@ suite = {
       {
         "name" : "utils",
         "subdir" : True,
-        "version" : "00e0018db91b66ebaec939f6cd7fa5f90f46ef30",
         "urls" : [
-          {"url" : "https://github.com/pekd/vmx86", "kind" : "git"},
+          {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
         ]
       }
     ]
@@ -148,6 +147,7 @@ suite = {
       "overlaps" : [
         "utils:CORE",
         "utils:POSIX",
+        "TRCVIEW",
       ],
       "license" : "UPL",
     },
