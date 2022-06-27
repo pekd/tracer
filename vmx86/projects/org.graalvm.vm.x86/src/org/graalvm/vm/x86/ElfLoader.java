@@ -156,6 +156,8 @@ public class ElfLoader {
     public static final int AT_RANDOM = 25;
     public static final int AT_HWCAP2 = 26;
     public static final int AT_EXECFN = 31;
+    public static final int AT_SYSINFO = 32;
+    public static final int AT_SYSINFO_EHDR = 33;
 
     public static final long LOAD_BIAS = getLong(Options.LOAD_BIAS);
 
@@ -316,6 +318,8 @@ public class ElfLoader {
 
                 if (hdr.getType() == Elf.PT_PHDR) {
                     phoff = offset;
+                } else if(fileOffset == 0) {
+                    phoff = offset + elf.e_phoff;
                 }
 
                 if (traceWriter != null) {
