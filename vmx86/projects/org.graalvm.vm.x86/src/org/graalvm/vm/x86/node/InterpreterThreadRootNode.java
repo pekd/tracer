@@ -73,9 +73,9 @@ public class InterpreterThreadRootNode extends AMD64RootNode {
     @Child private AbstractDispatchNode interpreter;
     @Child private InitializeFromCpuStateNode writeState = new InitializeFromCpuStateNode();
 
-    public InterpreterThreadRootNode(TruffleLanguage<AMD64Context> language, FrameDescriptor fd) {
+    public InterpreterThreadRootNode(TruffleLanguage<AMD64Context> language, FrameDescriptor fd, AMD64Context ctx) {
         super(language, fd);
-        ArchitecturalState state = language.getContextReference().get().getState();
+        ArchitecturalState state = ctx.getState();
         if (SIMPLE_DISPATCH) {
             log.warning("Using old and slow dispatch node");
             interpreter = new DispatchNode(state);

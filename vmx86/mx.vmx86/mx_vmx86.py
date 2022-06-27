@@ -99,10 +99,10 @@ def truffle_extract_VM_args(args, useDoubleDash=False):
 
 def getCommonOptions(withAssertion):
     options = [
-            '-Dgraal.TruffleCompilationExceptionsArePrinted=true',
+            #'-Dgraal.TruffleCompilationExceptionsArePrinted=true',
             '-Dgraal.ExitVMOnException=true',
-            '-Dgraal.TruffleOSRCompilationThreshold=10',
-            '-Dgraal.TruffleCompilationThreshold=10',
+            #'-Dgraal.TruffleOSRCompilationThreshold=10',
+            #'-Dgraal.TruffleCompilationThreshold=10',
             '-Dgraal.MaximumLoopExplosionCount=10000']
 
     library_path = ['/usr/java/packages/lib', '/usr/lib64', '/lib64', '/lib', '/usr/lib']
@@ -175,7 +175,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     dir_name='amd64',
     license_files=[],
     third_party_license_files=[],
-    truffle_jars=['vmx86:VM', 'vmx86:VM_MEMORY_SVM', 'vmx86:CORE', 'vmx86:POSIX'],
+    truffle_jars=['vmx86:VM', 'vmx86:VM_MEMORY_SVM', 'utils:CORE', 'utils:POSIX'],
     support_distributions=[
         'vmx86:VMX86_GRAALVM_SUPPORT'
     ],

@@ -96,7 +96,7 @@ public class TraceCallTarget extends AMD64RootNode {
     protected TraceCallTarget(TruffleLanguage<AMD64Context> language, FrameDescriptor fd, long pc) {
         super(language, fd);
         startPC = pc;
-        ctxref = language.getContextReference();
+        ctxref = getContextReference();
         AMD64Context ctx = ctxref.get();
         cpuStateSlot = ctx.getCpuState();
         gprMaskSlot = ctx.getGPRMask();

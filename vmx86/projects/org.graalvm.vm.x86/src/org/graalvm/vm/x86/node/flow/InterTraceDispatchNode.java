@@ -150,7 +150,7 @@ public class InterTraceDispatchNode extends AbstractDispatchNode {
         frame.setObject(traceSlot, currentTrace);
 
         try {
-            loop.executeLoop(frame);
+            loop.execute(frame);
         } catch (RetException e) {
             return e.getState();
         } catch (InteropInitException e) {
@@ -176,7 +176,7 @@ public class InterTraceDispatchNode extends AbstractDispatchNode {
 
         try {
             if (USE_LOOP_NODE) {
-                loop.executeLoop(frame);
+                loop.execute(frame);
                 CompilerDirectives.transferToInterpreter();
                 throw new AssertionError("loop node must not return");
             } else {

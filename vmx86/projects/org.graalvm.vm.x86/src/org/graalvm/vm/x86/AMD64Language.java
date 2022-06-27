@@ -52,16 +52,27 @@ import org.graalvm.vm.memory.hardware.MMU;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.el.ElParser;
 import org.graalvm.vm.x86.el.ast.BooleanExpression;
+import org.graalvm.vm.x86.node.InterpreterStartNode;
 import org.graalvm.vm.x86.node.InterpreterThreadRootNode;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceWriter;
 import org.graalvm.vm.x86.node.debug.trace.LogStreamHandler;
+import org.graalvm.vm.x86.node.init.InitializerNode;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.instrumentation.ProvidedTags;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.source.Source;
 
-public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
+@TruffleLanguage.Registration(id = "amd64", name = "AMD64VM", version = "0.1", defaultMimeType = AMD64Language.MIME_TYPE, characterMimeTypes = AMD64Language.MIME_TYPE, interactive = false, website = "https://github.com/pekd/tracer")
+@ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, DebuggerTags.AlwaysHalt.class})
+public class AMD64Language extends TruffleLanguage<AMD64Context> {
     private static final Logger log = Trace.create(AMD64Language.class);
+
+    public static final String NAME = "amd64";
 
     public static final String MIME_TYPE = "application/x-executable";
 
@@ -71,6 +82,21 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
     private static final int BUFSZ = 64 * 1024; // trace buffer size
 
     protected FrameDescriptor fd = new FrameDescriptor();
+
+    @Override
+    protected CallTarget parse(ParsingRequest request) throws Exception {
+        if (InitializerNode.BINARY != null) {
+            Source src = request.getSource();
+            InterpreterStartNode interpreter = new InterpreterStartNode(this, fd, src.getCharacters().toString());
+            return Truffle.getRuntime().createCallTarget(interpreter);
+        } else if (request.getSource().hasCharacters()) {
+            String path = request.getSource().getCharacters().toString();
+            InterpreterStartNode interpreter = new InterpreterStartNode(this, fd, path);
+            return Truffle.getRuntime().createCallTarget(interpreter);
+        } else {
+            throw new IllegalArgumentException("Source type is not supported");
+        }
+    }
 
     @Override
     protected AMD64Context createContext(Env env) {
@@ -121,7 +147,7 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
 
     @Override
     protected void initializeContext(AMD64Context ctx) {
-        InterpreterThreadRootNode interpreter = new InterpreterThreadRootNode(this, fd);
+        InterpreterThreadRootNode interpreter = new InterpreterThreadRootNode(this, fd, ctx);
         ctx.setInterpreter(Truffle.getRuntime().createCallTarget(interpreter));
         ctx.initialize();
     }
@@ -138,11 +164,6 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
     }
 
     @Override
-    protected boolean isObjectOfLanguage(Object object) {
-        return false;
-    }
-
-    @Override
     protected void disposeContext(AMD64Context ctx) {
         ExecutionTraceWriter trace = ctx.getTraceWriter();
         Logger.getLogger("").removeHandler(ctx.getLogHandler());
@@ -153,10 +174,6 @@ public abstract class AMD64Language extends TruffleLanguage<AMD64Context> {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    public static ContextReference<AMD64Context> getCurrentContextReference() {
-        return getCurrentLanguage(AMD64Language.class).getContextReference();
     }
 
     public static TruffleLanguage<AMD64Context> getCurrentLanguage() {

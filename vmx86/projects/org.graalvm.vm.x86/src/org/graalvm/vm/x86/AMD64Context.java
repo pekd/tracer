@@ -212,7 +212,7 @@ public class AMD64Context implements TraceStatus {
     }
 
     public void initialize() {
-        traces.initialize();
+        traces.initialize(this);
     }
 
     public void patch(Env newEnv) {

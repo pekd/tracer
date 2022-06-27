@@ -169,7 +169,7 @@ public class AMD64BasicBlock extends AMD64Node {
     }
 
     private void createChildren() {
-        AMD64Context ctx = AMD64Language.getCurrentContextReference().get();
+        AMD64Context ctx = getContextReference().get(this);
         ArchitecturalState state = ctx.getState();
         instructionCount = state.getInstructionCount();
         readInstructionCount = new RegisterReadNode(instructionCount);
@@ -298,7 +298,7 @@ public class AMD64BasicBlock extends AMD64Node {
             if (readCpuState == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 ctxref = getContextReference();
-                AMD64Context ctx = ctxref.get();
+                AMD64Context ctx = ctxref.get(this);
                 readCpuState = insert(new CopyToCpuStateNode());
                 symbolResolver = ctx.getSymbolResolver();
                 traceWriter = ctx.getTraceWriter();
@@ -309,7 +309,7 @@ public class AMD64BasicBlock extends AMD64Node {
                 if (symbolResolver == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     ctxref = getContextReference();
-                    symbolResolver = ctxref.get().getSymbolResolver();
+                    symbolResolver = ctxref.get(this).getSymbolResolver();
                 }
                 trace(pc, insn);
             }

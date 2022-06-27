@@ -54,7 +54,7 @@ public class InterpreterStartNode extends AMD64RootNode {
 
     public InterpreterStartNode(TruffleLanguage<AMD64Context> language, FrameDescriptor fd, String programName) {
         super(language, fd);
-        AMD64Context ctx = language.getContextReference().get();
+        AMD64Context ctx = getContextReference().get(this);
         ArchitecturalState state = ctx.getState();
         posix = ctx.getPosixEnvironment();
         interpreter = insert(new InterpreterRootNode(state, programName));

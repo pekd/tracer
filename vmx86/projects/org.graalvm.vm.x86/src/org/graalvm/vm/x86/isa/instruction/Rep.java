@@ -326,7 +326,7 @@ public class Rep extends AMD64Instruction {
 
     @Override
     public long executeInstruction(VirtualFrame frame) {
-        loop.executeLoop(frame);
+        loop.execute(frame);
         return next();
     }
 

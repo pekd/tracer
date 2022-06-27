@@ -54,7 +54,7 @@ public class InterTraceCallTarget extends AMD64RootNode {
 
     protected InterTraceCallTarget(TruffleLanguage<AMD64Context> language, FrameDescriptor fd) {
         super(language, fd);
-        ArchitecturalState state = language.getContextReference().get().getState();
+        ArchitecturalState state = getContextReference().get().getState();
         dispatch = new InterTraceDispatchNode(state);
     }
 

@@ -81,13 +81,8 @@ public abstract class AMD64Instruction extends AMD64Node {
 
     protected abstract String[] disassemble();
 
-    @Override
-    protected ContextReference<AMD64Context> getContextReference() {
-        return AMD64Language.getCurrentContextReference();
-    }
-
     protected AMD64Context getContext() {
-        return AMD64Language.getCurrentContextReference().get();
+        return getContextReference().get(this);
     }
 
     protected ArchitecturalState getState() {

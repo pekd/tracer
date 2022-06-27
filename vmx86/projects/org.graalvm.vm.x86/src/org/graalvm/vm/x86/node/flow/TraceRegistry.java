@@ -45,6 +45,7 @@ import java.util.Map;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.AMD64Context;
+import org.graalvm.vm.x86.AMD64Language;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -67,11 +68,11 @@ public class TraceRegistry {
         this.language = language;
         this.frameDescriptor = frameDescriptor;
         traces = new HashMap<>();
-        ctxref = language.getContextReference();
+        ctxref = ContextReference.create(AMD64Language.class);
     }
 
-    public void initialize() {
-        singleThreaded = ctxref.get().getSingleThreadedAssumption();
+    public void initialize(AMD64Context ctx) {
+        singleThreaded = ctx.getSingleThreadedAssumption();
     }
 
     @TruffleBoundary

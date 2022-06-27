@@ -48,7 +48,7 @@ suite = {
       {
         "name" : "truffle",
         "subdir" : True,
-        "version" : "00e0018db91b66ebaec939f6cd7fa5f90f46ef30",
+        "version" : "edb87981a3fb3b17419e755e7a921e43140b4c5b",
         "urls" : [
           {"url" : "https://github.com/oracle/graal", "kind" : "git"},
           {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -57,7 +57,7 @@ suite = {
       {
         "name" : "substratevm",
         "subdir" : True,
-        "version" : "00e0018db91b66ebaec939f6cd7fa5f90f46ef30",
+        "version" : "edb87981a3fb3b17419e755e7a921e43140b4c5b",
         "urls" : [
           {"url" : "https://github.com/oracle/graal", "kind" : "git"},
           {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -116,7 +116,7 @@ suite = {
         "utils:POSIX",
         "truffle:TRUFFLE_API",
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
       "workingSets" : "vmx86",
       "license" : "UPL",
@@ -129,7 +129,7 @@ suite = {
         "org.graalvm.vm.memory",
         "substratevm:SVM"
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
       "workingSets" : "vmx86",
       "license" : "UPL",
@@ -163,26 +163,25 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "org.graalvm.vm.memory",
-        "truffle:TRUFFLE_API",
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
       "workingSets" : "vmx86",
       "license" : "UPL",
     },
 
-    "org.graalvm.vm.x86.nfi" : {
-      "subDir" : "projects",
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "org.graalvm.vm.x86",
-        "truffle:TRUFFLE_NFI"
-      ],
-      "javaCompliance" : "1.8+",
-      "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
-      "workingSets" : "vmx86",
-      "license" : "UPL",
-    },
+    #"org.graalvm.vm.x86.nfi" : {
+    #  "subDir" : "projects",
+    #  "sourceDirs" : ["src"],
+    #  "dependencies" : [
+    #    "org.graalvm.vm.x86",
+    #    "truffle:TRUFFLE_NFI"
+    #  ],
+    #  "javaCompliance" : "11+",
+    #  "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
+    #  "workingSets" : "vmx86",
+    #  "license" : "UPL",
+    #},
 
     "org.graalvm.vm.x86.launcher" : {
       "subDir" : "projects",
@@ -191,7 +190,7 @@ suite = {
         "utils:CORE",
         "sdk:LAUNCHER_COMMON"
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "workingSets" : "vmx86",
       "license" : "UPL",
     },
@@ -204,7 +203,7 @@ suite = {
         "trcview:TRCVIEW",
         "trcview:LIBTRC",
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "workingSets" : "vmx86",
       "license" : "UPL",
     },
@@ -232,7 +231,7 @@ suite = {
         "org.graalvm.vm.x86.testcases.c",
         "mx:JUNIT",
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "workingSets" : "vmx86",
       "testProject" : True,
       "license" : "UPL",
@@ -245,7 +244,7 @@ suite = {
         "org.graalvm.vm.memory",
         "mx:JUNIT",
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "workingSets" : "vmx86",
       "testProject" : True,
       "license" : "UPL",
@@ -259,7 +258,7 @@ suite = {
         "org.graalvm.vm.memory",
         "org.graalvm.vm.x86"
       ],
-      "javaCompliance" : "1.8+",
+      "javaCompliance" : "11+",
       "workingSets" : "vmx86",
       "testProject" : True,
       "license" : "UPL",
@@ -284,19 +283,19 @@ suite = {
       "license" : "UPL",
     },
 
-    "org.graalvm.vm.x86.nfi.native" : {
-      "subDir" : "projects",
-      "native" : True,
-      "vpath" : True,
-      "results" : [
-        "bin/<lib:nfi>",
-      ],
-      "buildEnv" : {
-        "LIBNFI" : "<lib:nfi>",
-        "OS" : "<os>",
-      },
-      "license" : "UPL",
-    },
+    #"org.graalvm.vm.x86.nfi.native" : {
+    #  "subDir" : "projects",
+    #  "native" : True,
+    #  "vpath" : True,
+    #  "results" : [
+    #    "bin/<lib:nfi>",
+    #  ],
+    #  "buildEnv" : {
+    #    "LIBNFI" : "<lib:nfi>",
+    #    "OS" : "<os>",
+    #  },
+    #  "license" : "UPL",
+    #},
   },
 
   "distributions" : {
@@ -339,33 +338,33 @@ suite = {
       "license" : "UPL",
     },
 
-    "VM_NFI" : {
-      "path" : "build/vmx86_nfi.jar",
-      "subDir" : "vmx86",
-      "sourcesPath" : "build/vmx86_nfi.src.zip",
-      "dependencies" : [
-        "org.graalvm.vm.x86.nfi"
-      ],
-      "distDependencies" : [
-        "VM",
-        "VM_NFI_NATIVE",
-        "utils:CORE",
-        "utils:POSIX",
-        "truffle:TRUFFLE_API",
-        "truffle:TRUFFLE_NFI",
-      ],
-      "license" : "UPL",
-    },
+    #"VM_NFI" : {
+    #  "path" : "build/vmx86_nfi.jar",
+    #  "subDir" : "vmx86",
+    #  "sourcesPath" : "build/vmx86_nfi.src.zip",
+    #  "dependencies" : [
+    #    "org.graalvm.vm.x86.nfi"
+    #  ],
+    #  "distDependencies" : [
+    #    "VM",
+    #    "VM_NFI_NATIVE",
+    #    "utils:CORE",
+    #    "utils:POSIX",
+    #    "truffle:TRUFFLE_API",
+    #    "truffle:TRUFFLE_NFI",
+    #  ],
+    #  "license" : "UPL",
+    #},
 
-    "VM_NFI_NATIVE" : {
-      "native" : True,
-      "platformDependent" : True,
-      "output" : "build",
-      "dependencies" : [
-        "org.graalvm.vm.x86.nfi.native"
-      ],
-      "license" : "UPL",
-    },
+    #"VM_NFI_NATIVE" : {
+    #  "native" : True,
+    #  "platformDependent" : True,
+    #  "output" : "build",
+    #  "dependencies" : [
+    #    "org.graalvm.vm.x86.nfi.native"
+    #  ],
+    #  "license" : "UPL",
+    #},
 
     "VMX86_LAUNCHER" : {
       "path" : "build/vmx86-launcher.jar",
@@ -387,6 +386,7 @@ suite = {
       "mainClass" : "org.graalvm.vm.trcview.ui.MainWindow",
       "dependencies" : [
         "org.graalvm.vm.trcview.arch.x86",
+        "truffle:TRUFFLE_API",
       ],
       "strip" : [
         "trcview"
@@ -399,7 +399,7 @@ suite = {
         "trcview:LIBTRC",
         "sdk:GRAAL_SDK",
         "truffle:TRUFFLE_API",
-        "truffle:TRUFFLE_NFI",
+        #"truffle:TRUFFLE_NFI",
       ],
       "license" : "UPL",
     },
@@ -428,7 +428,7 @@ suite = {
       ],
       "distDependencies" : [
         "VM",
-        "VM_NFI",
+        #"VM_NFI",
         "VM_TESTCASES",
         "utils:CORE",
         "utils:POSIX",
@@ -477,7 +477,8 @@ suite = {
       "description" : "vmx86 support distribution for the GraalVM",
       "layout": {
         "native-image.properties" : "file:mx.vmx86/native-image.properties",
-        "./" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/<lib:memory>", "extracted-dependency:vmx86:VM_NFI_NATIVE/<lib:nfi>"],
+        #"./" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/<lib:memory>", "extracted-dependency:vmx86:VM_NFI_NATIVE/<lib:nfi>"],
+        "./" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/<lib:memory>"],
         "clibraries/<os>-<arch>/" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/libmemory.a", "file:projects/org.graalvm.vm.memory.native/include"],
       },
       "license" : "UPL",

@@ -68,7 +68,7 @@ public class AMD64VM {
             RuntimeOptions.set("TruffleOSRCompilationThreshold", 10);
             RuntimeOptions.set("TruffleCompilationThreshold", 10);
         }
-        Source source = Source.newBuilder(Vmx86.NAME, args[0], "<path>").build();
+        Source source = Source.newBuilder(AMD64Language.NAME, args[0], "<path>").build();
         System.exit(executeSource(source, args));
     }
 
@@ -77,7 +77,7 @@ public class AMD64VM {
             Trace.println("== running on " + Truffle.getRuntime().getName());
         }
 
-        Context ctx = Context.newBuilder(Vmx86.NAME).arguments(Vmx86.NAME, args).allowCreateThread(true).build();
+        Context ctx = Context.newBuilder(AMD64Language.NAME).arguments(AMD64Language.NAME, args).allowCreateThread(true).build();
 
         try {
             Value result = ctx.eval(source);

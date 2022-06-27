@@ -42,6 +42,7 @@ package org.graalvm.vm.memory.svm;
 
 import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.Platforms;
+import org.graalvm.vm.memory.svm.headers.Errno;
 import org.graalvm.vm.memory.svm.headers.Mman;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.word.PointerBase;
@@ -49,7 +50,7 @@ import org.graalvm.word.WordFactory;
 
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-import com.oracle.svm.core.headers.Errno;
+import com.oracle.svm.core.headers.LibC;
 
 @Platforms(Platform.LINUX.class)
 @TargetClass(org.graalvm.vm.memory.hardware.MMU.class)
@@ -81,7 +82,7 @@ final class Target_org_graalvm_vm_memory_hardware_MMU {
         }
         PointerBase result = Mman.mmap(WordFactory.pointer(addr), WordFactory.unsigned(len), prot, flags, fildes, off);
         if (result.equal(Mman.MAP_FAILED())) {
-            int errno = Errno.errno();
+            int errno = LibC.errno();
             throw new PosixException(ErrnoTranslator.translate(errno));
         } else {
             return result.rawValue();
@@ -92,7 +93,7 @@ final class Target_org_graalvm_vm_memory_hardware_MMU {
     public static int munmap(long addr, long len) throws PosixException {
         int result = Mman.munmap(WordFactory.pointer(addr), WordFactory.unsigned(len));
         if (result < 0) {
-            int errno = Errno.errno();
+            int errno = LibC.errno();
             throw new PosixException(ErrnoTranslator.translate(errno));
         }
         return result;
@@ -103,7 +104,7 @@ final class Target_org_graalvm_vm_memory_hardware_MMU {
         int prot = PosixUtils.getProtection(r, w, x);
         int result = Mman.mprotect(WordFactory.pointer(addr), WordFactory.unsigned(len), prot);
         if (result < 0) {
-            int errno = Errno.errno();
+            int errno = LibC.errno();
             throw new PosixException(ErrnoTranslator.translate(errno));
         }
         return result;

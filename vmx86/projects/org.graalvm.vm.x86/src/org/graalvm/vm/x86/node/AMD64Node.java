@@ -48,6 +48,6 @@ import com.oracle.truffle.api.nodes.Node;
 
 public class AMD64Node extends Node {
     protected ContextReference<AMD64Context> getContextReference() {
-        return AMD64Language.getCurrentContextReference();
+        return lookupContextReference(AMD64Language.class);
     }
 }
