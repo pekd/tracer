@@ -58,10 +58,12 @@ public class TestOptions {
             initialized = true;
         }
         try {
-            setLibraryPath();
+            // setLibraryPath();
         } catch (Throwable t) {
             t.printStackTrace();
         }
+
+        System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
     }
 
     // try to find the path for the test suite
