@@ -46,6 +46,7 @@ import org.graalvm.vm.posix.api.BytePosixPointer;
 import org.graalvm.vm.posix.api.Posix;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.vm.posix.api.PosixPointer;
+import org.graalvm.vm.posix.api.io.FileDescriptorManager;
 import org.graalvm.vm.posix.api.io.Stat;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +57,11 @@ public class StatTest {
     @Before
     public void setup() {
         posix = new Posix();
+
+        // deterministic stdin/stdout/stderr
+        posix.setTTY(FileDescriptorManager.STDIN, System.in, System.out);
+        posix.setTTY(FileDescriptorManager.STDOUT, System.in, System.out);
+        posix.setTTY(FileDescriptorManager.STDERR, System.err);
     }
 
     @Test
