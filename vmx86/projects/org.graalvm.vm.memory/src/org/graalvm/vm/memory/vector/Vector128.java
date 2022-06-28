@@ -41,7 +41,6 @@
 package org.graalvm.vm.memory.vector;
 
 import org.graalvm.vm.util.BitTest;
-import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.Endianess;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -55,7 +54,7 @@ public class Vector128 extends org.graalvm.vm.util.Vector128 implements Cloneabl
     public static final Vector128 ZERO = new Vector128();
 
     public Vector128() {
-	    this(0, 0);
+        this(0, 0);
     }
 
     public Vector128(long[] data) {
@@ -158,6 +157,7 @@ public class Vector128 extends org.graalvm.vm.util.Vector128 implements Cloneabl
         setI64(i, Double.doubleToRawLongBits(val));
     }
 
+    @Override
     public long getI64(int i) {
         assert i >= 0 && i < 2;
         switch (i) {
@@ -170,6 +170,7 @@ public class Vector128 extends org.graalvm.vm.util.Vector128 implements Cloneabl
         }
     }
 
+    @Override
     public void setI64(int i, long val) {
         assert i >= 0 && i < 2;
         switch (i) {
@@ -1212,10 +1213,6 @@ public class Vector128 extends org.graalvm.vm.util.Vector128 implements Cloneabl
     @Override
     public Vector128 clone() {
         return new Vector128(data0, data1);
-    }
-
-    public String hex() {
-        return HexFormatter.tohex(data0, 16) + HexFormatter.tohex(data1, 16);
     }
 
     @Override

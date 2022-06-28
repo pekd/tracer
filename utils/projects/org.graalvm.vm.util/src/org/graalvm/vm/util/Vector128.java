@@ -3,8 +3,6 @@ package org.graalvm.vm.util;
 import org.graalvm.vm.util.io.Endianess;
 
 public class Vector128 implements Cloneable {
-    private static final int SIZE = 2;
-
     public static final Vector128 ZERO = new Vector128();
 
     protected long data0;
