@@ -45,7 +45,7 @@ import org.junit.Test;
 public class IsaFeatures {
     @Test
     public void cpuidVendorBrand() throws Exception {
-        String stdout = "Vendor:   'VMX86onGraal'\n" +
+        String stdout = "Vendor:   'GenuineIntel'\n" +
                         "Brand:    'VMX86 on Graal/Truffle'\n" +
                         "[info]:   0x00000611\n" +
                         "Family:   6\n" +
