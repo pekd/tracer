@@ -825,9 +825,12 @@ public class JavaVirtualMemory extends VirtualMemory {
 
     @TruffleBoundary
     public void checkConsistency() {
+        if (pages.size() < 2) {
+            return;
+        }
         for (long addr : pages.keySet()) {
             MemoryPage page = pages.get(addr);
-            Entry<Long, MemoryPage> before = pages.floorEntry(addr - 1);
+            Entry<Long, MemoryPage> before = addr > 0 ? pages.floorEntry(addr - 1) : null;
             Entry<Long, MemoryPage> after = pages.ceilingEntry(addr + 1);
             if (before != null) {
                 // check overlap
