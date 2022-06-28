@@ -101,9 +101,9 @@ public class NativeFileSystemTest {
         assertEquals(info.size(), buf.st_size);
         assertEquals(info.lastModifiedTime().toMillis(), buf.st_mtim.toMillis());
 
-        byte[] ref = Files.readAllBytes(Paths.get("/proc/cpuinfo"));
+        byte[] ref = Files.readAllBytes(Paths.get("/proc/cmdline"));
         byte[] act = new byte[4096];
-        Stream in = vfs.open("/proc/cpuinfo", Fcntl.O_RDONLY, 0);
+        Stream in = vfs.open("/proc/cmdline", Fcntl.O_RDONLY, 0);
         ByteArrayOutputStream tmp = new ByteArrayOutputStream();
         int n;
         while ((n = in.read(act, 0, 4096)) > 0) {
