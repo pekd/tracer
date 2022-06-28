@@ -38,7 +38,7 @@ suite = {
         "org.graalvm.vm.trcview",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "license" : "UPL",
     },
 
@@ -49,7 +49,7 @@ suite = {
         "org.graalvm.vm.trcview",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "license" : "UPL",
     },
 
@@ -60,7 +60,7 @@ suite = {
         "org.graalvm.vm.trcview",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "license" : "UPL",
     },
 
@@ -72,7 +72,7 @@ suite = {
         "utils:POSIX",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "license" : "UPL",
     },
 
@@ -84,7 +84,7 @@ suite = {
         "utils:POSIX",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "license" : "UPL",
     },
 
@@ -98,7 +98,7 @@ suite = {
         "mx:JUNIT",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "testProject" : True,
       "license" : "UPL",
     },
@@ -111,7 +111,7 @@ suite = {
         "mx:JUNIT",
       ],
       "javaCompliance" : "1.8+",
-      "workingSets" : "vmx86",
+      "workingSets" : "trcview",
       "testProject" : True,
       "license" : "UPL",
     },
@@ -121,7 +121,7 @@ suite = {
     "TRCVIEW" : {
       "path" : "build/trcview.jar",
       "sourcesPath" : "build/trcview.src.zip",
-      "subDir" : "vmx86",
+      "subDir" : "trcview",
       "mainClass" : "org.graalvm.vm.trcview.ui.MainWindow",
       "dependencies" : [
         "org.graalvm.vm.trcview",
@@ -139,7 +139,7 @@ suite = {
     "TRCVIEW_MINIMAL" : {
       "path" : "build/trcview-minimal.jar",
       "sourcesPath" : "build/trcview-minimal.src.zip",
-      "subDir" : "vmx86",
+      "subDir" : "trcview",
       "mainClass" : "org.graalvm.vm.trcview.ui.MainWindow",
       "dependencies" : [
         "org.graalvm.vm.trcview",
