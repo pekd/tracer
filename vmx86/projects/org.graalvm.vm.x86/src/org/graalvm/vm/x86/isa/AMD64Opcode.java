@@ -494,6 +494,9 @@ public class AMD64Opcode {
 
     public static final byte XORPD_X_XM = 0x57;
 
+    public static final byte SSE4 = 0x3A;
+    public static final byte ROUNDSD_X_XM_I = 0x0B;
+
     // PREFIX: 0x0F (ESCAPE)
     public static final byte SYSCALL = 0x05;
 }

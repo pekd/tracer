@@ -420,6 +420,7 @@ import org.graalvm.vm.x86.isa.instruction.Ror.Rorb;
 import org.graalvm.vm.x86.isa.instruction.Ror.Rorl;
 import org.graalvm.vm.x86.isa.instruction.Ror.Rorq;
 import org.graalvm.vm.x86.isa.instruction.Ror.Rorw;
+import org.graalvm.vm.x86.isa.instruction.Roundsd;
 import org.graalvm.vm.x86.isa.instruction.Rsqrtps;
 import org.graalvm.vm.x86.isa.instruction.Sahf;
 import org.graalvm.vm.x86.isa.instruction.Sar.Sarb;
@@ -3834,6 +3835,22 @@ public class AMD64InstructionDecoder {
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                         }
+                    }
+                    case AMD64Opcode.SSE4: {
+                        byte opcd = code.read8();
+                        instruction[instructionLength++] = opcd;
+
+                        Args args = new Args(code, rex, segment, addressOverride);
+                        byte imm = code.read8();
+                        switch (opcd) {
+                            case AMD64Opcode.ROUNDSD_X_XM_I:
+                                if (sizeOverride) {
+                                    return new Roundsd(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
+                                } else {
+                                    return new IllegalInstruction(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1));
+                                }
+                        }
+                        return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                     }
                     case AMD64Opcode.SUBSD_X_XM: {
                         Args args = new Args(code, rex, segment, addressOverride);
