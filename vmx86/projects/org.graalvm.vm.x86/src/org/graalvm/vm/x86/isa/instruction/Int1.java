@@ -98,7 +98,7 @@ public class Int1 extends AMD64Instruction {
         assert syscall == null;
 
         ctxRef = getContextReference();
-        AMD64Context ctx = ctxRef.get();
+        AMD64Context ctx = ctxRef.get(this);
         RegisterAccessFactory reg = ctx.getState().getRegisters();
         PosixEnvironment posix = ctx.getPosixEnvironment();
         VirtualMemory memory = ctx.getMemory();
@@ -161,7 +161,7 @@ public class Int1 extends AMD64Instruction {
 
     @TruffleBoundary
     private long interopCall(int id, long a1, long a2, long a3, long a4, long a5, long a6, long f1, long f2, long f3, long f4, long f5, long f6, long f7, long f8) throws SyscallException {
-        return ctxRef.get().interopCall(id, a1, a2, a3, a4, a5, a6, f1, f2, f3, f4, f5, f6, f7, f8);
+        return ctxRef.get(this).interopCall(id, a1, a2, a3, a4, a5, a6, f1, f2, f3, f4, f5, f6, f7, f8);
     }
 
     @Override

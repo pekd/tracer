@@ -41,7 +41,6 @@
 package org.graalvm.vm.x86.node.flow;
 
 import org.graalvm.vm.x86.AMD64Context;
-import org.graalvm.vm.x86.AMD64Language;
 import org.graalvm.vm.x86.ArchitecturalState;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.node.AMD64Node;
@@ -50,7 +49,6 @@ import org.graalvm.vm.x86.node.init.CopyToCpuStateNode;
 import org.graalvm.vm.x86.node.init.InitializeFromCpuStateNode;
 
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -66,7 +64,7 @@ public class CompiledTraceInterpreter extends AMD64Node {
 
     public CompiledTraceInterpreter(TruffleLanguage<AMD64Context> language, FrameDescriptor fd) {
         interpreter = new InterTraceCallTarget(language, fd);
-        callTarget = Truffle.getRuntime().createCallTarget(interpreter);
+        callTarget = interpreter.getCallTarget();
 
         ArchitecturalState state = getContextReference().get(this).getState();
         readPC = state.getRegisters().getPC().createRead();

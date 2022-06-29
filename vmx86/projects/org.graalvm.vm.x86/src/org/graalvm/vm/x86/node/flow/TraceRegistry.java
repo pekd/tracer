@@ -80,7 +80,7 @@ public class TraceRegistry {
         CompiledTrace trace = traces.get(pc);
         if (trace == null) {
             TraceCallTarget target = new TraceCallTarget(language, frameDescriptor, pc);
-            trace = new CompiledTrace(target, ctxref.get().getSingleThreadedAssumption());
+            trace = new CompiledTrace(target, ctxref.get(null).getSingleThreadedAssumption());
             traces.put(pc, trace);
         }
         if (trace.trace.getStartAddress() != pc) {

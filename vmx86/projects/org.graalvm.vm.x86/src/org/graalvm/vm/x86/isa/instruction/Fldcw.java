@@ -76,7 +76,7 @@ public class Fldcw extends AMD64Instruction {
         if (readSrc == null) { // TODO: use createChildren/createChildNodes
             CompilerDirectives.transferToInterpreterAndInvalidate();
             log.log(Levels.WARNING, String.format("Stub instruction FLDCW executed at 0x%016x", getPC()));
-            ArchitecturalState state = getContextReference().get().getState();
+            ArchitecturalState state = getContextReference().get(this).getState();
             readSrc = operand.createRead(state, next());
         }
         // TODO: read FPU CW

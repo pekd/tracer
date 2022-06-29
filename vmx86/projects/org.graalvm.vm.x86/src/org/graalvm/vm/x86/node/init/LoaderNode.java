@@ -159,7 +159,7 @@ public class LoaderNode extends AMD64Node {
     }
 
     public Object execute(VirtualFrame frame, String execfn, String[] args) {
-        AMD64Context ctx = getContextReference().get();
+        AMD64Context ctx = getContextReference().get(this);
         ElfLoader loader = new ElfLoader(ctx.getTraceWriter());
         loader.setPosixEnvironment(ctx.getPosixEnvironment());
         loader.setVirtualMemory(ctx.getMemory());
@@ -168,7 +168,7 @@ public class LoaderNode extends AMD64Node {
         loader.setArguments(args);
         loader.setEnvironment(getenv());
 
-        PosixEnvironment posix = getContextReference().get().getPosixEnvironment();
+        PosixEnvironment posix = getContextReference().get(this).getPosixEnvironment();
 
         try {
             setup(execfn, posix);
@@ -197,7 +197,7 @@ public class LoaderNode extends AMD64Node {
     }
 
     public Object executeELF(VirtualFrame frame, String execfn, String[] args, byte[] elf) {
-        AMD64Context ctx = getContextReference().get();
+        AMD64Context ctx = getContextReference().get(this);
         ElfLoader loader = new ElfLoader(ctx.getTraceWriter());
         loader.setPosixEnvironment(ctx.getPosixEnvironment());
         loader.setVirtualMemory(ctx.getMemory());
@@ -206,7 +206,7 @@ public class LoaderNode extends AMD64Node {
         loader.setArguments(args);
         loader.setEnvironment(getenv());
 
-        PosixEnvironment posix = getContextReference().get().getPosixEnvironment();
+        PosixEnvironment posix = getContextReference().get(this).getPosixEnvironment();
 
         try {
             setup(execfn, posix);

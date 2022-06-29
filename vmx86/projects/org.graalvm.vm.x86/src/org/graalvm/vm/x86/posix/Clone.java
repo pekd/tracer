@@ -136,7 +136,7 @@ public class Clone extends AMD64Node {
             state.fs = newtls;
         }
 
-        AMD64Context ctx = ctxref.get();
+        AMD64Context ctx = ctxref.get(this);
         CallTarget threadMain = ctx.getInterpreter();
         PosixEnvironment posix = ctx.getPosixEnvironment();
         if (posix.getThreadCount() >= posix.getPosix().getProcessInfo().rlimit_nproc) {

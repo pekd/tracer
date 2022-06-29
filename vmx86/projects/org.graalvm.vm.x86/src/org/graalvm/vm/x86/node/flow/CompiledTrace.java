@@ -44,7 +44,6 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 
 public class CompiledTrace {
@@ -63,7 +62,7 @@ public class CompiledTrace {
         this.trace = trace;
         this.singleThreaded = singleThreaded;
         isSingleThreaded = singleThreaded.isValid();
-        callTarget = Truffle.getRuntime().createCallTarget(trace);
+        callTarget = trace.getCallTarget();
         usedSuccessors = 0;
         successors = new CompiledTrace[8];
     }

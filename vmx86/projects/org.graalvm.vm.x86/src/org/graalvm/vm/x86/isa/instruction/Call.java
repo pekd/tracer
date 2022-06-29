@@ -107,7 +107,7 @@ public abstract class Call extends AMD64Instruction {
         writeMemory = state.createMemoryWrite();
         traces = state.getTraceRegistry();
 
-        TruffleLanguage<AMD64Context> language = AMD64Language.getCurrentLanguage();
+        TruffleLanguage<AMD64Context> language = AMD64Language.getCurrentLanguage(this);
         interpreter = insert(new CompiledTraceInterpreter(language, ctx.getFrameDescriptor()));
     }
 

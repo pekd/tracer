@@ -195,7 +195,7 @@ public class DispatchNode extends AbstractDispatchNode {
 
     @TruffleBoundary
     public void dump() {
-        SymbolResolver resolver = getContextReference().get().getSymbolResolver();
+        SymbolResolver resolver = getContextReference().get(this).getSymbolResolver();
         boolean first = true;
         for (Map.Entry<Long, AMD64BasicBlock> entry : blockLookup.entrySet()) {
             long pc = entry.getKey();
@@ -262,7 +262,7 @@ public class DispatchNode extends AbstractDispatchNode {
             throw e;
         } catch (CpuRuntimeException e) {
             CompilerDirectives.transferToInterpreter();
-            SymbolResolver symbols = getContextReference().get().getSymbolResolver();
+            SymbolResolver symbols = getContextReference().get(this).getSymbolResolver();
             Symbol sym = symbols.getSymbol(e.getPC());
             if (sym == null) {
                 Trace.log.printf("Exception at address 0x%016x!\n", e.getPC());

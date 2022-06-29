@@ -59,18 +59,20 @@ import org.graalvm.vm.x86.node.debug.trace.LogStreamHandler;
 import org.graalvm.vm.x86.node.init.InitializerNode;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 
 @TruffleLanguage.Registration(id = "amd64", name = "AMD64VM", version = "0.1", defaultMimeType = AMD64Language.MIME_TYPE, characterMimeTypes = AMD64Language.MIME_TYPE, interactive = false, website = "https://github.com/pekd/tracer")
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, DebuggerTags.AlwaysHalt.class})
 public class AMD64Language extends TruffleLanguage<AMD64Context> {
     private static final Logger log = Trace.create(AMD64Language.class);
+
+    private static final LanguageReference<AMD64Language> REF = LanguageReference.create(AMD64Language.class);
 
     public static final String NAME = "amd64";
 
@@ -88,11 +90,11 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
         if (InitializerNode.BINARY != null) {
             Source src = request.getSource();
             InterpreterStartNode interpreter = new InterpreterStartNode(this, fd, src.getCharacters().toString());
-            return Truffle.getRuntime().createCallTarget(interpreter);
+            return interpreter.getCallTarget();
         } else if (request.getSource().hasCharacters()) {
             String path = request.getSource().getCharacters().toString();
             InterpreterStartNode interpreter = new InterpreterStartNode(this, fd, path);
-            return Truffle.getRuntime().createCallTarget(interpreter);
+            return interpreter.getCallTarget();
         } else {
             throw new IllegalArgumentException("Source type is not supported");
         }
@@ -148,7 +150,7 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
     @Override
     protected void initializeContext(AMD64Context ctx) {
         InterpreterThreadRootNode interpreter = new InterpreterThreadRootNode(this, fd, ctx);
-        ctx.setInterpreter(Truffle.getRuntime().createCallTarget(interpreter));
+        ctx.setInterpreter(interpreter.getCallTarget());
         ctx.initialize();
     }
 
@@ -176,12 +178,12 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
         }
     }
 
-    public static TruffleLanguage<AMD64Context> getCurrentLanguage() {
-        return getCurrentLanguage(AMD64Language.class);
+    public static AMD64Language getCurrentLanguage(Node node) {
+        return REF.get(node);
     }
 
-    public static String getHome() {
-        return getCurrentLanguage(AMD64Language.class).getLanguageHome();
+    public static String getHome(Node node) {
+        return REF.get(node).getLanguageHome();
     }
 
     @Override

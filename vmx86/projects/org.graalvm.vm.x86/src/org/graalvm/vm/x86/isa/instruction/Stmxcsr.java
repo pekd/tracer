@@ -76,7 +76,7 @@ public class Stmxcsr extends AMD64Instruction {
         if (writeDst == null) { // TODO: use createChildren/createChildNodes
             CompilerDirectives.transferToInterpreterAndInvalidate();
             log.log(Levels.WARNING, String.format("Stub instruction STMXCSR executed at 0x%016x", getPC()));
-            ArchitecturalState state = getContextReference().get().getState();
+            ArchitecturalState state = getContextReference().get(this).getState();
             writeDst = operand.createWrite(state, next());
         }
         // TODO: write MXCSR

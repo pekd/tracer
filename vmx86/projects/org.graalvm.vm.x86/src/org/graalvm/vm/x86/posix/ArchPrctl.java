@@ -73,7 +73,7 @@ public class ArchPrctl extends AMD64Node {
             case ARCH_SET_GS:
                 if (writeGS == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     writeGS = state.getRegisters().getGS().createWrite();
                 }
                 writeGS.executeI64(frame, value);
@@ -81,7 +81,7 @@ public class ArchPrctl extends AMD64Node {
             case ARCH_SET_FS:
                 if (writeGS == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     writeFS = state.getRegisters().getFS().createWrite();
                 }
                 writeFS.executeI64(frame, value);
@@ -89,12 +89,12 @@ public class ArchPrctl extends AMD64Node {
             case ARCH_GET_FS:
                 if (readFS == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     readFS = state.getRegisters().getFS().createRead();
                 }
                 if (writeMemory == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     writeMemory = state.createMemoryWrite();
                 }
                 writeMemory.executeI64(value, readFS.executeI64(frame));
@@ -102,12 +102,12 @@ public class ArchPrctl extends AMD64Node {
             case ARCH_GET_GS:
                 if (readGS == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     readGS = state.getRegisters().getGS().createRead();
                 }
                 if (writeMemory == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     writeMemory = state.createMemoryWrite();
                 }
                 writeMemory.executeI64(value, readGS.executeI64(frame));

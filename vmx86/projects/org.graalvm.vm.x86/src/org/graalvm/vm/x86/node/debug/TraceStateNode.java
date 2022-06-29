@@ -143,7 +143,7 @@ public class TraceStateNode extends AMD64Node {
 
     private void dumpMemory() {
         CompilerAsserts.neverPartOfCompilation();
-        AMD64Context ctx = ctxref.get();
+        AMD64Context ctx = ctxref.get(this);
         VirtualMemory mem = ctx.getMemory();
         ExecutionTraceWriter trc = ctx.getTraceWriter();
         for (MemorySegment segment : mem.getSegments()) {
@@ -167,7 +167,7 @@ public class TraceStateNode extends AMD64Node {
                 if (troff != null && troff.execute(frame, pc)) {
                     CompilerDirectives.transferToInterpreter();
                     frame.setBoolean(trace, false);
-                    ctxref.get().setTraceStatus(false);
+                    ctxref.get(this).setTraceStatus(false);
                 }
             } else {
                 if (tron != null) {
@@ -179,7 +179,7 @@ public class TraceStateNode extends AMD64Node {
                     CompilerDirectives.transferToInterpreter();
                     dumpMemory();
                     frame.setBoolean(trace, true);
-                    ctxref.get().setTraceStatus(true);
+                    ctxref.get(this).setTraceStatus(true);
                 }
             }
         }

@@ -265,7 +265,7 @@ public class TraceDispatchNode extends AMD64Node {
 
     @TruffleBoundary
     public void dump() {
-        SymbolResolver resolver = getContextReference().get().getSymbolResolver();
+        SymbolResolver resolver = getContextReference().get(this).getSymbolResolver();
         boolean first = true;
         for (Map.Entry<Long, AMD64BasicBlock> entry : blockLookup.entrySet()) {
             long pc = entry.getKey();
@@ -337,7 +337,7 @@ public class TraceDispatchNode extends AMD64Node {
             throw e;
         } catch (CpuRuntimeException e) {
             CompilerDirectives.transferToInterpreter();
-            AMD64Context ctx = getContextReference().get();
+            AMD64Context ctx = getContextReference().get(this);
             SymbolResolver symbols = ctx.getSymbolResolver();
             Symbol sym = symbols.getSymbol(e.getPC());
             long offset = 0;

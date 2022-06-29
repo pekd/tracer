@@ -97,7 +97,7 @@ public class TraceCallTarget extends AMD64RootNode {
         super(language, fd);
         startPC = pc;
         ctxref = getContextReference();
-        AMD64Context ctx = ctxref.get();
+        AMD64Context ctx = ctxref.get(this);
         cpuStateSlot = ctx.getCpuState();
         gprMaskSlot = ctx.getGPRMask();
         avxMaskSlot = ctx.getAVXMask();
@@ -260,7 +260,7 @@ public class TraceCallTarget extends AMD64RootNode {
         frame.setObject(avxMaskSlot, avxWriteMask);
 
         if (TRACE) {
-            frame.setBoolean(trace, ctxref.get().getTraceStatus());
+            frame.setBoolean(trace, ctxref.get(this).getTraceStatus());
         }
 
         long pc;
