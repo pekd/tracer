@@ -8,14 +8,14 @@ import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.type.VariableType;
-import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class DynamicTypePropagation {
     private final ArchitectureTypeInfo info;
-    private final CallDecoder call;
     private final Semantics semantics;
+    private final StepFormat fmt;
 
     private final MemoryAccessMap memory;
 
@@ -24,7 +24,7 @@ public class DynamicTypePropagation {
 
     public DynamicTypePropagation(Architecture arch, ArchitectureTypeInfo info, SymbolTable symbols) {
         this.info = info;
-        this.call = arch.getCallDecoder();
+        this.fmt = arch.getFormat();
         CodeTypeMap codeMap = new CodeTypeMap(arch.getRegisterCount());
         MemoryTypeMap memoryMap = new MemoryTypeMap();
         memory = new MemoryAccessMap();
@@ -94,7 +94,7 @@ public class DynamicTypePropagation {
                     Variable var = mem.getRecoveredType(addr);
                     if (var != null && var.getAddress() == addr) {
                         if (lasttype != null && !lasttype.equals(var.getType())) {
-                            System.out.println("array inconsistency at " + trc.getArchitecture().getFormat().formatShortAddress(addr));
+                            System.out.println("array inconsistency at " + fmt.formatShortAddress(addr));
                             continue loop;
                         }
                         lasttype = var.getType();

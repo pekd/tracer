@@ -140,6 +140,8 @@ public class MainWindow extends JFrame implements TraceListenable {
 
     private static final Logger log = Trace.create(MainWindow.class);
 
+    private static final int MENU_SHORTCUT_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
     public static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
 
     private JLabel status;
@@ -203,14 +205,14 @@ public class MainWindow extends JFrame implements TraceListenable {
         JMenu fileMenu = new JMenu("File");
         open = new JMenuItem("Open...");
         open.setMnemonic('O');
-        open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MENU_SHORTCUT_MASK));
         open.addActionListener(e -> {
             load.setVisible(true);
             if (load.getFile() == null) {
                 return;
             }
             String filename = load.getDirectory() + load.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -225,14 +227,14 @@ public class MainWindow extends JFrame implements TraceListenable {
         });
         loadSession = new JMenuItem("Load session...");
         loadSession.setMnemonic('l');
-        loadSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        loadSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, MENU_SHORTCUT_MASK));
         loadSession.addActionListener(e -> {
             loadSess.setVisible(true);
             if (loadSess.getFile() == null) {
                 return;
             }
             String filename = loadSess.getDirectory() + loadSess.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
 
                 @Override
                 protected Void doInBackground() throws Exception {
@@ -249,7 +251,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         loadSession.setEnabled(false);
         saveSession = new JMenuItem("Save session...");
         saveSession.setMnemonic('s');
-        saveSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        saveSession.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MENU_SHORTCUT_MASK));
         saveSession.addActionListener(e -> {
             saveSess.setVisible(true);
             if (saveSess.getFile() == null) {
@@ -257,7 +259,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             }
 
             String filename = saveSess.getDirectory() + saveSess.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -279,7 +281,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 return;
             }
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -301,7 +303,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 return;
             }
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -323,7 +325,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 return;
             }
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -345,7 +347,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 return;
             }
             String filename = genIDC.getDirectory() + genIDC.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -368,7 +370,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             }
 
             String filename = loadSyms.getDirectory() + loadSyms.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -390,7 +392,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 return;
             }
             String filename = saveSyms.getDirectory() + saveSyms.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -408,7 +410,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         refresh.setMnemonic('r');
         refresh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
         refresh.addActionListener(e -> {
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -424,7 +426,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         refresh.setEnabled(false);
         JMenuItem exit = new JMenuItem("Exit");
         exit.setMnemonic('x');
-        exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK));
+        exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, MENU_SHORTCUT_MASK));
         exit.addActionListener(e -> exit());
 
         if (master == null) {
@@ -450,7 +452,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         } else {
             JMenuItem close = new JMenuItem("Close");
             close.addActionListener(e -> this.dispose());
-            close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK));
+            close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MENU_SHORTCUT_MASK));
             fileMenu.add(close);
 
             // synchronize master view to slave view

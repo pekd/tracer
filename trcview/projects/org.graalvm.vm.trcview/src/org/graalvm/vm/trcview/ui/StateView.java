@@ -291,7 +291,7 @@ public class StateView extends JPanel {
     }
 
     private String getValue(Point p) {
-        int pos = text.viewToModel(p);
+        int pos = text.viewToModel2D(p);
         if (pos >= 0) {
             StyledDocument doc = (StyledDocument) text.getDocument();
             Element elem = doc.getCharacterElement(pos);
