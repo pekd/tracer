@@ -49,7 +49,7 @@ public class CustomUI extends UIPlugin {
                 return;
             }
             String filename = load.getDirectory() + load.getFile();
-            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
@@ -128,7 +128,7 @@ public class CustomUI extends UIPlugin {
         TraceReader reader = new CustomTraceReader(analyzer);
         long size = analyzer.getEvents().size();
         String file = "Transformed trace [" + analyzer.getArchitecture().getName() + "]";
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() throws Exception {
                 try {
