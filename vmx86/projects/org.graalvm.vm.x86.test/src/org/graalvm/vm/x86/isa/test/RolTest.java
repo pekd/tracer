@@ -52,13 +52,21 @@ public class RolTest extends InstructionTest {
     private static final byte[] MACHINECODE2 = {(byte) 0xd2, (byte) 0xc0};
     private static final String ASSEMBLY2 = "rol\tal,cl";
 
+    private static final byte[] MACHINECODE3 = {(byte) 0xC0, 0x04, 0x25, (byte) 0xe4, 0x40, (byte) 0x80, 0x00, 0x56};
+    private static final String ASSEMBLY3 = "rol\t[0x8040e4],0x56";
+
     @Test
     public void test1() {
         check(MACHINECODE1, ASSEMBLY1, Rolq.class);
     }
 
     @Test
-    public void test3() {
+    public void test2() {
         check(MACHINECODE2, ASSEMBLY2, Rolb.class);
+    }
+
+    @Test
+    public void test3() {
+        check(MACHINECODE3, ASSEMBLY3, Rolb.class);
     }
 }

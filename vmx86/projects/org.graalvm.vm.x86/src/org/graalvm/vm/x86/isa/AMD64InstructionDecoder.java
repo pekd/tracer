@@ -1715,6 +1715,10 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.SHL_RM8_I8: {
                 Args args = new Args(code, rex, segment, addressOverride);
                 switch (args.modrm.getReg()) {
+                    case 0: { // ROL r/m8,i8
+                        byte imm = code.read8();
+                        return new Rolb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
+                    }
                     case 4: { // SHL r/m8,i8
                         byte imm = code.read8();
                         return new Shlb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
