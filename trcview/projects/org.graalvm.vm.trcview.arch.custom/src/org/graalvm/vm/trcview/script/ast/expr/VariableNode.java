@@ -5,12 +5,17 @@ import org.graalvm.vm.trcview.script.ast.Variable;
 import org.graalvm.vm.trcview.script.rt.Context;
 import org.graalvm.vm.trcview.script.rt.Pointer;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
+import org.graalvm.vm.trcview.script.type.Type;
 
 public class VariableNode extends Expression {
     private final Variable var;
 
     public VariableNode(Variable var) {
         this.var = var;
+    }
+
+    public Type getType() {
+        return var.getType();
     }
 
     @Override

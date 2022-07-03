@@ -139,7 +139,11 @@ public class Intrinsics {
 
             Object[] vararg = new Object[args.length - 2];
             for (int i = 0; i < vararg.length; i++) {
-                vararg[i] = args[i + 2];
+                if (args[i + 2] instanceof Pointer) {
+                    vararg[i] = ((Pointer) args[i + 2]).cstr();
+                } else {
+                    vararg[i] = args[i + 2];
+                }
             }
 
             String result = String.format(src.cstr(), vararg);
