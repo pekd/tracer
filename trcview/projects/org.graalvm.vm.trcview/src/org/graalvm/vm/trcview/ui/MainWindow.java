@@ -722,7 +722,7 @@ public class MainWindow extends JFrame implements TraceListenable {
 
         typeRecovery = new JCheckBoxMenuItem("Perform type recovery");
         typeRecovery.setMnemonic('t');
-        typeRecovery.setSelected(true);
+        typeRecovery.setSelected(false);
         toolsMenu.add(typeRecovery);
 
         exportMemory = new JMenuItem("Export memory region");
