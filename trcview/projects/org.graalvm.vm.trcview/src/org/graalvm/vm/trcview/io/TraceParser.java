@@ -177,12 +177,7 @@ public class TraceParser {
                     parent = block;
                     analysis.process(trap, block, lastState);
                 } else if (lastStep != null) {
-                    // like a call
-                    BlockNode block = new BlockNode(lastStep);
-                    block.setHeadState(lastState);
-                    parent.add(block);
-                    parent = block;
-                    analysis.process(lastStep, block, lastState);
+                    // like a call, handled by last StepEvent
                 }
             } else if (evt instanceof DeviceDefinitionEvent) {
                 analysis.process(evt, evt, lastState);
