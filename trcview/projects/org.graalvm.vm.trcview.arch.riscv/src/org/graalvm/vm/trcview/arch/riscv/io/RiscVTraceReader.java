@@ -3,6 +3,7 @@ package org.graalvm.vm.trcview.arch.riscv.io;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 import org.graalvm.vm.posix.api.mem.Mman;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
@@ -17,6 +18,7 @@ import org.graalvm.vm.trcview.net.protocol.IO;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.LEInputStream;
 import org.graalvm.vm.util.io.WordInputStream;
+import org.graalvm.vm.util.log.Trace;
 
 public class RiscVTraceReader extends ArchTraceReader {
     public static final int TYPE_STEP32 = 0x0;
@@ -36,6 +38,8 @@ public class RiscVTraceReader extends ArchTraceReader {
     public static final int TYPE_MMAP = 0x0E;
 
     private static final int FULL_STEPS = 1000;
+
+    private static final Logger log = Trace.create(RiscVTraceReader.class);
 
     private final WordInputStream in;
     private RiscVStepEvent lastStep;
@@ -140,6 +144,11 @@ public class RiscVTraceReader extends ArchTraceReader {
             case TYPE_DUMP: {
                 long address = in.read64bit();
                 byte[] data = IO.readArray(in);
+                if (data == null) {
+                    // skip this dump event, return the next one
+                    log.warning("Suspicious DUMP event of length 0 encountered for address 0x" + HexFormatter.tohex(address, 8));
+                    return read();
+                }
                 return new MemoryDumpEvent(0, address, data);
             }
             case TYPE_MMAP: {
