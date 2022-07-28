@@ -64,4 +64,41 @@ public class Opcode {
     public static final int F3_LWU = 0b110;
     public static final int F3_LD = 0b011;
     public static final int F3_SD = 0b011;
+    public static final int F3_ADDIW = 0b000;
+    public static final int F3_SLLIW = 0b001;
+    public static final int F3_SRLIW = 0b101;
+    public static final int F3_SRAIW = 0b101;
+    public static final int F3_ADDW = 0b000;
+    public static final int F3_SUBW = 0b000;
+    public static final int F3_SLLW = 0b001;
+    public static final int F3_SRLW = 0b101;
+    public static final int F3_SRAW = 0b101;
+
+    // RV32/RV64 Zifencei
+    public static final int F3_FENCEI = 0b001;
+
+    // RV32/RV64 Zicsr
+    public static final int F3_CSRRW = 0b001;
+    public static final int F3_CSRRS = 0b010;
+    public static final int F3_CSRRC = 0b011;
+    public static final int F3_CSRRWI = 0b101;
+    public static final int F3_CSRRSI = 0b110;
+    public static final int F3_CSRRCI = 0b111;
+
+    // RV32M
+    public static final int F3_MUL = 0b000;
+    public static final int F3_MULH = 0b001;
+    public static final int F3_MULHSU = 0b010;
+    public static final int F3_MULHU = 0b011;
+    public static final int F3_DIV = 0b100;
+    public static final int F3_DIVU = 0b101;
+    public static final int F3_REM = 0b110;
+    public static final int F3_REMU = 0b111;
+
+    // RV64M
+    public static final int F3_MULW = 0b000;
+    public static final int F3_DIVW = 0b100;
+    public static final int F3_DIVuW = 0b101;
+    public static final int F3_REMW = 0b110;
+    public static final int F3_REMUW = 0b111;
 }

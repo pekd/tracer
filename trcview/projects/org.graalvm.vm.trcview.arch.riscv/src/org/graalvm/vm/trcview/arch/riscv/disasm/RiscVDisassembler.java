@@ -27,9 +27,18 @@ public class RiscVDisassembler {
             case Opcode.OP_BRANCH:
                 return InstructionType.JCC;
             case Opcode.OP_SYSTEM:
-                if (opcd == Opcode.OP_SYSTEM) {
+                if (insn == Opcode.OP_SYSTEM) {
                     // ecall
                     return InstructionType.SYSCALL;
+                } else if (insn == (Opcode.OP_SYSTEM | (1 << 20))) {
+                    // ebreak
+                    return InstructionType.SYSCALL;
+                } else if (insn == (Opcode.OP_SYSTEM | (0b0001000_00010 << 20))) {
+                    // sret
+                    return InstructionType.RTI;
+                } else if (insn == (Opcode.OP_SYSTEM | (0b0011000_00010 << 20))) {
+                    // mret
+                    return InstructionType.RTI;
                 }
             default:
                 return InstructionType.OTHER;
@@ -125,6 +134,24 @@ public class RiscVDisassembler {
                         break;
                 }
                 break;
+            case Opcode.OP_IMM_32:
+                switch (insn.funct3.get()) {
+                    case Opcode.F3_ADDIW:
+                        return opimm(insn, "addiw");
+                    case Opcode.F3_SLLIW:
+                        if (insn.imm11_5.get() == 0) {
+                            return shiftimm(insn, "slliw");
+                        }
+                        break;
+                    case Opcode.F3_SRLIW:
+                        if (insn.imm11_5.get() == 0) {
+                            return shiftimm(insn, "srliw");
+                        } else if (insn.imm11_5.get() == 0b0100000) {
+                            return shiftimm(insn, "sraiw");
+                        }
+                        break;
+                }
+                break;
             case Opcode.OP:
                 switch (insn.funct3.get()) {
                     case Opcode.F3_ADD:
@@ -132,26 +159,36 @@ public class RiscVDisassembler {
                             return op(insn, "add");
                         } else if (insn.imm11_5.get() == 0b0100000) {
                             return op(insn, "sub");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "mul");
                         }
                         break;
                     case Opcode.F3_SLL:
                         if (insn.imm11_5.get() == 0) {
                             return op(insn, "sll");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "mulh");
                         }
                         break;
                     case Opcode.F3_SLT:
                         if (insn.imm11_5.get() == 0) {
                             return op(insn, "slt");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "mulhsu");
                         }
                         break;
                     case Opcode.F3_SLTU:
                         if (insn.imm11_5.get() == 0) {
                             return op(insn, "sltu");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "mulhu");
                         }
                         break;
                     case Opcode.F3_XOR:
                         if (insn.imm11_5.get() == 0) {
                             return op(insn, "xor");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "div");
                         }
                         break;
                     case Opcode.F3_SRL:
@@ -159,25 +196,101 @@ public class RiscVDisassembler {
                             return op(insn, "srl");
                         } else if (insn.imm11_5.get() == 0b0100000) {
                             return op(insn, "sra");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "divu");
                         }
                         break;
                     case Opcode.F3_OR:
                         if (insn.imm11_5.get() == 0) {
                             return op(insn, "or");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "rem");
                         }
                         break;
                     case Opcode.F3_AND:
                         if (insn.imm11_5.get() == 0) {
                             return op(insn, "and");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "remu");
                         }
                         break;
                 }
                 break;
+            case Opcode.OP_32:
+                switch (insn.funct3.get()) {
+                    case Opcode.F3_ADDW:
+                        if (insn.imm11_5.get() == 0) {
+                            return op(insn, "addw");
+                        } else if (insn.imm11_5.get() == 0b0100000) {
+                            return op(insn, "subw");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "mulw");
+                        }
+                        break;
+                    case Opcode.F3_SLLW:
+                        if (insn.imm11_5.get() == 0) {
+                            return op(insn, "sllw");
+                        }
+                        break;
+                    case Opcode.F3_DIVW:
+                        if (insn.imm11_5.get() == 1) {
+                            return op(insn, "divw");
+                        }
+                        break;
+                    case Opcode.F3_SRLW:
+                        if (insn.imm11_5.get() == 0) {
+                            return op(insn, "srlw");
+                        } else if (insn.imm11_5.get() == 0b0100000) {
+                            return op(insn, "sraw");
+                        } else if (insn.imm11_5.get() == 1) {
+                            return op(insn, "divwu");
+                        }
+                        break;
+                    case Opcode.F3_REMW:
+                        if (insn.imm11_5.get() == 1) {
+                            return op(insn, "remw");
+                        }
+                        break;
+                    case Opcode.F3_REMUW:
+                        if (insn.imm11_5.get() == 1) {
+                            return op(insn, "remuw");
+                        }
+                        break;
+                }
+                break;
+            case Opcode.OP_MISC_MEM:
+                switch (insn.funct3.get()) {
+                    case Opcode.F3_FENCEI:
+                        return new String[]{"fence.i"};
+                }
+                break;
             case Opcode.OP_SYSTEM:
-                if (word == Opcode.OP_SYSTEM) {
-                    return new String[]{"ecall"};
-                } else if (word == (Opcode.OP_SYSTEM | (1 << 20))) {
-                    return new String[]{"ebreak"};
+                switch (insn.funct3.get()) {
+                    case 0:
+                        if (word == Opcode.OP_SYSTEM) {
+                            return new String[]{"ecall"};
+                        } else if (word == (Opcode.OP_SYSTEM | (1 << 20))) {
+                            return new String[]{"ebreak"};
+                        } else if (word == (Opcode.OP_SYSTEM | (0b0001000_00010 << 20))) {
+                            return new String[]{"sret"};
+                        } else if (word == (Opcode.OP_SYSTEM | (0b0011000_00010 << 20))) {
+                            return new String[]{"mret"};
+                        } else if (word == (Opcode.OP_SYSTEM | (0b0001000_00101 << 20))) {
+                            return new String[]{"wfi"};
+                        }
+                        break;
+                    case Opcode.F3_CSRRW:
+                        return csr(insn, "csrrw");
+                    case Opcode.F3_CSRRS:
+                        return csr(insn, "csrrs");
+                    case Opcode.F3_CSRRC:
+                        return csr(insn, "csrrc");
+                    case Opcode.F3_CSRRWI:
+                        return csri(insn, "csrrwi");
+                    case Opcode.F3_CSRRSI:
+                        return csri(insn, "csrrsi");
+                    case Opcode.F3_CSRRCI:
+                        return csri(insn, "csrrci");
                 }
                 break;
         }
@@ -208,6 +321,10 @@ public class RiscVDisassembler {
 
     protected static String imm(int x) {
         return Integer.toUnsignedString(x);
+    }
+
+    protected static String csr(int csr) {
+        return CSR.getName(csr);
     }
 
     protected static String[] lui(InstructionFormat insn) {
@@ -394,5 +511,13 @@ public class RiscVDisassembler {
 
     protected static String[] op(InstructionFormat insn, String mnemonic) {
         return new String[]{mnemonic, r(insn.rd.get()), r(insn.rs1.get()), r(insn.rs2.get())};
+    }
+
+    protected static String[] csr(InstructionFormat insn, String mnemonic) {
+        return new String[]{mnemonic, r(insn.rd.get()), csr(insn.imm11_0u.get()), r(insn.rs1.get())};
+    }
+
+    protected static String[] csri(InstructionFormat insn, String mnemonic) {
+        return new String[]{mnemonic, r(insn.rd.get()), csr(insn.imm11_0u.get()), imm(insn.rs1.get())};
     }
 }
