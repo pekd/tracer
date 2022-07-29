@@ -19,8 +19,17 @@ public abstract class RiscVStepEvent extends StepEvent {
 
     @Override
     public byte[] getMachinecode() {
-        byte[] opcd = new byte[4];
-        Endianess.set32bitBE(opcd, getState().getInstruction());
+        int insn = getState().getInstruction();
+        int len = RiscVDisassembler.getSize(insn);
+
+        byte[] opcd = new byte[len];
+        if (len == 2) {
+            Endianess.set16bitBE(opcd, (short) insn);
+        } else if (len == 4) {
+            Endianess.set32bitBE(opcd, insn);
+        } else {
+            throw new IllegalStateException("invalid instruction size");
+        }
         return opcd;
     }
 
