@@ -101,4 +101,59 @@ public class Opcode {
     public static final int F3_DIVuW = 0b101;
     public static final int F3_REMW = 0b110;
     public static final int F3_REMUW = 0b111;
+
+    // RVC
+    public static final int F3_CADDI4SPN = 0b000;
+    public static final int F3_CFLD = 0b001; // RV32/64
+    public static final int F3_CLQ = 0b001; // RV128
+    public static final int F3_CLW = 0b010;
+    public static final int F3_CFLW = 0b011; // RV32
+    public static final int F3_CLD = 0b011; // RV64/128
+    public static final int F3_CFSD = 0b101; // RV32/64
+    public static final int F3_CSQ = 0b101; // RV128
+    public static final int F3_CSW = 0b110;
+    public static final int F3_CFSW = 0b111; // RV32
+    public static final int F3_CSD = 0b111; // RV64/128
+
+    public static final int F3_CNOP = 0b000;
+    public static final int F3_CADDI = 0b000;
+    public static final int F3_CJAL = 0b001; // RV32
+    public static final int F3_CADDIW = 0b001; // RV64/128
+    public static final int F3_CLI = 0b010;
+    public static final int F3_CADDI16SP = 0b011;
+    public static final int F3_CLUI = 0b011;
+    public static final int F3_CARITHMETIC = 0b100;
+    public static final int XOP_CSRLI = 0b00;
+    public static final int XOP_CSRLI64 = 0b00;
+    public static final int XOP_CSRAI = 0b01;
+    public static final int XOP_CSRAI64 = 0b01;
+    public static final int XOP_CANDI = 0b10;
+    public static final int XOP_CARITH = 0b11;
+    public static final int F2_CSUB = 0b00;
+    public static final int F2_CXOR = 0b01;
+    public static final int F2_COR = 0b10;
+    public static final int F2_CAND = 0b11;
+    public static final int F2_CSUBW = 0b00;
+    public static final int F2_CADDW = 0b01;
+    public static final int F3_CJ = 0b101;
+    public static final int F3_CBEQZ = 0b110;
+    public static final int F3_CBNEZ = 0b111;
+
+    public static final int F3_CSLLI = 0b000;
+    public static final int F3_CSLLI64 = 0b000;
+    public static final int F3_CFLDSP = 0b001;
+    public static final int F3_CLQSP = 0b001;
+    public static final int F3_CLWSP = 0b010;
+    public static final int F3_CFLWSP = 0b011;
+    public static final int F3_CLDSP = 0b011;
+    public static final int F3_CJR = 0b100;
+    public static final int F3_CMV = 0b100;
+    public static final int F3_CEBREAK = 0b100;
+    public static final int F3_CJALR = 0b100;
+    public static final int F3_CADD = 0b100;
+    public static final int F3_CFSDSP = 0b101;
+    public static final int F3_CSQSP = 0b101;
+    public static final int F3_CSWSP = 0b110;
+    public static final int F3_CFSWSP = 0b111;
+    public static final int F3_CSDSP = 0b111;
 }
