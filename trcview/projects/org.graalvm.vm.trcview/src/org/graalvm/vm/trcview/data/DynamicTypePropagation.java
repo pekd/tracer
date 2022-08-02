@@ -1,6 +1,9 @@
 package org.graalvm.vm.trcview.data;
 
+import java.util.logging.Logger;
+
 import org.graalvm.vm.trcview.analysis.SymbolTable;
+import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
@@ -11,8 +14,12 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 
 public class DynamicTypePropagation {
+    private static final Logger log = Trace.create(DynamicTypePropagation.class);
+
     private final ArchitectureTypeInfo info;
     private final Semantics semantics;
     private final StepFormat fmt;
@@ -22,13 +29,13 @@ public class DynamicTypePropagation {
     private long last;
     private long laststep;
 
-    public DynamicTypePropagation(Architecture arch, ArchitectureTypeInfo info, SymbolTable symbols) {
-        this.info = info;
+    public DynamicTypePropagation(Architecture arch, SymbolTable symbols, MemoryTrace memtrc) {
+        this.info = arch.getTypeInfo();
         this.fmt = arch.getFormat();
         CodeTypeMap codeMap = new CodeTypeMap(arch.getRegisterCount());
         MemoryTypeMap memoryMap = new MemoryTypeMap();
         memory = new MemoryAccessMap();
-        this.semantics = new Semantics(codeMap, memoryMap, symbols, memory);
+        semantics = new CodeSemantics(codeMap, memoryMap, symbols, memory, memtrc, arch);
         last = -1;
     }
 
@@ -46,6 +53,14 @@ public class DynamicTypePropagation {
         }
         last = pc;
 
+        for (int reg : event.getRegisterReads()) {
+            semantics.read(reg);
+        }
+
+        for (int reg : event.getRegisterWrites()) {
+            semantics.write(reg);
+        }
+
         event.getSemantics(semantics);
 
         memory.access(pc, event);
@@ -53,7 +68,7 @@ public class DynamicTypePropagation {
 
     public void finish() {
         semantics.finish();
-        System.out.println("DynamicTypePropagation result: " + semantics.getStatistics());
+        log.info("DynamicTypePropagation result: " + semantics.getStatistics());
     }
 
     public Semantics getSemantics() {
@@ -64,7 +79,10 @@ public class DynamicTypePropagation {
     public void transfer(TraceAnalyzer trc) {
         TypedMemory mem = trc.getTypedMemory();
 
+        log.info("Resolving types...");
+
         // transfer final data types in memory
+        log.info(semantics.getUsedAddresses().size() + " accesed memory locations");
         for (long addr : semantics.getUsedAddresses()) {
             long bits = semantics.resolveMemory(addr, laststep);
             VariableType vartype = VariableType.resolve(bits, info.getPointerSize());
@@ -94,7 +112,7 @@ public class DynamicTypePropagation {
                     Variable var = mem.getRecoveredType(addr);
                     if (var != null && var.getAddress() == addr) {
                         if (lasttype != null && !lasttype.equals(var.getType())) {
-                            System.out.println("array inconsistency at " + fmt.formatShortAddress(addr));
+                            log.warning("array inconsistency at " + fmt.formatShortAddress(addr));
                             continue loop;
                         }
                         lasttype = var.getType();
@@ -141,10 +159,12 @@ public class DynamicTypePropagation {
                 }
             }
         }
+
+        log.info("Type recovery finished");
     }
 
     private static void defineArray(TypedMemory mem, Type type, long first, long last) {
-        System.out.printf("defining array at %x-%x\n", first, last);
+        log.log(Levels.INFO, () -> String.format("defining array at %x-%x", first, last));
         int elements = (int) ((last - first) / type.getSize()) + 1;
         Type t = new Type(type.getType(), false, elements, type.getRepresentation());
         mem.setRecoveredType(first, t);

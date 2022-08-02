@@ -2,16 +2,17 @@ package org.graalvm.vm.trcview.data.ir;
 
 import org.graalvm.vm.util.HexFormatter;
 
-public class IndexedMemoryOperand extends Operand {
+// this is really a pointer to a pointer
+public class IndirectIndexedMemoryOperand extends Operand {
     private final int register;
     private final long offset;
 
-    public IndexedMemoryOperand(int register) {
+    public IndirectIndexedMemoryOperand(int register) {
         this.register = register;
         this.offset = 0;
     }
 
-    public IndexedMemoryOperand(int register, long offset) {
+    public IndirectIndexedMemoryOperand(int register, long offset) {
         this.register = register;
         this.offset = offset;
     }
@@ -34,21 +35,21 @@ public class IndexedMemoryOperand extends Operand {
         if (o == null) {
             return false;
         }
-        if (!(o instanceof IndexedMemoryOperand)) {
+        if (!(o instanceof IndirectIndexedMemoryOperand)) {
             return false;
         }
-        IndexedMemoryOperand m = (IndexedMemoryOperand) o;
+        IndirectIndexedMemoryOperand m = (IndirectIndexedMemoryOperand) o;
         return m.offset == offset && m.register == register;
     }
 
     @Override
     public String toString() {
         if (offset == 0) {
-            return "(R" + register + ")";
+            return "@(R" + register + ")";
         } else if (offset < 0) {
-            return "-0x" + HexFormatter.tohex(-offset) + "(R" + register + ")";
+            return "@-0x" + HexFormatter.tohex(-offset) + "(R" + register + ")";
         } else {
-            return "0x" + HexFormatter.tohex(offset) + "(R" + register + ")";
+            return "@0x" + HexFormatter.tohex(offset) + "(R" + register + ")";
         }
     }
 }

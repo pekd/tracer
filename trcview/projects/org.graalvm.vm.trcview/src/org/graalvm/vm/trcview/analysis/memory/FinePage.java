@@ -365,6 +365,21 @@ public class FinePage extends Page {
     }
 
     @Override
+    public byte getLastByte(long addr) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (updates[off] == null || updates[off].isEmpty()) {
+            return data[off];
+        } else {
+            MemoryUpdate update = updates[off].get(updates[off].size() - 1);
+            return update.getByte(addr);
+        }
+    }
+
+    @Override
     public void trim() {
         for (ArrayList<MemoryUpdate> update : updates) {
             if (update != null) {

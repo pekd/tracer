@@ -20,6 +20,14 @@ public class CodePageTypeMap {
         return memory[offset];
     }
 
+    public void setLive(int offset, int reg, boolean value) {
+        memory[offset].setLive(reg, value);
+    }
+
+    public boolean isLive(int offset, int reg) {
+        return memory[offset].isLive(reg);
+    }
+
     public void set(int offset, RegisterOperand op, VariableType type) {
         memory[offset].set(op, type);
     }

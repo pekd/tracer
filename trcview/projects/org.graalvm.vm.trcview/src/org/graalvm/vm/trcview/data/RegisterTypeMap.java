@@ -18,6 +18,8 @@ public class RegisterTypeMap {
     private Set<ChainTarget>[] forwardChainTargets;
     private boolean mark = false;
 
+    private boolean[] live;
+
     private final long currentPC; // debugging
 
     @SuppressWarnings("unchecked")
@@ -26,6 +28,7 @@ public class RegisterTypeMap {
         registerTypes = new long[size];
         reverseChainTargets = new Set[size];
         forwardChainTargets = new Set[size];
+        live = new boolean[size];
         clear();
     }
 
@@ -39,6 +42,14 @@ public class RegisterTypeMap {
 
     public void clearMark() {
         mark = false;
+    }
+
+    public boolean isLive(int reg) {
+        return live[reg];
+    }
+
+    public void setLive(int reg, boolean value) {
+        live[reg] = value;
     }
 
     public void clear() {

@@ -92,6 +92,8 @@ public abstract class Page {
 
     public abstract long getWord(long addr, long instructionCount) throws MemoryNotMappedException;
 
+    public abstract byte getLastByte(long addr) throws MemoryNotMappedException;
+
     public abstract MemoryUpdate getLastUpdate(long addr, long instructionCount) throws MemoryNotMappedException;
 
     public abstract MemoryUpdate getNextUpdate(long addr, long instructionCount) throws MemoryNotMappedException;

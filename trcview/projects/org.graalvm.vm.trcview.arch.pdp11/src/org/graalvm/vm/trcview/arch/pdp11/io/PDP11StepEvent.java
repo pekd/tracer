@@ -111,6 +111,16 @@ public abstract class PDP11StepEvent extends StepEvent {
     }
 
     @Override
+    public int[] getRegisterReads() {
+        return PDP11Semantics.getRegisterReads(getState().getMachinecodeWords(), (short) getPC());
+    }
+
+    @Override
+    public int[] getRegisterWrites() {
+        return PDP11Semantics.getRegisterWrites(getState().getMachinecodeWords(), (short) getPC());
+    }
+
+    @Override
     public String toString() {
         return String.format("%06o: %s ; step %d", getPC(), getDisassembly(), getStep());
     }

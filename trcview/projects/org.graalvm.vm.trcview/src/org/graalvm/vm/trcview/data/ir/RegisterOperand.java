@@ -10,4 +10,26 @@ public class RegisterOperand extends Operand {
     public int getRegister() {
         return register;
     }
+
+    @Override
+    public int hashCode() {
+        return register;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof RegisterOperand)) {
+            return false;
+        }
+        RegisterOperand r = (RegisterOperand) o;
+        return r.register == register;
+    }
+
+    @Override
+    public String toString() {
+        return "R" + register;
+    }
 }

@@ -147,7 +147,7 @@ public class Analysis {
             regcnt = 0;
         }
         if (regcnt != 0) {
-            typeRecovery = new DynamicTypePropagation(arch, info, symbols);
+            typeRecovery = new DynamicTypePropagation(arch, symbols, memory);
         }
     }
 

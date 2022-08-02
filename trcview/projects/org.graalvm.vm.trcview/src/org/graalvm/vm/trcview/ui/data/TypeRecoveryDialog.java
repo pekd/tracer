@@ -4,9 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import javax.swing.JDialog;
@@ -19,9 +21,11 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.ArrayStructRecovery;
 import org.graalvm.vm.trcview.data.ChainTarget;
+import org.graalvm.vm.trcview.data.CodeSemantics;
 import org.graalvm.vm.trcview.data.MemoryChainTarget;
 import org.graalvm.vm.trcview.data.RegisterChainTarget;
 import org.graalvm.vm.trcview.data.RegisterTypeMap;
+import org.graalvm.vm.trcview.data.SemanticInfo;
 import org.graalvm.vm.trcview.data.Semantics;
 import org.graalvm.vm.trcview.data.ir.RegisterOperand;
 import org.graalvm.vm.trcview.data.type.VariableType;
@@ -36,7 +40,7 @@ import org.graalvm.vm.util.HexFormatter;
 
 @SuppressWarnings("serial")
 public class TypeRecoveryDialog extends JDialog implements StepListener {
-    private static final boolean debug = false;
+    private static final boolean debug = true;
 
     private TraceAnalyzer trc;
 
@@ -99,11 +103,20 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
             long flags = semantics.resolve(pc, new RegisterOperand(i));
             long flowflags = semantics.resolveData(pc, new RegisterOperand(i));
 
+            boolean live = semantics.isLive(pc, i);
+            for (int reg : step.getRegisterWrites()) {
+                if (reg == i) {
+                    live = true;
+                    break;
+                }
+            }
+
             buf.append("register ");
             buf.append(String.format("%02d", i));
             buf.append(":");
 
             buf.append(" [");
+            buf.append(live ? 'L' : 'D');
             if (BitTest.test(flowflags, VariableType.MUL_BIT)) {
                 buf.append('M');
             } else {
@@ -131,10 +144,14 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
 
             if (flags == 0) {
                 buf.append(" [ ] --\n");
+            } else if (flags == VariableType.BREAK_BIT) {
+                buf.append(" [B] --\n");
             } else if (flags == VariableType.CHAIN_BIT) {
                 buf.append(" [C] --\n");
             } else {
-                if (BitTest.test(flags, VariableType.CHAIN_BIT)) {
+                if (BitTest.test(flags, VariableType.BREAK_BIT)) {
+                    buf.append(" [B]");
+                } else if (BitTest.test(flags, VariableType.CHAIN_BIT)) {
                     buf.append(" [C]");
                 } else {
                     buf.append(" [ ]");
@@ -150,6 +167,14 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
                 buf.append('\n');
             }
         }
+
+        int[] reads = step.getRegisterReads();
+        int[] writes = step.getRegisterWrites();
+
+        buf.append("\nRegister reads:  ").append(IntStream.of(reads).sorted().mapToObj(x -> "r" + x).collect(Collectors.joining(", ")));
+        buf.append("\nRegister writes: ").append(IntStream.of(writes).sorted().mapToObj(x -> "r" + x).collect(Collectors.joining(", ")));
+
+        buf.append('\n');
 
         // memory accesses
         buf.append("\n\nMEMORY:\n");
@@ -219,7 +244,7 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
             buf.append("\nClosure per register:\n");
 
             for (int i = 0; i < regcount; i++) {
-                Set<ChainTarget> set = new HashSet<>();
+                List<ChainTarget> set = new ArrayList<>();
                 semantics.resolve(pc, new RegisterOperand(i), set);
                 buf.append("register ");
                 buf.append(String.format("%02d", i));
@@ -234,9 +259,55 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
                     } else {
                         return "?";
                     }
-                }).sorted().forEach(x -> buf.append(' ').append(x));
+                }).forEach(x -> buf.append(' ').append(x));
                 buf.append('\n');
             }
+
+            buf.append("\n\nLinks per register:\n");
+            CodeSemantics cs = (CodeSemantics) semantics;
+            for (int i = 0; i < regcount; i++) {
+                RegisterTypeMap map = cs.get(pc);
+                Set<ChainTarget> forward = map.getForwardChain(i);
+                Set<ChainTarget> reverse = map.getReverseChain(i);
+
+                buf.append("register ");
+                buf.append(String.format("%02d", i));
+                buf.append(":\n");
+                buf.append("forward = ");
+                buf.append(forward.stream().map(x -> {
+                    if (x instanceof RegisterChainTarget) {
+                        RegisterChainTarget t = (RegisterChainTarget) x;
+                        return fmt.formatAddress(t.map.getPC()) + "[r" + t.register + "]";
+                    } else if (x instanceof MemoryChainTarget) {
+                        MemoryChainTarget t = (MemoryChainTarget) x;
+                        return fmt.formatAddress(t.address) + "[step=" + t.step + "]";
+                    } else {
+                        return "???";
+                    }
+                }).sorted().collect(Collectors.joining(" ")));
+                buf.append("\nreverse = ");
+                buf.append(reverse.stream().map(x -> {
+                    if (x instanceof RegisterChainTarget) {
+                        RegisterChainTarget t = (RegisterChainTarget) x;
+                        return fmt.formatAddress(t.map.getPC()) + "[r" + t.register + "]";
+                    } else if (x instanceof MemoryChainTarget) {
+                        MemoryChainTarget t = (MemoryChainTarget) x;
+                        return fmt.formatAddress(t.address) + "[step=" + t.step + "]";
+                    } else {
+                        return "???";
+                    }
+                }).sorted().collect(Collectors.joining(" ")));
+
+                buf.append("\n");
+            }
+        }
+
+        SemanticInfo info = new SemanticInfo();
+        step.getSemantics(info);
+
+        buf.append("\nSemantics:");
+        for (String line : info.getOperations()) {
+            buf.append('\n').append(line);
         }
 
         text.setText(buf.toString());

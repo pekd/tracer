@@ -39,6 +39,18 @@ public class CodeTypeMap {
         return map;
     }
 
+    public void setLive(long pc, int reg, boolean value) {
+        CodePageTypeMap map = getMap(pc);
+        int offset = getOffset(pc);
+        map.setLive(offset, reg, value);
+    }
+
+    public boolean isLive(long pc, int reg) {
+        CodePageTypeMap map = getMap(pc);
+        int offset = getOffset(pc);
+        return map.isLive(offset, reg);
+    }
+
     public RegisterTypeMap get(long pc) {
         return getMap(pc).getMap(getOffset(pc));
     }

@@ -235,7 +235,7 @@ public class MemoryTrace {
         return page.getByte(addr, instructionCount);
     }
 
-    public long getShort(long addr, long instructionCount) throws MemoryNotMappedException {
+    public short getShort(long addr, long instructionCount) throws MemoryNotMappedException {
         return (short) (Byte.toUnsignedInt(getByte(addr, instructionCount)) | (Byte.toUnsignedInt(getByte(addr + 1, instructionCount)) << 8));
     }
 
@@ -264,6 +264,36 @@ public class MemoryTrace {
         } else {
             return page.getWord(addr, instructionCount);
         }
+    }
+
+    public byte getLastByte(long addr) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getLastByte(addr);
+    }
+
+    public short getLastShort(long addr) throws MemoryNotMappedException {
+        return (short) (Byte.toUnsignedInt(getLastByte(addr)) | (Byte.toUnsignedInt(getLastByte(addr + 1)) << 8));
+    }
+
+    public int getLastInt(long addr) throws MemoryNotMappedException {
+        long value = 0;
+        for (int i = 0; i < 4; i++) {
+            value >>>= 8;
+            value |= Byte.toUnsignedLong(getLastByte(addr + i)) << 24;
+        }
+        return (int) value;
+    }
+
+    public long getLastWord(long addr) throws MemoryNotMappedException {
+        long value = 0;
+        for (int i = 0; i < 8; i++) {
+            value >>>= 8;
+            value |= Byte.toUnsignedLong(getLastByte(addr + i)) << 56;
+        }
+        return value;
     }
 
     public MemoryUpdate getLastWrite(long addr, long instructionCount) throws MemoryNotMappedException {

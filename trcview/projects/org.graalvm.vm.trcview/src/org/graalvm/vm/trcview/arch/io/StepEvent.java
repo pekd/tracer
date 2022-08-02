@@ -110,6 +110,14 @@ public abstract class StepEvent extends Event {
         return write;
     }
 
+    public int[] getRegisterReads() {
+        return new int[0];
+    }
+
+    public int[] getRegisterWrites() {
+        return new int[0];
+    }
+
     @Override
     public int hashCode() {
         long hash = (getStep() ^ getPC());

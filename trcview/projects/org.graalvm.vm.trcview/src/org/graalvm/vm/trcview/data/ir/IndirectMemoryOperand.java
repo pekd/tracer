@@ -2,10 +2,11 @@ package org.graalvm.vm.trcview.data.ir;
 
 import org.graalvm.vm.util.HexFormatter;
 
-public class MemoryOperand extends Operand {
+// this is really a pointer to a pointer
+public class IndirectMemoryOperand extends Operand {
     private long address;
 
-    public MemoryOperand(long address) {
+    public IndirectMemoryOperand(long address) {
         this.address = address;
     }
 
@@ -23,15 +24,15 @@ public class MemoryOperand extends Operand {
         if (o == null) {
             return false;
         }
-        if (!(o instanceof MemoryOperand)) {
+        if (!(o instanceof IndirectMemoryOperand)) {
             return false;
         }
-        MemoryOperand m = (MemoryOperand) o;
+        IndirectMemoryOperand m = (IndirectMemoryOperand) o;
         return m.address == address;
     }
 
     @Override
     public String toString() {
-        return "(0x" + HexFormatter.tohex(address) + ")";
+        return "@(0x" + HexFormatter.tohex(address) + ")";
     }
 }

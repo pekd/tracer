@@ -247,6 +247,12 @@ public class CoarsePage extends Page {
     }
 
     @Override
+    public byte getLastByte(long addr) throws MemoryNotMappedException {
+        // TODO: implement
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
         if (addr < address || addr >= address + 4096) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
