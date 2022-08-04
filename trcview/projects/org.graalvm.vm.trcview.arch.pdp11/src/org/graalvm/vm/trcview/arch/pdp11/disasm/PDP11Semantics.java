@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.arch.pdp11.disasm;
 
 import org.graalvm.vm.trcview.data.Semantics;
+import org.graalvm.vm.trcview.data.ir.ConstOperand;
 import org.graalvm.vm.trcview.data.ir.IndexedMemoryOperand;
 import org.graalvm.vm.trcview.data.ir.IndirectIndexedMemoryOperand;
 import org.graalvm.vm.trcview.data.ir.IndirectMemoryOperand;
@@ -9,6 +10,7 @@ import org.graalvm.vm.trcview.data.ir.Operand;
 import org.graalvm.vm.trcview.data.ir.RegisterOperand;
 import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.disasm.Field;
+import org.graalvm.vm.util.OctFormatter;
 
 public class PDP11Semantics {
     private static final Field RN = Field.getLE(2, 0);
@@ -39,7 +41,7 @@ public class PDP11Semantics {
         switch (mode) {
             case 2: // #<imm>
                 code.pc += 2;
-                return null;
+                return new ConstOperand();
             case 3: // @#<addr>
                 code.pc += 2;
                 return new MemoryOperand(Short.toUnsignedLong(code.next()));
@@ -50,7 +52,7 @@ public class PDP11Semantics {
                 code.pc += 2;
                 return new IndirectMemoryOperand(Short.toUnsignedLong((short) (code.pc + code.next())));
         }
-        return null;
+        throw new IllegalArgumentException("unsupported PC operand mode " + mode);
     }
 
     public static Operand getOperand(int rn, int mode, Code code, boolean is8bit) {
@@ -86,7 +88,7 @@ public class PDP11Semantics {
                 code.pc += 2;
                 return new IndirectIndexedMemoryOperand(rn, code.next());
         }
-        return null;
+        throw new IllegalArgumentException("unsupported operand mode " + mode);
     }
 
     private static Operand getOperand(int rn, int mode, Code code, Semantics semantics, boolean is8bit) {
@@ -130,7 +132,7 @@ public class PDP11Semantics {
                 semantics.constraint(new RegisterOperand(rn), VariableType.POINTER_I16);
                 return new IndirectIndexedMemoryOperand(rn, code.next());
         }
-        return null;
+        throw new IllegalArgumentException("unsupported operand mode " + mode);
     }
 
     private static Operand op1(short opcd, Code code, Semantics semantics, boolean is8bit) {
