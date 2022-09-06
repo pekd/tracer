@@ -88,6 +88,21 @@ public class Type {
         this.elements = elements;
     }
 
+    private Type(Type type, long elements, boolean isConst) {
+        this.isConst = isConst;
+        this.type = type.type;
+        this.pointee = type.pointee;
+        this.struct = type.struct;
+        this.info = type.info;
+        this.elements = elements;
+        this.representation = type.representation;
+        this.expr = type.expr;
+    }
+
+    public Type array(long elems, boolean cons) {
+        return new Type(this, elems, cons);
+    }
+
     public void setElements(long elements) {
         this.elements = elements;
     }

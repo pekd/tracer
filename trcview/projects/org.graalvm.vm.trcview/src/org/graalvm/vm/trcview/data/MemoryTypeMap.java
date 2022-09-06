@@ -70,6 +70,10 @@ public class MemoryTypeMap {
         getMap(addr).set(getOffset(addr), bits);
     }
 
+    public void set(long addr, long step, long bits) {
+        getMap(addr).set(getOffset(addr), step, bits);
+    }
+
     public void constrain(MemoryOperand addr, VariableType type) {
         constrain(addr.getAddress(), type.getMask());
     }

@@ -10,6 +10,7 @@ import org.graalvm.vm.trcview.data.type.VariableType;
 
 public class RegisterTypeMap {
     private final long[] registerTypes;
+    private final long[] resolvedTypes;
 
     private long chain = -1;
     private Set<RegisterTypeMap> reverseChain = null;
@@ -26,6 +27,7 @@ public class RegisterTypeMap {
     public RegisterTypeMap(int size, long pc) {
         this.currentPC = pc;
         registerTypes = new long[size];
+        resolvedTypes = new long[size];
         reverseChainTargets = new Set[size];
         forwardChainTargets = new Set[size];
         live = new boolean[size];
@@ -50,6 +52,10 @@ public class RegisterTypeMap {
 
     public void setLive(int reg, boolean value) {
         live[reg] = value;
+    }
+
+    public void setResolvedType(int reg, long type) {
+        resolvedTypes[reg] = type;
     }
 
     public void clear() {
@@ -176,11 +182,11 @@ public class RegisterTypeMap {
     }
 
     public long get(int reg) {
-        return registerTypes[reg];
+        return registerTypes[reg] | resolvedTypes[reg];
     }
 
     public long get(RegisterOperand op) {
-        return registerTypes[op.getRegister()];
+        return registerTypes[op.getRegister()] | resolvedTypes[op.getRegister()];
     }
 
     public void breakChain(int reg) {

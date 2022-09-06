@@ -28,6 +28,10 @@ public class CodePageTypeMap {
         return memory[offset].isLive(reg);
     }
 
+    public void setResolvedType(int offset, int reg, long type) {
+        memory[offset].setResolvedType(reg, type);
+    }
+
     public void set(int offset, RegisterOperand op, VariableType type) {
         memory[offset].set(op, type);
     }

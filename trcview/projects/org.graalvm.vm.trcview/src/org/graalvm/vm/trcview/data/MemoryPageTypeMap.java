@@ -40,9 +40,18 @@ public class MemoryPageTypeMap {
         }
     }
 
-    private TypedMemoryCell getStep(int offset, long step) {
+    private TypedMemoryCell getStep(int offset, long step, boolean write) {
         if (memory[offset] == null || memory[offset].isEmpty()) {
-            return new TypedMemoryCell(0);
+            if (write) {
+                // allocate memory cell if it doesn't exist already
+                if (memory[offset] == null) {
+                    memory[offset] = new ArrayList<>();
+                }
+                TypedMemoryCell cell = new TypedMemoryCell(0);
+                memory[offset].add(cell);
+            } else {
+                return new TypedMemoryCell(0);
+            }
         }
 
         int idx = Collections.binarySearch(memory[offset], new TypedMemoryCell(step), (a, b) -> Long.compareUnsigned(a.getStep(), b.getStep()));
@@ -70,6 +79,10 @@ public class MemoryPageTypeMap {
         last(offset).set(type);
     }
 
+    public void set(int offset, long step, long bits) {
+        getStep(offset, step, true).set(bits);
+    }
+
     public void constrain(int offset, long type) {
         last(offset).constrain(type);
     }
@@ -79,15 +92,15 @@ public class MemoryPageTypeMap {
     }
 
     public long get(int offset, long step) {
-        return getStep(offset, step).get();
+        return getStep(offset, step, false).get();
     }
 
     public Set<ChainTarget> getForwardChain(int offset, long step) {
-        return memory[offset] == null || memory[offset].isEmpty() ? Collections.emptySet() : getStep(offset, step).getForwardChain();
+        return memory[offset] == null || memory[offset].isEmpty() ? Collections.emptySet() : getStep(offset, step, false).getForwardChain();
     }
 
     public Set<ChainTarget> getReverseChain(int offset, long step) {
-        return memory[offset] == null || memory[offset].isEmpty() ? Collections.emptySet() : getStep(offset, step).getReverseChain();
+        return memory[offset] == null || memory[offset].isEmpty() ? Collections.emptySet() : getStep(offset, step, false).getReverseChain();
     }
 
     public void clear(int offset) {

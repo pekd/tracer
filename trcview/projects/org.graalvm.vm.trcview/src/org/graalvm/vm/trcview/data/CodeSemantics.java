@@ -407,6 +407,10 @@ public class CodeSemantics extends Semantics {
         return memoryMap.get(addr, step);
     }
 
+    public void setMemory(long addr, long step, long value) {
+        memoryMap.set(addr, step, value);
+    }
+
     @Override
     public Set<ChainTarget> getMemoryReverseChain(long addr, long step) {
         return memoryMap.getReverseChain(addr, step);
@@ -446,14 +450,15 @@ public class CodeSemantics extends Semantics {
         long bits = 0;
 
         Set<ChainTarget> visited = new HashSet<>();
-        Deque<ChainTarget> todo = new LinkedList<>();
+        Set<ChainTarget> todo = new HashSet<>();
 
         // all back links
         todo.add(start);
 
         while (!todo.isEmpty()) {
             // fetch next target
-            ChainTarget target = todo.remove();
+            ChainTarget target = todo.iterator().next();
+            todo.remove(target);
 
             if (visited.contains(target)) {
                 continue;
@@ -525,8 +530,23 @@ public class CodeSemantics extends Semantics {
                 // follow forward chain
                 todo.addAll(getMemoryForwardChain(tgt.address, tgt.step));
             }
+
+            if (VariableType.SOLVED.test(bits)) {
+                return bits;
+            }
         }
 
+        // cache value
+        bits |= VariableType.SOLVED.getMask();
+        for (ChainTarget t : visited) {
+            if (t instanceof RegisterChainTarget) {
+                RegisterChainTarget rt = (RegisterChainTarget) t;
+                rt.map.setResolvedType(rt.register, bits);
+            } else if (t instanceof MemoryChainTarget) {
+                MemoryChainTarget mt = (MemoryChainTarget) t;
+                setMemory(mt.address, mt.step, bits);
+            }
+        }
         return bits;
     }
 

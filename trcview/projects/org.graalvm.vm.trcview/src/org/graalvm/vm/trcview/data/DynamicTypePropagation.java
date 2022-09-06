@@ -80,6 +80,7 @@ public class DynamicTypePropagation {
         TypedMemory mem = trc.getTypedMemory();
 
         log.info("Resolving types...");
+        long start = System.currentTimeMillis();
 
         // transfer final data types in memory
         log.info(semantics.getUsedAddresses().size() + " accesed memory locations");
@@ -95,6 +96,7 @@ public class DynamicTypePropagation {
         }
 
         // update code fields
+        log.info("Discovering arrays...");
         loop: for (StepEvent evt : memory.getCode()) {
             long pc = evt.getPC();
 
@@ -160,13 +162,15 @@ public class DynamicTypePropagation {
             }
         }
 
-        log.info("Type recovery finished");
+        long end = System.currentTimeMillis();
+        long time = end - start;
+        log.info("Type recovery finished [" + time + " ms]");
     }
 
     private static void defineArray(TypedMemory mem, Type type, long first, long last) {
         log.log(Levels.INFO, () -> String.format("defining array at %x-%x", first, last));
         int elements = (int) ((last - first) / type.getSize()) + 1;
-        Type t = new Type(type.getType(), false, elements, type.getRepresentation());
+        Type t = type.array(elements, false);
         mem.setRecoveredType(first, t);
     }
 }

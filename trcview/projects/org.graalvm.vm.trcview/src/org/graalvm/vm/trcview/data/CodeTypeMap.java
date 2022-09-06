@@ -51,6 +51,12 @@ public class CodeTypeMap {
         return map.isLive(offset, reg);
     }
 
+    public void setResolvedType(long pc, int reg, long type) {
+        CodePageTypeMap map = getMap(pc);
+        int offset = getOffset(pc);
+        map.setResolvedType(offset, reg, type);
+    }
+
     public RegisterTypeMap get(long pc) {
         return getMap(pc).getMap(getOffset(pc));
     }
