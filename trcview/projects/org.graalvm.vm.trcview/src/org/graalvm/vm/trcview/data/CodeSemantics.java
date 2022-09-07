@@ -14,6 +14,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.data.ir.ConstOperand;
 import org.graalvm.vm.trcview.data.ir.IndexedMemoryOperand;
 import org.graalvm.vm.trcview.data.ir.IndirectIndexedMemoryOperand;
 import org.graalvm.vm.trcview.data.ir.IndirectMemoryOperand;
@@ -191,6 +192,9 @@ public class CodeSemantics extends Semantics {
             return memoryMap.get(resolve((IndexedMemoryOperand) op));
         } else if (op instanceof IndirectMemoryOperand) {
             return memoryMap.get(resolve((IndirectMemoryOperand) op));
+        } else if (op instanceof ConstOperand) {
+            ConstOperand cop = (ConstOperand) op;
+            return cop.get();
         } else {
             return 0;
         }
@@ -267,6 +271,9 @@ public class CodeSemantics extends Semantics {
         } else if (op instanceof IndirectIndexedMemoryOperand) {
             MemoryOperand mop = resolve((IndirectIndexedMemoryOperand) op);
             memoryMap.constrain(mop, type);
+        } else if (op instanceof ConstOperand) {
+            ConstOperand cop = (ConstOperand) op;
+            cop.constrain(type);
         }
     }
 
@@ -292,6 +299,9 @@ public class CodeSemantics extends Semantics {
             MemoryOperand mop = resolve((IndirectIndexedMemoryOperand) op);
             memoryMap.step(mop, state.getStep());
             memoryMap.set(mop, type);
+        } else if (op instanceof ConstOperand) {
+            ConstOperand cop = (ConstOperand) op;
+            cop.set(type);
         }
     }
 
