@@ -20,7 +20,7 @@ public class LSIRunner {
         for (VariableType type : types) {
             check |= type.getMask();
         }
-        long actual = mask & ~(VariableType.CHAIN_BIT | VariableType.BREAK_BIT);
+        long actual = mask & ~(VariableType.CHAIN_BIT | VariableType.BREAK_BIT | VariableType.SOLVED.getMask());
         assertEquals(check, actual);
     }
 
