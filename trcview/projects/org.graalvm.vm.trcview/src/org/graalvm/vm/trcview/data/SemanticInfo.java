@@ -2,6 +2,7 @@ package org.graalvm.vm.trcview.data;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +22,7 @@ public class SemanticInfo extends Semantics {
 
     private List<Operation> operations = new ArrayList<>();
 
-    private static class Operation {
+    public static class Operation {
         private final int op;
         private final Operand dst;
         private final Operand src;
@@ -48,7 +49,23 @@ public class SemanticInfo extends Semantics {
             this.type = type;
         }
 
-        private String getOp() {
+        public int getOp() {
+            return op;
+        }
+
+        public Operand getSource() {
+            return src;
+        }
+
+        public Operand getDestination() {
+            return dst;
+        }
+
+        public VariableType getType() {
+            return type;
+        }
+
+        private String getOpString() {
             switch (op) {
                 case OP_ADDSUB:
                     return "ADD/SUB";
@@ -71,7 +88,7 @@ public class SemanticInfo extends Semantics {
 
         @Override
         public String toString() {
-            String o = getOp();
+            String o = getOpString();
             if (src == null) {
                 if (type == null) {
                     return o + " " + dst;
@@ -252,5 +269,9 @@ public class SemanticInfo extends Semantics {
             result[i] = operations.get(i).toString();
         }
         return result;
+    }
+
+    public List<Operation> getRawOperations() {
+        return Collections.unmodifiableList(operations);
     }
 }
