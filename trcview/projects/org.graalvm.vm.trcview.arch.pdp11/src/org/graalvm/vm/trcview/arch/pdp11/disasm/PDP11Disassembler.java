@@ -372,7 +372,7 @@ public class PDP11Disassembler {
                 out.add(buf.toString());
                 buf = new StringBuilder();
                 buf.append('L');
-                writeN(buf, (short) (pc - SOB_OFFSET.get(opcd) * 2));
+                writeN(buf, (short) (pc - SOB_OFFSET.get(opcd) * 2 + 2));
                 out.add(buf.toString());
                 return code.n();
             case 0070000: /* MUL */
