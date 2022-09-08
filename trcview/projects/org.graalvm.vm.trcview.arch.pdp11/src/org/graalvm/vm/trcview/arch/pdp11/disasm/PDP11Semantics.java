@@ -10,7 +10,6 @@ import org.graalvm.vm.trcview.data.ir.Operand;
 import org.graalvm.vm.trcview.data.ir.RegisterOperand;
 import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.disasm.Field;
-import org.graalvm.vm.util.OctFormatter;
 
 public class PDP11Semantics {
     private static final Field RN = Field.getLE(2, 0);
@@ -37,10 +36,11 @@ public class PDP11Semantics {
         }
     }
 
-    public static Operand getPCOperand(int mode, Code code) {
+    private static Operand getPCOperand(int mode, Code code) {
         switch (mode) {
             case 2: // #<imm>
                 code.pc += 2;
+                code.next();
                 return new ConstOperand();
             case 3: // @#<addr>
                 code.pc += 2;
@@ -55,7 +55,7 @@ public class PDP11Semantics {
         throw new IllegalArgumentException("unsupported PC operand mode " + mode);
     }
 
-    public static Operand getOperand(int rn, int mode, Code code, boolean is8bit) {
+    private static Operand getOperand(int rn, int mode, Code code, boolean is8bit) {
         if (rn == 7 && ((mode & 6) == 2 || (mode & 6) == 6)) {
             return getPCOperand(mode, code);
         }
@@ -179,7 +179,7 @@ public class PDP11Semantics {
         }
     }
 
-    public static void move(Semantics semantics, Operand src, Operand dst, VariableType type) {
+    private static void move(Semantics semantics, Operand src, Operand dst, VariableType type) {
         if (src == null) {
             semantics.set(dst, type);
         } else {
