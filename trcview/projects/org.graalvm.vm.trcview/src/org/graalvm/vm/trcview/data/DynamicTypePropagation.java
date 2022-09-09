@@ -114,7 +114,7 @@ public class DynamicTypePropagation {
                     Variable var = mem.getRecoveredType(addr);
                     if (var != null && var.getAddress() == addr) {
                         if (lasttype != null && !lasttype.equals(var.getType())) {
-                            log.warning("array inconsistency at " + fmt.formatShortAddress(addr));
+                            log.warning("array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
                             continue loop;
                         }
                         lasttype = var.getType();
