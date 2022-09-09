@@ -23,6 +23,7 @@ import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.Expression;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.StepListener;
+import org.graalvm.vm.util.BitTest;
 import org.graalvm.vm.util.HexFormatter;
 
 @SuppressWarnings("serial")
@@ -152,6 +153,22 @@ public class DynamicDataView extends JPanel implements StepListener {
                 assert size > 0;
 
                 buf.append(format.formatAddress(addr)).append(": ").append(type);
+
+                if (type.equals(VariableType.UNKNOWN)) {
+                    buf.append(" [");
+                    boolean first = true;
+                    for (VariableType t : VariableType.getTypeConstraints()) {
+                        if (BitTest.test(flags, t.getMask())) {
+                            if (!first) {
+                                buf.append(' ');
+                            } else {
+                                first = false;
+                            }
+                            buf.append(t.getName());
+                        }
+                    }
+                    buf.append("]");
+                }
                 buf.append('\n');
 
                 i += size;
