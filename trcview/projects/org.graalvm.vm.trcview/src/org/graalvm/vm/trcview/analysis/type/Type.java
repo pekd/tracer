@@ -312,6 +312,12 @@ public class Type {
                 }
             case STRUCT:
                 return conststr + struct.getName() + arraystr;
+            case UNION:
+                return "/* union */";
+            case USER:
+                return "/* user */";
+            case CODE:
+                return "/* code */";
             default:
                 return "/* unknown */";
         }
