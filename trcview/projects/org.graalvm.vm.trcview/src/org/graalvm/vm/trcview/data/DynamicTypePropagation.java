@@ -3,10 +3,12 @@ package org.graalvm.vm.trcview.data;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.SymbolTable;
+import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
+import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
@@ -151,13 +153,13 @@ public class DynamicTypePropagation {
                     if (addresses[i + 1] - addresses[i] != array.getElementSize()) {
                         // split here
                         if (lastidx != -1) {
-                            defineArray(mem, lasttype, addresses[lastidx], addresses[i]);
+                            defineArray(trc, lasttype, addresses[lastidx], addresses[i], laststep);
                         }
                         lastidx = i + 1;
                     }
                 }
                 if (lastidx != -1 && lastidx != addresses.length - 1) {
-                    defineArray(mem, lasttype, addresses[lastidx], addresses[addresses.length - 1]);
+                    defineArray(trc, lasttype, addresses[lastidx], addresses[addresses.length - 1], laststep);
                 }
             }
         }
@@ -167,10 +169,46 @@ public class DynamicTypePropagation {
         log.info("Type recovery finished [" + time + " ms]");
     }
 
-    private static void defineArray(TypedMemory mem, Type type, long first, long last) {
+    private static void defineArray(TraceAnalyzer trc, Type type, long first, long last, long laststep) {
         log.log(Levels.INFO, () -> String.format("defining array at %x-%x", first, last));
+
+        TypedMemory mem = trc.getTypedMemory();
+
         int elements = (int) ((last - first) / type.getSize()) + 1;
         Type t = type.array(elements, false);
+
+        if (elements > 2 && (type.getType() == DataType.S8 || type.getType() == DataType.U8)) {
+            // check if it's a string
+            try {
+                boolean string = true;
+                loop: for (int i = 0; i < elements; i++) {
+                    byte b = trc.getI8(first + i, laststep);
+                    switch (b) {
+                        case 0:
+                        case '\r':
+                        case '\n':
+                        case '\t':
+                        case '\f':
+                        case 0x1b:
+                            // ok
+                            break;
+                        default:
+                            if (b >= 0x20 && b < 0x7F) {
+                                // ok
+                            } else {
+                                string = false;
+                                break loop;
+                            }
+                            break;
+                    }
+                }
+                if (string) {
+                    t.setRepresentation(Representation.CHAR);
+                }
+            } catch (MemoryNotMappedException e) {
+                // abort
+            }
+        }
         mem.setRecoveredType(first, t);
     }
 }
