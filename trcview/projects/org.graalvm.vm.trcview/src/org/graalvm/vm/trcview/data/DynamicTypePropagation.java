@@ -116,7 +116,7 @@ public class DynamicTypePropagation {
                     Variable var = mem.getRecoveredType(addr);
                     if (var != null && var.getAddress() == addr) {
                         if (lasttype != null && !lasttype.equals(var.getType())) {
-                            log.warning("array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
+                            log.warning(fmt.formatShortAddress(pc) + ": array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
                             continue loop;
                         }
                         lasttype = var.getType();
@@ -141,10 +141,14 @@ public class DynamicTypePropagation {
                 }
 
                 if (lasttype == null) {
+                    log.warning(fmt.formatShortAddress(pc) + ": unknown last type for array at " + fmt.formatShortAddress(array.getAddresses()[0]));
                     continue loop;
                 }
 
                 if (lasttype.getSize() != array.getElementSize()) {
+                    log.warning(fmt.formatShortAddress(pc) + ": array element size mismatch at " + fmt.formatShortAddress(array.getAddresses()[0]) + ": " + lasttype.getSize() + " (" + lasttype +
+                                    ") vs array element size " +
+                                    array.getElementSize());
                     continue loop;
                 }
 
