@@ -1,5 +1,7 @@
 package org.graalvm.vm.trcview.analysis.type;
 
+import java.util.Objects;
+
 import org.graalvm.vm.util.HexFormatter;
 
 public class Field {
@@ -69,6 +71,23 @@ public class Field {
 
     public long end() {
         return offset + type.getSize();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(offset, name, type);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof Field)) {
+            return false;
+        }
+        Field f = (Field) o;
+        return offset == f.offset && name.equals(f.name) && type.equals(f.type);
     }
 
     @Override

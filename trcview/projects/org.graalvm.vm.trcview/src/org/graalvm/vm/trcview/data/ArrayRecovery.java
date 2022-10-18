@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
-public class ArrayStructRecovery {
+public class ArrayRecovery {
     public static ArrayInfo recoverArray(Semantics semantics, long pc) {
         return recoverArray(semantics, pc, false);
     }

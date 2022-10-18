@@ -19,7 +19,7 @@ import javax.swing.JTextPane;
 
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.trcview.data.ArrayStructRecovery;
+import org.graalvm.vm.trcview.data.ArrayRecovery;
 import org.graalvm.vm.trcview.data.ChainTarget;
 import org.graalvm.vm.trcview.data.CodeSemantics;
 import org.graalvm.vm.trcview.data.MemoryChainTarget;
@@ -186,7 +186,7 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
         buf.append("\n=> W: ");
         buf.append(LongStream.of(semantics.getDataWrites(pc)).sorted().mapToObj(HexFormatter::tohex).collect(Collectors.joining(" ")));
         buf.append("\n\nARRAY: ");
-        buf.append(ArrayStructRecovery.recoverArray(semantics, pc, true));
+        buf.append(ArrayRecovery.recoverArray(semantics, pc, true));
 
         // debugging feature: show data per position
         buf.append("\n\nDEBUG:\n");

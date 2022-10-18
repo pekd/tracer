@@ -97,14 +97,15 @@ public class DynamicTypePropagation {
             }
         }
 
-        // update code fields
+        // update code fields and discover arrays
+        StructArrayRecovery arrays = new StructArrayRecovery(trc);
         log.info("Discovering arrays...");
         loop: for (StepEvent evt : memory.getCode()) {
             long pc = evt.getPC();
 
             mem.setRecoveredType(pc, DefaultTypes.getCodeType(evt.getMachinecode().length));
 
-            ArrayInfo array = ArrayStructRecovery.recoverArray(semantics, pc, true);
+            ArrayInfo array = ArrayRecovery.recoverArray(semantics, pc, true);
             if (array != null) {
                 long[] addresses = array.getAddresses();
                 if (addresses.length == 0) {
@@ -145,7 +146,9 @@ public class DynamicTypePropagation {
                     continue loop;
                 }
 
-                if (lasttype.getSize() != array.getElementSize()) {
+                boolean structArray = lasttype.getSize() < array.getElementSize();
+
+                if (lasttype.getSize() > array.getElementSize()) {
                     log.warning(fmt.formatShortAddress(pc) + ": array element size mismatch at " + fmt.formatShortAddress(array.getAddresses()[0]) + ": " + lasttype.getSize() + " (" + lasttype +
                                     ") vs array element size " +
                                     array.getElementSize());
@@ -157,16 +160,26 @@ public class DynamicTypePropagation {
                     if (addresses[i + 1] - addresses[i] != array.getElementSize()) {
                         // split here
                         if (lastidx != -1) {
-                            defineArray(trc, lasttype, addresses[lastidx], addresses[i], laststep);
+                            if (structArray) {
+                                arrays.defineArray(lasttype, array.getElementSize(), addresses[lastidx], addresses[i], laststep);
+                            } else {
+                                defineArray(trc, lasttype, addresses[lastidx], addresses[i], laststep);
+                            }
                         }
                         lastidx = i + 1;
                     }
                 }
                 if (lastidx != -1 && lastidx != addresses.length - 1) {
-                    defineArray(trc, lasttype, addresses[lastidx], addresses[addresses.length - 1], laststep);
+                    if (structArray) {
+                        arrays.defineArray(lasttype, array.getElementSize(), addresses[lastidx], addresses[addresses.length - 1], laststep);
+                    } else {
+                        defineArray(trc, lasttype, addresses[lastidx], addresses[addresses.length - 1], laststep);
+                    }
                 }
             }
         }
+
+        arrays.transfer();
 
         long end = System.currentTimeMillis();
         long time = end - start;
