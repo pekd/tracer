@@ -209,7 +209,8 @@ public class MemoryTrace {
                     long oldaddr = page.getAddress();
                     page = pages.get(page.getAddress() + 4096);
                     if (page == null) {
-                        throw new AssertionError(String.format("no memory mapped to 0x%x", oldaddr + 4096));
+                        log.log(Levels.WARNING, String.format("no memory mapped to 0x%x", oldaddr + 4096));
+                        return;
                     }
                     if (page instanceof CoarsePage && ((CoarsePage) page).getSize() > SIZE_THRESHOLD) {
                         page = ((CoarsePage) page).transformToFine();
