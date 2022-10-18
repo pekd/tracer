@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.vm.trcview.data.Semantics;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public abstract class StepEvent extends Event {
     public MemoryEvent read;
@@ -27,6 +28,10 @@ public abstract class StepEvent extends Event {
     }
 
     public abstract String[] getDisassemblyComponents();
+
+    public String[] getDisassemblyComponents(@SuppressWarnings("unused") TraceAnalyzer trc) {
+        return getDisassemblyComponents();
+    }
 
     public abstract String getMnemonic();
 

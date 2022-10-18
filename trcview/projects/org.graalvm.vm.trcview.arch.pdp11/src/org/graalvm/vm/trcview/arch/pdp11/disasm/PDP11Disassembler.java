@@ -3,8 +3,12 @@ package org.graalvm.vm.trcview.arch.pdp11.disasm;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.data.TypedMemory;
+import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.disasm.Field;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class PDP11Disassembler {
     private static final Field RN = Field.getLE(2, 0);
@@ -66,64 +70,112 @@ public class PDP11Disassembler {
         }
     }
 
-    private static void disassemblePCOperand(int mode, Code code, StringBuilder buf) {
+    private static void disassemblePCOperand(int mode, Code code, StringBuilder buf, TraceAnalyzer trc) {
+        int addr;
         switch (mode) {
-            case 2:
+            case 2: // #<imm>
                 code.pc += 2;
                 buf.append('#');
                 writeN(buf, code.next());
                 break;
-            case 3:
+            case 3: // @#<addr>
+                code.pc += 2;
+                if (trc != null) {
+                    addr = Short.toUnsignedInt(code.next());
+                    Symbol sym = trc.getSymbol(addr);
+                    if (sym != null) {
+                        buf.append(sym.getName());
+                    } else {
+                        Variable v = trc.getTypedMemory().get(addr);
+                        if (v != null) {
+                            buf.append(v.getName());
+                        } else {
+                            buf.append('@');
+                            buf.append('#');
+                            writeN(buf, (short) addr);
+                        }
+                    }
+                } else {
+                    buf.append('@');
+                    buf.append('#');
+                    writeN(buf, code.next());
+                }
+                break;
+            case 6: // <offset>(PC)
+                code.pc += 2;
+                if (trc != null) {
+                    addr = (code.pc + code.next()) & 0xFFFF;
+                    Symbol sym = trc.getSymbol(addr);
+                    if (sym != null) {
+                        buf.append(sym.getName());
+                    } else {
+                        Variable v = trc.getTypedMemory().get(addr);
+                        if (v != null) {
+                            buf.append(v.getName());
+                        } else {
+                            writeN(buf, (short) addr);
+                        }
+                    }
+                } else {
+                    writeN(buf, (short) (code.pc + code.next()));
+                }
+                break;
+            case 7: // @<offset>(PC)
                 code.pc += 2;
                 buf.append('@');
-                buf.append('#');
-                writeN(buf, code.next());
-                break;
-            case 6:
-                code.pc += 2;
-                writeN(buf, (short) (code.pc + code.next()));
-                break;
-            case 7:
-                code.pc += 2;
-                buf.append('@');
-                writeN(buf, (short) (code.pc + code.next()));
+                if (trc != null) {
+                    addr = (code.pc + code.next()) & 0xFFFF;
+                    Symbol sym = trc.getSymbol(addr);
+                    if (sym != null) {
+                        buf.append(sym.getName());
+                    } else {
+                        Variable v = trc.getTypedMemory().get(addr);
+                        if (v != null) {
+                            buf.append(v.getName());
+                        } else {
+                            writeN(buf, (short) addr);
+                        }
+                    }
+                } else {
+                    writeN(buf, (short) (code.pc + code.next()));
+                }
                 break;
         }
     }
 
-    private static void disassembleOperand(int rn, int mode, Code code, StringBuilder buf) {
+    private static void disassembleOperand(int rn, int mode, Code code, StringBuilder buf, TraceAnalyzer trc) {
         if (rn == 7 && ((mode & 6) == 2 || (mode & 6) == 6)) {
-            disassemblePCOperand(mode, code, buf);
+            disassemblePCOperand(mode, code, buf, trc);
             return;
         }
         switch (mode) {
-            case 0:
+            case 0: // Rn
                 writeRN(buf, rn);
                 break;
-            case 1:
+            case 1: // (Rn)
                 buf.append('(');
                 writeRN(buf, rn);
                 buf.append(')');
                 break;
-            case 3:
+            case 3: // @(Rn)+
                 buf.append('@');
-            case 2:
+            case 2: // (Rn)+
                 buf.append('(');
                 writeRN(buf, rn);
                 buf.append(')');
                 buf.append('+');
                 break;
-            case 5:
+            case 5: // @-(Rn)
                 buf.append('@');
-            case 4:
+            case 4: // -(Rn)
                 buf.append('-');
                 buf.append('(');
                 writeRN(buf, rn);
                 buf.append(')');
                 break;
-            case 7:
+            case 7: // @<offset>(Rn)
                 buf.append('@');
-            case 6:
+            case 6: // <offset>(Rn)
                 code.pc += 2;
                 writeO(buf, code.next());
                 buf.append('(');
@@ -150,18 +202,18 @@ public class PDP11Disassembler {
         }
     }
 
-    private static void op1(List<String> out, short opcd, Code code) {
+    private static void op1(List<String> out, short opcd, Code code, TraceAnalyzer trc) {
         StringBuilder buf = new StringBuilder();
-        disassembleOperand(RN.get(opcd), MODE.get(opcd), code, buf);
+        disassembleOperand(RN.get(opcd), MODE.get(opcd), code, buf, trc);
         out.add(buf.toString());
     }
 
-    private static void op2(List<String> out, short opcd, Code code) {
+    private static void op2(List<String> out, short opcd, Code code, TraceAnalyzer trc) {
         StringBuilder buf = new StringBuilder();
-        disassembleOperand(SRC_RN.get(opcd), SRC_MODE.get(opcd), code, buf);
+        disassembleOperand(SRC_RN.get(opcd), SRC_MODE.get(opcd), code, buf, trc);
         out.add(buf.toString());
         buf = new StringBuilder();
-        disassembleOperand(RN.get(opcd), MODE.get(opcd), code, buf);
+        disassembleOperand(RN.get(opcd), MODE.get(opcd), code, buf, trc);
         out.add(buf.toString());
     }
 
@@ -171,7 +223,7 @@ public class PDP11Disassembler {
         out.add(buf.toString());
     }
 
-    private static int disassemble(short[] insn, short pc, List<String> out) {
+    private static int disassemble(short[] insn, short pc, TraceAnalyzer trc, List<String> out) {
         StringBuilder buf = new StringBuilder();
         Code code = new Code(insn, pc);
         short opcd = code.next();
@@ -181,119 +233,119 @@ public class PDP11Disassembler {
         switch (opcd & 0177700) {
             case 0005000: /* CLR */
                 out.add("CLR");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105000: /* CLRB */
                 out.add("CLRB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005100: /* COM */
                 out.add("COM");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105100: /* COMB */
                 out.add("COMB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005200: /* INC */
                 out.add("INC");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105200: /* INCB */
                 out.add("INCB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005300: /* DEC */
                 out.add("DEC");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105300: /* DECB */
                 out.add("DECB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005400: /* NEG */
                 out.add("NEG");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105400: /* NEGB */
                 out.add("NEGB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005700: /* TST */
                 out.add("TST");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105700: /* TSTB */
                 out.add("TSTB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0006200: /* ASR */
                 out.add("ASR");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0106200: /* ASRB */
                 out.add("ASRB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0006300: /* ASL */
                 out.add("ASL");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0106300: /* ASLB */
                 out.add("ASLB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0006000: /* ROR */
                 out.add("ROR");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0106000: /* RORB */
                 out.add("RORB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0006100: /* ROL */
                 out.add("ROL");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0106100: /* ROLB */
                 out.add("ROLB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0000300: /* SWAB */
                 out.add("SWAB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005500: /* ADC */
                 out.add("ADC");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105500: /* ADCB */
                 out.add("ADCB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0005600: /* SBC */
                 out.add("SBC");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0105600: /* SBCB */
                 out.add("SBCB");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0006700: /* SXT */
                 out.add("SXT");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0106700: /* MFPS */
                 out.add("MFPS");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0106400: /* MTPS */
                 out.add("MTPS");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0000100: /* JMP */
                 out.add("JMP");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0006400: /* MARK */
                 out.add("MARK");
@@ -305,51 +357,51 @@ public class PDP11Disassembler {
         switch (opcd & 0170000) {
             case 0010000: /* MOV */
                 out.add("MOV");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0110000: /* MOVB */
                 out.add("MOVB");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0020000: /* CMP */
                 out.add("CMP");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0120000: /* CMPB */
                 out.add("CMPB");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0060000: /* ADD */
                 out.add("ADD");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0160000: /* SUB */
                 out.add("SUB");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0030000: /* BIT */
                 out.add("BIT");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0130000: /* BITB */
                 out.add("BITB");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0040000: /* BIC */
                 out.add("BIC");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0140000: /* BICB */
                 out.add("BICB");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0050000: /* BIS */
                 out.add("BIS");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
             case 0150000: /* BISB */
                 out.add("BISB");
-                op2(out, opcd, code);
+                op2(out, opcd, code, trc);
                 return code.n();
         }
 
@@ -358,13 +410,13 @@ public class PDP11Disassembler {
                 out.add("XOR");
                 writeRN(buf, (short) JSR_R.get(opcd));
                 out.add(buf.toString());
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0004000: /* JSR */
                 out.add("JSR");
                 writeRN(buf, (short) JSR_R.get(opcd));
                 out.add(buf.toString());
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 return code.n();
             case 0077000: /* SOB */
                 out.add("SOB");
@@ -377,25 +429,25 @@ public class PDP11Disassembler {
                 return code.n();
             case 0070000: /* MUL */
                 out.add("MUL");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 writeRN(buf, (short) JSR_R.get(opcd));
                 out.add(buf.toString());
                 return code.n();
             case 0071000: /* DIV */
                 out.add("DIV");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 writeRN(buf, (short) JSR_R.get(opcd));
                 out.add(buf.toString());
                 return code.n();
             case 0072000: /* ASH */
                 out.add("ASH");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 writeRN(buf, (short) JSR_R.get(opcd));
                 out.add(buf.toString());
                 return code.n();
             case 0073000: /* ASHC */
                 out.add("ASHC");
-                op1(out, opcd, code);
+                op1(out, opcd, code, trc);
                 writeRN(buf, (short) JSR_R.get(opcd));
                 out.add(buf.toString());
                 return code.n();
@@ -584,14 +636,18 @@ public class PDP11Disassembler {
     }
 
     public static String[] getDisassembly(short[] code, short pc) {
+        return getDisassembly(code, pc, null);
+    }
+
+    public static String[] getDisassembly(short[] code, short pc, TraceAnalyzer trc) {
         List<String> buf = new ArrayList<>(5);
-        disassemble(code, pc, buf);
+        disassemble(code, pc, trc, buf);
         return buf.toArray(new String[buf.size()]);
     }
 
     public static int getLength(short[] code) {
         List<String> tmp = new ArrayList<>(5);
-        return disassemble(code, (short) 0, tmp);
+        return disassemble(code, (short) 0, null, tmp);
     }
 
     public static InstructionType getType(short opcd) {

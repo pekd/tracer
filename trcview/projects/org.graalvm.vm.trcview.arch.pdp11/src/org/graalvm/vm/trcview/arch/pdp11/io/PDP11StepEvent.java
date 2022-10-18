@@ -13,6 +13,7 @@ import org.graalvm.vm.trcview.arch.pdp11.PDP11;
 import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Disassembler;
 import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Semantics;
 import org.graalvm.vm.trcview.data.Semantics;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.io.Endianess;
 
 public abstract class PDP11StepEvent extends StepEvent {
@@ -50,6 +51,11 @@ public abstract class PDP11StepEvent extends StepEvent {
     @Override
     public String[] getDisassemblyComponents() {
         return PDP11Disassembler.getDisassembly(getState().getMachinecodeWords(), (short) getPC());
+    }
+
+    @Override
+    public String[] getDisassemblyComponents(TraceAnalyzer trc) {
+        return PDP11Disassembler.getDisassembly(getState().getMachinecodeWords(), (short) getPC(), trc);
     }
 
     @Override

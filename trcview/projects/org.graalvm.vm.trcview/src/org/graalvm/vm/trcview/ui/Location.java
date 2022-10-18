@@ -67,7 +67,7 @@ public class Location {
         loc.filename = trc.getFilename(pc);
         loc.base = trc.getBase(pc);
         loc.offset = trc.getOffset(pc);
-        loc.disasm = step.getDisassemblyComponents();
+        loc.disasm = step.getDisassemblyComponents(trc);
         loc.machinecode = step.getMachinecode();
         loc.format = step.getFormat();
         return loc;
