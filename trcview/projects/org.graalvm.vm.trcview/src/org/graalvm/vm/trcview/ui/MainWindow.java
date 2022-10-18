@@ -1167,7 +1167,12 @@ public class MainWindow extends JFrame implements TraceListenable {
             while ((line = in.readLine()) != null) {
                 int comment = line.indexOf('#');
                 if (comment > 0) {
-                    line = line.substring(0, comment).trim();
+                    // TODO: handle comments properly!
+                    String sub = line.substring(0, comment).trim();
+                    if (sub.length() == 0) {
+                        continue;
+                    }
+                    // line = line.substring(0, comment).trim();
                 }
                 line = line.trim();
                 if (line.length() == 0) {
@@ -1177,7 +1182,15 @@ public class MainWindow extends JFrame implements TraceListenable {
                 int idx = line.indexOf('=');
                 if (idx > 0) {
                     String address = line.substring(0, idx);
-                    String[] data = TextSerializer.tokenize(line.substring(idx + 1));
+                    String[] data;
+                    try {
+                        data = TextSerializer.tokenize(line.substring(idx + 1));
+                    } catch(IOException e) {
+                        log.info("Syntax error in line " + lineno + ": " + e.getMessage());
+                        setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
+                        ok = false;
+                        continue;
+                    }
                     if (everything && address.equals("WATCH")) {
                         // watch point
                         if (data.length != 3) {

@@ -264,11 +264,12 @@ public class TextSerializer {
                 break;
             case ZERO:
                 result.add("0");
+                break;
             case START:
             case SEP:
                 break;
             default:
-                throw new IllegalArgumentException("unexpected EOF");
+                throw new IOException("unexpected EOF in state " + state);
         }
         return result.toArray(new String[result.size()]);
     }
