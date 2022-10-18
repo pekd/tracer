@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.disasm.Field;
@@ -88,7 +89,8 @@ public class PDP11Disassembler {
                     } else {
                         Variable v = trc.getTypedMemory().get(addr);
                         if (v != null) {
-                            buf.append(v.getName());
+                            StepFormat fmt = trc.getArchitecture().getFormat();
+                            buf.append(v.getName(fmt));
                         } else {
                             buf.append('@');
                             buf.append('#');
@@ -111,7 +113,8 @@ public class PDP11Disassembler {
                     } else {
                         Variable v = trc.getTypedMemory().get(addr);
                         if (v != null) {
-                            buf.append(v.getName());
+                            StepFormat fmt = trc.getArchitecture().getFormat();
+                            buf.append(v.getName(fmt));
                         } else {
                             writeN(buf, (short) addr);
                         }
@@ -131,7 +134,8 @@ public class PDP11Disassembler {
                     } else {
                         Variable v = trc.getTypedMemory().get(addr);
                         if (v != null) {
-                            buf.append(v.getName());
+                            StepFormat fmt = trc.getArchitecture().getFormat();
+                            buf.append(v.getName(fmt));
                         } else {
                             writeN(buf, (short) addr);
                         }
