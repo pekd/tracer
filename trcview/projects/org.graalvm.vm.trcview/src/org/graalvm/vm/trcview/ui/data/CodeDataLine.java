@@ -23,6 +23,7 @@ public class CodeDataLine extends DataLine {
 
     // private final StepEvent event;
     private final String[] disasm;
+    private final String comment;
 
     private static Type getType(Type type, TraceAnalyzer trc) {
         if (type == null) {
@@ -46,12 +47,12 @@ public class CodeDataLine extends DataLine {
 
         Disassembler disas = trc.getArchitecture().getDisassembler(trc);
         if (disas != null) {
-            disasm = disas.getDisassembly(new TraceCodeReader(trc, addr, false, step));
+            disasm = disas.getDisassembly(new TraceCodeReader(trc, addr + offset, false, step));
         } else {
             DynamicTypePropagation typeRecovery = trc.getTypeRecovery();
             StepEvent event = null;
             if (typeRecovery != null) {
-                Set<StepEvent> steps = typeRecovery.getSemantics().getSteps(addr);
+                Set<StepEvent> steps = typeRecovery.getSemantics().getSteps(addr + offset);
                 Iterator<StepEvent> i = steps.iterator();
                 if (i.hasNext()) {
                     event = i.next();
@@ -67,6 +68,13 @@ public class CodeDataLine extends DataLine {
             } else {
                 disasm = null;
             }
+        }
+
+        String c = trc.getCommentForPC(addr + offset);
+        if (c != null) {
+            comment = "; " + c;
+        } else {
+            comment = null;
         }
 
         omitUnknownLabel = true;
@@ -91,7 +99,12 @@ public class CodeDataLine extends DataLine {
             result.add(new DefaultElement("    ??? ", Element.TYPE_PLAIN));
             result.add(new DefaultElement("; code", Element.TYPE_COMMENT));
         } else {
-            int tabSize = 7;
+            int start = 0;
+            for (Element e : result) {
+                start += e.getLength();
+            }
+
+            int tabSize = DataViewModel.TAB_SIZE;
             if (disasm == null) {
                 result.add(new DefaultElement("<unreadable>", Element.TYPE_COMMENT));
             } else if (disasm.length == 1) {
@@ -102,6 +115,23 @@ public class CodeDataLine extends DataLine {
                     addToken(result, disasm[i], Element.TYPE_PLAIN, tabSize, true);
                 }
                 result.add(new DefaultElement(disasm[disasm.length - 1], Element.TYPE_PLAIN));
+            }
+
+            int end = 0;
+            for (Element e : result) {
+                end += e.getLength();
+            }
+
+            int len = end - start;
+
+            if (comment != null) {
+                int padlen = DataViewModel.CODE_WIDTH - len;
+                if (padlen < 1) {
+                    padlen = 1;
+                }
+                String pad = StringUtils.repeat(" ", padlen);
+                result.add(new DefaultElement(pad, Element.TYPE_PLAIN));
+                result.add(new DefaultElement(comment, Element.TYPE_COMMENT));
             }
         }
     }

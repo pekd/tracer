@@ -26,8 +26,10 @@ import org.graalvm.vm.trcview.ui.data.editor.Line;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
 
 public class DataViewModel extends EditorModel implements ChangeListener, SymbolRenameListener {
+    public static final int TAB_SIZE = 7;
     public static final int NAME_WIDTH = 40;
     public static final int DATA_WIDTH = 32;
+    public static final int CODE_WIDTH = DATA_WIDTH + TAB_SIZE;
     private static final Element HEADER_SEPARATOR = new DefaultElement("================================================================================", Element.TYPE_COMMENT);
 
     private TraceAnalyzer trc;

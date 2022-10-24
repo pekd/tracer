@@ -271,6 +271,19 @@ public class DataView extends JPanel implements StepListener {
             }
         });
 
+        KeyStroke semicolon = KeyStroke.getKeyStroke(KeyEvent.VK_SEMICOLON, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(semicolon, semicolon);
+        getActionMap().put(semicolon, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int line = editor.getCursorLine();
+                long addr = model.getAddressByLine(line);
+                Utils.setCommentPC(addr, trc);
+                model.update();
+                editor.requestFocus();
+            }
+        });
+
         KeyStroke esc = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(esc, esc);
         getActionMap().put(esc, new AbstractAction() {

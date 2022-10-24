@@ -20,6 +20,7 @@ public class ScalarDataLine extends DataLine {
     private static final Type DEFAULT_TYPE_OCT = new Type(DataType.U8, Representation.OCT);
     private static final Type DEFAULT_TYPE_HEX = new Type(DataType.U8, Representation.DEC);
     private static final int DEREF_STR_MAXLEN = 16;
+    private final String pccomment;
 
     private static Type getType(Type type, TraceAnalyzer trc) {
         if (type == null) {
@@ -40,6 +41,12 @@ public class ScalarDataLine extends DataLine {
 
     public ScalarDataLine(long addr, long offset, String name, long index, Type type, long step, TraceAnalyzer trc) {
         super(addr, offset, name, index, getType(type, trc), step, trc);
+
+        if (trc != null) {
+            pccomment = trc.getCommentForPC(addr + offset);
+        } else {
+            pccomment = null;
+        }
     }
 
     private Element encode(long val, boolean isaddr) {
@@ -134,6 +141,9 @@ public class ScalarDataLine extends DataLine {
         }
 
         result.add(data);
+        if (pccomment != null) {
+            comment = "; " + pccomment;
+        }
         if (comment != null) {
             int len = data.getLength();
             int padlen = DataViewModel.DATA_WIDTH - len;
