@@ -16,6 +16,7 @@ import org.graalvm.vm.trcview.arch.none.None;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
 import org.graalvm.vm.trcview.decode.SyscallDecoder;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.log.Trace;
 
 public abstract class Architecture {
@@ -66,6 +67,10 @@ public abstract class Architecture {
 
     public int getRegisterCount() {
         return 0;
+    }
+
+    public Disassembler getDisassembler(@SuppressWarnings("unused") TraceAnalyzer trc) {
+        return null;
     }
 
     public static void register(Architecture arch) {

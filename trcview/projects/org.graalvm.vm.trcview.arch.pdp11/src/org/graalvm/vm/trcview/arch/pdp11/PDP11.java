@@ -6,8 +6,10 @@ import java.util.Arrays;
 import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.arch.pdp11.disasm.PDP11Disassembler;
 import org.graalvm.vm.trcview.arch.pdp11.io.PDP11TraceReader;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
@@ -21,6 +23,7 @@ import org.graalvm.vm.trcview.expression.ast.MulNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.graalvm.vm.trcview.expression.ast.XorNode;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class PDP11 extends Architecture {
     public static final short ID = Elf.EM_PDP11;
@@ -93,6 +96,11 @@ public class PDP11 extends Architecture {
     @Override
     public int getRegisterCount() {
         return 8;
+    }
+
+    @Override
+    public Disassembler getDisassembler(TraceAnalyzer trc) {
+        return new PDP11Disassembler(trc);
     }
 
     @Override

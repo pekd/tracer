@@ -1,0 +1,30 @@
+package org.graalvm.vm.trcview.arch;
+
+public class ShortCodeReader extends CodeReader {
+    private final short[] code;
+
+    public ShortCodeReader(short[] code, long pc) {
+        super(pc, false);
+        this.code = code;
+    }
+
+    @Override
+    public byte nextI8() {
+        throw new UnsupportedOperationException("only 16bit access supported");
+    }
+
+    @Override
+    public short nextI16() {
+        return code[n++];
+    }
+
+    @Override
+    public int nextI32() {
+        throw new UnsupportedOperationException("only 16bit access supported");
+    }
+
+    @Override
+    public int n() {
+        return n << 1;
+    }
+}

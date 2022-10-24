@@ -7,6 +7,8 @@ import java.util.Set;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.arch.Disassembler;
+import org.graalvm.vm.trcview.arch.TraceCodeReader;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.DynamicTypePropagation;
@@ -19,7 +21,8 @@ public class CodeDataLine extends DataLine {
     private static final Type DEFAULT_TYPE_OCT = new Type(DataType.U8, Representation.OCT);
     private static final Type DEFAULT_TYPE_HEX = new Type(DataType.U8, Representation.DEC);
 
-    private final StepEvent event;
+    // private final StepEvent event;
+    private final String[] disasm;
 
     private static Type getType(Type type, TraceAnalyzer trc) {
         if (type == null) {
@@ -41,17 +44,29 @@ public class CodeDataLine extends DataLine {
     public CodeDataLine(long addr, long offset, String name, long index, Type type, long step, TraceAnalyzer trc) {
         super(addr, offset, name, index, getType(type, trc), step, trc);
 
-        DynamicTypePropagation typeRecovery = trc.getTypeRecovery();
-        if (typeRecovery != null) {
-            Set<StepEvent> steps = typeRecovery.getSemantics().getSteps(addr);
-            Iterator<StepEvent> i = steps.iterator();
-            if (i.hasNext()) {
-                event = i.next();
+        Disassembler disas = trc.getArchitecture().getDisassembler(trc);
+        if (disas != null) {
+            disasm = disas.getDisassembly(new TraceCodeReader(trc, addr, false, step));
+        } else {
+            DynamicTypePropagation typeRecovery = trc.getTypeRecovery();
+            StepEvent event = null;
+            if (typeRecovery != null) {
+                Set<StepEvent> steps = typeRecovery.getSemantics().getSteps(addr);
+                Iterator<StepEvent> i = steps.iterator();
+                if (i.hasNext()) {
+                    event = i.next();
+                } else {
+                    event = null;
+                }
             } else {
                 event = null;
             }
-        } else {
-            event = null;
+
+            if (event != null) {
+                disasm = event.getDisassemblyComponents(trc);
+            } else {
+                disasm = null;
+            }
         }
 
         omitUnknownLabel = true;
@@ -71,13 +86,12 @@ public class CodeDataLine extends DataLine {
 
     @Override
     protected void addData(List<Element> result) {
-        if (event == null) {
+        if (disasm == null) {
             result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
             result.add(new DefaultElement("    ??? ", Element.TYPE_PLAIN));
             result.add(new DefaultElement("; code", Element.TYPE_COMMENT));
         } else {
             int tabSize = 7;
-            String[] disasm = event.getDisassemblyComponents();
             if (disasm == null) {
                 result.add(new DefaultElement("<unreadable>", Element.TYPE_COMMENT));
             } else if (disasm.length == 1) {

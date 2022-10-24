@@ -22,8 +22,8 @@ public class LSISemanticTest {
         short[] insn = {032737, 000200, (short) 0177560};
         short pc = 05142;
 
-        assertEquals(3, PDP11Disassembler.getLength(insn));
-        assertArrayEquals(new String[]{"BIT", "#200", "@#177560"}, PDP11Disassembler.getDisassembly(insn, pc));
+        assertEquals(3, new PDP11Disassembler(null).getLength(insn));
+        assertArrayEquals(new String[]{"BIT", "#200", "@#177560"}, new PDP11Disassembler(null).getDisassembly(insn, pc));
 
         SemanticInfo info = new SemanticInfo();
         assertArrayEquals(new int[0], PDP11Semantics.getRegisterReads(insn, pc));
