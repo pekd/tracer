@@ -317,7 +317,7 @@ public class Type {
             case USER:
                 return "/* user */";
             case CODE:
-                return "/* code */";
+                return "code" + arraystr;
             default:
                 return "/* unknown */";
         }

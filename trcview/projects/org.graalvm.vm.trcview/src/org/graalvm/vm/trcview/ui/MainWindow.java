@@ -1400,6 +1400,10 @@ public class MainWindow extends JFrame implements TraceListenable {
                             TypedMemory mem = trc.getTypedMemory();
                             long addr = Long.parseUnsignedLong(address.substring(4), 16);
                             String name = data[0];
+                            if(data[1].startsWith("/*")) {
+                                // unparseable type, ignore it
+                                continue;
+                            }
                             mem.set(addr, new Parser(data[1], trc.getTypeDatabase()).parseType(), name);
                         } catch (NumberFormatException e) {
                             log.info("Syntax error in line " + lineno + ": invalid address");

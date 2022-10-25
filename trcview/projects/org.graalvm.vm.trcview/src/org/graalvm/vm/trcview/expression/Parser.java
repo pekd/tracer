@@ -66,6 +66,7 @@ import org.graalvm.vm.trcview.expression.ast.XorNode;
  *           | "s32"
  *           | "u64"
  *           | "s64"
+ *           | "code"
  *           | "void" )
  *           [ "<" rexpr ">" ]
  *           .
@@ -208,6 +209,9 @@ public class Parser {
                     break;
                 case "typedef":
                     la = new Token(TokenType.TYPEDEF);
+                    break;
+                case "code":
+                    la = new Token(TokenType.CODE);
                     break;
             }
         }
@@ -485,6 +489,9 @@ public class Parser {
             case FX32:
                 scan();
                 return new Type(DataType.FX32, isConst);
+            case CODE:
+                scan();
+                return new Type(DataType.CODE, isConst);
             case VOID:
                 scan();
                 return new Type(DataType.VOID);

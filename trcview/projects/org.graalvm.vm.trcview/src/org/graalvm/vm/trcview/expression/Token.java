@@ -61,6 +61,7 @@ public class Token {
         STRUCT,
         UNION,
         TYPEDEF,
+        CODE,
         EOF;
     }
 
