@@ -271,7 +271,7 @@ public class DataView extends JPanel implements StepListener {
             }
         });
 
-        KeyStroke semicolon = KeyStroke.getKeyStroke(KeyEvent.VK_SEMICOLON, 0);
+        KeyStroke semicolon = KeyStroke.getKeyStroke(';');
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(semicolon, semicolon);
         getActionMap().put(semicolon, new AbstractAction() {
             @Override
