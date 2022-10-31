@@ -597,10 +597,6 @@ public class PDP11Disassembler extends Disassembler {
                 return code.n() >> 1;
         }
 
-        buf.append("; unknown [");
-        writeN(buf, opcd);
-        buf.append(']');
-        out.add(buf.toString());
         return 1;
     }
 
@@ -608,7 +604,11 @@ public class PDP11Disassembler extends Disassembler {
     public String[] getDisassembly(CodeReader code) {
         List<String> buf = new ArrayList<>(5);
         disassemble(code, buf);
-        return buf.toArray(new String[buf.size()]);
+        if (buf.size() == 0) {
+            return null;
+        } else {
+            return buf.toArray(new String[buf.size()]);
+        }
     }
 
     @Override
@@ -618,7 +618,16 @@ public class PDP11Disassembler extends Disassembler {
     }
 
     public String[] getDisassembly(short[] code, short pc) {
-        return getDisassembly(new ShortCodeReader(code, pc));
+        String[] disasm = getDisassembly(new ShortCodeReader(code, pc));
+        if (disasm != null) {
+            return disasm;
+        } else {
+            StringBuilder buf = new StringBuilder();
+            buf.append("; unknown [");
+            writeN(buf, code[0]);
+            buf.append(']');
+            return new String[]{buf.toString()};
+        }
     }
 
     public int getLength(short[] code) {
