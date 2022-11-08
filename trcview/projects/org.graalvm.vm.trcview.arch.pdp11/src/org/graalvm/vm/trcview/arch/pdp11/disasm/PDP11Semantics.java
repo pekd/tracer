@@ -124,6 +124,7 @@ public class PDP11Semantics {
                     return new IndirectIndexedMemoryOperand(rn, -size);
                 }
             case 6: // <offset>(Rn)
+                // TODO: use heuristic to distinguish between base and offset
                 code.pc += 2;
                 semantics.constraint(new RegisterOperand(rn), ptrType);
                 return new IndexedMemoryOperand(rn, code.next());
