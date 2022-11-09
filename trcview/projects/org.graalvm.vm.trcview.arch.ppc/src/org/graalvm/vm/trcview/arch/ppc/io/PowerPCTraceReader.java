@@ -24,17 +24,42 @@ import org.graalvm.vm.util.io.WordInputStream;
 public class PowerPCTraceReader extends ArchTraceReader {
     private static final byte TYPE_SYMBOLS = 0;
     private static final byte TYPE_MMAP = 1;
-    private static final byte TYPE_DUMP = 2;
-    private static final byte TYPE_MEMR8 = 3;
-    private static final byte TYPE_MEMR16 = 4;
-    private static final byte TYPE_MEMR32 = 5;
-    private static final byte TYPE_MEMR64 = 6;
-    private static final byte TYPE_MEMW8 = 7;
-    private static final byte TYPE_MEMW16 = 8;
-    private static final byte TYPE_MEMW32 = 9;
-    private static final byte TYPE_MEMW64 = 10;
-    private static final byte TYPE_STEP = 11;
-    private static final byte TYPE_TRAP = 12;
+    private static final byte TYPE_MMAP2 = 2;
+    private static final byte TYPE_DUMP = 3;
+    private static final byte TYPE_MEM32R8 = 4;
+    private static final byte TYPE_MEM32R16 = 5;
+    private static final byte TYPE_MEM32R32 = 6;
+    private static final byte TYPE_MEM32R64 = 7;
+    private static final byte TYPE_MEM32W8 = 8;
+    private static final byte TYPE_MEM32W16 = 9;
+    private static final byte TYPE_MEM32W32 = 10;
+    private static final byte TYPE_MEM32W64 = 11;
+    private static final byte TYPE_MEM32R8F = 12;
+    private static final byte TYPE_MEM32R16F = 13;
+    private static final byte TYPE_MEM32R32F = 14;
+    private static final byte TYPE_MEM32R64F = 15;
+    private static final byte TYPE_MEM32W8F = 16;
+    private static final byte TYPE_MEM32W16F = 17;
+    private static final byte TYPE_MEM32W32F = 18;
+    private static final byte TYPE_MEM32W64F = 19;
+    private static final byte TYPE_MEM64R8 = 20;
+    private static final byte TYPE_MEM64R16 = 21;
+    private static final byte TYPE_MEM64R32 = 22;
+    private static final byte TYPE_MEM64R64 = 23;
+    private static final byte TYPE_MEM64W8 = 24;
+    private static final byte TYPE_MEM64W16 = 25;
+    private static final byte TYPE_MEM64W32 = 26;
+    private static final byte TYPE_MEM64W64 = 27;
+    private static final byte TYPE_MEM64R8F = 28;
+    private static final byte TYPE_MEM64R16F = 29;
+    private static final byte TYPE_MEM64R32F = 30;
+    private static final byte TYPE_MEM64R64F = 31;
+    private static final byte TYPE_MEM64W8F = 32;
+    private static final byte TYPE_MEM64W16F = 33;
+    private static final byte TYPE_MEM64W32F = 34;
+    private static final byte TYPE_MEM64W64F = 35;
+    private static final byte TYPE_STEP = 36;
+    private static final byte TYPE_TRAP = 37;
 
     private final WordInputStream in;
     private PowerPCStepEvent lastStep;
@@ -54,11 +79,11 @@ public class PowerPCTraceReader extends ArchTraceReader {
         lastStep = null;
     }
 
-    private static MmapEvent mmap(int start, int end, String name) {
-        return new MmapEvent(0, Integer.toUnsignedLong(start), Integer.toUnsignedLong(end - start + 1),
+    private static MmapEvent mmap(long start, long end, String name) {
+        return new MmapEvent(0, start, end - start + 1,
                         Mman.PROT_READ | Mman.PROT_WRITE | Mman.PROT_EXEC,
                         Mman.MAP_FIXED | Mman.MAP_PRIVATE | Mman.MAP_ANONYMOUS, -1, 0, name,
-                        Integer.toUnsignedLong(start), null);
+                        start, null);
     }
 
     private void checkTrap(PowerPCStepEvent step) {
@@ -110,56 +135,148 @@ public class PowerPCTraceReader extends ArchTraceReader {
                 PowerPCExceptionEvent trap = new PowerPCExceptionEvent(in, 0, lastStep);
                 trapstack.push(trap.getSRR0());
                 return trap;
-            case TYPE_MEMR8: {
+            case TYPE_MEM32R8: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = Byte.toUnsignedLong((byte) in.read8bit());
                 return new GenericMemoryEvent(true, 0, address, (byte) 1, false, value);
             }
-            case TYPE_MEMR16: {
+            case TYPE_MEM32R16: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = Short.toUnsignedLong(in.read16bit());
                 return new GenericMemoryEvent(true, 0, address, (byte) 2, false, value);
             }
-            case TYPE_MEMR32: {
+            case TYPE_MEM32R32: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = Integer.toUnsignedLong(in.read32bit());
                 return new GenericMemoryEvent(true, 0, address, (byte) 4, false, value);
             }
-            case TYPE_MEMR64: {
+            case TYPE_MEM32R64: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = in.read64bit();
                 return new GenericMemoryEvent(true, 0, address, (byte) 8, false, value);
             }
-            case TYPE_MEMW8: {
+            case TYPE_MEM32W8F:
+            case TYPE_MEM32W8: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = Byte.toUnsignedLong((byte) in.read8bit());
                 return new GenericMemoryEvent(true, 0, address, (byte) 1, true, value);
             }
-            case TYPE_MEMW16: {
+            case TYPE_MEM32W16F:
+            case TYPE_MEM32W16: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = Short.toUnsignedLong(in.read16bit());
                 return new GenericMemoryEvent(true, 0, address, (byte) 2, true, value);
             }
-            case TYPE_MEMW32: {
+            case TYPE_MEM32W32F:
+            case TYPE_MEM32W32: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = Integer.toUnsignedLong(in.read32bit());
                 return new GenericMemoryEvent(true, 0, address, (byte) 4, true, value);
             }
-            case TYPE_MEMW64: {
+            case TYPE_MEM32W64F:
+            case TYPE_MEM32W64: {
                 long address = Integer.toUnsignedLong(in.read32bit());
                 long value = in.read64bit();
                 return new GenericMemoryEvent(true, 0, address, (byte) 8, true, value);
             }
-            case TYPE_DUMP: {
+            case TYPE_MEM32R8F: {
                 long address = Integer.toUnsignedLong(in.read32bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 1, false);
+            }
+            case TYPE_MEM32R16F: {
+                long address = Integer.toUnsignedLong(in.read32bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 2, false);
+            }
+            case TYPE_MEM32R32F: {
+                long address = Integer.toUnsignedLong(in.read32bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 4, false);
+            }
+            case TYPE_MEM32R64F: {
+                long address = Integer.toUnsignedLong(in.read32bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 8, false);
+            }
+            case TYPE_MEM64R8: {
+                long address = in.read64bit();
+                long value = Byte.toUnsignedLong((byte) in.read8bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 1, false, value);
+            }
+            case TYPE_MEM64R16: {
+                long address = in.read64bit();
+                long value = Short.toUnsignedLong(in.read16bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 2, false, value);
+            }
+            case TYPE_MEM64R32: {
+                long address = in.read64bit();
+                long value = Integer.toUnsignedLong(in.read32bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 4, false, value);
+            }
+            case TYPE_MEM64R64: {
+                long address = in.read64bit();
+                long value = in.read64bit();
+                return new GenericMemoryEvent(true, 0, address, (byte) 8, false, value);
+            }
+            case TYPE_MEM64W8F:
+            case TYPE_MEM64W8: {
+                long address = in.read64bit();
+                long value = Byte.toUnsignedLong((byte) in.read8bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 1, true, value);
+            }
+            case TYPE_MEM64W16F:
+            case TYPE_MEM64W16: {
+                long address = in.read64bit();
+                long value = Short.toUnsignedLong(in.read16bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 2, true, value);
+            }
+            case TYPE_MEM64W32F:
+            case TYPE_MEM64W32: {
+                long address = in.read64bit();
+                long value = Integer.toUnsignedLong(in.read32bit());
+                return new GenericMemoryEvent(true, 0, address, (byte) 4, true, value);
+            }
+            case TYPE_MEM64W64F:
+            case TYPE_MEM64W64: {
+                long address = in.read64bit();
+                long value = in.read64bit();
+                return new GenericMemoryEvent(true, 0, address, (byte) 8, true, value);
+            }
+            case TYPE_MEM64R8F: {
+                long address = in.read64bit();
+                return new GenericMemoryEvent(true, 0, address, (byte) 1, false);
+            }
+            case TYPE_MEM64R16F: {
+                long address = in.read64bit();
+                return new GenericMemoryEvent(true, 0, address, (byte) 2, false);
+            }
+            case TYPE_MEM64R32F: {
+                long address = in.read64bit();
+                return new GenericMemoryEvent(true, 0, address, (byte) 4, false);
+            }
+            case TYPE_MEM64R64F: {
+                long address = in.read64bit();
+                return new GenericMemoryEvent(true, 0, address, (byte) 8, false);
+            }
+            case TYPE_DUMP: {
+                long address = in.read64bit();
                 byte[] data = IO.readArray(in);
                 return new MemoryDumpEvent(0, address, data);
             }
             case TYPE_MMAP: {
-                int start = in.read32bit();
-                int end = in.read32bit();
+                long start = in.read64bit();
+                long end = in.read64bit();
                 String name = IO.readString(in);
                 return mmap(start, end, name);
+            }
+            case TYPE_MMAP2: {
+                long addr = in.read64bit();
+                long len = in.read64bit();
+                int prot = in.read32bit();
+                int flags = in.read32bit();
+                int fildes = in.read32bit();
+                long offset = in.read64bit();
+                long result = in.read64bit();
+                String name = IO.readString(in);
+                byte[] data = IO.readArray(in);
+                return new MmapEvent(0, addr, len, prot, flags, fildes, offset, name, result, data);
             }
             case TYPE_SYMBOLS: {
                 StandardSymbolTable symtab = new StandardSymbolTable();
