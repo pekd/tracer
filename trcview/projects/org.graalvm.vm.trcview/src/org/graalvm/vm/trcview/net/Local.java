@@ -279,17 +279,35 @@ public class Local implements TraceAnalyzer {
 
     @Override
     public short getI16(long address, long insn) throws MemoryNotMappedException {
-        return (short) memory.getWord(address, insn);
+        boolean be = arch.getFormat().be;
+        short word = (short) memory.getWord(address, insn);
+        if (be) {
+            return Short.reverseBytes(word);
+        } else {
+            return word;
+        }
     }
 
     @Override
     public int getI32(long address, long insn) throws MemoryNotMappedException {
-        return (int) memory.getWord(address, insn);
+        boolean be = arch.getFormat().be;
+        int word = (int) memory.getWord(address, insn);
+        if (be) {
+            return Integer.reverseBytes(word);
+        } else {
+            return word;
+        }
     }
 
     @Override
     public long getI64(long address, long insn) throws MemoryNotMappedException {
-        return memory.getWord(address, insn);
+        boolean be = arch.getFormat().be;
+        long word = memory.getWord(address, insn);
+        if (be) {
+            return Long.reverseBytes(word);
+        } else {
+            return word;
+        }
     }
 
     @Override
