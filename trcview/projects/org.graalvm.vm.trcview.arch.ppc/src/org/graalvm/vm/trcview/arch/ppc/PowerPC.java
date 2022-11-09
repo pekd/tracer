@@ -3,6 +3,7 @@ package org.graalvm.vm.trcview.arch.ppc;
 import java.io.InputStream;
 
 import org.graalvm.vm.posix.elf.Elf;
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -57,6 +58,11 @@ public class PowerPC extends Architecture {
     @Override
     public StepFormat getFormat() {
         return FORMAT;
+    }
+
+    @Override
+    public ArchitectureTypeInfo getTypeInfo() {
+        return ArchitectureTypeInfo.ILP32;
     }
 
     @Override
