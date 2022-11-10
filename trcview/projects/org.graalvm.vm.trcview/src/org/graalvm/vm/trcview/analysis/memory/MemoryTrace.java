@@ -106,6 +106,10 @@ public class MemoryTrace {
     }
 
     public void brk(long newbrk, long pc, long instructionCount, Node node, StepEvent step) {
+        if (this.brk == newbrk) {
+            return;
+        }
+
         if (brk == -1) {
             brk = getPageAddress(newbrk);
             if (brk != newbrk) {
@@ -118,7 +122,7 @@ public class MemoryTrace {
                     // pages.put(this.brk, new CoarsePage(p, pc, instructionCount, node));
                     page = new FinePage(p, pc, instructionCount, node, PROT_RW);
                     page.setName(instructionCount, "[heap]");
-                    pages.put(this.brk, page);
+                    pages.put(page.getAddress(), page);
                 } else {
                     break;
                 }
