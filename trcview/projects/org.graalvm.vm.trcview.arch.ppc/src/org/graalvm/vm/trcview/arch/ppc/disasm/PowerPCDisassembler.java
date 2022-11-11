@@ -62,8 +62,8 @@ public class PowerPCDisassembler {
                         cond_ok = bo(bo, 0) || (cr(state.getCR(), bi + 32) == bo(bo, 1));
                         if (ctr_ok && cond_ok) {
                             if (insnfmt.LK.getBit(insn)) {
-                                // TODO: this is a CALL+RET in one instruction
-                                return InstructionType.CALL;
+                                // TODO: this is a RET+CALL in one instruction
+                                return InstructionType.RET;
                             } else {
                                 return InstructionType.RET;
                             }
