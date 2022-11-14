@@ -42,6 +42,10 @@ public abstract class Page {
         return firstInstructionCount;
     }
 
+    public boolean isActive(long step) {
+        return step >= firstInstructionCount;
+    }
+
     public final Node getInitialNode() {
         return firstNode;
     }

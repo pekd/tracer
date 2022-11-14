@@ -375,6 +375,7 @@ public class MemoryTrace {
         Page page = null;
         long addr = 0;
 
+        // find first page
         while (page == null) {
             Entry<Long, Page> entry = pages.ceilingEntry(addr);
             if (entry == null) {
@@ -389,6 +390,7 @@ public class MemoryTrace {
             }
         }
 
+        // find end of contiguous region
         while (true) {
             long next = addr + Page.SIZE;
             Entry<Long, Page> nextPage = pages.ceilingEntry(next);
@@ -397,7 +399,19 @@ public class MemoryTrace {
             }
             Page p = nextPage.getValue();
             try {
-                if (p.getAddress() != next || !Objects.equals(page.getName(step), p.getName(step)) || !page.getProtection(step).equals(p.getProtection(step))) {
+                if (page == null) {
+                    if (p.isActive(step)) {
+                        // new start of a region after a gap
+                        page = p;
+                    }
+                } else if (!p.isActive(step)) {
+                    // gap starts here
+                    MemorySegment range = new MemorySegment(page.getAddress(), next - 1, page.getProtection(step), page.getName(step));
+                    result.add(range);
+                    page = null;
+                } else if (p.getAddress() != next || !Objects.equals(page.getName(step), p.getName(step)) ||
+                                !page.getProtection(step).equals(p.getProtection(step))) {
+                    // different region found
                     MemorySegment range = new MemorySegment(page.getAddress(), next - 1, page.getProtection(step), page.getName(step));
                     result.add(range);
                     page = p;
@@ -409,6 +423,7 @@ public class MemoryTrace {
         }
 
         try {
+            // if there is a final region, add it now
             if (page != null) {
                 MemorySegment range = new MemorySegment(page.getAddress(), addr + Page.SIZE - 1, page.getProtection(step), page.getName(step));
                 result.add(range);
