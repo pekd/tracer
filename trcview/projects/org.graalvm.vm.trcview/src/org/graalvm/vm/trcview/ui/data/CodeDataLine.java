@@ -47,7 +47,8 @@ public class CodeDataLine extends DataLine {
 
         Disassembler disas = trc.getArchitecture().getDisassembler(trc);
         if (disas != null) {
-            disasm = disas.getDisassembly(new TraceCodeReader(trc, addr + offset, false, step));
+            boolean be = trc.getArchitecture().getFormat().be;
+            disasm = disas.getDisassembly(new TraceCodeReader(trc, addr + offset, be, step));
         } else {
             DynamicTypePropagation typeRecovery = trc.getTypeRecovery();
             StepEvent event = null;
