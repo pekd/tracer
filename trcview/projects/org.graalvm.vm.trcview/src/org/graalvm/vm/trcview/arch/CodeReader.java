@@ -3,7 +3,7 @@ package org.graalvm.vm.trcview.arch;
 public abstract class CodeReader {
     public long pc;
     protected int n;
-    private boolean isBE;
+    private final boolean isBE;
 
     protected CodeReader(long pc, boolean isBE) {
         this.pc = pc;
@@ -28,7 +28,7 @@ public abstract class CodeReader {
         byte b3 = nextI8();
         byte b4 = nextI8();
         if (isBE) {
-            return (Byte.toUnsignedInt(b1) << 24) | (Byte.toUnsignedInt(b2) << 16) | (Byte.toUnsignedInt(b3) << 8) | Byte.toUnsignedInt(b2);
+            return (Byte.toUnsignedInt(b1) << 24) | (Byte.toUnsignedInt(b2) << 16) | (Byte.toUnsignedInt(b3) << 8) | Byte.toUnsignedInt(b4);
         } else {
             return Byte.toUnsignedInt(b1) | (Byte.toUnsignedInt(b2) << 8) | (Byte.toUnsignedInt(b3) << 16) | (Byte.toUnsignedInt(b4) << 24);
         }
