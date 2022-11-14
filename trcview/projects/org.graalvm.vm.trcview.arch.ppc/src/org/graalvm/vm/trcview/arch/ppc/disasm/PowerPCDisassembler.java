@@ -1,14 +1,21 @@
 package org.graalvm.vm.trcview.arch.ppc.disasm;
 
+import org.graalvm.vm.trcview.arch.CodeReader;
+import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.ppc.io.PowerPCCpuState;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 
-public class PowerPCDisassembler {
+public class PowerPCDisassembler extends Disassembler {
     public static final InstructionFormat insnfmt = new InstructionFormat();
 
     private static final String[] BC_TRUE = {"lt", "gt", "eq", "so"};
     private static final String[] BC_FALSE = {"ge", "le", "ne", "ns"};
+
+    public PowerPCDisassembler(TraceAnalyzer trc) {
+        super(trc);
+    }
 
     private static boolean bo(int bo, int bit) {
         return (bo & (1 << (4 - bit))) != 0;
@@ -2210,5 +2217,66 @@ public class PowerPCDisassembler {
         boolean rc = insn.Rc.getBit();
         String dot = rc ? "." : "";
         return new String[]{"fcfid" + dot, "f" + frt, "f" + frb};
+    }
+
+    @Override
+    public String[] getDisassembly(CodeReader code) {
+        long pc = code.getPC();
+        int insn = code.nextI32();
+        return disassemble((int) pc, insn);
+    }
+
+    @Override
+    public int getLength(CodeReader code) {
+        return 4;
+    }
+
+    @Override
+    public InstructionType getType(CodeReader code) {
+        int insn = code.nextI32();
+        int opcd = insnfmt.OPCD.get(insn);
+        switch (opcd) {
+            case Opcode.TWI:
+                return InstructionType.SYSCALL;
+            case Opcode.BC: {
+                if (insnfmt.LK.getBit(insn)) {
+                    return InstructionType.CALL;
+                } else {
+                    return InstructionType.JCC;
+                }
+            }
+            case Opcode.B:
+                if (insnfmt.LK.getBit(insn)) {
+                    return InstructionType.CALL;
+                } else {
+                    return InstructionType.JMP;
+                }
+            case Opcode.CR_OPS:
+                switch (insnfmt.XO_1.get(insn)) {
+                    case Opcode.XO_BCLR: {
+                        if (insnfmt.LK.getBit(insn)) {
+                            // TODO: this is a RET+CALL in one instruction
+                            return InstructionType.RET;
+                        } else {
+                            return InstructionType.RET;
+                        }
+                    }
+                    case Opcode.XO_RFI:
+                        return InstructionType.RTI;
+                    case Opcode.XO_BCCTR: {
+                        if (insnfmt.LK.getBit(insn)) {
+                            return InstructionType.CALL;
+                        } else {
+                            return InstructionType.JCC;
+                        }
+                    }
+                    default:
+                        return InstructionType.OTHER;
+                }
+            case Opcode.SC:
+                return InstructionType.SYSCALL;
+            default:
+                return InstructionType.OTHER;
+        }
     }
 }
