@@ -1,6 +1,6 @@
 package org.graalvm.vm.trcview.arch;
 
-import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.Variable;
@@ -8,6 +8,10 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public abstract class Disassembler {
     protected final TraceAnalyzer trc;
+
+    protected Disassembler() {
+        this.trc = null;
+    }
 
     protected Disassembler(TraceAnalyzer trc) {
         this.trc = trc;
@@ -25,9 +29,9 @@ public abstract class Disassembler {
 
     protected String getName(long addr) {
         if (trc != null) {
-            Symbol sym = trc.getSymbol(addr);
+            ComputedSymbol sym = trc.getComputedSymbol(addr);
             if (sym != null) {
-                return sym.getName();
+                return sym.name;
             } else {
                 Variable v = trc.getTypedMemory().get(addr);
                 if (v != null) {
@@ -44,9 +48,9 @@ public abstract class Disassembler {
 
     protected String getLocation(long addr) {
         if (trc != null) {
-            Symbol sym = trc.getSymbol(addr);
+            ComputedSymbol sym = trc.getComputedSymbol(addr);
             if (sym != null) {
-                return sym.getName();
+                return sym.name;
             } else {
                 return null;
             }

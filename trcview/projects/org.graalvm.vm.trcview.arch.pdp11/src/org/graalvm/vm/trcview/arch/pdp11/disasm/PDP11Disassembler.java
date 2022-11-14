@@ -23,6 +23,10 @@ public class PDP11Disassembler extends Disassembler {
 
     private static final Field SOB_OFFSET = Field.getLE(5, 0);
 
+    public PDP11Disassembler() {
+        super();
+    }
+
     public PDP11Disassembler(TraceAnalyzer trc) {
         super(trc);
     }

@@ -30,7 +30,7 @@ public abstract class PDP11StepEvent extends StepEvent {
         }
 
         short[] code = getState().getMachinecodeWords();
-        int length = new PDP11Disassembler(null).getLength(code);
+        int length = new PDP11Disassembler().getLength(code);
         machinecode = new byte[length * 2];
         for (int i = 0; i < length; i++) {
             Endianess.set16bitLE(machinecode, 2 * i, code[i]);
@@ -50,7 +50,7 @@ public abstract class PDP11StepEvent extends StepEvent {
 
     @Override
     public String[] getDisassemblyComponents() {
-        return new PDP11Disassembler(null).getDisassembly(getState().getMachinecodeWords(), (short) getPC());
+        return new PDP11Disassembler().getDisassembly(getState().getMachinecodeWords(), (short) getPC());
     }
 
     @Override

@@ -13,6 +13,10 @@ public class PowerPCDisassembler extends Disassembler {
     private static final String[] BC_TRUE = {"lt", "gt", "eq", "so"};
     private static final String[] BC_FALSE = {"ge", "le", "ne", "ns"};
 
+    public PowerPCDisassembler() {
+        super();
+    }
+
     public PowerPCDisassembler(TraceAnalyzer trc) {
         super(trc);
     }
@@ -101,7 +105,7 @@ public class PowerPCDisassembler extends Disassembler {
         }
     }
 
-    public static String[] disassemble(int pc, int word) {
+    public String[] disassemble(int pc, int word) {
         InstructionFormat insn = new InstructionFormat(word);
         switch (insn.OPCD.get()) {
             case Opcode.TWI:
@@ -590,17 +594,24 @@ public class PowerPCDisassembler extends Disassembler {
         }
     }
 
-    protected static String[] bc(int pc, InstructionFormat insn) {
+    protected String[] bc(int pc, InstructionFormat insn) {
         int bo = insn.BO.get();
         int bi = insn.BI.get();
         int bd = insn.BD.get() << 2;
         boolean aa = insn.AA.getBit();
         boolean lk = insn.LK.getBit();
+        int bta = aa ? bd : (pc + bd);
         String a = aa ? "a" : "";
         String l = lk ? "l" : "";
         String add = l + a;
-        String bta = Integer.toHexString(aa ? bd : pc + bd);
         String prefix = "b";
+        String target;
+        String label = getLocation(Integer.toUnsignedLong(bta));
+        if (label != null) {
+            target = label;
+        } else {
+            target = Integer.toHexString(bta);
+        }
         if ((bo & 0b11110) == 0 || (bo & 0b1110) == 0b00010 || (bo & 0b11100) == 0b00100) {
             if ((bo & 0b1110) == 0) {
                 // Decrement the CTR, then branch if the decremented CTR != 0 and CR_BI = 0
@@ -612,9 +623,9 @@ public class PowerPCDisassembler extends Disassembler {
             String suffix = BC_FALSE[bi & 0x3];
             int cr = bi >> 2;
             if (cr != 0) {
-                return new String[]{prefix + suffix + add, "cr" + cr, bta};
+                return new String[]{prefix + suffix + add, "cr" + cr, target};
             } else {
-                return new String[]{prefix + suffix + add, bta};
+                return new String[]{prefix + suffix + add, target};
             }
         } else if ((bo & 0b11110) == 0b01000 || (bo & 0b11110) == 0b01010 || (bo & 0b11100) == 0b01100) {
             if ((bo & 0b11110) == 0b01000) {
@@ -627,18 +638,18 @@ public class PowerPCDisassembler extends Disassembler {
             String suffix = BC_TRUE[bi & 0x3];
             int cr = bi >> 2;
             if (cr != 0) {
-                return new String[]{prefix + suffix + add, "cr" + cr, bta};
+                return new String[]{prefix + suffix + add, "cr" + cr, target};
             } else {
-                return new String[]{prefix + suffix + add, bta};
+                return new String[]{prefix + suffix + add, target};
             }
         } else if ((bo & 0b10100) == 0b10100) {
-            return new String[]{"b" + add, bta};
+            return new String[]{"b" + add, target};
         } else if ((bo & 0b10110) == 0b10000) {
-            return new String[]{"bdnz", bta};
+            return new String[]{"bdnz", target};
         } else if ((bo & 0b10110) == 0b10010) {
-            return new String[]{"bdz", bta};
+            return new String[]{"bdz", target};
         }
-        return new String[]{"bc" + add, Integer.toString(bo), Integer.toString(bi), bta};
+        return new String[]{"bc" + add, Integer.toString(bo), Integer.toString(bi), target};
     }
 
     protected static String[] sc(InstructionFormat insn) {
@@ -650,7 +661,7 @@ public class PowerPCDisassembler extends Disassembler {
         }
     }
 
-    protected static String[] b(int pc, InstructionFormat insn) {
+    protected String[] b(int pc, InstructionFormat insn) {
         int li = insn.LI.get() << 2;
         boolean aa = insn.AA.getBit();
         boolean lk = insn.LK.getBit();
@@ -665,7 +676,14 @@ public class PowerPCDisassembler extends Disassembler {
         } else {
             bta += pc;
         }
-        return new String[]{name.toString(), Integer.toHexString(bta)};
+        String target;
+        String label = getLocation(Integer.toUnsignedLong(bta));
+        if (label != null) {
+            target = label;
+        } else {
+            target = Integer.toHexString(bta);
+        }
+        return new String[]{name.toString(), target};
     }
 
     protected static String[] mcrf(InstructionFormat insn) {

@@ -8,6 +8,7 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.ppc.PowerPC;
 import org.graalvm.vm.trcview.arch.ppc.disasm.PowerPCDisassembler;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.io.Endianess;
 
 public abstract class PowerPCStepEvent extends StepEvent {
@@ -36,7 +37,12 @@ public abstract class PowerPCStepEvent extends StepEvent {
 
     @Override
     public String[] getDisassemblyComponents() {
-        return PowerPCDisassembler.disassemble((int) getState().getPC(), getState().getInstruction());
+        return new PowerPCDisassembler().disassemble((int) getState().getPC(), getState().getInstruction());
+    }
+
+    @Override
+    public String[] getDisassemblyComponents(TraceAnalyzer trc) {
+        return new PowerPCDisassembler(trc).disassemble((int) getState().getPC(), getState().getInstruction());
     }
 
     @Override
