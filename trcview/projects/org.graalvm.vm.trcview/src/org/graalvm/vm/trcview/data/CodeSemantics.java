@@ -112,6 +112,9 @@ public class CodeSemantics extends Semantics {
 
     private MemoryOperand resolve(IndexedMemoryOperand op) {
         long reg = state.getRegisterById(op.getRegister());
+        if (op.getOffsetRegister() != -1) {
+            reg += state.getRegisterById(op.getOffsetRegister());
+        }
         long offset = op.getOffset();
         long address = reg + offset;
         return new MemoryOperand(address);
