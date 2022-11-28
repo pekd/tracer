@@ -1802,7 +1802,7 @@ public class PowerPCDisassembler extends Disassembler {
         if (rc) {
             add.append('.');
         }
-        return new String[]{"div" + add, r(rt), r(ra), r(rb)};
+        return new String[]{"divw" + add, r(rt), r(ra), r(rb)};
     }
 
     protected static String[] lwz(InstructionFormat insn) {
