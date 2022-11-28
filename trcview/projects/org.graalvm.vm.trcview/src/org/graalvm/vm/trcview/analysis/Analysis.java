@@ -453,6 +453,7 @@ public class Analysis {
                     // nothing
                 }
             } else if (start != -1) {
+                // TODO: check if this condition is correct
                 if (start < i - 1) {
                     buf.append('-');
                     buf.append(getR(i - 1));
@@ -461,7 +462,11 @@ public class Analysis {
             }
         }
 
-        assert start == -1;
+        if (start != 0) {
+            buf.append('-');
+            buf.append(getR(count - 1));
+        }
+
         assert buf.length() > 1;
 
         return buf.append('}').toString();
