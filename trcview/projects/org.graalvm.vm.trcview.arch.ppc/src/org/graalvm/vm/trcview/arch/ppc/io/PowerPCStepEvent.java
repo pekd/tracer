@@ -8,6 +8,9 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.ppc.PowerPC;
 import org.graalvm.vm.trcview.arch.ppc.disasm.PowerPCDisassembler;
+import org.graalvm.vm.trcview.arch.ppc.disasm.PowerPCRegisterUsage;
+import org.graalvm.vm.trcview.arch.ppc.disasm.PowerPCSemantics;
+import org.graalvm.vm.trcview.data.Semantics;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.io.Endianess;
 
@@ -65,5 +68,20 @@ public abstract class PowerPCStepEvent extends StepEvent {
     @Override
     public StepFormat getFormat() {
         return PowerPC.FORMAT;
+    }
+
+    @Override
+    public void getSemantics(Semantics s) {
+        PowerPCSemantics.getSemantics(s, getState().getInstruction());
+    }
+
+    @Override
+    public int[] getRegisterReads() {
+        return PowerPCRegisterUsage.getRegisterUsage(getState().getInstruction(), true);
+    }
+
+    @Override
+    public int[] getRegisterWrites() {
+        return PowerPCRegisterUsage.getRegisterUsage(getState().getInstruction(), false);
     }
 }

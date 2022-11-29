@@ -97,6 +97,11 @@ public class PowerPC extends Architecture {
     }
 
     @Override
+    public int getRegisterCount() {
+        return 32;
+    }
+
+    @Override
     public ABI createABI() {
         GenericABI abi = new GenericABI();
         abi.getCall().setArguments(Arrays.asList(new VariableNode("r3"), new VariableNode("r4"), new VariableNode("r5"), new VariableNode("r6"), new VariableNode("r7"), new VariableNode("r8"),
