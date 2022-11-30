@@ -352,7 +352,7 @@ public class StateEncoder {
     private static String encode(Location location) {
         StringBuilder buf = new StringBuilder();
         buf.append("IN: ");
-        buf.append(str(location.getSymbol(), "symbol"));
+        buf.append(str(location.getSymbolName(), "symbol"));
         if (location.getFilename() != null) {
             buf.append(" # ");
             buf.append(Utils.html(location.getFilename()));

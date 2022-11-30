@@ -176,8 +176,8 @@ public class InstructionView extends JPanel {
             }
             buf.append(fmt.formatAddress(loc.getPC()));
             if (loc.getSymbol() != null) {
-                buf.append(" ");
-                buf.append(loc.getSymbol());
+                buf.append(' ');
+                getName(buf, loc, fmt);
             }
             if (loc.getFilename() != null) {
                 buf.append(" [");
@@ -209,6 +209,21 @@ public class InstructionView extends JPanel {
                 trace();
             }
         });
+    }
+
+    private static void getName(StringBuilder buf, Location loc, StepFormat fmt) {
+        Symbol sym = loc.getSymbol();
+        if (sym != null) {
+            buf.append(sym.getName());
+            long diff = loc.getPC() - sym.getValue();
+            if (diff > 0) {
+                buf.append('+');
+                buf.append(fmt.formatShortAddress(diff));
+            } else if (diff < 0) {
+                buf.append('-');
+                buf.append(fmt.formatShortAddress(-diff));
+            }
+        }
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
@@ -599,7 +614,7 @@ public class InstructionView extends JPanel {
                 }
                 if (loc.getSymbol() != null) {
                     buf.append(" # <");
-                    buf.append(loc.getSymbol());
+                    getName(buf, loc, trc.getArchitecture().getFormat());
                     buf.append(">");
                     if (loc.getFilename() != null) {
                         buf.append(" [");

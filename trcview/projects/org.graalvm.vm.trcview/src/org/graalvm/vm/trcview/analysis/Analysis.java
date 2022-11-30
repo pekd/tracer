@@ -208,7 +208,7 @@ public class Analysis {
                         break;
                     case CALL:
                         sym = resolver.getSymbol(pc);
-                        if (sym != null && sym.getName() != null) {
+                        if (sym != null && sym.getName() != null && sym.getValue() == pc) {
                             symbols.addSubroutine(pc, sym.getName());
                         } else {
                             symbols.addSubroutine(pc);

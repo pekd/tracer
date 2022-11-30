@@ -77,7 +77,11 @@ public class Location {
         return pc;
     }
 
-    public String getSymbol() {
+    public Symbol getSymbol() {
+        return symbol;
+    }
+
+    public String getSymbolName() {
         return symbol == null ? null : symbol.getName();
     }
 
