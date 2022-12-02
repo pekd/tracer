@@ -94,7 +94,20 @@ public class PowerPCTraceReader extends ArchTraceReader {
 
     private void checkTrap(PowerPCStepEvent step) {
         int opcd = step.getState().getInstruction();
+
         switch (insn.OPCD.get(opcd)) {
+            case Opcode.BC: {
+                // treat bl .+4 and bl .+8 as normal branch
+                int bo = insn.BO.get(opcd);
+                int bd = insn.BD.get(opcd) << 2;
+                boolean aa = insn.AA.getBit(opcd);
+                boolean lk = insn.LK.getBit(opcd);
+                int bta = aa ? bd : ((int) step.getPC() + bd);
+                if (lk && (bta == step.getPC() + 4 || bta == step.getPC() + 8) && (bo & 0b10100) == 0b10100) {
+                    step.type = InstructionType.JMP;
+                }
+                break;
+            }
             case Opcode.CR_OPS:
                 switch (insn.XO_1.get(opcd)) {
                     case Opcode.XO_RFI:
@@ -110,7 +123,7 @@ public class PowerPCTraceReader extends ArchTraceReader {
                         } else {
                             step.type = InstructionType.JMP_INDIRECT;
                         }
-                        return;
+                        break;
                 }
                 break;
         }
