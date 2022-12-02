@@ -64,16 +64,16 @@ public class PDP11Semantics {
             case 0: // Rn
                 return new RegisterOperand(rn);
             case 1: // (Rn)
-                return new IndexedMemoryOperand(rn, 0);
+                return new IndexedMemoryOperand(rn, (long) 0);
             case 2: // (Rn)+
-                return new IndexedMemoryOperand(rn, 0);
+                return new IndexedMemoryOperand(rn, (long) 0);
             case 3: // @(Rn)+
                 return new IndirectIndexedMemoryOperand(rn, 0);
             case 4: // -(Rn)
                 if (rn == 6 && size == 1) {
-                    return new IndexedMemoryOperand(rn, -2);
+                    return new IndexedMemoryOperand(rn, (long) -2);
                 } else {
-                    return new IndexedMemoryOperand(rn, -size);
+                    return new IndexedMemoryOperand(rn, (long) -size);
                 }
             case 5: // @-(Rn)
                 if (rn == 6 && size == 1) {
@@ -83,7 +83,7 @@ public class PDP11Semantics {
                 }
             case 6: // <offset>(Rn)
                 code.pc += 2;
-                return new IndexedMemoryOperand(rn, code.next());
+                return new IndexedMemoryOperand(rn, (long) code.next());
             case 7: // @<offset>(Rn)
                 code.pc += 2;
                 return new IndirectIndexedMemoryOperand(rn, code.next());
@@ -102,19 +102,19 @@ public class PDP11Semantics {
                 return new RegisterOperand(rn);
             case 1: // (Rn)
                 semantics.constraint(new RegisterOperand(rn), ptrType);
-                return new IndexedMemoryOperand(rn, 0);
+                return new IndexedMemoryOperand(rn, (long) 0);
             case 2: // (Rn)+
                 semantics.constraint(new RegisterOperand(rn), ptrType);
-                return new IndexedMemoryOperand(rn, 0);
+                return new IndexedMemoryOperand(rn, (long) 0);
             case 3: // @(Rn)+
                 semantics.constraint(new RegisterOperand(rn), VariableType.POINTER_I16);
                 return new IndirectIndexedMemoryOperand(rn, 0);
             case 4: // -(Rn)
                 semantics.constraint(new RegisterOperand(rn), ptrType);
                 if (rn == 6 && size == 1) {
-                    return new IndexedMemoryOperand(rn, -2);
+                    return new IndexedMemoryOperand(rn, (long) -2);
                 } else {
-                    return new IndexedMemoryOperand(rn, -size);
+                    return new IndexedMemoryOperand(rn, (long) -size);
                 }
             case 5: // @-(Rn)
                 semantics.constraint(new RegisterOperand(rn), VariableType.POINTER_I16);
@@ -127,7 +127,7 @@ public class PDP11Semantics {
                 // TODO: use heuristic to distinguish between base and offset
                 code.pc += 2;
                 semantics.constraint(new RegisterOperand(rn), ptrType);
-                return new IndexedMemoryOperand(rn, code.next());
+                return new IndexedMemoryOperand(rn, (long) code.next());
             case 7: // @<offset>(Rn)
                 code.pc += 2;
                 semantics.constraint(new RegisterOperand(rn), VariableType.POINTER_I16);
@@ -388,7 +388,7 @@ public class PDP11Semantics {
             case 0004000: /* JSR */
                 // JSR R,tgt does MOV R,-(SP); MOV PC,R; JMP tgt
                 semantics.constraint(new RegisterOperand(JSR_R.get(opcd)), VariableType.POINTER_I16);
-                semantics.move(new IndexedMemoryOperand(6, -2), new RegisterOperand(JSR_R.get(opcd)));
+                semantics.move(new IndexedMemoryOperand(6, (long) -2), new RegisterOperand(JSR_R.get(opcd)));
                 semantics.move(new RegisterOperand(JSR_R.get(opcd)), new RegisterOperand(7));
                 // op1(opcd, code, semantics, false);
                 return;
