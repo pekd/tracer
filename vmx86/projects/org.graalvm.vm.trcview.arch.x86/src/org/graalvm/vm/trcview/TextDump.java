@@ -262,7 +262,7 @@ public class TextDump {
     private static String encode(Location location) {
         StringBuilder buf = new StringBuilder();
         buf.append("IN: ");
-        buf.append(str(location.getSymbol()));
+        buf.append(str(location.getSymbolName()));
         if (location.getFilename() != null) {
             buf.append(" # ");
             buf.append(location.getFilename());
