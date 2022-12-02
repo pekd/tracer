@@ -105,11 +105,12 @@ public abstract class PDP11StepEvent extends StepEvent {
     public List<MemoryEvent> getDataReads() {
         List<MemoryEvent> reads = super.getDataReads();
         List<MemoryEvent> data = new ArrayList<>();
+        int len = new PDP11Disassembler().getLength(getState().getMachinecodeWords());
         for (MemoryEvent evt : reads) {
             long addr = evt.getAddress();
             // PC = instruction, PC+n = operands (offsets or immediate)
             // TODO: filter offsets without filtering immediate
-            if (addr != getState().getPC()) {
+            if ((addr < getPC()) || (addr >= getPC() + len * 2)) {
                 data.add(evt);
             }
         }
