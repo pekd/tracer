@@ -102,7 +102,7 @@ public class PowerPCTraceReader extends ArchTraceReader {
                 int bd = insn.BD.get(opcd) << 2;
                 boolean aa = insn.AA.getBit(opcd);
                 boolean lk = insn.LK.getBit(opcd);
-                int bta = aa ? bd : ((int) step.getPC() + bd);
+                long bta = Integer.toUnsignedLong(aa ? bd : ((int) step.getPC() + bd));
                 if (lk && (bta == step.getPC() + 4 || bta == step.getPC() + 8) && (bo & 0b10100) == 0b10100) {
                     step.type = InstructionType.JMP;
                 }
