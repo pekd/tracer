@@ -64,18 +64,13 @@ import javax.swing.KeyStroke;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.Subroutine;
-import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
-import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.InterruptEvent;
-import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
-import org.graalvm.vm.trcview.data.TypedMemory;
-import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.expression.EvaluationException;
 import org.graalvm.vm.trcview.io.Block;
 import org.graalvm.vm.trcview.io.BlockNode;
@@ -84,9 +79,7 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.CallListener;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
 import org.graalvm.vm.util.HexFormatter;
-import org.graalvm.vm.util.OctFormatter;
 import org.graalvm.vm.util.StringUtils;
-import org.graalvm.vm.util.Stringify;
 import org.graalvm.vm.util.log.Trace;
 
 @SuppressWarnings("serial")
