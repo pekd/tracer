@@ -35,6 +35,7 @@ public class Type {
     }
 
     public Type(DataType type, boolean isConst, int elements, Representation repr) {
+        assert type != DataType.STRUCT;
         this.type = type;
         this.pointee = null;
         this.struct = null;
@@ -89,6 +90,7 @@ public class Type {
     }
 
     private Type(Type type, long elements, boolean isConst) {
+        assert type.type == DataType.STRUCT && type.struct != null || type.type != DataType.STRUCT;
         this.isConst = isConst;
         this.type = type.type;
         this.pointee = type.pointee;
@@ -122,6 +124,8 @@ public class Type {
     public Type getElementType() {
         if (getType() == DataType.PTR) {
             return new Type(pointee, isConst, info);
+        } else if (getType() == DataType.STRUCT) {
+            return new Type(struct, isConst);
         } else {
             return new Type(type, isConst, representation);
         }
