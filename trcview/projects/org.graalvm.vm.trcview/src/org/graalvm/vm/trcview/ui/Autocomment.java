@@ -1,9 +1,12 @@
 package org.graalvm.vm.trcview.ui;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Field;
+import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -15,8 +18,12 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.OctFormatter;
 import org.graalvm.vm.util.Stringify;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 
 public class Autocomment {
+    private static final Logger log = Trace.create(Autocomment.class);
+
     private static long trunc(Type type, long val) {
         switch ((int) type.getElementSize()) {
             case 1:
@@ -139,6 +146,39 @@ public class Autocomment {
         }
     }
 
+    private static String decode(TraceAnalyzer trc, Type type, long off, MemoryEvent access) {
+        long offset = off;
+        String prefix = "";
+
+        if (type.getElements() > 1) {
+            long idx = off / type.getElementSize();
+            offset = off % type.getElementSize();
+            prefix = "[" + idx + "]";
+        }
+
+        if (type.getType() == DataType.STRUCT) {
+            Struct struct = type.getStruct();
+            if (struct == null) {
+                log.log(Levels.ERROR, "Type is " + type.getType() + " but struct is " + struct);
+                return prefix + " = ??? (struct error)";
+            }
+            for (Field field : struct.getFields()) {
+                if (field.getOffset() <= offset && field.end() > offset) {
+                    // found it
+                    return prefix + "." + field.getName() + decode(trc, field.getType(), offset - field.getOffset(), access);
+                }
+            }
+            log.log(Levels.ERROR, "Field not found at offset " + offset + " in struct " + struct);
+            return prefix + " = ??? (field not found)";
+        } else {
+            if (offset != 0) {
+                return prefix + " (+" + offset + ") = " + data(trc, type, access);
+            } else {
+                return prefix + " = " + data(trc, type, access);
+            }
+        }
+    }
+
     private static String decode(TraceAnalyzer trc, MemoryEvent access, Variable var, StepFormat fmt) {
         Type type = var.getType();
         String name = var.getName(fmt);
@@ -150,13 +190,14 @@ public class Autocomment {
                 // is an array
                 long idx = offset / type.getElementSize();
                 long off = offset % type.getElementSize();
-                if (off == 0) {
-                    return name + "[" + idx + "] = " + data(trc, type, access);
+                if (type.getType() == DataType.STRUCT) {
+                    // we got a struct
+                    return name + "[" + idx + "]" + decode(trc, type.getElementType(), off, access);
                 } else {
-                    return null;
+                    return name + "[" + idx + "] = " + data(trc, type, access);
                 }
             } else if (type.getType() == DataType.STRUCT) {
-                return null;
+                return name + decode(trc, type, offset, access);
             } else {
                 return name + " = " + data(trc, type, access.getValue());
             }
