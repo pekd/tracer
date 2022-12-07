@@ -36,6 +36,7 @@ public class Type {
 
     public Type(DataType type, boolean isConst, int elements, Representation repr) {
         assert type != DataType.STRUCT;
+        assert elements > 0 || elements == -1;
         this.type = type;
         this.pointee = null;
         this.struct = null;
@@ -58,6 +59,7 @@ public class Type {
     }
 
     public Type(Struct struct, boolean isConst, int elements) {
+        assert elements > 0 || elements == -1;
         this.type = DataType.STRUCT;
         this.pointee = null;
         this.struct = struct;
@@ -76,6 +78,7 @@ public class Type {
     }
 
     public Type(Type type, boolean isConst, long elements, ArchitectureTypeInfo info) {
+        assert elements > 0 || elements == -1;
         this.type = DataType.PTR;
         this.pointee = type;
         this.struct = null;
@@ -91,6 +94,7 @@ public class Type {
 
     private Type(Type type, long elements, boolean isConst) {
         assert type.type == DataType.STRUCT && type.struct != null || type.type != DataType.STRUCT;
+        assert elements > 0 || elements == -1;
         this.isConst = isConst;
         this.type = type.type;
         this.pointee = type.pointee;
