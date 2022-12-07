@@ -79,6 +79,8 @@ public class StructArrayRecovery {
             log.info("array of structs (new): " + array);
         } else {
             log.info("array of structs (old): " + array + "; " + String.format("0x%x-0x%x", first, last));
+            // resize
+            array.end = last + array.elementSize;
         }
 
         long offset = (first - array.start) % elementSize;
@@ -155,20 +157,29 @@ public class StructArrayRecovery {
         private Map<Long, Type> fields = new HashMap<>();
 
         public Record(int size) {
+            assert size > 0;
             this.size = size;
         }
 
         public void reorder(long offset) {
             Map<Long, Type> reordered = new HashMap<>();
             for (Entry<Long, Type> entry : fields.entrySet()) {
-                long off = (entry.getKey() + offset);
+                long off = (entry.getKey() + offset) % size;
+                assert off + entry.getValue().getSize() <= size;
                 reordered.put(off, entry.getValue());
             }
             fields = reordered;
         }
 
         public void addField(long offset, Type field) {
-            fields.put(offset, field);
+            // check if this field is already defined
+            long off = offset % size;
+            if (fields.get(off) != null) {
+                return;
+            }
+
+            assert offset + field.getSize() <= size;
+            fields.put(off, field);
         }
 
         public Struct createStruct(String name) {
@@ -180,6 +191,7 @@ public class StructArrayRecovery {
                 if (lastOffset < offset) {
                     // add padding
                     long pad = offset - lastOffset;
+                    assert pad > 0;
                     struct.add("pad_" + fmt.formatShortAddress(lastOffset), new Type(DataType.U8, false, (int) pad));
                 }
                 Type field = fields.get(offset);
@@ -189,6 +201,7 @@ public class StructArrayRecovery {
             if (lastOffset != size) {
                 // add padding
                 long pad = size - lastOffset;
+                assert pad > 0;
                 struct.add("pad_" + fmt.formatShortAddress(lastOffset), new Type(DataType.U8, false, (int) pad));
             }
             return struct;
