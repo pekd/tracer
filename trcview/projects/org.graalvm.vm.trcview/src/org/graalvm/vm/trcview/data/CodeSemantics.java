@@ -56,6 +56,21 @@ public class CodeSemantics extends Semantics {
         }
     }
 
+    private long addr(long addr) {
+        switch (addrsize) {
+            case 1:
+                return Byte.toUnsignedLong((byte) addr);
+            case 2:
+                return Short.toUnsignedLong((short) addr);
+            case 4:
+                return Integer.toUnsignedLong((int) addr);
+            case 8:
+                return addr;
+            default:
+                throw new AssertionError("unknown address size " + addrsize);
+        }
+    }
+
     @Override
     public void setPC(long pc) {
         super.setPC(pc);
@@ -116,7 +131,7 @@ public class CodeSemantics extends Semantics {
             reg += state.getRegisterById(op.getOffsetRegister());
         }
         long offset = op.getOffset();
-        long address = reg + offset;
+        long address = addr(reg + offset);
         return new MemoryOperand(address);
     }
 
@@ -125,16 +140,16 @@ public class CodeSemantics extends Semantics {
         try {
             switch (addrsize) {
                 case 1:
-                    address = Byte.toUnsignedInt(memtrc.getLastByte(op.getAddress()));
+                    address = Byte.toUnsignedInt(memtrc.getLastByte(addr(op.getAddress())));
                     break;
                 case 2:
-                    address = Short.toUnsignedInt(memtrc.getLastShort(op.getAddress()));
+                    address = Short.toUnsignedInt(memtrc.getLastShort(addr(op.getAddress())));
                     break;
                 case 4:
-                    address = Integer.toUnsignedLong(memtrc.getLastInt(op.getAddress()));
+                    address = Integer.toUnsignedLong(memtrc.getLastInt(addr(op.getAddress())));
                     break;
                 case 8:
-                    address = memtrc.getLastWord(op.getAddress());
+                    address = memtrc.getLastWord(addr(op.getAddress()));
                     break;
                 default:
                     throw new AssertionError("unknown address size " + addrsize);
@@ -149,7 +164,7 @@ public class CodeSemantics extends Semantics {
     private MemoryOperand resolve(IndirectIndexedMemoryOperand op) {
         long reg = state.getRegisterById(op.getRegister());
         long offset = op.getOffset();
-        long addr = reg + offset;
+        long addr = addr(reg + offset);
         long address;
         try {
             switch (addrsize) {
