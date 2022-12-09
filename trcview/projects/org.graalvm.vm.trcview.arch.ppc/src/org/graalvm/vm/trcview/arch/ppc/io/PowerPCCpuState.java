@@ -161,6 +161,11 @@ public abstract class PowerPCCpuState extends PowerPCStepEvent implements CpuSta
         }
     }
 
+    @Override
+    public long getRegisterById(int id) {
+        return getGPR(id);
+    }
+
     private static boolean test(int x, int i) {
         return (x & (1 << (3 - i))) != 0;
     }
