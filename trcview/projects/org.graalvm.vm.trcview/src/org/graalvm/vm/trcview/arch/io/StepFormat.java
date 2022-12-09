@@ -46,6 +46,24 @@ public class StepFormat {
         }
     }
 
+    public String formatOffset(long off) {
+        long uoff;
+        char sign;
+        if (off < 0) {
+            uoff = -off;
+            sign = '-';
+        } else {
+            uoff = off;
+            sign = '+';
+        }
+
+        if (numberfmt == NUMBERFMT_OCT) {
+            return sign + OctFormatter.tooct(uoff);
+        } else {
+            return sign + HexFormatter.tohex(uoff);
+        }
+    }
+
     public String formatCode(byte[] machinecode) {
         if (machinecodesz == 1) {
             return getPrintableBytes(machinecode);

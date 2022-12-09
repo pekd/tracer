@@ -216,12 +216,8 @@ public class InstructionView extends JPanel {
         if (sym != null) {
             buf.append(sym.getName());
             long diff = loc.getPC() - sym.getValue();
-            if (diff > 0) {
-                buf.append('+');
-                buf.append(fmt.formatShortAddress(diff));
-            } else if (diff < 0) {
-                buf.append('-');
-                buf.append(fmt.formatShortAddress(-diff));
+            if (diff != 0) {
+                buf.append(fmt.formatOffset(diff));
             }
         }
     }

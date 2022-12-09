@@ -47,7 +47,12 @@ public class Autocomment {
             } else {
                 Symbol sym = trc.getSymbol(address);
                 if (sym != null && sym.getName() != null) {
-                    return sym.getName();
+                    if (sym.getValue() != address) {
+                        long off = val - sym.getValue();
+                        return sym.getName() + trc.getArchitecture().getFormat().formatOffset(off);
+                    } else {
+                        return sym.getName();
+                    }
                 } else {
                     Variable var = trc.getTypedMemory().get(address);
                     if (var != null && var.getAddress() == address) {
@@ -182,6 +187,16 @@ public class Autocomment {
     private static String decode(TraceAnalyzer trc, MemoryEvent access, Variable var, StepFormat fmt) {
         Type type = var.getType();
         String name = var.getName(fmt);
+
+        // no explicit variable name?
+        if (var.getRawName() == null) {
+            // try to use symbol name if available
+            Symbol sym = trc.getSymbol(var.getAddress());
+            if (sym != null && sym.getValue() == var.getAddress()) {
+                name = sym.getName();
+            }
+        }
+
         if (type == null && name != null && var.getAddress() == access.getAddress()) {
             return name + " = " + data(access, fmt);
         } else if (name != null && type != null) {
