@@ -101,17 +101,26 @@ public class StructArrayRecovery {
         UserTypeDatabase types = trc.getTypeDatabase();
         TypedMemory mem = trc.getTypedMemory();
 
+        Map<Struct, Struct> structs = new HashMap<>();
+
         for (Array array : arrays.values()) {
             Struct struct = array.struct.createStruct("struct_" + id);
-            Type type = new Type(struct, false, array.getElements());
-            try {
-                types.add(struct);
-                mem.setRecoveredType(array.start, type);
-            } catch (NameAlreadyUsedException e) {
-                log.log(Levels.ERROR, "Name collision for struct name " + struct.getName());
+            if (structs.containsKey(struct)) {
+                struct = structs.get(struct);
+            } else {
+                structs.put(struct, struct);
+                id++;
+
+                try {
+                    types.add(struct);
+                } catch (NameAlreadyUsedException e) {
+                    log.log(Levels.ERROR, "Name collision for struct name " + struct.getName());
+                    continue;
+                }
             }
 
-            id++;
+            Type type = new Type(struct, false, array.getElements());
+            mem.setRecoveredType(array.start, type);
         }
     }
 
