@@ -382,11 +382,11 @@ public class Type {
         }
         Type t = (Type) o;
 
-        return t.isConst == isConst && t.representation == representation && Objects.equals(t.type, type) && Objects.equals(t.struct, struct) && Objects.equals(t.expr, expr);
+        return t.isConst == isConst && t.representation == representation && Objects.equals(t.type, type) && Objects.equals(t.struct, struct) && Objects.equals(t.expr, expr) && t.elements == elements;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isConst, representation, type, struct, expr);
+        return Objects.hash(isConst, representation, type, struct, expr, elements);
     }
 }
