@@ -10,6 +10,6 @@ public interface CpuState {
     int getTid();
 
     default long getRegisterById(@SuppressWarnings("unused") int id) {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 }
