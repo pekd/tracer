@@ -90,4 +90,35 @@ public class Struct extends UserDefinedType {
         }
         return "struct " + getName() + " {\n" + fielddef + "}";
     }
+
+    @Override
+    public int hashCode() {
+        return fields.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+
+        if (!(o instanceof Struct)) {
+            return false;
+        }
+
+        Struct s = (Struct) o;
+
+        if (fields.size() != s.fields.size()) {
+            return false;
+        }
+
+        for (Entry<Long, Field> entry : fields.entrySet()) {
+            Field f = s.getFieldAt(entry.getKey());
+            if (!entry.getValue().equals(f)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
