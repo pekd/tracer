@@ -87,7 +87,7 @@ public class Field {
             return false;
         }
         Field f = (Field) o;
-        return offset == f.offset && name.equals(f.name) && type.equals(f.type);
+        return offset == f.offset && Objects.equals(name, f.name) && type.equals(f.type);
     }
 
     @Override
