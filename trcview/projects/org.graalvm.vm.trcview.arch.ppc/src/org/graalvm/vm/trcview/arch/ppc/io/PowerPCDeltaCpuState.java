@@ -2,10 +2,11 @@ package org.graalvm.vm.trcview.arch.ppc.io;
 
 import java.io.IOException;
 
+import org.graalvm.vm.trcview.arch.io.CpuDeltaState;
 import org.graalvm.vm.util.io.Endianess;
 import org.graalvm.vm.util.io.WordInputStream;
 
-public class PowerPCDeltaCpuState extends PowerPCCpuState {
+public class PowerPCDeltaCpuState extends PowerPCCpuState implements CpuDeltaState<PowerPCCpuState> {
     private final int MASK_LR = bit(0);
     private final int MASK_CTR = bit(1);
     private final int MASK_CR = bit(2);
@@ -85,84 +86,116 @@ public class PowerPCDeltaCpuState extends PowerPCCpuState {
         return insn;
     }
 
-    @Override
-    public int getLR() {
+    public int getLR(PowerPCCpuState lastState) {
         int offset = getOffset(MASK_LR, 0);
         if (offset == -1) {
-            return last.getLR();
+            return lastState.getLR();
         } else {
             return Endianess.get32bitBE(data, offset);
         }
+    }
+
+    public int getCR(PowerPCCpuState lastState) {
+        int offset = getOffset(MASK_CR, 0);
+        if (offset == -1) {
+            return lastState.getCR();
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    public int getCTR(PowerPCCpuState lastState) {
+        int offset = getOffset(MASK_CTR, 0);
+        if (offset == -1) {
+            return lastState.getCTR();
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    public int getXER(PowerPCCpuState lastState) {
+        int offset = getOffset(MASK_XER, 0);
+        if (offset == -1) {
+            return lastState.getXER();
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    public int getFPSCR(PowerPCCpuState lastState) {
+        int offset = getOffset(MASK_FPSCR, 0);
+        if (offset == -1) {
+            return lastState.getFPSCR();
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    public int getGPR(int reg, PowerPCCpuState lastState) {
+        int offset = getOffset(1 << reg, 1);
+        if (offset == -1) {
+            return lastState.getGPR(reg);
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    public int getSRR0(PowerPCCpuState lastState) {
+        int offset = getOffset(MASK_SRR0, 0);
+        if (offset == -1) {
+            return lastState.getSRR0();
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    public int getSRR1(PowerPCCpuState lastState) {
+        int offset = getOffset(MASK_SRR1, 0);
+        if (offset == -1) {
+            return lastState.getSRR1();
+        } else {
+            return Endianess.get32bitBE(data, offset);
+        }
+    }
+
+    @Override
+    public int getLR() {
+        return getLR(last);
     }
 
     @Override
     public int getCR() {
-        int offset = getOffset(MASK_CR, 0);
-        if (offset == -1) {
-            return last.getCR();
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getCR(last);
     }
 
     @Override
     public int getCTR() {
-        int offset = getOffset(MASK_CTR, 0);
-        if (offset == -1) {
-            return last.getCTR();
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getCTR(last);
     }
 
     @Override
     public int getXER() {
-        int offset = getOffset(MASK_XER, 0);
-        if (offset == -1) {
-            return last.getXER();
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getXER(last);
     }
 
     @Override
     public int getFPSCR() {
-        int offset = getOffset(MASK_FPSCR, 0);
-        if (offset == -1) {
-            return last.getFPSCR();
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getFPSCR(last);
     }
 
     @Override
     public int getGPR(int reg) {
-        int offset = getOffset(1 << reg, 1);
-        if (offset == -1) {
-            return last.getGPR(reg);
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getGPR(reg, last);
     }
 
     @Override
     public int getSRR0() {
-        int offset = getOffset(MASK_SRR0, 0);
-        if (offset == -1) {
-            return last.getSRR0();
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getSRR0(last);
     }
 
     @Override
     public int getSRR1() {
-        int offset = getOffset(MASK_SRR1, 0);
-        if (offset == -1) {
-            return last.getSRR1();
-        } else {
-            return Endianess.get32bitBE(data, offset);
-        }
+        return getSRR1(last);
     }
 
     @Override
@@ -173,5 +206,10 @@ public class PowerPCDeltaCpuState extends PowerPCCpuState {
     @Override
     public long getPC() {
         return Integer.toUnsignedLong(pc);
+    }
+
+    @Override
+    public PowerPCCpuState resolve(PowerPCCpuState lastState) {
+        return new PowerPCFullCpuState(this, lastState);
     }
 }

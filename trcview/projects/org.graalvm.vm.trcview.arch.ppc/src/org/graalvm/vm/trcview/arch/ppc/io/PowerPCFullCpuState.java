@@ -56,6 +56,24 @@ public class PowerPCFullCpuState extends PowerPCCpuState {
         step = state.getStep();
     }
 
+    public PowerPCFullCpuState(PowerPCDeltaCpuState state, PowerPCCpuState last) {
+        super(state.getTid());
+        insn = state.getInstruction();
+        gpr = new int[32];
+        for (int i = 0; i < gpr.length; i++) {
+            gpr[i] = state.getGPR(i, last);
+        }
+        lr = state.getLR(last);
+        ctr = state.getCTR(last);
+        pc = (int) state.getPC();
+        cr = state.getCR(last);
+        xer = state.getXER(last);
+        fpscr = state.getFPSCR(last);
+        srr0 = state.getSRR0(last);
+        srr1 = state.getSRR1(last);
+        step = state.getStep();
+    }
+
     @Override
     public long getStep() {
         return step;
