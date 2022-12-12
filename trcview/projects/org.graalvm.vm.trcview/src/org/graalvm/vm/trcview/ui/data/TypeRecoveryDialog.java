@@ -103,6 +103,8 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
             long flags = semantics.resolve(pc, new RegisterOperand(i));
             long flowflags = semantics.resolveData(pc, new RegisterOperand(i));
 
+            flags &= ~VariableType.SOLVED.getMask();
+
             boolean live = semantics.isLive(pc, i);
             for (int reg : step.getRegisterWrites()) {
                 if (reg == i) {
