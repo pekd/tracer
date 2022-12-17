@@ -324,9 +324,6 @@ public class InstructionView extends JPanel {
                 }
             }
         }
-        if (comment == null) {
-            comment = Autocomment.get(trc, step);
-        }
         if (comment != null) {
             comment(buf, loc.getAsm(tabSize), comment);
         }
@@ -351,6 +348,10 @@ public class InstructionView extends JPanel {
         }
         if (comment2 != null) {
             parts.add(comment2);
+        }
+        String autocomment = Autocomment.get(trc, step);
+        if (autocomment != null) {
+            parts.add(autocomment);
         }
         return parts.isEmpty() ? null : String.join("; ", parts);
     }
