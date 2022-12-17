@@ -18,6 +18,7 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.OctFormatter;
 import org.graalvm.vm.util.Stringify;
+import org.graalvm.vm.util.Vector128;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 
@@ -68,8 +69,11 @@ public class Autocomment {
     }
 
     private static String data(TraceAnalyzer trc, Type type, MemoryEvent access) {
-        if (access.hasData()) {
+        if (access.hasData() && access.getSize() <= 8) {
             return data(trc, type, access.getValue());
+        } else if (access.hasData() && access.getSize() == 16) {
+            Vector128 vec = access.getVector();
+            return vec.hex();
         } else {
             return "???";
         }
