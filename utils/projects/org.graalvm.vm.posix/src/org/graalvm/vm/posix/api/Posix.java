@@ -1233,8 +1233,24 @@ public class Posix {
             }
             return result;
         } else {
-            log.log(Level.WARNING, "Cannot poll on non-socket streams");
-            throw new PosixException(Errno.EINVAL);
+            // handle poll with empty events field and timeout=0 (like e.g. in rust startup)
+            boolean fail = false;
+            if (timeout != 0) {
+                fail = true;
+            }
+            for (int i = 0; i < nfds; i++) {
+                if (pfds[i].events != 0) {
+                    fail = true;
+                    break;
+                }
+            }
+
+            if (fail) {
+                log.log(Level.WARNING, "Cannot poll on non-socket streams");
+                throw new PosixException(Errno.EINVAL);
+            } else {
+                return 0;
+            }
         }
     }
 
