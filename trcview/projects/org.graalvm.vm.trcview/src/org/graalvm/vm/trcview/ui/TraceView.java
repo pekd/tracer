@@ -276,6 +276,10 @@ public class TraceView extends JPanel implements StepListenable {
         });
     }
 
+    public void setAutocomment(boolean autocomment) {
+        insns.setAutocomment(autocomment);
+    }
+
     public static class ThreadID {
         public final int id;
         public String name;

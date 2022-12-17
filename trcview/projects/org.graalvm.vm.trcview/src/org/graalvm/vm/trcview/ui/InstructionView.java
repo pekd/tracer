@@ -123,6 +123,8 @@ public class InstructionView extends JPanel {
 
     private Consumer<String> status;
 
+    private boolean useAutocomment = false;
+
     public InstructionView(Consumer<String> status, Consumer<Long> position) {
         super(new BorderLayout());
         this.status = status;
@@ -209,6 +211,11 @@ public class InstructionView extends JPanel {
                 trace();
             }
         });
+    }
+
+    public void setAutocomment(boolean autocomment) {
+        useAutocomment = autocomment;
+        insns.repaint();
     }
 
     private static void getName(StringBuilder buf, Location loc, StepFormat fmt) {
@@ -349,9 +356,12 @@ public class InstructionView extends JPanel {
         if (comment2 != null) {
             parts.add(comment2);
         }
-        String autocomment = Autocomment.get(trc, step);
-        if (autocomment != null) {
-            parts.add(autocomment);
+
+        if (useAutocomment) {
+            String autocomment = Autocomment.get(trc, step);
+            if (autocomment != null) {
+                parts.add(autocomment);
+            }
         }
         return parts.isEmpty() ? null : String.join("; ", parts);
     }

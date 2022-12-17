@@ -169,6 +169,7 @@ public class MainWindow extends JFrame implements TraceListenable {
     private JMenuItem gotoNext;
     private JMenuItem exportMemory;
     private JCheckBoxMenuItem typeRecovery;
+    private JCheckBoxMenuItem autoComment;
     private JMenu subviewMenu;
 
     private TraceAnalyzer trc;
@@ -725,6 +726,13 @@ public class MainWindow extends JFrame implements TraceListenable {
         typeRecovery.setSelected(false);
         toolsMenu.add(typeRecovery);
 
+        autoComment = new JCheckBoxMenuItem("Enable autocomment");
+        autoComment.setMnemonic('c');
+        autoComment.setSelected(false);
+        autoComment.addItemListener(e -> view.setAutocomment(autoComment.isSelected()));
+        autoComment.setSelected(true);
+        toolsMenu.add(autoComment);
+
         exportMemory = new JMenuItem("Export memory region");
         exportMemory.setMnemonic('e');
         exportMemory.addActionListener(e -> {
@@ -1185,7 +1193,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                     String[] data;
                     try {
                         data = TextSerializer.tokenize(line.substring(idx + 1));
-                    } catch(IOException e) {
+                    } catch (IOException e) {
                         log.info("Syntax error in line " + lineno + ": " + e.getMessage());
                         setStatus("Syntax error in line " + lineno + ": " + e.getMessage());
                         ok = false;
@@ -1400,7 +1408,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                             TypedMemory mem = trc.getTypedMemory();
                             long addr = Long.parseUnsignedLong(address.substring(4), 16);
                             String name = data[0];
-                            if(data[1].startsWith("/*")) {
+                            if (data[1].startsWith("/*")) {
                                 // unparseable type, ignore it
                                 continue;
                             }
