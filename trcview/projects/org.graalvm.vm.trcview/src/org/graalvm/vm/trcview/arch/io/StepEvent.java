@@ -72,8 +72,10 @@ public abstract class StepEvent extends Event {
 
     public final void addRead(MemoryEvent evt) {
         assert !evt.isWrite();
-        evt.setNext(read);
-        read = evt;
+        if (read != evt) {
+            evt.setNext(read);
+            read = evt;
+        }
     }
 
     public final MemoryEvent getRead() {
@@ -107,8 +109,10 @@ public abstract class StepEvent extends Event {
 
     public final void addWrite(MemoryEvent evt) {
         assert evt.isWrite();
-        evt.setNext(write);
-        write = evt;
+        if (write != evt) {
+            evt.setNext(write);
+            write = evt;
+        }
     }
 
     public final MemoryEvent getWrite() {

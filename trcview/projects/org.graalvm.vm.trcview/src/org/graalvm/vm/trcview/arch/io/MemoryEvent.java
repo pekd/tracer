@@ -57,6 +57,7 @@ public abstract class MemoryEvent extends Event {
     public abstract Vector128 getVector();
 
     public void setNext(MemoryEvent next) {
+        assert next != this;
         this.next = next;
     }
 
