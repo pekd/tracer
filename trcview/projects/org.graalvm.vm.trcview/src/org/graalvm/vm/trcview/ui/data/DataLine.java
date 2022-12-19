@@ -72,9 +72,21 @@ public abstract class DataLine extends Line {
             } else {
                 array = "";
             }
+
+            Variable var = trc.getTypedMemory().get(addr);
             Symbol sym = trc.getSymbol(addr);
-            if (sym != null && sym.getValue() == addr) {
+
+            if (var != null && var.getAddress() == addr && var.getRawName() != null) {
+                String name = var.getRawName();
+
+                if (label != null) {
+                    lbl = StringUtils.pad(name + array + "." + label, DataViewModel.NAME_WIDTH);
+                } else {
+                    lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
+                }
+            } else if (sym != null && sym.getValue() == addr) {
                 String name = sym.getName();
+
                 if (name != null) {
                     if (label != null) {
                         lbl = StringUtils.pad(name + array + "." + label, DataViewModel.NAME_WIDTH);
@@ -82,18 +94,18 @@ public abstract class DataLine extends Line {
                         lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
                     }
                 }
-            } else if (!omitUnknownLabel) {
-                Variable var = trc.getTypedMemory().get(addr);
-                if (var != null && var.getAddress() == addr) {
+            } else {
+                if (var != null && var.getAddress() == addr && (!omitUnknownLabel || var.getRawName() != null)) {
                     String name = var.getName(trc.getArchitecture().getFormat());
+
                     if (label != null) {
                         lbl = StringUtils.pad(name + array + "." + label, DataViewModel.NAME_WIDTH);
                     } else {
                         lbl = StringUtils.pad(name + array, DataViewModel.NAME_WIDTH);
                     }
+                } else {
+                    lbl = StringUtils.repeat(" ", DataViewModel.NAME_WIDTH);
                 }
-            } else {
-                lbl = StringUtils.repeat(" ", DataViewModel.NAME_WIDTH);
             }
         }
 
