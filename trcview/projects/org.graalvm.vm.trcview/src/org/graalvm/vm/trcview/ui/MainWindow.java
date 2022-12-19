@@ -89,6 +89,7 @@ import org.graalvm.vm.trcview.analysis.Analysis;
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
+import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
 import org.graalvm.vm.trcview.analysis.type.Struct;
@@ -1109,7 +1110,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             symbols.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(sym -> {
                 out.printf("\tadd_func(0x%x);\n", sym.address);
                 if (!sym.name.startsWith("sub_") && !sym.name.startsWith("j_sub_")) {
-                    out.printf("\tset_name(0x%x, %s);\n", sym.address, DecoderUtils.str(sym.name));
+                    out.printf("\tset_name(0x%x, %s, SN_NOWARN);\n", sym.address, DecoderUtils.str(sym.name));
                 }
                 if (sym.prototype != null) {
                     out.printf("\tSetType(0x%x, \"%s __fastcall %s(%s);\");\n", sym.address, sym.prototype.returnType.toCType(), sym.name,
@@ -1123,6 +1124,22 @@ public class MainWindow extends JFrame implements TraceListenable {
             commentsPC.entrySet().stream().sorted((x, y) -> Long.compareUnsigned(x.getKey(), y.getKey())).forEach(comment -> {
                 out.printf("\tset_cmt(0x%x, %s, 0);\n", comment.getKey(), DecoderUtils.str(comment.getValue()));
             });
+
+            out.println();
+            out.println("\t// variables");
+            TypedMemory mem = trc.getTypedMemory();
+            for (Variable var : mem.getAllTypes()) {
+                String name = var.getRawName();
+                if (name != null) {
+                    out.printf("\tset_name(0x%x, %s, SN_NOWARN);\n", var.getAddress(), DecoderUtils.str(name));
+                }
+
+                if (var.getType() != null && var.getType().getType() != DataType.CODE) {
+                    out.printf("\tSetType(0x%x, %s);\n", var.getAddress(), DecoderUtils.str(var.getType().toCType()));
+                } else if (var.getType() != null && var.getType().getType() == DataType.CODE) {
+                    out.printf("\tcreate_insn(0x%x);\n", var.getAddress());
+                }
+            }
 
             out.println("}");
 

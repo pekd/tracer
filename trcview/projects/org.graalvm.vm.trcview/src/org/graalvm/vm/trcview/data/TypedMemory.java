@@ -156,9 +156,9 @@ public class TypedMemory {
     }
 
     public List<Variable> getAllTypes() {
-        List<Variable> result = new ArrayList<>(types.values());
+        List<Variable> result = new ArrayList<>(derivedTypes.values());
         result.addAll(recoveredTypes.values());
-        result.addAll(derivedTypes.values());
+        result.addAll(types.values());
         return result;
     }
 

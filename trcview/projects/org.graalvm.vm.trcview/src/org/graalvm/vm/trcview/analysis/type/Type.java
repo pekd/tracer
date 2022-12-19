@@ -332,6 +332,14 @@ public class Type {
     }
 
     public String toCType() {
+        if (elements > 1) {
+            return getCType() + "[" + elements + "]";
+        } else {
+            return getCType();
+        }
+    }
+
+    private String getCType() {
         switch (type) {
             case VOID:
                 return "void";
@@ -367,6 +375,8 @@ public class Type {
                 } else {
                     return pointee.toCType() + "*";
                 }
+            case STRUCT:
+                return getStruct().getName();
             default:
                 return "int"; // unknown
         }
