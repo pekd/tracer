@@ -18,6 +18,7 @@ import org.graalvm.vm.trcview.ui.event.TraceListener;
 public class DataDialog extends JDialog {
     private DataView data;
     private DatatypeView types;
+    private NameView names;
     private MemorySegmentView segments;
     private DynamicDataView dynamic;
 
@@ -31,6 +32,10 @@ public class DataDialog extends JDialog {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Data", data = new DataView());
         tabs.addTab("Segments", segments = new MemorySegmentView(addr -> {
+            data.setAddress(addr);
+            tabs.setSelectedIndex(0);
+        }));
+        tabs.addTab("Names", names = new NameView(addr -> {
             data.setAddress(addr);
             tabs.setSelectedIndex(0);
         }));
@@ -69,6 +74,7 @@ public class DataDialog extends JDialog {
         data.setTraceAnalyzer(trc);
         types.setTypeDatabase(trc.getTypeDatabase());
         segments.setTraceAnalyzer(trc);
+        names.setTraceAnalyzer(trc);
         dynamic.setTraceAnalyzer(trc);
     }
 }
