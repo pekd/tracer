@@ -109,13 +109,13 @@ public class DataView extends JPanel implements StepListener {
                         if (input != null && input.trim().length() > 0) {
                             String name = input.trim();
                             if (NameValidator.isValidName(name)) {
-                                var.setName(name);
+                                mem.setName(var, name);
                                 model.update();
                             } else {
                                 JOptionPane.showMessageDialog(DataView.this, "Invalid name", "Error", JOptionPane.ERROR_MESSAGE);
                             }
                         } else if (input != null) {
-                            var.setName(null);
+                            mem.setName(var, null);
                             model.update();
                         }
                     }

@@ -59,7 +59,7 @@ public class Variable {
         return address;
     }
 
-    public void setName(String name) {
+    void setName(String name) {
         // clear name?
         if (name == null) {
             this.name = null;

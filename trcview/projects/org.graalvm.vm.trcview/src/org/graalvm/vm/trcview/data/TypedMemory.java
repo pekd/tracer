@@ -6,24 +6,33 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.ui.event.ChangeListener;
+import org.graalvm.vm.util.log.Levels;
+import org.graalvm.vm.util.log.Trace;
 
 public class TypedMemory {
+    private static final Logger log = Trace.create(TypedMemory.class);
+
     private static final long MAX_STRING_LENGTH = 32768; // 32k
 
     private NavigableMap<Long, Variable> types;
     private NavigableMap<Long, Variable> recoveredTypes;
     private NavigableMap<Long, Variable> derivedTypes;
 
+    private List<ChangeListener> listeners;
+
     public TypedMemory() {
         types = new TreeMap<>();
         derivedTypes = new TreeMap<>();
         recoveredTypes = new TreeMap<>();
+        listeners = new ArrayList<>();
     }
 
     public Variable get(long addr) {
@@ -73,16 +82,19 @@ public class TypedMemory {
             clean(addr, var.getSize());
             types.put(addr, new Variable(addr, var));
         }
+        fireNameChanged();
     }
 
     public Variable setDerivedType(long addr, Type var) {
         if (var == null) {
             derivedTypes.remove(addr);
+            fireNameChanged();
             return null;
         } else {
             Variable v = new Variable(addr, var);
             clean(addr, var.getSize(), derivedTypes);
             derivedTypes.put(addr, v);
+            fireNameChanged();
             return v;
         }
     }
@@ -114,6 +126,7 @@ public class TypedMemory {
             clean(addr, var.getSize());
             types.put(addr, new Variable(addr, var, name));
         }
+        fireNameChanged();
     }
 
     private void clean(long addr, long size) {
@@ -241,6 +254,29 @@ public class TypedMemory {
                 return null;
             }
         }
+    }
+
+    public void setName(Variable var, String name) {
+        var.setName(name);
+        fireNameChanged();
+    }
+
+    protected void fireNameChanged() {
+        for (ChangeListener l : listeners) {
+            try {
+                l.valueChanged();
+            } catch (Throwable t) {
+                log.log(Levels.ERROR, "Failed to run name change listener: " + t.getMessage(), t);
+            }
+        }
+    }
+
+    public void addNameChangeListener(ChangeListener l) {
+        listeners.add(l);
+    }
+
+    public void removeNameChangeListener(ChangeListener l) {
+        listeners.remove(l);
     }
 
     private static boolean isASCII(byte val) {

@@ -9,7 +9,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTabbedPane;
 
+import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
+import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.ui.event.ChangeListener;
 import org.graalvm.vm.trcview.ui.event.StepListenable;
 import org.graalvm.vm.trcview.ui.event.TraceListenable;
 import org.graalvm.vm.trcview.ui.event.TraceListener;
@@ -21,6 +24,11 @@ public class DataDialog extends JDialog {
     private NameView names;
     private MemorySegmentView segments;
     private DynamicDataView dynamic;
+
+    private ChangeListener namechange;
+    private SymbolRenameListener symrename;
+    private TypedMemory mem;
+    private TraceAnalyzer trc;
 
     public DataDialog(JFrame owner, TraceAnalyzer trc, StepListenable step, TraceListenable trace) {
         super(owner, "Data", false);
@@ -44,6 +52,9 @@ public class DataDialog extends JDialog {
         add(BorderLayout.CENTER, tabs);
         add(BorderLayout.SOUTH, status);
 
+        namechange = () -> names.nameChanged();
+        symrename = (sym) -> names.nameChanged();
+
         if (trc != null) {
             setTraceAnalyzer(trc);
         }
@@ -65,12 +76,25 @@ public class DataDialog extends JDialog {
                 step.removeStepListener(segments);
                 step.removeStepListener(dynamic);
                 trace.removeTraceListener(listener);
+                if (DataDialog.this.trc != null) {
+                    mem.removeNameChangeListener(namechange);
+                    DataDialog.this.trc.removeSymbolChangeListener(namechange);
+                    DataDialog.this.trc.removeSymbolRenameListener(symrename);
+                }
                 dispose();
             }
         });
     }
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
+        if (this.trc != null) {
+            this.trc.removeSymbolChangeListener(namechange);
+            this.trc.removeSymbolRenameListener(symrename);
+            mem.removeNameChangeListener(namechange);
+        }
+        this.trc = trc;
+        mem = trc.getTypedMemory();
+        mem.addNameChangeListener(namechange);
         data.setTraceAnalyzer(trc);
         types.setTypeDatabase(trc.getTypeDatabase());
         segments.setTraceAnalyzer(trc);

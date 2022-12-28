@@ -1,6 +1,7 @@
 package org.graalvm.vm.trcview.ui.data;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -11,10 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -22,6 +26,8 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.text.AbstractDocument;
 
+import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.AbstractDocumentFilter;
 import org.graalvm.vm.trcview.ui.MainWindow;
@@ -38,6 +44,8 @@ public class NameView extends JPanel {
 
     private JTextField filter;
     private String filterString;
+
+    private boolean showUnnamed = true;
 
     public NameView(Consumer<Long> jump) {
         super(new BorderLayout());
@@ -90,10 +98,21 @@ public class NameView extends JPanel {
             updateFilter();
         });
 
+        JCheckBox unnamedvars = new JCheckBox();
+        unnamedvars.addItemListener(e -> {
+            showUnnamed = unnamedvars.isSelected();
+            update();
+        });
+
+        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        optionsPanel.add(new JLabel("Show unnamed variables:"));
+        optionsPanel.add(unnamedvars);
+
         JPanel filterPanel = new JPanel(new BorderLayout());
         filterPanel.add(BorderLayout.CENTER, filter);
         filterPanel.add(BorderLayout.EAST, clear);
 
+        add(BorderLayout.NORTH, optionsPanel);
         add(BorderLayout.CENTER, new JScrollPane(names));
         add(BorderLayout.SOUTH, filterPanel);
     }
@@ -110,6 +129,10 @@ public class NameView extends JPanel {
         update();
     }
 
+    public void nameChanged() {
+        update();
+    }
+
     private static boolean isSyntheticName(String name) {
         if (name.startsWith("sub_") || name.startsWith("loc_")) {
             return true;
@@ -121,7 +144,12 @@ public class NameView extends JPanel {
     private void update() {
         filterString = null;
         data.clear();
-        List<Name> variables = trc.getTypedMemory().getAllTypes().stream().filter(x -> x.getRawName() != null).map(x -> new Name(x.getRawName(), x.getAddress())).collect(Collectors.toList());
+        Stream<Variable> stream = trc.getTypedMemory().getAllTypes().stream();
+        if (!showUnnamed) {
+            stream = stream.filter(x -> x.getRawName() != null);
+        }
+        StepFormat fmt = trc.getArchitecture().getFormat();
+        List<Name> variables = stream.map(x -> new Name(x.getName(fmt), x.getAddress())).collect(Collectors.toList());
         variables.addAll(trc.getSymbols().stream().filter(x -> !isSyntheticName(x.name)).map(x -> new Name(x.name, x.address)).collect(Collectors.toList()));
         variables.stream().sorted().forEach(data::add);
         updateFilter();
