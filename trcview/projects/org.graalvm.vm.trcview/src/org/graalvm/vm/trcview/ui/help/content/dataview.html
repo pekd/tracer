@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<title>Data View</title>
+		<style>
+			table {
+				border: 1px black solid;
+				background-color: black;
+			}
+			td, th {
+				background-color: white;
+			}
+			th {
+				font-weight: bold;
+			}
+			code {
+				background-color: #cccccc;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Data View</h1>
+		<p>The Data View allows you to inspect memory at the current point in time. You can define variables with types and disassemble code (if supported by the architecture module).</p>
+
+		<h2>Key bindings</h2>
+		<table border="0" cellpadding="2" cellspacing="1">
+			<tr>
+				<th>Key</th>
+				<th>Action</th>
+			</tr>
+
+			<tr><td style="text-align: center"><code>g</code></td><td>go to address</td></tr>
+			<tr><td style="text-align: center"><code>n</code></td><td>rename location</td></tr>
+			<tr><td style="text-align: center"><code>y</code></td><td>set type</td></tr>
+			<tr><td style="text-align: center"><code>u</code></td><td>undefine location</td></tr>
+			<tr><td style="text-align: center"><code>d</code></td><td>define data</td></tr>
+			<tr><td style="text-align: center"><code>o</code></td><td>define address/pointer</td></tr>
+			<tr><td style="text-align: center"><code>r</code></td><td>change display format to characters</td></tr>
+			<tr><td style="text-align: center"><code>a</code></td><td>define string</td></tr>
+			<tr><td style="text-align: center"><code>&lt;C-C&gt;</code></td><td>copy currently selected text</td></tr>
+			<tr><td style="text-align: center"><code>&lt;CR&gt;</code></td><td>follow pointer</td></tr>
+			<tr><td style="text-align: center"><code>&lt;ESC&gt;</code></td><td>return to previous location</td></tr>
+		</table>
+	</body>
+</html>

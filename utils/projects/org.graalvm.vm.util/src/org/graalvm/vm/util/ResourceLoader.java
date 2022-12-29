@@ -44,6 +44,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.logging.Logger;
 
 import org.graalvm.vm.util.exception.Messages;
@@ -68,6 +69,29 @@ public class ResourceLoader {
             }
             if (caller.getSuperclass() != null) {
                 return loadResource(caller.getSuperclass(), resourceName);
+            }
+            log.log(Levels.WARNING, Messages.NO_RESOURCE.format(caller.getCanonicalName(), resourceName));
+        } else {
+            log.log(Levels.WARNING, Messages.NO_RESOURCE.format("<unknown>", resourceName));
+        }
+        return null;
+    }
+
+    public static URL getURL(Class<?> caller, String resourceName) {
+        if (caller != null) {
+            URL url = null;
+            if (caller.getClassLoader() != null) {
+                url = caller.getClassLoader().getResource(resourceName);
+                if (url != null) {
+                    return url;
+                }
+            }
+            url = caller.getResource(resourceName);
+            if (url != null) {
+                return url;
+            }
+            if (caller.getSuperclass() != null) {
+                return getURL(caller.getSuperclass(), resourceName);
             }
             log.log(Levels.WARNING, Messages.NO_RESOURCE.format(caller.getCanonicalName(), resourceName));
         } else {

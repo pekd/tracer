@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<help page="index.html">
+	<page name="About TRCView" file="trcview.html"/>
+	<page name="Main Window" file="main.html"/>
+	<page name="Data View" file="dataview.html"/>
+	<page name="Expression Syntax" file="syntax.html"/>
+	<page name="Map Files" file="mapfiles.html"/>
+</help>

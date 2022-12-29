@@ -1,0 +1,48 @@
+<html>
+	<head>
+		<title>Main Window</title>
+		<style>
+			table {
+				border: 1px black solid;
+				background-color: black;
+			}
+			td, th {
+				background-color: white;
+			}
+			th {
+				font-weight: bold;
+			}
+			code {
+				background-color: #cccccc;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Main Window</h1>
+		<p>The main window shows the execution trace as well as all other relevant information. You will probably spend most of your time here.</p>
+
+		<h2>Key Bindings</h2>
+		<table border="0" cellpadding="2" cellspacing="1">
+			<tr>
+				<th>Key</th>
+				<th>Action</th>
+			</tr>
+
+			<tr><td style="text-align: center"><code>n</code></td><td>rename symbol</td></tr>
+			<tr><td style="text-align: center"><code>y</code></td><td>set function type</td></tr>
+			<tr><td style="text-align: center"><code>/</code></td><td>set comment (current timestamp)</td></tr>
+			<tr><td style="text-align: center"><code>;</code></td><td>set comment (memory location)</td></tr>
+			<tr><td style="text-align: center"><code>@</code></td><td>set dynamic comment</td></tr>
+			<tr><td style="text-align: center"><code>h</code></td><td>set color (memory location)</td></tr>
+			<tr><td style="text-align: center"><code>g</code></td><td>go to program counter</td></tr>
+			<tr><td style="text-align: center"><code>i</code></td><td>go to timestamp</td></tr>
+			<tr><td style="text-align: center"><code>c</code></td><td>"continue" to next execution of current instruction</td></tr>
+			<tr><td style="text-align: center"><code>&lt;C-O&gt;</code></td><td>open trace file</td></tr>
+			<tr><td style="text-align: center"><code>&lt;C-L&gt;</code></td><td>load session file</td></tr>
+			<tr><td style="text-align: center"><code>&lt;C-S&gt;</code></td><td>save session file</td></tr>
+			<tr><td style="text-align: center"><code>&lt;C-Q&gt;</code></td><td>exit TRCView</td></tr>
+			<tr><td style="text-align: center"><code>&lt;CR&gt;</code></td><td>step into subroutine</td></tr>
+			<tr><td style="text-align: center"><code>&lt;ESC&gt;</code></td><td>return from subroutine</td></tr>
+		</table>
+	</body>
+</html>

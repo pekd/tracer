@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<title>About TRCView</title>
+		<style>
+			code {
+				background-color: #cccccc;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>About TRCView</h1>
+		<p>TRCView is an execution trace analyzer: you run your program in an instrumented runtime environment once and record an execution trace, then you look at this execution trace as long as you want. It is a very advanced debugger.</p>
+
+		<h2>Features</h2>
+		<ul>
+			<li><strong>Architecture agnostic</strong>: the core analysis algorithms are completely architecture agnostic. Support for different architectures is provided by architecture modules. By default TRCView comes with architecture modules for 32bit RISC-V, 32bit PowerPC, and PDP-11/03.</li>
+			<li><strong>Execution tree</strong>: in a flat execution trace, you would see all instructions of called subroutines, which can be tens of thousands of instructions. TRCView transforms the execution trace into a tree, so you can "step over" subroutine calls and focus on the code of the current subroutine.</li>
+			<li><strong>Annotations</strong>: you can annotate the program run with comments and add types to make it easier to understand what the program did.</li>
+			<li><strong>Call decoding</strong>: if you provide prototypes for subroutines in C syntax, TRCView can decode the arguments according to the ABI and show them as comment in the execution trace.</li>
+			<li><strong>Automatic subroutine discovery</strong>: every subroutine which was called by a call instruction is automatically recognized and added to the symbol table. If no symbol information is available, generic names are generated with the prefix <code>sub_</code> followed by the starting address of the subroutine.</li>
+			<li><strong>System calls</strong>: TRCView automatically detects system calls and shows them in an strace view. You can use this to quickly navigate through an execution trace if you know how the program interacted with the environment.</li>
+			<li><strong>Threads</strong>: if an architecture module provides a thread ID, TRCView separates the execution trace into individual traces for every thread.</li>
+			<li><strong>Devices / Peripherals</strong>: by defining devices, you can observe the state of devices while the program was running. This can be e.g. a disk controller, or a graphics accelerator, or just some extra information about operating system internals. Devices are defined by the architecture modules.</li>
+			<li><strong>Data View</strong>: look at code and data like in a static analysis tool, with support for comments, symbols, and variables with data types, but with the exact memory contents from the current timestamp.</li>
+			<li><strong>Sessions</strong>: you can save and reload your analysis session with all your annotations. You can even load the same session with a new execution trace to transfer all your knowledge to a new run of the same program.</li>
+			<li><strong>IDA Pro IDC export</strong>: you can export all your symbols and prototypes to an IDC file and load it into an IDA Pro session. You can also export a map file from IDA Pro and load it into TRCView.</li>
+			<li><strong>Type recovery (experimental)</strong>: if an architecture module provides instruction semantics, TRCView can recover certain data types automatically, including primitive types and arrays.</li>
+			<li><strong>Modular design</strong>: since the analysis algorithms are completely architecture agnostic, you can easily add support for your own architecture. All you have to do is implement a trace file reader which can read your execution trace file. You will most likely also have to implement a disassembler.</li>
+		</ul>
+
+		<h2>Supported Interpreters and Emulators</h2>
+		<p>At the moment the following interpreters can record execution traces for TRCView:</p>
+		<ul>
+			<li><a href="https://github.com/pekd/tracer/tree/master/vmx86">vmx86</a>: a fully sandboxed GraalVM based AMD64 interpreter with support for many Linux syscalls; this also includes the necessary x86 architecture module for TRCView</li>
+			<li><a href="https://github.com/hackyourlife/lsi-11">LSI-11</a>: a PDP-11/03 interpreter</li>
+		</ul>
+
+		<h2>Links</h2>
+		<ul>
+			<li>Source code: <a href="https://github.com/pekd/tracer">GitHub</a></li>
+			<li>Paper: <a href="https://dl.acm.org/doi/10.1145/3426182.3426190">trcview: interactive architecture agnostic execution trace analysis</a></li>
+		</ul>
+	</body>
+</html>

@@ -125,6 +125,7 @@ import org.graalvm.vm.trcview.ui.data.TypeRecoveryDialog;
 import org.graalvm.vm.trcview.ui.device.DeviceDialog;
 import org.graalvm.vm.trcview.ui.event.TraceListenable;
 import org.graalvm.vm.trcview.ui.event.TraceListener;
+import org.graalvm.vm.trcview.ui.help.HelpBrowser;
 import org.graalvm.vm.trcview.ui.plugin.UIPluginLoader;
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.log.Levels;
@@ -758,6 +759,17 @@ public class MainWindow extends JFrame implements TraceListenable {
         }
 
         JMenu helpMenu = new JMenu("Help");
+        helpMenu.setMnemonic('H');
+
+        JMenuItem help = new JMenuItem("Help");
+        help.setMnemonic('H');
+        help.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+        help.addActionListener(e -> {
+            HelpBrowser dlg = new HelpBrowser(this);
+            dlg.setVisible(true);
+        });
+        helpMenu.add(help);
+
         JMenuItem about = new JMenuItem("About...");
         about.setMnemonic('A');
         about.addActionListener(e -> {
@@ -778,7 +790,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             JOptionPane.showMessageDialog(this, aboutText, "About...", JOptionPane.INFORMATION_MESSAGE);
         });
         helpMenu.add(about);
-        helpMenu.setMnemonic('H');
+
         menu.add(helpMenu);
 
         setJMenuBar(menu);

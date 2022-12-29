@@ -1,0 +1,62 @@
+<html>
+	<head>
+		<title>Expression Syntax</title>
+		<style>
+			table {
+				border: 1px black solid;
+				background-color: black;
+			}
+			td, th {
+				background-color: white;
+			}
+			th {
+				font-weight: bold;
+			}
+			code {
+				background-color: #cccccc;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Expression Syntax</h1>
+		<p>Many inputs in TRCView accept expressions. These expressions are dynamically evaluated.</p>
+		<p>The syntax of these expressions is similar to C syntax: you can use arithmetic and built-in functions as well as built-in variables to compute any value you need.</p>
+
+		<h2>Built-in Variables</h2>
+		<p>CPU registers with the value from the currently selected timestamp are available as variables. By convention, every architecture also exports <code>pc</code> for the program counter and <code>sp</code> for the stack pointer, even if these registers might also have a different name on that architecture.</p>
+
+		<h2>Built-in Functions</h2>
+		<table border="0" cellpadding="2" cellspacing="1">
+			<tr>
+				<th>Function</th>
+				<th>Description</th>
+			</tr>
+			<tr><td><code>getU8(addr)</code></td><td>read unsigned 8bit value from memory at given address</td></tr>
+			<tr><td><code>getU16(addr)</code></td><td>read unsigned 16bit value from memory at given address using default endianess</td></tr>
+			<tr><td><code>getU32(addr)</code></td><td>read unsigned 32bit value from memory at given address using default endianess</td></tr>
+			<tr><td><code>getU64(addr)</code></td><td>read unsigned 64bit value from memory at given address using default endianess</td></tr>
+			<tr><td><code>getI8(addr)</code></td><td>read signed 8bit value from memory at given address</td></tr>
+			<tr><td><code>getI16(addr)</code></td><td>read signed 16bit value from memory at given address using default endianess</td></tr>
+			<tr><td><code>getI32(addr)</code></td><td>read signed 32bit value from memory at given address using default endianess</td></tr>
+			<tr><td><code>getI64(addr)</code></td><td>read signed 64bit value from memory at given address using default endianess</td></tr>
+			<tr><td><code>getMem(addr, size)</code></td><td>read <code>size</code> many bytes from memory at given address; <code>size</code> has to be one of 1, 2, 4, or 8</td></tr>
+			<tr><td><code>bswap16(value)</code></td><td>16bit byte swap / endianess conversion</td></tr>
+			<tr><td><code>bswap32(value)</code></td><td>32bit byte swap / endianess conversion</td></tr>
+			<tr><td><code>bswap64(value)</code></td><td>64bit byte swap / endianess conversion</td></tr>
+			<tr><td><code>ite(if, then, else)</code></td><td>returns <code>then</code> if <code>if</code> is non-zero, otherwise returns <code>else</code>; <code>then</code> and <code>else</code> are lazily evaluated</td></tr>
+		</table>
+
+		<h2>Examples</h2>
+		<table border="0" cellpadding="2" cellspacing="1">
+			<tr>
+				<th>Expression</th>
+				<th>Meaning</th>
+			</tr>
+			<tr><td><code>12345</code></td><td>decimal number</td></tr>
+			<tr><td><code>0xBEEF</code></td><td>hexadecimal number</td></tr>
+			<tr><td><code>01337</code></td><td>octal number</td></tr>
+			<tr><td><code>pc + 4</code></td><td>program counter + 4 bytes</td></tr>
+			<tr><td><code>getU32(pc)</code></td><td>32bit value from memory at program counter location</td></tr>
+		</table>
+	</body>
+</html>
