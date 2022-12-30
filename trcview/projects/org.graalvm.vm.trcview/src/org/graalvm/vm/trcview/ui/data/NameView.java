@@ -9,7 +9,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,6 +28,8 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.text.AbstractDocument;
 
+import org.graalvm.vm.posix.elf.Symbol;
+import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
@@ -150,7 +154,16 @@ public class NameView extends JPanel {
         }
         StepFormat fmt = trc.getArchitecture().getFormat();
         List<Name> variables = stream.map(x -> new Name(x.getName(fmt), x.getAddress())).collect(Collectors.toList());
-        variables.addAll(trc.getSymbols().stream().filter(x -> !isSyntheticName(x.name)).map(x -> new Name(x.name, x.address)).collect(Collectors.toList()));
+
+        Map<Long, Name> symbols = new HashMap<>();
+        for (Symbol sym : trc.getTraceSymbols().values()) {
+            symbols.put(sym.getValue(), new Name(sym.getName(), sym.getValue()));
+        }
+        for (ComputedSymbol sym : trc.getSymbols()) {
+            symbols.put(sym.address, new Name(sym.name, sym.address));
+        }
+        variables.addAll(symbols.values().stream().filter(x -> x.name != null && x.name.length() > 0 && x.name.trim().length() > 0).filter(x -> !isSyntheticName(x.name)).map(
+                        x -> new Name(x.name, x.address)).collect(Collectors.toList()));
         variables.stream().sorted().forEach(data::add);
         updateFilter();
     }

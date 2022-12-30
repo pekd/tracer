@@ -326,6 +326,11 @@ public class TextDump {
         }
 
         @Override
+        public NavigableMap<Long, Symbol> getTraceSymbols() {
+            return null;
+        }
+
+        @Override
         public Map<String, List<ComputedSymbol>> getNamedSymbols() {
             return null;
         }

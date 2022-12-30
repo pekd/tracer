@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 
 import org.graalvm.vm.posix.elf.Symbol;
@@ -43,6 +44,8 @@ public interface TraceAnalyzer {
     Set<ComputedSymbol> getLocations();
 
     Collection<ComputedSymbol> getSymbols();
+
+    NavigableMap<Long, Symbol> getTraceSymbols();
 
     Map<String, List<ComputedSymbol>> getNamedSymbols();
 

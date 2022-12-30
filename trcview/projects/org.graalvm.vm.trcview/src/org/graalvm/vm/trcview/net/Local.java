@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -101,6 +102,11 @@ public class Local implements TraceAnalyzer {
     @Override
     public Symbol getSymbol(long pc) {
         return resolver.getSymbol(pc);
+    }
+
+    @Override
+    public NavigableMap<Long, Symbol> getTraceSymbols() {
+        return symbols.getTraceSymbols();
     }
 
     @Override

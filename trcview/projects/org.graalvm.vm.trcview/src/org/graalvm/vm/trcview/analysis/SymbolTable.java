@@ -46,10 +46,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -61,6 +63,8 @@ import org.graalvm.vm.util.log.Trace;
 
 public class SymbolTable {
     private static Logger log = Trace.create(SymbolTable.class);
+
+    private final NavigableMap<Long, Symbol> traceSymbols;
 
     private final Map<Long, ComputedSymbol> symbols = new HashMap<>();
     private final List<SymbolRenameListener> listeners = new ArrayList<>();
@@ -79,8 +83,13 @@ public class SymbolTable {
         return new ComputedSymbol(names.loc(pc), pc, ComputedSymbol.Type.LOCATION);
     }
 
-    public SymbolTable(StepFormat format) {
+    public SymbolTable(StepFormat format, NavigableMap<Long, Symbol> traceSymbols) {
+        this.traceSymbols = traceSymbols;
         names = new SymbolName(format);
+    }
+
+    public NavigableMap<Long, Symbol> getTraceSymbols() {
+        return Collections.unmodifiableNavigableMap(traceSymbols);
     }
 
     public void addSubroutine(long pc) {

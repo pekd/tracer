@@ -129,8 +129,8 @@ public class Analysis {
     public Analysis(Architecture arch, List<Analyzer> analyzers, boolean typeAnalysis) {
         this.analyzers = analyzers;
         this.arch = arch;
-        symbols = new SymbolTable(arch.getFormat());
         symbolTable = new TreeMap<>();
+        symbols = new SymbolTable(arch.getFormat(), symbolTable);
         mappedFiles = new TreeMap<>();
         resolver = new DefaultSymbolResolver(symbolTable);
         augmentedResolver = new AugmentingSymbolResolver(resolver, symbols);
@@ -561,6 +561,10 @@ public class Analysis {
 
     public SymbolResolver getSymbolResolver() {
         return augmentedResolver;
+    }
+
+    public Map<Long, Symbol> getTraceSymbols() {
+        return symbolTable;
     }
 
     public MappedFiles getMappedFiles() {

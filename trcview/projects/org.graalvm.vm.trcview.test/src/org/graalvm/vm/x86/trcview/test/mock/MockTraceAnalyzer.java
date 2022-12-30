@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 
 import org.graalvm.vm.posix.elf.Symbol;
@@ -62,6 +63,11 @@ public class MockTraceAnalyzer implements TraceAnalyzer {
 
     @Override
     public Collection<ComputedSymbol> getSymbols() {
+        return null;
+    }
+
+    @Override
+    public NavigableMap<Long, Symbol> getTraceSymbols() {
         return null;
     }
 
