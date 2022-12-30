@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.data;
 
+import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.util.HexFormatter;
@@ -32,7 +33,11 @@ public class Variable {
             if (type != null && type.isStringData()) {
                 return "asc_" + HexFormatter.tohex(address);
             } else if (type != null) {
-                return "data_" + HexFormatter.tohex(address);
+                if (type.getType() == DataType.CODE) {
+                    return "code_" + HexFormatter.tohex(address);
+                } else {
+                    return "data_" + HexFormatter.tohex(address);
+                }
             } else {
                 return "unk_" + HexFormatter.tohex(address);
             }
@@ -46,7 +51,11 @@ public class Variable {
             if (type != null && type.isStringData()) {
                 return "asc_" + format.formatShortAddress(address);
             } else if (type != null) {
-                return "data_" + format.formatShortAddress(address);
+                if (type.getType() == DataType.CODE) {
+                    return "code_" + format.formatShortAddress(address);
+                } else {
+                    return "data_" + format.formatShortAddress(address);
+                }
             } else {
                 return "unk_" + format.formatShortAddress(address);
             }
@@ -71,7 +80,7 @@ public class Variable {
             return;
         }
 
-        // cannot set name to unk_ or asc_ since these are reserved prefixes
+        // cannot set name to unk_, data_ or asc_ since these are reserved prefixes
         if (name.startsWith("unk_") || name.startsWith("data_") || name.startsWith("asc_")) {
             return;
         }

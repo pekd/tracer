@@ -373,10 +373,21 @@ public class Type {
     }
 
     public String toCType() {
-        if (elements > 1) {
-            return getCType() + "[" + elements + "]";
+        return toCType(null);
+    }
+
+    public String toCType(String name) {
+        String ctype;
+        if (name == null) {
+            ctype = getCType();
         } else {
-            return getCType();
+            ctype = getCType() + " " + name;
+        }
+
+        if (elements > 1) {
+            return ctype + "[" + elements + "]";
+        } else {
+            return ctype;
         }
     }
 
@@ -418,6 +429,8 @@ public class Type {
                 }
             case STRUCT:
                 return getStruct().getName();
+            case CODE:
+                return "unsigned char";
             default:
                 return "int"; // unknown
         }

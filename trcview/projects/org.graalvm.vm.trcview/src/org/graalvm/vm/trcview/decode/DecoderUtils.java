@@ -124,7 +124,11 @@ public class DecoderUtils {
     }
 
     public static String cstr(long addr, long insn, TraceAnalyzer trc) {
-        return cstr(addr, insn, trc, STRING_MAXLEN);
+        return cstr(addr, insn, trc, true);
+    }
+
+    public static String cstr(long addr, long insn, TraceAnalyzer trc, boolean limit) {
+        return cstr(addr, insn, trc, limit ? STRING_MAXLEN : Integer.MAX_VALUE);
     }
 
     public static String cstr(long addr, long insn, TraceAnalyzer trc, int maxlen) {
@@ -243,19 +247,27 @@ public class DecoderUtils {
     }
 
     public static String str(Type type, long val, CpuState state, TraceAnalyzer trc) {
+        if (state == null) {
+            return str(type, val, -1, trc, true);
+        } else {
+            return str(type, val, state.getStep(), trc, true);
+        }
+    }
+
+    public static String str(Type type, long val, long step, TraceAnalyzer trc, boolean limit) {
         Representation repr = type.getRepresentation();
         switch (type.getType()) {
             case VOID:
                 return "";
             case PTR:
-                if (state != null && trc != null && repr == Representation.STRING) {
-                    return cstr(truncptr(val, trc), state.getStep(), trc);
+                if (step != -1 && trc != null && repr == Representation.STRING) {
+                    return cstr(truncptr(val, trc), step, trc, limit);
                 } else {
                     return ptr(truncptr(val, trc), trc);
                 }
             case STRING:
-                if (state != null && trc != null) {
-                    return cstr(truncptr(val, trc), state.getStep(), trc);
+                if (step != -1 && trc != null) {
+                    return cstr(truncptr(val, trc), step, trc, limit);
                 } else {
                     return ptr(truncptr(val, trc), trc);
                 }

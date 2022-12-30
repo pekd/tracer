@@ -284,6 +284,24 @@ public class DataView extends JPanel implements StepListener {
             }
         });
 
+        KeyStroke w = KeyStroke.getKeyStroke(KeyEvent.VK_W, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(w, w);
+        getActionMap().put(w, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int line = editor.getCursorLine();
+                long addr = model.getAddressByLine(line);
+                TypedMemory mem = trc.getTypedMemory();
+
+                Variable var = mem.get(addr);
+                if (var != null) {
+                    DataExportDialog dlg = new DataExportDialog(null, trc, var, step.getStep());
+                    dlg.setVisible(true);
+                    editor.requestFocus();
+                }
+            }
+        });
+
         KeyStroke esc = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(esc, esc);
         getActionMap().put(esc, new AbstractAction() {
