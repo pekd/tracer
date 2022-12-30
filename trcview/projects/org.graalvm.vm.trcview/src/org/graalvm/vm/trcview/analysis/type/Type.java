@@ -23,7 +23,7 @@ public class Type {
     }
 
     public Type(DataType type, boolean isConst) {
-        this(type, isConst, -1, null);
+        this(type, isConst, -1, (Representation) null);
     }
 
     public Type(DataType type, boolean isConst, Representation repr) {
@@ -31,16 +31,53 @@ public class Type {
     }
 
     public Type(DataType type, boolean isConst, int elements) {
-        this(type, isConst, elements, null);
+        this(type, isConst, elements, (Representation) null);
     }
 
     public Type(DataType type, boolean isConst, int elements, Representation repr) {
-        assert type != DataType.STRUCT;
+        assert type != DataType.STRUCT && type != DataType.PTR && type != DataType.STRING;
         assert elements > 0 || elements == -1;
         this.type = type;
         this.pointee = null;
         this.struct = null;
         this.info = null;
+        this.isConst = isConst;
+        if (repr != null) {
+            this.representation = repr;
+        } else {
+            this.representation = getDefaultRepresentation();
+        }
+        this.elements = elements;
+    }
+
+    public Type(DataType type, ArchitectureTypeInfo info) {
+        this(type, false, info);
+    }
+
+    public Type(DataType type, Representation repr, ArchitectureTypeInfo info) {
+        this(type, false, repr, info);
+    }
+
+    public Type(DataType type, boolean isConst, ArchitectureTypeInfo info) {
+        this(type, isConst, -1, null, info);
+    }
+
+    public Type(DataType type, boolean isConst, Representation repr, ArchitectureTypeInfo info) {
+        this(type, isConst, -1, repr, info);
+    }
+
+    public Type(DataType type, boolean isConst, int elements, ArchitectureTypeInfo info) {
+        this(type, isConst, elements, null, info);
+    }
+
+    public Type(DataType type, boolean isConst, int elements, Representation repr, ArchitectureTypeInfo info) {
+        assert type == DataType.STRING;
+        assert info != null;
+        assert elements > 0 || elements == -1;
+        this.type = type;
+        this.pointee = null;
+        this.struct = null;
+        this.info = info;
         this.isConst = isConst;
         if (repr != null) {
             this.representation = repr;
@@ -79,6 +116,7 @@ public class Type {
 
     public Type(Type type, boolean isConst, long elements, ArchitectureTypeInfo info) {
         assert elements > 0 || elements == -1;
+        assert info != null;
         this.type = DataType.PTR;
         this.pointee = type;
         this.struct = null;
@@ -93,7 +131,9 @@ public class Type {
     }
 
     private Type(Type type, long elements, boolean isConst) {
-        assert type.type == DataType.STRUCT && type.struct != null || type.type != DataType.STRUCT;
+        assert (type.type == DataType.STRUCT && type.struct != null) || type.type != DataType.STRUCT;
+        assert (type.type == DataType.PTR && type.info != null) || type.type != DataType.PTR;
+        assert (type.type == DataType.STRING && type.info != null) || type.type != DataType.STRING;
         assert elements > 0 || elements == -1;
         this.isConst = isConst;
         this.type = type.type;
@@ -172,6 +212,7 @@ public class Type {
                 return 0;
             case STRING:
             case PTR:
+                assert info != null : toString();
                 return info.getPointerSize();
             case U8:
             case S8:
