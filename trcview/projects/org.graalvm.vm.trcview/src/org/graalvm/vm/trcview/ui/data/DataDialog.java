@@ -40,11 +40,11 @@ public class DataDialog extends JDialog {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Data", data = new DataView());
         tabs.addTab("Segments", segments = new MemorySegmentView(addr -> {
-            data.setAddress(addr);
+            data.jump(addr);
             tabs.setSelectedIndex(0);
         }));
         tabs.addTab("Names", names = new NameView(addr -> {
-            data.setAddress(addr);
+            data.jump(addr);
             tabs.setSelectedIndex(0);
         }));
         tabs.addTab("Types", types = new DatatypeView(trc.getTypeDatabase(), status::setText));
