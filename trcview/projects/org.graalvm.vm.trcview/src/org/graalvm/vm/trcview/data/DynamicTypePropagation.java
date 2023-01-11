@@ -117,8 +117,12 @@ public class DynamicTypePropagation {
                     Variable var = mem.getRecoveredType(addr);
                     if (var != null && var.getAddress() == addr) {
                         if (lasttype != null && !lasttype.equals(var.getType())) {
-                            log.warning(fmt.formatShortAddress(pc) + ": array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
-                            continue loop;
+                            if (lasttype.getElementType().equals(var.getType().getElementType())) {
+                                // array types, only the element count is different => ignore
+                            } else {
+                                log.warning(fmt.formatShortAddress(pc) + ": array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
+                                continue loop;
+                            }
                         }
                         lasttype = var.getType();
                     }
@@ -146,12 +150,15 @@ public class DynamicTypePropagation {
                     continue loop;
                 }
 
+                if (lasttype.getElements() > 1) {
+                    lasttype = lasttype.getElementType();
+                }
+
                 boolean structArray = lasttype.getSize() < array.getElementSize();
 
                 if (lasttype.getSize() > array.getElementSize()) {
                     log.warning(fmt.formatShortAddress(pc) + ": array element size mismatch at " + fmt.formatShortAddress(array.getAddresses()[0]) + ": " + lasttype.getSize() + " (" + lasttype +
-                                    ") vs array element size " +
-                                    array.getElementSize());
+                                    ") vs array element size " + array.getElementSize());
                     continue loop;
                 }
 
@@ -187,7 +194,7 @@ public class DynamicTypePropagation {
     }
 
     private static void defineArray(TraceAnalyzer trc, Type type, long first, long last, long laststep) {
-        log.log(Levels.INFO, () -> String.format("defining array at %x-%x", first, last));
+        log.log(Levels.INFO, () -> String.format("defining array at %x-%x: %s", first, last, type));
 
         TypedMemory mem = trc.getTypedMemory();
 
