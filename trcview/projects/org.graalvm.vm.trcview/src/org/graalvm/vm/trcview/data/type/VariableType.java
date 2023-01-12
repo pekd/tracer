@@ -65,10 +65,9 @@ public class VariableType {
     private final int size;
     private final String name;
 
-    private static final List<VariableType> TYPES = Collections.unmodifiableList(
-                    Arrays.asList(GENERIC_POINTER, POINTER_I8, POINTER_I16, POINTER_I32, POINTER_I32, POINTER_I64, POINTER_U8, POINTER_U16, POINTER_U32, POINTER_U64, POINTER_S8, POINTER_S16,
-                                    POINTER_S32, POINTER_S64, POINTER_F32, POINTER_F64, POINTER_FX16, POINTER_FX32, POINTER_CODE, I8, I16, I32, I64, U8, U16, U32, U64, S8, S16, S32, S64, F32, F64,
-                                    FX16, FX32, PC, SP, FLAGS));
+    private static final List<VariableType> TYPES = Collections.unmodifiableList(Arrays.asList(GENERIC_POINTER, POINTER_I8, POINTER_I16, POINTER_I32, POINTER_I64, POINTER_U8, POINTER_U16, POINTER_U32,
+                    POINTER_U64, POINTER_S8, POINTER_S16, POINTER_S32, POINTER_S64, POINTER_F32, POINTER_F64, POINTER_FX16, POINTER_FX32, POINTER_CODE, I8, I16, I32, I64, U8, U16, U32, U64, S8, S16,
+                    S32, S64, F32, F64, FX16, FX32, PC, SP, FLAGS));
 
     public VariableType(int bit, int size, String name) {
         this.bit = bit;
