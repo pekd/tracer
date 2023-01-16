@@ -70,19 +70,21 @@ import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
+import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Watches.Watch;
 import org.graalvm.vm.trcview.ui.event.CallListener;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
+import org.graalvm.vm.trcview.ui.event.MemoryAddressListener;
 import org.graalvm.vm.trcview.ui.event.StepListenable;
 import org.graalvm.vm.trcview.ui.event.StepListener;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 
 @SuppressWarnings("serial")
-public class TraceView extends JPanel implements StepListenable {
+public class TraceView extends JPanel implements StepListenable, MemoryAddressListener {
     private static final Logger log = Trace.create(TraceView.class);
 
     private SymbolView symbols;
@@ -525,6 +527,15 @@ public class TraceView extends JPanel implements StepListenable {
 
     public void setMemoryExpression(String expr) {
         mem.setExpression(expr);
+    }
+
+    @Override
+    public void setMemoryAddress(long addr) {
+        if (trc.getArchitecture().getFormat().numberfmt == StepFormat.NUMBERFMT_OCT) {
+            mem.setExpression("0" + Long.toUnsignedString(addr, 8));
+        } else {
+            mem.setExpression("0x" + Long.toUnsignedString(addr, 16));
+        }
     }
 
     public String getMemoryHistoryExpression() {

@@ -13,6 +13,7 @@ import org.graalvm.vm.trcview.analysis.SymbolRenameListener;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.event.ChangeListener;
+import org.graalvm.vm.trcview.ui.event.MemoryAddressListener;
 import org.graalvm.vm.trcview.ui.event.StepListenable;
 import org.graalvm.vm.trcview.ui.event.TraceListenable;
 import org.graalvm.vm.trcview.ui.event.TraceListener;
@@ -30,7 +31,7 @@ public class DataDialog extends JDialog {
     private TypedMemory mem;
     private TraceAnalyzer trc;
 
-    public DataDialog(JFrame owner, TraceAnalyzer trc, StepListenable step, TraceListenable trace) {
+    public DataDialog(JFrame owner, TraceAnalyzer trc, StepListenable step, MemoryAddressListener memaddr, TraceListenable trace) {
         super(owner, "Data", false);
 
         setLayout(new BorderLayout());
@@ -38,7 +39,7 @@ public class DataDialog extends JDialog {
         JLabel status = new JLabel("Ready");
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Data", data = new DataView());
+        tabs.addTab("Data", data = new DataView(memaddr));
         tabs.addTab("Segments", segments = new MemorySegmentView(addr -> {
             data.jump(addr);
             tabs.setSelectedIndex(0);

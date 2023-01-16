@@ -109,7 +109,7 @@ public abstract class DataLine extends Line {
             }
         }
 
-        result.add(new DefaultElement(address, Element.TYPE_COMMENT));
+        result.add(new LineAddressElement(address, Element.TYPE_COMMENT, addr + offset));
         result.add(new DefaultElement(" ", Element.TYPE_PLAIN));
         result.add(new DefaultElement(StringUtils.pad(lbl, DataViewModel.NAME_WIDTH), Element.TYPE_IDENTIFIER));
         result.add(new DefaultElement(" ", Element.TYPE_PLAIN));

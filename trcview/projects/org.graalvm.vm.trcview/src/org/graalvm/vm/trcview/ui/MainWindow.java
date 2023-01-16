@@ -602,7 +602,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         dataWindow.setMnemonic('i');
         dataWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.SHIFT_DOWN_MASK));
         dataWindow.addActionListener(e -> {
-            DataDialog dlg = new DataDialog(this, trc, view, this);
+            DataDialog dlg = new DataDialog(this, trc, view, view, this);
             dlg.setVisible(true);
         });
         JMenuItem typeRecoveryWindow = new JMenuItem("Type Recovery");

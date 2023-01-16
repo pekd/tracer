@@ -36,6 +36,7 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Utils;
 import org.graalvm.vm.trcview.ui.data.editor.Element;
 import org.graalvm.vm.trcview.ui.data.editor.JEditor;
+import org.graalvm.vm.trcview.ui.event.MemoryAddressListener;
 import org.graalvm.vm.trcview.ui.event.StepListener;
 
 @SuppressWarnings("serial")
@@ -47,7 +48,7 @@ public class DataView extends JPanel implements StepListener {
 
     private Deque<Long> addressStack = new ArrayDeque<>();
 
-    public DataView() {
+    public DataView(MemoryAddressListener memaddr) {
         super(new BorderLayout());
         editor = new JEditor(model = new DataViewModel());
         add(BorderLayout.CENTER, new JScrollPane(editor));
@@ -357,6 +358,8 @@ public class DataView extends JPanel implements StepListener {
                 jump(((AddressElement) element).getAddress());
             } else if (element instanceof NumberElement) {
                 jump(((NumberElement) element).getValue());
+            } else if (element instanceof LineAddressElement) {
+                memaddr.setMemoryAddress(((LineAddressElement) element).getAddress());
             }
         });
     }
