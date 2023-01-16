@@ -117,6 +117,10 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
             buf.append(String.format("%02d", i));
             buf.append(":");
 
+            buf.append(" (");
+            buf.append(HexFormatter.tohex(flags, 16));
+            buf.append(")");
+
             buf.append(" [");
             buf.append(live ? 'L' : 'D');
             if (BitTest.test(flowflags, VariableType.MUL_BIT)) {
@@ -193,7 +197,7 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
         // debugging feature: show data per position
         buf.append("\n\nDEBUG:\n");
         for (int i = 0; i < regcount; i++) {
-            long flags = semantics.get(pc, new RegisterOperand(i));
+            long flags = semantics.getDirect(pc, new RegisterOperand(i));
             buf.append("register ");
             buf.append(String.format("%02d", i));
             buf.append(":");

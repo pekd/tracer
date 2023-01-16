@@ -52,6 +52,10 @@ public class CodePageTypeMap {
         return memory[offset].get(op);
     }
 
+    public long getDirect(int offset, RegisterOperand op) {
+        return memory[offset].getDirect(op);
+    }
+
     public long getChain(int offset) {
         return memory[offset].getChain();
     }

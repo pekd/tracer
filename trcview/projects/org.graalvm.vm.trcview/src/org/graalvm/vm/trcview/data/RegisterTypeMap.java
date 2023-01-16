@@ -189,6 +189,10 @@ public class RegisterTypeMap {
         return registerTypes[op.getRegister()] | resolvedTypes[op.getRegister()];
     }
 
+    public long getDirect(RegisterOperand op) {
+        return registerTypes[op.getRegister()];
+    }
+
     public void breakChain(int reg) {
         registerTypes[reg] &= ~VariableType.CHAIN_BIT;
         registerTypes[reg] |= VariableType.BREAK_BIT;

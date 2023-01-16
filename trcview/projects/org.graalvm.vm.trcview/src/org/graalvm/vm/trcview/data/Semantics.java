@@ -55,6 +55,10 @@ public abstract class Semantics {
 
     public abstract long get(@SuppressWarnings("hiding") long pc, RegisterOperand op);
 
+    public long getDirect(@SuppressWarnings("hiding") long pc, RegisterOperand op) {
+        return get(pc, op);
+    }
+
     public abstract long getMemory(long addr, long step);
 
     public abstract Set<ChainTarget> getMemoryReverseChain(long addr, long step);

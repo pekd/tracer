@@ -101,6 +101,16 @@ public class CodeTypeMap {
         }
     }
 
+    public long getDirect(long pc, RegisterOperand op) {
+        CodePageTypeMap map = getPage(pc);
+        int offset = getOffset(pc);
+        if (map == null) {
+            return 0;
+        } else {
+            return map.getDirect(offset, op);
+        }
+    }
+
     public void set(long pc, RegisterOperand op, VariableType type) {
         CodePageTypeMap map = getMap(pc);
         int offset = getOffset(pc);

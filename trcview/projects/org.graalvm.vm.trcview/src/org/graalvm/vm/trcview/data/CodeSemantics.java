@@ -431,6 +431,11 @@ public class CodeSemantics extends Semantics {
     }
 
     @Override
+    public long getDirect(@SuppressWarnings("hiding") long pc, RegisterOperand op) {
+        return codeMap.getDirect(pc, op);
+    }
+
+    @Override
     public long getMemory(long addr, long step) {
         return memoryMap.get(addr, step);
     }
