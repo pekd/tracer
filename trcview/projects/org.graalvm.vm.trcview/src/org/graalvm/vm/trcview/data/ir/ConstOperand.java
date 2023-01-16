@@ -26,6 +26,25 @@ public class ConstOperand extends Operand {
     }
 
     @Override
+    public int hashCode() {
+        return (int) type ^ (int) (type >> 32);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+
+        if (!(o instanceof ConstOperand)) {
+            return false;
+        }
+
+        ConstOperand c = (ConstOperand) o;
+        return c.type == type;
+    }
+
+    @Override
     public String toString() {
         return "CONST";
     }
