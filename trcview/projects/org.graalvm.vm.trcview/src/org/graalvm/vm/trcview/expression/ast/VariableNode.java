@@ -23,7 +23,11 @@ public class VariableNode extends Expression {
         try {
             return ctx.state.get(name);
         } catch (IllegalArgumentException e) {
-            throw new UnknownVariableException(name);
+            try {
+                return ctx.resolve(name);
+            } catch (IllegalArgumentException ex) {
+                throw new UnknownVariableException(name);
+            }
         }
     }
 
