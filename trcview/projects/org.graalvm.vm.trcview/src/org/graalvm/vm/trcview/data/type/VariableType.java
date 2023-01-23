@@ -234,6 +234,39 @@ public class VariableType {
             return I16;
         }
 
+        // S32:
+        if (S32.test(bits)) {
+            if (U32.test(bits)) {
+                long m = U32.mask | S32.mask | I32.mask;
+                if ((bits & ~m) == 0) {
+                    return I32;
+                } else {
+                    return UNKNOWN;
+                }
+            } else {
+                long m = S32.mask | I32.mask;
+                if ((bits & ~m) == 0) {
+                    return S32;
+                } else {
+                    return UNKNOWN;
+                }
+            }
+        }
+
+        // U32:
+        if (U32.test(bits)) {
+            long m = U32.mask | I32.mask;
+            if ((bits & ~m) == 0) {
+                return U32;
+            } else {
+                return UNKNOWN;
+            }
+        }
+
+        if (I32.test(bits) && (bits & ~I32.mask) == 0) {
+            return I32;
+        }
+
         // precise pointer types for f32/f64/fx16/fx32
         if (POINTER_F32.test(bits) && (bits & ~(addrbits | POINTER_F32.mask)) == 0) {
             return POINTER_F32;
@@ -297,13 +330,13 @@ public class VariableType {
             return POINTER_I64;
         }
 
-        // check for generic pointers
-        if ((bits & addrbits) != 0 && (bits & ~(addrbits | ptrbits)) == 0) {
+        // conflicting pointer types => generic pointer
+        if ((bits & ~(addrbits | ptrbits)) == 0 && (bits & ptrbits) != 0) {
             return GENERIC_POINTER;
         }
 
-        // conflicting pointer types => generic pointer
-        if ((bits & ~(addrbits | ptrbits)) == 0 && (bits & ptrbits) != 0) {
+        // check for generic pointers
+        if ((bits & addrbits) != 0 && (bits & ~(addrbits | ptrbits)) == 0) {
             return GENERIC_POINTER;
         }
 
