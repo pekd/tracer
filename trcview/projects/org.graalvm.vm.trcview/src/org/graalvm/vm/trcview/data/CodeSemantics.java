@@ -564,7 +564,7 @@ public class CodeSemantics extends Semantics {
                 todo.addAll(getMemoryForwardChain(tgt.address, tgt.step));
             }
 
-            if (VariableType.SOLVED.test(bits)) {
+            if (result == null && VariableType.SOLVED.test(bits)) {
                 return bits;
             }
         }

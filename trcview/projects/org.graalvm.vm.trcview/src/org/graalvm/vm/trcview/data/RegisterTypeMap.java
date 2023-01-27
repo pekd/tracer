@@ -55,7 +55,7 @@ public class RegisterTypeMap {
     }
 
     public void setResolvedType(int reg, long type) {
-        resolvedTypes[reg] = type;
+        resolvedTypes[reg] = type & ~(VariableType.CHAIN_BIT | VariableType.BREAK_BIT);
     }
 
     public void clear() {
@@ -187,6 +187,10 @@ public class RegisterTypeMap {
 
     public long get(RegisterOperand op) {
         return registerTypes[op.getRegister()] | resolvedTypes[op.getRegister()];
+    }
+
+    public long getDirect(int reg) {
+        return registerTypes[reg];
     }
 
     public long getDirect(RegisterOperand op) {
