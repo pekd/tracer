@@ -11,10 +11,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import javax.swing.AbstractListModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -30,6 +36,7 @@ import org.graalvm.vm.trcview.data.Semantics;
 import org.graalvm.vm.trcview.data.ir.RegisterOperand;
 import org.graalvm.vm.trcview.data.type.VariableType;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.trcview.ui.MainWindow;
 import org.graalvm.vm.trcview.ui.Utils;
 import org.graalvm.vm.trcview.ui.event.StepListenable;
 import org.graalvm.vm.trcview.ui.event.StepListener;
@@ -40,11 +47,15 @@ import org.graalvm.vm.util.HexFormatter;
 
 @SuppressWarnings("serial")
 public class TypeRecoveryDialog extends JDialog implements StepListener {
-    private static final boolean debug = true;
+    private static final boolean debug = false;
 
     private TraceAnalyzer trc;
+    private StepEvent step;
 
     private JTextPane text;
+
+    private JComboBox<String> regSelector;
+    private GraphModel graph;
 
     public TypeRecoveryDialog(JFrame owner, TraceAnalyzer trc, StepListenable step, TraceListenable trace) {
         super(owner, "Type Recovery", false);
@@ -53,12 +64,30 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
 
         JLabel status = new JLabel("Ready");
 
+        JTabbedPane tabs = new JTabbedPane();
+
+        JPanel types = new JPanel(new BorderLayout());
+        tabs.addTab("Type Recovery", types);
+
         text = new JTextPane();
         text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
         text.setEditable(false);
         text.setContentType("text/plain");
-        add(BorderLayout.CENTER, new JScrollPane(text));
-        add(BorderLayout.SOUTH, status);
+        types.add(BorderLayout.CENTER, new JScrollPane(text));
+        types.add(BorderLayout.SOUTH, status);
+
+        JPanel debugTrace = new JPanel(new BorderLayout());
+        tabs.addTab("Debug Trace", debugTrace);
+
+        regSelector = new JComboBox<>(new RegisterModel(0));
+        regSelector.addItemListener(e -> updateDebugTrace());
+        debugTrace.add(BorderLayout.NORTH, regSelector);
+
+        JList<String> list = new JList<>(graph = new GraphModel());
+        list.setFont(MainWindow.FONT);
+        debugTrace.add(BorderLayout.CENTER, new JScrollPane(list));
+
+        add(BorderLayout.CENTER, tabs);
 
         if (trc != null) {
             setTraceAnalyzer(trc);
@@ -84,13 +113,19 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
 
     public void setTraceAnalyzer(TraceAnalyzer trc) {
         this.trc = trc;
-        StepEvent step = Utils.getStep(trc.getInstruction(0));
-        if (step != null) {
-            setStep(step);
+        StepEvent s = Utils.getStep(trc.getInstruction(0));
+        if (s != null) {
+            setStep(s);
+        }
+        int regcnt = trc.getArchitecture().getRegisterCount();
+        regSelector.setModel(new RegisterModel(regcnt));
+        if (regcnt > 0) {
+            regSelector.setSelectedIndex(0);
         }
     }
 
     public void setStep(StepEvent step) {
+        this.step = step;
         int regcount = trc.getArchitecture().getRegisterCount();
         long pc = step.getPC();
         StringBuilder buf = new StringBuilder();
@@ -318,5 +353,152 @@ public class TypeRecoveryDialog extends JDialog implements StepListener {
 
         text.setText(buf.toString());
         text.setCaretPosition(0);
+
+        updateDebugTrace();
+    }
+
+    private void updateDebugTrace() {
+        if (trc == null || step == null) {
+            return;
+        }
+
+        int regcount = trc.getArchitecture().getRegisterCount();
+        int reg = regSelector.getSelectedIndex();
+        if (reg < 0 || reg >= regcount) {
+            return;
+        }
+
+        long pc = step.getPC();
+        if (trc.getTypeRecovery() == null) {
+            return;
+        }
+
+        Semantics semantics = trc.getTypeRecovery().getSemantics();
+
+        List<ChainTarget> list = new ArrayList<>();
+        semantics.resolve(pc, new RegisterOperand(reg), list);
+
+        List<String> result = graph.getList();
+        result.clear();
+        result.add("Graph Size: " + list.size());
+        int ptrsz = trc.getArchitecture().getTypeInfo().getPointerSize();
+        StepFormat fmt = trc.getArchitecture().getFormat();
+        for (ChainTarget target : list) {
+            long flags = 0;
+            StringBuilder buf = new StringBuilder();
+            if (target instanceof RegisterChainTarget) {
+                RegisterChainTarget tgt = (RegisterChainTarget) target;
+                int r = tgt.register;
+                flags = tgt.map.getDirect(r);
+                long ip = tgt.map.getPC();
+
+                buf.append(fmt.formatAddress(ip));
+                buf.append(": r");
+                buf.append(r);
+            } else if (target instanceof MemoryChainTarget) {
+                MemoryChainTarget tgt = (MemoryChainTarget) target;
+
+                buf.append("[");
+                buf.append(fmt.formatAddress(tgt.address));
+                buf.append("@");
+                buf.append(tgt.step);
+                buf.append("]");
+            } else {
+                buf.append("[");
+                buf.append(target.getClass().getSimpleName());
+                buf.append("]");
+            }
+
+            int len = buf.length();
+            for (int i = len; i < 32; i++) {
+                buf.append(' ');
+            }
+
+            buf.append(" = (");
+            buf.append(HexFormatter.tohex(flags, 16));
+            buf.append(") => [");
+            if (BitTest.test(flags, VariableType.MUL_BIT)) {
+                buf.append('M');
+            } else {
+                buf.append('-');
+            }
+            if (BitTest.test(flags, VariableType.ADDSUB_BIT)) {
+                buf.append('A');
+            } else {
+                buf.append('-');
+            }
+            buf.append("]");
+
+            if (flags == 0) {
+                buf.append(" [ ] --\n");
+            } else if (flags == VariableType.BREAK_BIT) {
+                buf.append(" [B] --\n");
+            } else if (flags == VariableType.CHAIN_BIT) {
+                buf.append(" [C] --\n");
+            } else {
+                if (BitTest.test(flags, VariableType.BREAK_BIT)) {
+                    buf.append(" [B]");
+                } else if (BitTest.test(flags, VariableType.CHAIN_BIT)) {
+                    buf.append(" [C]");
+                } else {
+                    buf.append(" [ ]");
+                }
+                for (VariableType type : VariableType.getTypeConstraints()) {
+                    if (BitTest.test(flags, type.getMask())) {
+                        buf.append(' ');
+                        buf.append(type.getName());
+                    }
+                }
+                buf.append(" => ");
+                buf.append(VariableType.resolve(flags, ptrsz));
+                buf.append('\n');
+            }
+
+            result.add(buf.toString());
+        }
+
+        graph.changed();
+    }
+
+    private static class RegisterModel extends DefaultComboBoxModel<String> {
+        private int regcnt;
+
+        public RegisterModel(int regcnt) {
+            this.regcnt = regcnt;
+        }
+
+        @Override
+        public int getSize() {
+            return regcnt;
+        }
+
+        @Override
+        public String getElementAt(int index) {
+            return "Register " + index;
+        }
+    }
+
+    private static class GraphModel extends AbstractListModel<String> {
+        private List<String> list;
+
+        public GraphModel() {
+            list = new ArrayList<>();
+        }
+
+        public List<String> getList() {
+            return list;
+        }
+
+        public int getSize() {
+            return list.size();
+        }
+
+        public String getElementAt(int index) {
+            return list.get(index);
+        }
+
+        public void changed() {
+            fireContentsChanged(this, 0, getSize());
+        }
     }
 }
