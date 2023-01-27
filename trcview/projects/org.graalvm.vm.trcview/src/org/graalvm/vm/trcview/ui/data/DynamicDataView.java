@@ -154,21 +154,20 @@ public class DynamicDataView extends JPanel implements StepListener {
 
                 buf.append(format.formatAddress(addr)).append(": ").append(type);
 
-                if (type.equals(VariableType.UNKNOWN)) {
-                    buf.append(" [");
-                    boolean first = true;
-                    for (VariableType t : VariableType.getTypeConstraints()) {
-                        if (BitTest.test(flags, t.getMask())) {
-                            if (!first) {
-                                buf.append(' ');
-                            } else {
-                                first = false;
-                            }
-                            buf.append(t.getName());
+                buf.append(" [");
+                boolean first = true;
+                for (VariableType t : VariableType.getTypeConstraints()) {
+                    if (BitTest.test(flags, t.getMask())) {
+                        if (!first) {
+                            buf.append(' ');
+                        } else {
+                            first = false;
                         }
+                        buf.append(t.getName());
                     }
-                    buf.append("]");
                 }
+                buf.append("]");
+
                 buf.append('\n');
 
                 i += size;
