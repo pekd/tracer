@@ -12,6 +12,9 @@ import org.graalvm.vm.trcview.arch.TraceCodeReader;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.DynamicTypePropagation;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.disasm.Operand;
+import org.graalvm.vm.trcview.disasm.Token;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.data.editor.DefaultElement;
 import org.graalvm.vm.trcview.ui.data.editor.Element;
@@ -22,7 +25,7 @@ public class CodeDataLine extends DataLine {
     private static final Type DEFAULT_TYPE_HEX = new Type(DataType.U8, Representation.DEC);
 
     // private final StepEvent event;
-    private final String[] disasm;
+    private final AssemblerInstruction disasm;
     private final String comment;
 
     private static Type getType(Type type, TraceAnalyzer trc) {
@@ -48,7 +51,7 @@ public class CodeDataLine extends DataLine {
         Disassembler disas = trc.getArchitecture().getDisassembler(trc);
         if (disas != null) {
             boolean be = trc.getArchitecture().getFormat().be;
-            disasm = disas.getDisassembly(new TraceCodeReader(trc, addr + offset, be, step));
+            disasm = disas.disassemble(new TraceCodeReader(trc, addr + offset, be, step));
         } else {
             DynamicTypePropagation typeRecovery = trc.getTypeRecovery();
             StepEvent event = null;
@@ -65,7 +68,7 @@ public class CodeDataLine extends DataLine {
             }
 
             if (event != null) {
-                disasm = event.getDisassemblyComponents(trc);
+                disasm = event.disassemble(trc);
             } else {
                 disasm = null;
             }
@@ -81,14 +84,43 @@ public class CodeDataLine extends DataLine {
         omitUnknownLabel = true;
     }
 
-    private static void addToken(List<Element> result, String text, int type, int width, boolean comma) {
+    private static void addToken(List<Element> result, String text, int type, int width, boolean comma, boolean pad) {
         result.add(new DefaultElement(text, type));
         int len = text.length();
         if (comma) {
             len++;
             result.add(new DefaultElement(",", Element.TYPE_PLAIN));
         }
-        if (len < width) {
+        if (pad && len < width) {
+            result.add(new DefaultElement(StringUtils.repeat(" ", width - len), Element.TYPE_PLAIN));
+        }
+    }
+
+    private static void addToken(List<Element> result, Operand operand, int width, boolean comma, boolean pad) {
+        int len = 0;
+        for (Token token : operand.getTokens()) {
+            String text = token.getText();
+            int type = Element.TYPE_PLAIN;
+            switch (token.getType()) {
+                case NUMBER:
+                    type = Element.TYPE_NUMBER;
+                    break;
+                case LABEL:
+                    type = Element.TYPE_IDENTIFIER;
+                    break;
+                case ADDRESS:
+                case OFFSET:
+                    type = Element.TYPE_NUMBER;
+                    break;
+            }
+            result.add(new DefaultElement(text, type));
+            len += text.length();
+        }
+        if (comma) {
+            len++;
+            result.add(new DefaultElement(",", Element.TYPE_PLAIN));
+        }
+        if (pad && len < width) {
             result.add(new DefaultElement(StringUtils.repeat(" ", width - len), Element.TYPE_PLAIN));
         }
     }
@@ -108,14 +140,15 @@ public class CodeDataLine extends DataLine {
             int tabSize = DataViewModel.TAB_SIZE;
             if (disasm == null) {
                 result.add(new DefaultElement("<unreadable>", Element.TYPE_COMMENT));
-            } else if (disasm.length == 1) {
-                result.add(new DefaultElement(disasm[0], Element.TYPE_KEYWORD));
+            } else if (disasm.getOperands().length == 0) {
+                result.add(new DefaultElement(disasm.getMnemonic(), Element.TYPE_KEYWORD));
             } else {
-                addToken(result, disasm[0], Element.TYPE_KEYWORD, tabSize, false);
-                for (int i = 1; i < disasm.length - 1; i++) {
-                    addToken(result, disasm[i], Element.TYPE_PLAIN, tabSize, true);
+                addToken(result, disasm.getMnemonic(), Element.TYPE_KEYWORD, tabSize, false, true);
+                Operand[] operands = disasm.getOperands();
+                for (int i = 0; i < operands.length - 1; i++) {
+                    addToken(result, operands[i], tabSize, true, true);
                 }
-                result.add(new DefaultElement(disasm[disasm.length - 1], Element.TYPE_PLAIN));
+                addToken(result, operands[operands.length - 1], tabSize, false, false);
             }
 
             int end = 0;

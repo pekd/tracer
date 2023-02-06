@@ -1,11 +1,16 @@
 package org.graalvm.vm.trcview.arch.io;
 
+import static org.graalvm.vm.trcview.disasm.Type.OTHER;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.vm.trcview.data.Semantics;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.disasm.Operand;
+import org.graalvm.vm.trcview.disasm.Token;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public abstract class StepEvent extends Event {
@@ -34,6 +39,20 @@ public abstract class StepEvent extends Event {
     }
 
     public abstract String getMnemonic();
+
+    public AssemblerInstruction disassemble(TraceAnalyzer trc) {
+        String[] parts = getDisassemblyComponents(trc);
+        if (parts.length == 1) {
+            return new AssemblerInstruction(parts[0]);
+        } else {
+            Operand[] operands = new Operand[parts.length - 1];
+            for (int i = 0; i < operands.length; i++) {
+                Token token = new Token(OTHER, parts[i + 1]);
+                operands[i] = new Operand(token);
+            }
+            return new AssemblerInstruction(parts[0], operands);
+        }
+    }
 
     public abstract long getPC();
 

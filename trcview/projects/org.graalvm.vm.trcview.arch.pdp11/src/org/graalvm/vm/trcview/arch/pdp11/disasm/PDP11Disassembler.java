@@ -1,5 +1,12 @@
 package org.graalvm.vm.trcview.arch.pdp11.disasm;
 
+import static org.graalvm.vm.trcview.disasm.Type.ADDRESS;
+import static org.graalvm.vm.trcview.disasm.Type.LABEL;
+import static org.graalvm.vm.trcview.disasm.Type.NUMBER;
+import static org.graalvm.vm.trcview.disasm.Type.OFFSET;
+import static org.graalvm.vm.trcview.disasm.Type.OTHER;
+import static org.graalvm.vm.trcview.disasm.Type.REGISTER;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +14,10 @@ import org.graalvm.vm.trcview.arch.CodeReader;
 import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.ShortCodeReader;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 import org.graalvm.vm.trcview.disasm.Field;
+import org.graalvm.vm.trcview.disasm.Operand;
+import org.graalvm.vm.trcview.disasm.Token;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class PDP11Disassembler extends Disassembler {
@@ -31,20 +41,20 @@ public class PDP11Disassembler extends Disassembler {
         super(trc);
     }
 
-    private static void writeN(StringBuilder buf, short val) {
-        buf.append(Integer.toOctalString(Short.toUnsignedInt(val)));
+    private static String writeN(short val) {
+        return Integer.toOctalString(Short.toUnsignedInt(val));
     }
 
-    private static void writeO(StringBuilder buf, short val) {
+    private static String writeO(short val) {
         if (val < 0 && val > -128) {
-            buf.append('-');
-            writeN(buf, (short) -val);
+            return '-' + writeN((short) -val);
         } else {
-            writeN(buf, val);
+            return writeN(val);
         }
     }
 
-    private static void writeRN(StringBuilder buf, int r) {
+    private static String writeRN(int r) {
+        StringBuilder buf = new StringBuilder();
         if (r < 0 || r > 7) {
             throw new IllegalArgumentException("invalid register");
         }
@@ -56,141 +66,130 @@ public class PDP11Disassembler extends Disassembler {
             buf.append('R');
             buf.append((char) (r + '0'));
         }
+        return buf.toString();
     }
 
-    private void disassemblePCOperand(int mode, CodeReader code, StringBuilder buf) {
+    private Operand disassemblePCOperand(int mode, CodeReader code) {
         int addr;
         String name;
         switch (mode) {
             case 2: // #<imm>
                 code.pc += 2;
-                buf.append('#');
-                writeN(buf, code.nextI16());
-                break;
+                return new Operand(new Token(OTHER, "#"), new Token(NUMBER, writeN(code.nextI16())));
             case 3: // @#<addr>
                 code.pc += 2;
                 addr = Short.toUnsignedInt(code.nextI16());
                 name = getName(addr);
                 if (name != null) {
-                    buf.append(name);
+                    return new Operand(new Token(LABEL, name));
                 } else {
-                    buf.append("@#");
-                    writeN(buf, (short) addr);
+                    return new Operand(new Token(OTHER, "@#"), new Token(ADDRESS, writeN((short) addr)));
                 }
-                break;
             case 6: // <offset>(PC)
                 code.pc += 2;
                 addr = (int) (code.pc + code.nextI16()) & 0xFFFF;
                 name = getName(addr);
                 if (name != null) {
-                    buf.append(name);
+                    return new Operand(new Token(LABEL, name));
                 } else {
-                    writeN(buf, (short) addr);
+                    return new Operand(new Token(ADDRESS, writeN((short) addr)));
                 }
-                break;
             case 7: // @<offset>(PC)
                 code.pc += 2;
                 addr = (int) (code.pc + code.nextI16()) & 0xFFFF;
-                buf.append('@');
                 name = getName(addr);
                 if (name != null) {
-                    buf.append(name);
+                    return new Operand(new Token(OTHER, "@"), new Token(LABEL, name));
                 } else {
-                    buf.append("@#");
-                    writeN(buf, (short) addr);
+                    return new Operand(new Token(OTHER, "@#"), new Token(ADDRESS, writeN((short) addr)));
                 }
-                break;
+            default:
+                throw new IllegalArgumentException("invalid operand mode pc with mode=" + mode);
         }
     }
 
-    private void disassembleOperand(int rn, int mode, CodeReader code, StringBuilder buf) {
+    private Operand disassembleOperand(int rn, int mode, CodeReader code) {
         if (rn == 7 && ((mode & 6) == 2 || (mode & 6) == 6)) {
-            disassemblePCOperand(mode, code, buf);
-            return;
+            return disassemblePCOperand(mode, code);
         }
         switch (mode) {
             case 0: // Rn
-                writeRN(buf, rn);
-                break;
+                return new Operand(new Token(REGISTER, writeRN(rn)));
             case 1: // (Rn)
-                buf.append('(');
-                writeRN(buf, rn);
-                buf.append(')');
-                break;
+                return new Operand(new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             case 3: // @(Rn)+
-                buf.append('@');
+                return new Operand(new Token(OTHER, "@("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")+"));
             case 2: // (Rn)+
-                buf.append('(');
-                writeRN(buf, rn);
-                buf.append(')');
-                buf.append('+');
-                break;
+                return new Operand(new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")+"));
             case 5: // @-(Rn)
-                buf.append('@');
+                return new Operand(new Token(OTHER, "@-("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             case 4: // -(Rn)
-                buf.append('-');
-                buf.append('(');
-                writeRN(buf, rn);
-                buf.append(')');
-                break;
+                return new Operand(new Token(OTHER, "-("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             case 7: // @<offset>(Rn)
-                buf.append('@');
+                code.pc += 2;
+                return new Operand(new Token(OTHER, "@"), new Token(OFFSET, writeO(code.nextI16())), new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             case 6: // <offset>(Rn)
                 code.pc += 2;
-                writeO(buf, code.nextI16());
-                buf.append('(');
-                writeRN(buf, rn);
-                buf.append(')');
-                break;
+                return new Operand(new Token(OFFSET, writeO(code.nextI16())), new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
+            default:
+                throw new IllegalArgumentException("invalid operand mode " + mode);
         }
     }
 
-    private void disassembleBranch(short offset, short pc, StringBuilder buf) {
+    private Operand disassembleBranch(short offset, short pc) {
         short off = (short) (offset * 2);
+        List<Token> tokens = new ArrayList<>();
         if (pc == 0xFFFF) {
-            buf.append('.');
+            tokens.add(new Token(OTHER, "."));
             if (offset >= 0) {
-                buf.append('+');
-                writeN(buf, off);
+                tokens.add(new Token(OFFSET, "+" + writeN(off)));
             } else {
-                buf.append('-');
-                writeN(buf, (short) -off);
+                tokens.add(new Token(OFFSET, "-" + writeN((short) -off)));
             }
         } else {
             int addr = (pc + off) & 0xFFFF;
             String name = getLocation(addr);
             if (name != null) {
-                buf.append(name);
+                tokens.add(new Token(LABEL, name));
             } else {
-                buf.append('L');
-                writeN(buf, (short) addr);
+                tokens.add(new Token(LABEL, "L" + writeN((short) addr)));
             }
+        }
+        return new Operand(tokens.toArray(new Token[tokens.size()]));
+    }
+
+    private Operand[] op1(short opcd, CodeReader code) {
+        return new Operand[]{disassembleOperand(RN.get(opcd), MODE.get(opcd), code)};
+    }
+
+    private Operand[] op2(short opcd, CodeReader code) {
+        return new Operand[]{
+                        disassembleOperand(SRC_RN.get(opcd), SRC_MODE.get(opcd), code),
+                        disassembleOperand(RN.get(opcd), MODE.get(opcd), code)
+        };
+    }
+
+    private Operand br(short opcd, CodeReader code) {
+        return disassembleBranch((short) BR_OFFSET.get(opcd), (short) code.pc);
+    }
+
+    private static class DisasmResult {
+        public final String mnemonic;
+        public final Operand[] operands;
+        public final int len;
+
+        DisasmResult(String mnemonic, int len) {
+            this(mnemonic, new Operand[0], len);
+        }
+
+        DisasmResult(String mnemonic, Operand[] operands, int len) {
+            this.mnemonic = mnemonic;
+            this.operands = operands;
+            this.len = len;
         }
     }
 
-    private void op1(List<String> out, short opcd, CodeReader code) {
-        StringBuilder buf = new StringBuilder();
-        disassembleOperand(RN.get(opcd), MODE.get(opcd), code, buf);
-        out.add(buf.toString());
-    }
-
-    private void op2(List<String> out, short opcd, CodeReader code) {
-        StringBuilder buf = new StringBuilder();
-        disassembleOperand(SRC_RN.get(opcd), SRC_MODE.get(opcd), code, buf);
-        out.add(buf.toString());
-        buf = new StringBuilder();
-        disassembleOperand(RN.get(opcd), MODE.get(opcd), code, buf);
-        out.add(buf.toString());
-    }
-
-    private void br(List<String> out, short opcd, CodeReader code) {
-        StringBuilder buf = new StringBuilder();
-        disassembleBranch((short) BR_OFFSET.get(opcd), (short) code.pc, buf);
-        out.add(buf.toString());
-    }
-
-    private int disassemble(CodeReader code, List<String> out) {
-        StringBuilder buf = new StringBuilder();
+    private DisasmResult disasm(CodeReader code) {
         short opcd = code.nextI16();
 
         short pc = (short) code.pc;
@@ -198,427 +197,243 @@ public class PDP11Disassembler extends Disassembler {
 
         switch (opcd & 0177700) {
             case 0005000: /* CLR */
-                out.add("CLR");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("CLR", op1(opcd, code), code.n() >> 1);
             case 0105000: /* CLRB */
-                out.add("CLRB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("CLRB", op1(opcd, code), code.n() >> 1);
             case 0005100: /* COM */
-                out.add("COM");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("COM", op1(opcd, code), code.n() >> 1);
             case 0105100: /* COMB */
-                out.add("COMB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("COMB", op1(opcd, code), code.n() >> 1);
             case 0005200: /* INC */
-                out.add("INC");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("INC", op1(opcd, code), code.n() >> 1);
             case 0105200: /* INCB */
-                out.add("INCB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("INCB", op1(opcd, code), code.n() >> 1);
             case 0005300: /* DEC */
-                out.add("DEC");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("DEC", op1(opcd, code), code.n() >> 1);
             case 0105300: /* DECB */
-                out.add("DECB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("DECB", op1(opcd, code), code.n() >> 1);
             case 0005400: /* NEG */
-                out.add("NEG");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("NEG", op1(opcd, code), code.n() >> 1);
             case 0105400: /* NEGB */
-                out.add("NEGB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("NEGB", op1(opcd, code), code.n() >> 1);
             case 0005700: /* TST */
-                out.add("TST");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("TST", op1(opcd, code), code.n() >> 1);
             case 0105700: /* TSTB */
-                out.add("TSTB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("TSTB", op1(opcd, code), code.n() >> 1);
             case 0006200: /* ASR */
-                out.add("ASR");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ASR", op1(opcd, code), code.n() >> 1);
             case 0106200: /* ASRB */
-                out.add("ASRB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ASRB", op1(opcd, code), code.n() >> 1);
             case 0006300: /* ASL */
-                out.add("ASL");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ASL", op1(opcd, code), code.n() >> 1);
             case 0106300: /* ASLB */
-                out.add("ASLB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ASLB", op1(opcd, code), code.n() >> 1);
             case 0006000: /* ROR */
-                out.add("ROR");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ROR", op1(opcd, code), code.n() >> 1);
             case 0106000: /* RORB */
-                out.add("RORB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("RORB", op1(opcd, code), code.n() >> 1);
             case 0006100: /* ROL */
-                out.add("ROL");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ROL", op1(opcd, code), code.n() >> 1);
             case 0106100: /* ROLB */
-                out.add("ROLB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ROLB", op1(opcd, code), code.n() >> 1);
             case 0000300: /* SWAB */
-                out.add("SWAB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("SWAB", op1(opcd, code), code.n() >> 1);
             case 0005500: /* ADC */
-                out.add("ADC");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ADC", op1(opcd, code), code.n() >> 1);
             case 0105500: /* ADCB */
-                out.add("ADCB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ADCB", op1(opcd, code), code.n() >> 1);
             case 0005600: /* SBC */
-                out.add("SBC");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("SBC", op1(opcd, code), code.n() >> 1);
             case 0105600: /* SBCB */
-                out.add("SBCB");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("SBCB", op1(opcd, code), code.n() >> 1);
             case 0006700: /* SXT */
-                out.add("SXT");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("SXT", op1(opcd, code), code.n() >> 1);
             case 0106700: /* MFPS */
-                out.add("MFPS");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("MFPS", op1(opcd, code), code.n() >> 1);
             case 0106400: /* MTPS */
-                out.add("MTPS");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("MTPS", op1(opcd, code), code.n() >> 1);
             case 0000100: /* JMP */
-                out.add("JMP");
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("JMP", op1(opcd, code), code.n() >> 1);
             case 0006400: /* MARK */
-                out.add("MARK");
-                writeN(buf, (short) (opcd & 077));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("MARK", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 077)))}, code.n() >> 1);
         }
 
         switch (opcd & 0170000) {
             case 0010000: /* MOV */
-                out.add("MOV");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("MOV", op2(opcd, code), code.n() >> 1);
             case 0110000: /* MOVB */
-                out.add("MOVB");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("MOVB", op2(opcd, code), code.n() >> 1);
             case 0020000: /* CMP */
-                out.add("CMP");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("CMP", op2(opcd, code), code.n() >> 1);
             case 0120000: /* CMPB */
-                out.add("CMPB");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("CMPB", op2(opcd, code), code.n() >> 1);
             case 0060000: /* ADD */
-                out.add("ADD");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("ADD", op2(opcd, code), code.n() >> 1);
             case 0160000: /* SUB */
-                out.add("SUB");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("SUB", op2(opcd, code), code.n() >> 1);
             case 0030000: /* BIT */
-                out.add("BIT");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BIT", op2(opcd, code), code.n() >> 1);
             case 0130000: /* BITB */
-                out.add("BITB");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BITB", op2(opcd, code), code.n() >> 1);
             case 0040000: /* BIC */
-                out.add("BIC");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BIC", op2(opcd, code), code.n() >> 1);
             case 0140000: /* BICB */
-                out.add("BICB");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BICB", op2(opcd, code), code.n() >> 1);
             case 0050000: /* BIS */
-                out.add("BIS");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BIS", op2(opcd, code), code.n() >> 1);
             case 0150000: /* BISB */
-                out.add("BISB");
-                op2(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BISB", op2(opcd, code), code.n() >> 1);
         }
 
         switch (opcd & 0177000) {
             case 0074000: /* XOR */
-                out.add("XOR");
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("XOR", new Operand[]{new Operand(REGISTER, writeRN((short) JSR_R.get(opcd))), op1(opcd, code)[0]}, code.n() >> 1);
             case 0004000: /* JSR */
-                out.add("JSR");
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
-                op1(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("JSR", new Operand[]{new Operand(REGISTER, writeRN((short) JSR_R.get(opcd))), op1(opcd, code)[0]}, code.n() >> 1);
             case 0077000: { /* SOB */
-                out.add("SOB");
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
+                Operand reg = new Operand(REGISTER, writeRN((short) JSR_R.get(opcd)));
                 int addr = (pc - SOB_OFFSET.get(opcd) * 2 + 2) & 0xFFFF;
                 String loc = getLocation(addr);
                 if (loc != null) {
-                    out.add(loc);
+                    return new DisasmResult("SOB", new Operand[]{reg, new Operand(LABEL, loc)}, code.n() >> 1);
                 } else {
-                    buf = new StringBuilder();
-                    buf.append('L');
-                    writeN(buf, (short) addr);
-                    out.add(buf.toString());
+                    return new DisasmResult("SOB", new Operand[]{reg, new Operand(LABEL, "L" + writeN((short) addr))}, code.n() >> 1);
                 }
-                return code.n() >> 1;
             }
             case 0070000: /* MUL */
-                out.add("MUL");
-                op1(out, opcd, code);
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("MUL", new Operand[]{op1(opcd, code)[0], new Operand(REGISTER, writeRN((short) JSR_R.get(opcd)))}, code.n() >> 1);
             case 0071000: /* DIV */
-                out.add("DIV");
-                op1(out, opcd, code);
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("DIV", new Operand[]{op1(opcd, code)[0], new Operand(REGISTER, writeRN((short) JSR_R.get(opcd)))}, code.n() >> 1);
             case 0072000: /* ASH */
-                out.add("ASH");
-                op1(out, opcd, code);
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("ASH", new Operand[]{op1(opcd, code)[0], new Operand(REGISTER, writeRN((short) JSR_R.get(opcd)))}, code.n() >> 1);
             case 0073000: /* ASHC */
-                out.add("ASHC");
-                op1(out, opcd, code);
-                writeRN(buf, (short) JSR_R.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("ASHC", new Operand[]{op1(opcd, code)[0], new Operand(REGISTER, writeRN((short) JSR_R.get(opcd)))}, code.n() >> 1);
         }
 
         switch (opcd & 0177770) {
             case 0000200: /* RTS */
-                out.add("RTS");
-                writeRN(buf, (short) RN.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("RTS", new Operand[]{new Operand(REGISTER, writeRN((short) RN.get(opcd)))}, code.n() >> 1);
             case 0075000: /* FADD */
-                out.add("FADD");
-                writeRN(buf, (short) RN.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("FADD", new Operand[]{new Operand(REGISTER, writeRN((short) RN.get(opcd)))}, code.n() >> 1);
             case 0075010: /* FSUB */
-                out.add("FSUB");
-                writeRN(buf, (short) RN.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("FSUB", new Operand[]{new Operand(REGISTER, writeRN((short) RN.get(opcd)))}, code.n() >> 1);
             case 0075020: /* FMUL */
-                out.add("FMUL");
-                writeRN(buf, (short) RN.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("FMUL", new Operand[]{new Operand(REGISTER, writeRN((short) RN.get(opcd)))}, code.n() >> 1);
             case 0075030: /* FDIV */
-                out.add("FDIV");
-                writeRN(buf, (short) RN.get(opcd));
-                out.add(buf.toString());
-                return code.n() >> 1;
+                return new DisasmResult("FDIV", new Operand[]{new Operand(REGISTER, writeRN((short) RN.get(opcd)))}, code.n() >> 1);
         }
 
         switch (opcd & 0177400) {
             case 0000400: /* BR */
-                out.add("BR");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BR", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0001000: /* BNE */
-                out.add("BNE");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BNE", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0001400: /* BEQ */
-                out.add("BEQ");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BEQ", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0100000: /* BPL */
-                out.add("BPL");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BPL", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0100400: /* BMI */
-                out.add("BMI");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BMI", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0102000: /* BVC */
-                out.add("BVC");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BVC", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0102400: /* BVS */
-                out.add("BVS");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BVS", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0103000: /* BCC */
-                out.add("BCC");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BCC", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0103400: /* BCS */
-                out.add("BCS");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BCS", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0002000: /* BGE */
-                out.add("BGE");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BGE", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0002400: /* BLT */
-                out.add("BLT");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BLT", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0003000: /* BGT */
-                out.add("BGT");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BGT", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0003400: /* BLE */
-                out.add("BLE");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BLE", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0101000: /* BHI */
-                out.add("BHI");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BHI", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0101400: /* BLOS */
-                out.add("BLOS");
-                br(out, opcd, code);
-                return code.n() >> 1;
+                return new DisasmResult("BLOS", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0104000: /* EMT */
                 if ((opcd & 0377) != 0) {
-                    out.add("EMT");
-                    writeN(buf, (short) (opcd & 0377));
-                    out.add(buf.toString());
+                    return new DisasmResult("EMT", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 0377)))}, code.n() >> 1);
                 } else {
-                    out.add("EMT");
+                    return new DisasmResult("EMT", code.n() >> 1);
                 }
-                return code.n() >> 1;
             case 0104400: /* TRAP */
                 if ((opcd & 0377) != 0) {
-                    out.add("TRAP");
-                    writeN(buf, (short) (opcd & 0377));
-                    out.add(buf.toString());
+                    return new DisasmResult("TRAP", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 0377)))}, code.n() >> 1);
                 } else {
-                    out.add("TRAP");
+                    return new DisasmResult("TRAP", code.n() >> 1);
                 }
-                return code.n() >> 1;
         }
 
         switch (opcd) {
             case 0000003: /* BPT */
-                out.add("BPT");
-                return code.n() >> 1;
+                return new DisasmResult("BPT", code.n() >> 1);
             case 0000004: /* IOT */
-                out.add("IOT");
-                return code.n() >> 1;
+                return new DisasmResult("IOT", code.n() >> 1);
             case 0000002: /* RTI */
-                out.add("RTI");
-                return code.n() >> 1;
+                return new DisasmResult("RTI", code.n() >> 1);
             case 0000006: /* RTT */
-                out.add("RTT");
-                return code.n() >> 1;
+                return new DisasmResult("RTT", code.n() >> 1);
             case 0000000: /* HALT */
-                out.add("HALT");
-                return code.n() >> 1;
+                return new DisasmResult("HALT", code.n() >> 1);
             case 0000001: /* WAIT */
-                out.add("WAIT");
-                return code.n() >> 1;
+                return new DisasmResult("WAIT", code.n() >> 1);
             case 0000005: /* RESET */
-                out.add("RESET");
-                return code.n() >> 1;
+                return new DisasmResult("RESET", code.n() >> 1);
             case 0000240: /* NOP */
-                out.add("NOP");
-                return code.n() >> 1;
+                return new DisasmResult("NOP", code.n() >> 1);
             case 0000241: /* CLC */
-                out.add("CLC");
-                return code.n() >> 1;
+                return new DisasmResult("CLC", code.n() >> 1);
             case 0000242: /* CLV */
-                out.add("CLV");
-                return code.n() >> 1;
+                return new DisasmResult("CLV", code.n() >> 1);
             case 0000243: /* CLVC */
-                out.add("CLVC");
-                return code.n() >> 1;
+                return new DisasmResult("CLVC", code.n() >> 1);
             case 0000244: /* CLZ */
-                out.add("CLZ");
-                return code.n() >> 1;
+                return new DisasmResult("CLZ", code.n() >> 1);
             case 0000250: /* CLN */
-                out.add("CLN");
-                return code.n() >> 1;
+                return new DisasmResult("CLN", code.n() >> 1);
             case 0000257: /* CCC */
-                out.add("CCC");
-                return code.n() >> 1;
+                return new DisasmResult("CCC", code.n() >> 1);
             case 0000260: /* NOP1 */
-                out.add("NOP1");
-                return code.n() >> 1;
+                return new DisasmResult("NOP1", code.n() >> 1);
             case 0000261: /* SEC */
-                out.add("SEC");
-                return code.n() >> 1;
+                return new DisasmResult("SEC", code.n() >> 1);
             case 0000262: /* SEV */
-                out.add("SEV");
-                return code.n() >> 1;
+                return new DisasmResult("SEV", code.n() >> 1);
             case 0000263: /* SEVC */
-                out.add("SEVC");
-                return code.n() >> 1;
+                return new DisasmResult("SEVC", code.n() >> 1);
             case 0000264: /* SEZ */
-                out.add("SEZ");
-                return code.n() >> 1;
+                return new DisasmResult("SEZ", code.n() >> 1);
             case 0000270: /* SEN */
-                out.add("SEN");
-                return code.n() >> 1;
+                return new DisasmResult("SEN", code.n() >> 1);
             case 0000277: /* SCC */
-                out.add("SCC");
-                return code.n() >> 1;
+                return new DisasmResult("SCC", code.n() >> 1);
         }
 
-        return 1;
+        return new DisasmResult(null, 1);
     }
 
     @Override
     public String[] getDisassembly(CodeReader code) {
-        List<String> buf = new ArrayList<>(5);
-        disassemble(code, buf);
-        if (buf.size() == 0) {
+        return getDisassembly(disassemble(code));
+    }
+
+    @Override
+    public AssemblerInstruction disassemble(CodeReader code) {
+        DisasmResult result = disasm(code);
+        if (result.mnemonic == null) {
             return null;
         } else {
-            return buf.toArray(new String[buf.size()]);
+            return new AssemblerInstruction(result.mnemonic, result.operands);
         }
     }
 
     @Override
     public int getLength(CodeReader code) {
-        List<String> tmp = new ArrayList<>(5);
-        return disassemble(code, tmp) << 1;
+        return disasm(code).len << 1;
     }
 
     public String[] getDisassembly(short[] code, short pc) {
@@ -628,7 +443,7 @@ public class PDP11Disassembler extends Disassembler {
         } else {
             StringBuilder buf = new StringBuilder();
             buf.append("; unknown [");
-            writeN(buf, code[0]);
+            buf.append(writeN(code[0]));
             buf.append(']');
             return new String[]{buf.toString()};
         }
