@@ -721,8 +721,8 @@ public class PowerPCSemantics {
         int rb = insn.RB.get();
         // essentially the same as lwx
         Operand mem = mem(semantics, ra, rb, VariableType.POINTER_I32);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.I32);
+        semantics.constraint(mem, VariableType.I32);
+        semantics.set(r(rt), VariableType.I32);
     }
 
     protected static void lwzx(Semantics semantics, InstructionFormat insn) {
@@ -731,8 +731,8 @@ public class PowerPCSemantics {
         int rb = insn.RB.get();
         // essentially the same as lwx
         Operand mem = mem(semantics, ra, rb, VariableType.POINTER_U32);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.U32);
+        semantics.constraint(mem, VariableType.I32);
+        semantics.set(r(rt), VariableType.I32);
     }
 
     protected static void slw(Semantics semantics, InstructionFormat insn) {
@@ -786,8 +786,8 @@ public class PowerPCSemantics {
         int ra = insn.RA.get();
         int rb = insn.RB.get();
         Operand mem = mem(semantics, ra, rb, VariableType.POINTER_U32);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.U32);
+        semantics.constraint(mem, VariableType.I32);
+        semantics.set(r(rt), VariableType.I32);
         semantics.constraint(r(ra), VariableType.POINTER_U32);
     }
 
@@ -901,7 +901,7 @@ public class PowerPCSemantics {
 
         Operand mem = mem(semantics, ra, rb, VariableType.POINTER_I8);
         semantics.constraint(r(rs), VariableType.I8);
-        semantics.move(mem, r(rs));
+        semantics.set(mem, VariableType.I8);
     }
 
     protected static void stvx(Semantics semantics, InstructionFormat insn) {
@@ -927,7 +927,7 @@ public class PowerPCSemantics {
 
         Operand mem = mem(semantics, ra, rb, VariableType.POINTER_I8);
         semantics.constraint(r(rs), VariableType.I8);
-        semantics.move(mem, r(rs));
+        semantics.set(mem, VariableType.I8);
         semantics.set(r(ra), VariableType.POINTER_I8);
     }
 
@@ -945,7 +945,8 @@ public class PowerPCSemantics {
         int rb = insn.RB.get();
 
         Operand mem = mem(semantics, ra, rb, VariableType.POINTER_U16);
-        semantics.move(r(rt), mem);
+        semantics.constraint(mem, VariableType.U16);
+        semantics.set(r(rt), VariableType.U32);
         semantics.constraint(r(rt), VariableType.U16);
     }
 
@@ -1403,8 +1404,8 @@ public class PowerPCSemantics {
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_U32);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.U32);
+        semantics.constraint(mem, VariableType.I32);
+        semantics.set(r(rt), VariableType.I32);
     }
 
     protected static void lwzu(Semantics semantics, InstructionFormat insn) {
@@ -1413,8 +1414,8 @@ public class PowerPCSemantics {
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_U32);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.U32);
+        semantics.constraint(mem, VariableType.I32);
+        semantics.set(r(rt), VariableType.I32);
         semantics.set(r(ra), VariableType.POINTER_U32);
     }
 
@@ -1461,23 +1462,21 @@ public class PowerPCSemantics {
     }
 
     protected static void stb(Semantics semantics, InstructionFormat insn) {
-        int rs = insn.RS.get();
+        // int rs = insn.RS.get();
         int ra = insn.RA.get();
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_I8);
-        semantics.constraint(r(rs), VariableType.I8);
-        semantics.move(mem, r(rs));
+        semantics.set(mem, VariableType.I8);
     }
 
     protected static void stbu(Semantics semantics, InstructionFormat insn) {
-        int rs = insn.RS.get();
+        // int rs = insn.RS.get();
         int ra = insn.RA.get();
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_I8);
-        semantics.constraint(r(rs), VariableType.I8);
-        semantics.move(mem, r(rs));
+        semantics.constraint(mem, VariableType.I8);
         semantics.set(r(ra), VariableType.POINTER_I8);
     }
 
@@ -1497,8 +1496,8 @@ public class PowerPCSemantics {
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_U16);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.U16);
+        semantics.constraint(mem, VariableType.U16);
+        semantics.set(r(rt), VariableType.I32);
         semantics.set(r(ra), VariableType.POINTER_U16);
     }
 
@@ -1508,8 +1507,8 @@ public class PowerPCSemantics {
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_S16);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.S16);
+        semantics.constraint(mem, VariableType.S16);
+        semantics.set(r(rt), VariableType.I32);
     }
 
     protected static void lhau(Semantics semantics, InstructionFormat insn) {
@@ -1518,8 +1517,8 @@ public class PowerPCSemantics {
         int d = insn.D.get();
 
         Operand mem = memOff(semantics, ra, d, VariableType.POINTER_S16);
-        semantics.move(r(rt), mem);
-        semantics.constraint(r(rt), VariableType.S16);
+        semantics.constraint(mem, VariableType.S16);
+        semantics.set(r(rt), VariableType.I32);
         semantics.set(r(ra), VariableType.POINTER_S16);
     }
 
