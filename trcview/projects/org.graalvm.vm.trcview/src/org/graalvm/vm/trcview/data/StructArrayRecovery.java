@@ -187,8 +187,11 @@ public class StructArrayRecovery {
                 return;
             }
 
-            assert offset + field.getSize() <= size;
-            fields.put(off, field);
+            if (offset + field.getSize() > size) {
+                log.log(Levels.WARNING, "Cannot add field to array of structs: offset=" + offset + ", field.size=" + field.getSize() + ", size=" + size);
+            } else {
+                fields.put(off, field);
+            }
         }
 
         public Struct createStruct(String name) {
