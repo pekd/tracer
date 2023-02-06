@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
@@ -109,5 +110,10 @@ public class PowerPC extends Architecture {
         abi.getCall().setReturn(new VariableNode("r3"));
         abi.getCall().setStack(new CallNode("getMem", Arrays.asList(new AddNode(new VariableNode("r2"), new MulNode(new VariableNode("arg_id"), new ValueNode(8))), new VariableNode("arg_size"))));
         return abi;
+    }
+
+    @Override
+    public void addStandardTypes(UserTypeDatabase types) {
+        PowerPCTypes.add(types);
     }
 }

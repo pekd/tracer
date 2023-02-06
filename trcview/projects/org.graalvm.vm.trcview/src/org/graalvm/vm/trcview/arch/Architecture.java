@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.none.None;
@@ -71,6 +72,10 @@ public abstract class Architecture {
 
     public Disassembler getDisassembler(@SuppressWarnings("unused") TraceAnalyzer trc) {
         return null;
+    }
+
+    public void addStandardTypes(@SuppressWarnings("unused") UserTypeDatabase types) {
+        // empty
     }
 
     public static void register(Architecture arch) {
