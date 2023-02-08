@@ -84,21 +84,7 @@ public class DataView extends JPanel implements StepListener {
         getActionMap().put(n, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Element element = editor.getCurrentElement();
-                long addr;
-                if (element instanceof AddressElement) {
-                    AddressElement ae = (AddressElement) element;
-                    long a = ae.getAddress();
-                    if (trc.getComputedSymbol(a) != null || trc.getTypedMemory().get(a) != null) {
-                        addr = a;
-                    } else {
-                        int line = editor.getCursorLine();
-                        addr = model.getAddressByLine(line);
-                    }
-                } else {
-                    int line = editor.getCursorLine();
-                    addr = model.getAddressByLine(line);
-                }
+                long addr = getOperandAddress();
                 ComputedSymbol sym = trc.getComputedSymbol(addr);
                 if (sym != null) {
                     Utils.rename(sym, trc, DataView.this);
@@ -130,9 +116,13 @@ public class DataView extends JPanel implements StepListener {
         getActionMap().put(y, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int line = editor.getCursorLine();
-                long addr = model.getAddressByLine(line);
-                Utils.setDataType(addr, trc, DataView.this);
+                long addr = getOperandAddress();
+                ComputedSymbol sym = trc.getComputedSymbol(addr);
+                if (sym != null && sym.type == ComputedSymbol.Type.SUBROUTINE) {
+                    Utils.setFunctionType(sym, trc, DataView.this);
+                } else {
+                    Utils.setDataType(addr, trc, DataView.this);
+                }
                 model.update();
                 editor.requestFocus();
             }
@@ -362,6 +352,25 @@ public class DataView extends JPanel implements StepListener {
                 memaddr.setMemoryAddress(((LineAddressElement) element).getAddress());
             }
         });
+    }
+
+    private long getOperandAddress() {
+        Element element = editor.getCurrentElement();
+        long addr;
+        if (element instanceof AddressElement) {
+            AddressElement ae = (AddressElement) element;
+            long a = ae.getAddress();
+            if (trc.getComputedSymbol(a) != null || trc.getTypedMemory().get(a) != null) {
+                addr = a;
+            } else {
+                int line = editor.getCursorLine();
+                addr = model.getAddressByLine(line);
+            }
+        } else {
+            int line = editor.getCursorLine();
+            addr = model.getAddressByLine(line);
+        }
+        return addr;
     }
 
     private Representation getArchRepresentation() {
