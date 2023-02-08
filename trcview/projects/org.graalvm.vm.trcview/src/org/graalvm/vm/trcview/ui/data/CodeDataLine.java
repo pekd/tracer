@@ -100,20 +100,23 @@ public class CodeDataLine extends DataLine {
         int len = 0;
         for (Token token : operand.getTokens()) {
             String text = token.getText();
-            int type = Element.TYPE_PLAIN;
             switch (token.getType()) {
                 case NUMBER:
-                    type = Element.TYPE_NUMBER;
+                    result.add(new NumberElement(text, Element.TYPE_NUMBER, token.getValue()));
                     break;
                 case LABEL:
-                    type = Element.TYPE_IDENTIFIER;
+                    result.add(new AddressElement(text, Element.TYPE_IDENTIFIER, token.getValue()));
                     break;
                 case ADDRESS:
+                    result.add(new AddressElement(text, Element.TYPE_NUMBER, token.getValue()));
+                    break;
                 case OFFSET:
-                    type = Element.TYPE_NUMBER;
+                    result.add(new NumberElement(text, Element.TYPE_NUMBER, token.getValue()));
+                    break;
+                default:
+                    result.add(new DefaultElement(text, Element.TYPE_PLAIN));
                     break;
             }
-            result.add(new DefaultElement(text, type));
             len += text.length();
         }
         if (comma) {

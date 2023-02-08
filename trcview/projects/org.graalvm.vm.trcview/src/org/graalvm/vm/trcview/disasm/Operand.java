@@ -10,6 +10,10 @@ public class Operand {
         tokens = new Token[]{new Token(type, text)};
     }
 
+    public Operand(Type type, String text, long value) {
+        tokens = new Token[]{new Token(type, text, value)};
+    }
+
     public Operand(Token... tokens) {
         this.tokens = tokens;
     }

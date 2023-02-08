@@ -72,36 +72,38 @@ public class PDP11Disassembler extends Disassembler {
     private Operand disassemblePCOperand(int mode, CodeReader code) {
         int addr;
         String name;
+        short tmp;
         switch (mode) {
             case 2: // #<imm>
                 code.pc += 2;
-                return new Operand(new Token(OTHER, "#"), new Token(NUMBER, writeN(code.nextI16())));
+                tmp = code.nextI16();
+                return new Operand(new Token(OTHER, "#"), new Token(NUMBER, writeN(tmp), tmp));
             case 3: // @#<addr>
                 code.pc += 2;
                 addr = Short.toUnsignedInt(code.nextI16());
                 name = getName(addr);
                 if (name != null) {
-                    return new Operand(new Token(LABEL, name));
+                    return new Operand(new Token(LABEL, name, addr));
                 } else {
-                    return new Operand(new Token(OTHER, "@#"), new Token(ADDRESS, writeN((short) addr)));
+                    return new Operand(new Token(OTHER, "@#"), new Token(ADDRESS, writeN((short) addr), addr));
                 }
             case 6: // <offset>(PC)
                 code.pc += 2;
                 addr = (int) (code.pc + code.nextI16()) & 0xFFFF;
                 name = getName(addr);
                 if (name != null) {
-                    return new Operand(new Token(LABEL, name));
+                    return new Operand(new Token(LABEL, name, addr));
                 } else {
-                    return new Operand(new Token(ADDRESS, writeN((short) addr)));
+                    return new Operand(new Token(ADDRESS, writeN((short) addr), addr));
                 }
             case 7: // @<offset>(PC)
                 code.pc += 2;
                 addr = (int) (code.pc + code.nextI16()) & 0xFFFF;
                 name = getName(addr);
                 if (name != null) {
-                    return new Operand(new Token(OTHER, "@"), new Token(LABEL, name));
+                    return new Operand(new Token(OTHER, "@"), new Token(LABEL, name, addr));
                 } else {
-                    return new Operand(new Token(OTHER, "@#"), new Token(ADDRESS, writeN((short) addr)));
+                    return new Operand(new Token(OTHER, "@#"), new Token(ADDRESS, writeN((short) addr), addr));
                 }
             default:
                 throw new IllegalArgumentException("invalid operand mode pc with mode=" + mode);
@@ -112,6 +114,7 @@ public class PDP11Disassembler extends Disassembler {
         if (rn == 7 && ((mode & 6) == 2 || (mode & 6) == 6)) {
             return disassemblePCOperand(mode, code);
         }
+        short tmp;
         switch (mode) {
             case 0: // Rn
                 return new Operand(new Token(REGISTER, writeRN(rn)));
@@ -127,10 +130,12 @@ public class PDP11Disassembler extends Disassembler {
                 return new Operand(new Token(OTHER, "-("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             case 7: // @<offset>(Rn)
                 code.pc += 2;
-                return new Operand(new Token(OTHER, "@"), new Token(OFFSET, writeO(code.nextI16())), new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
+                tmp = code.nextI16();
+                return new Operand(new Token(OTHER, "@"), new Token(OFFSET, writeO(tmp), tmp), new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             case 6: // <offset>(Rn)
                 code.pc += 2;
-                return new Operand(new Token(OFFSET, writeO(code.nextI16())), new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
+                tmp = code.nextI16();
+                return new Operand(new Token(OFFSET, writeO(tmp), tmp), new Token(OTHER, "("), new Token(REGISTER, writeRN(rn)), new Token(OTHER, ")"));
             default:
                 throw new IllegalArgumentException("invalid operand mode " + mode);
         }
@@ -142,17 +147,17 @@ public class PDP11Disassembler extends Disassembler {
         if (pc == 0xFFFF) {
             tokens.add(new Token(OTHER, "."));
             if (offset >= 0) {
-                tokens.add(new Token(OFFSET, "+" + writeN(off)));
+                tokens.add(new Token(OFFSET, "+" + writeN(off), off));
             } else {
-                tokens.add(new Token(OFFSET, "-" + writeN((short) -off)));
+                tokens.add(new Token(OFFSET, "-" + writeN((short) -off), -off));
             }
         } else {
             int addr = (pc + off) & 0xFFFF;
             String name = getLocation(addr);
             if (name != null) {
-                tokens.add(new Token(LABEL, name));
+                tokens.add(new Token(LABEL, name, addr));
             } else {
-                tokens.add(new Token(LABEL, "L" + writeN((short) addr)));
+                tokens.add(new Token(LABEL, "L" + writeN((short) addr), addr));
             }
         }
         return new Operand(tokens.toArray(new Token[tokens.size()]));
@@ -255,7 +260,7 @@ public class PDP11Disassembler extends Disassembler {
             case 0000100: /* JMP */
                 return new DisasmResult("JMP", op1(opcd, code), code.n() >> 1);
             case 0006400: /* MARK */
-                return new DisasmResult("MARK", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 077)))}, code.n() >> 1);
+                return new DisasmResult("MARK", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 077)), opcd & 077)}, code.n() >> 1);
         }
 
         switch (opcd & 0170000) {
@@ -295,9 +300,9 @@ public class PDP11Disassembler extends Disassembler {
                 int addr = (pc - SOB_OFFSET.get(opcd) * 2 + 2) & 0xFFFF;
                 String loc = getLocation(addr);
                 if (loc != null) {
-                    return new DisasmResult("SOB", new Operand[]{reg, new Operand(LABEL, loc)}, code.n() >> 1);
+                    return new DisasmResult("SOB", new Operand[]{reg, new Operand(LABEL, loc, addr)}, code.n() >> 1);
                 } else {
-                    return new DisasmResult("SOB", new Operand[]{reg, new Operand(LABEL, "L" + writeN((short) addr))}, code.n() >> 1);
+                    return new DisasmResult("SOB", new Operand[]{reg, new Operand(LABEL, "L" + writeN((short) addr), addr)}, code.n() >> 1);
                 }
             }
             case 0070000: /* MUL */
@@ -356,13 +361,13 @@ public class PDP11Disassembler extends Disassembler {
                 return new DisasmResult("BLOS", new Operand[]{br(opcd, code)}, code.n() >> 1);
             case 0104000: /* EMT */
                 if ((opcd & 0377) != 0) {
-                    return new DisasmResult("EMT", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 0377)))}, code.n() >> 1);
+                    return new DisasmResult("EMT", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 0377)), opcd & 0377)}, code.n() >> 1);
                 } else {
                     return new DisasmResult("EMT", code.n() >> 1);
                 }
             case 0104400: /* TRAP */
                 if ((opcd & 0377) != 0) {
-                    return new DisasmResult("TRAP", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 0377)))}, code.n() >> 1);
+                    return new DisasmResult("TRAP", new Operand[]{new Operand(NUMBER, writeN((short) (opcd & 0377)), opcd & 0377)}, code.n() >> 1);
                 } else {
                     return new DisasmResult("TRAP", code.n() >> 1);
                 }
