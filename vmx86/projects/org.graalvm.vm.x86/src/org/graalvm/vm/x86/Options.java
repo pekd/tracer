@@ -54,10 +54,6 @@ public class Options {
     public static final BooleanOption DEBUG_EXEC = new BooleanOption("vmx86.debug.exec", false);
     public static final BooleanOption DEBUG_EXEC_TRACE = new BooleanOption("vmx86.debug.exec.trace", false);
     public static final StringOption DEBUG_EXEC_TRACEFILE = new StringOption("vmx86.debug.exec.tracefile", "vmx86.trc");
-    public static final BooleanOption DEBUG_PRINT_SYMBOLS = new BooleanOption("vmx86.debug.symbols", true);
-    public static final BooleanOption DEBUG_PRINT_STATE = new BooleanOption("vmx86.debug.state", true);
-    public static final BooleanOption DEBUG_PRINT_ONCE = new BooleanOption("vmx86.debug.once", false);
-    public static final BooleanOption DEBUG_PRINT_ARGS = new BooleanOption("vmx86.debug.args", true);
     public static final BooleanOption DEBUG_SYMBOLS = new BooleanOption("vmx86.debug.symbols", false);
     public static final BooleanOption DEBUG_STATIC_ENV = new BooleanOption("vmx86.debug.staticenv", false);
 

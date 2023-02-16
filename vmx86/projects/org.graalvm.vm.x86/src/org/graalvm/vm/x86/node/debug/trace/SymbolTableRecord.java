@@ -49,7 +49,7 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class SymbolTableRecord extends Record {
-    public static final int MAGIC = 0x53594d54; // SYMT
+    public static final byte ID = 0x40;
 
     private NavigableMap<Long, Symbol> symbols;
     private String filename;
@@ -58,11 +58,11 @@ public class SymbolTableRecord extends Record {
     private long size;
 
     public SymbolTableRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
     public SymbolTableRecord(long loadBias, String filename, long address, long size, NavigableMap<Long, Symbol> symbols) {
-        super(MAGIC);
+        super(ID);
         this.symbols = symbols;
         this.filename = filename;
         this.loadBias = loadBias;

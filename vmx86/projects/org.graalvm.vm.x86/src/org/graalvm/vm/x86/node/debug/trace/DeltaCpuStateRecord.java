@@ -47,27 +47,7 @@ import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.CpuState;
 
 public class DeltaCpuStateRecord extends CpuStateRecord {
-    public static final int MAGIC = 0x43505531; // CPU1
-
-    public static final int ID_RAX = 0;
-    public static final int ID_RCX = 1;
-    public static final int ID_RDX = 2;
-    public static final int ID_RBX = 3;
-    public static final int ID_RSP = 4;
-    public static final int ID_RBP = 5;
-    public static final int ID_RSI = 6;
-    public static final int ID_RDI = 7;
-    public static final int ID_R8 = 8;
-    public static final int ID_R9 = 9;
-    public static final int ID_R10 = 10;
-    public static final int ID_R11 = 11;
-    public static final int ID_R12 = 12;
-    public static final int ID_R13 = 13;
-    public static final int ID_R14 = 14;
-    public static final int ID_R15 = 15;
-    public static final int ID_FS = 16;
-    public static final int ID_GS = 17;
-    public static final int ID_RFL = 18;
+    public static final byte ID = 0x02;
 
     private CpuState current;
 
@@ -78,14 +58,18 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
     private long instructionCount;
 
     public DeltaCpuStateRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
-    public DeltaCpuStateRecord(CpuState lastState, CpuState current) {
-        super(MAGIC);
+    private DeltaCpuStateRecord(byte[] machinecode, CpuState lastState, CpuState current) {
+        super(ID, machinecode);
         this.current = current;
         setLastState(lastState);
-        computeDelta(current);
+    }
+
+    public static CpuStateRecord get(byte[] machinecode, CpuState lastState, CpuState current) {
+        DeltaCpuStateRecord delta = new DeltaCpuStateRecord(machinecode, lastState, current);
+        return delta.computeDelta(current);
     }
 
     public long getDelta() {
@@ -104,7 +88,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         deltaId |= 1L << id;
     }
 
-    private void computeDelta(CpuState state) {
+    private CpuStateRecord computeDelta(CpuState state) {
         // compute number of differences
         CpuState lastState = getLastState();
         clearLastState();
@@ -166,9 +150,20 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
         if (lastState.getRFL() != state.getRFL()) {
             cnt++;
         }
+
+        int tmp = cnt;
+
         for (int i = 0; i < 16; i++) {
             if (!lastState.xmm[i].equals(state.xmm[i])) {
                 cnt += 2;
+            }
+        }
+
+        if (tmp == cnt) {
+            if (cnt == 0) {
+                return new TinyDeltaCpuStateRecord(getMachinecode(), state);
+            } else if (cnt == 1) {
+                return new SmallDeltaCpuStateRecord(getMachinecode(), lastState, state);
             }
         }
 
@@ -285,6 +280,8 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
         pc = state.rip;
         instructionCount = state.instructionCount;
+
+        return this;
     }
 
     @Override
@@ -383,11 +380,12 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
     @Override
     protected int getDataSize() {
-        return 1 + deltaValue.length + 8 * deltaValue.length + 2 * 8;
+        return 1 + deltaValue.length + 8 * deltaValue.length + 2 * 8 + super.getDataSize();
     }
 
     @Override
     protected void readRecord(WordInputStream in) throws IOException {
+        super.readRecord(in);
         pc = in.read64bit();
         instructionCount = in.read64bit();
         int cnt = in.read8bit();
@@ -411,6 +409,7 @@ public class DeltaCpuStateRecord extends CpuStateRecord {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
+        super.writeRecord(out);
         out.write64bit(pc);
         out.write64bit(instructionCount);
         out.write8bit((byte) deltaValue.length);

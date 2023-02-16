@@ -61,7 +61,7 @@ import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.node.debug.trace.BrkRecord;
-import org.graalvm.vm.x86.node.debug.trace.CallArgsRecord;
+import org.graalvm.vm.x86.node.debug.trace.CpuStateRecord;
 import org.graalvm.vm.x86.node.debug.trace.EofRecord;
 import org.graalvm.vm.x86.node.debug.trace.ExecutionTraceReader;
 import org.graalvm.vm.x86.node.debug.trace.MemoryEventRecord;
@@ -69,7 +69,6 @@ import org.graalvm.vm.x86.node.debug.trace.MmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.MprotectRecord;
 import org.graalvm.vm.x86.node.debug.trace.MunmapRecord;
 import org.graalvm.vm.x86.node.debug.trace.Record;
-import org.graalvm.vm.x86.node.debug.trace.StepRecord;
 import org.graalvm.vm.x86.node.debug.trace.SymbolTableRecord;
 import org.graalvm.vm.x86.node.debug.trace.SystemLogRecord;
 
@@ -100,7 +99,7 @@ public class Verify86 {
 
     private long currentBrk;
     private boolean transfer;
-    private StepRecord lastStep;
+    private CpuStateRecord lastStep;
 
     static {
         MNEMONIC_MEM_CHECK = new HashSet<>();
@@ -163,8 +162,8 @@ public class Verify86 {
     }
 
     public void step() throws ProcessExitException, PosixException {
-        StepRecord record = (StepRecord) currentRecord;
-        CpuState state = record.getState().getState();
+        CpuStateRecord record = (CpuStateRecord) currentRecord;
+        CpuState state = record.getState();
         byte[] mcode = record.getMachinecode();
         regs = ptrace.getRegisters();
         if (transfer) {
@@ -441,10 +440,10 @@ public class Verify86 {
                         ptrace.mmap(addr, len, true, true, false, true, true, false, -1, 0);
                         currentBrk = brk.getResult();
                     }
-                } else if (currentRecord instanceof StepRecord) {
+                } else if (currentRecord instanceof CpuStateRecord) {
                     // log.info("[STEP] " + currentRecord);
                     step();
-                    lastStep = (StepRecord) currentRecord;
+                    lastStep = (CpuStateRecord) currentRecord;
                     if (check) {
                         if (memory.getI64(memwatchAddress) != memwatchValue) {
                             log.severe("[MEMWATCH] 0x" + HexFormatter.tohex(memwatchAddress, 16) + " was overwritten with 0x" + HexFormatter.tohex(memory.getI64(0x00007fff6c8441e8L), 16));
@@ -454,8 +453,6 @@ public class Verify86 {
                     }
                 } else if (currentRecord instanceof SystemLogRecord) {
                     log.info("[LOG] " + currentRecord);
-                } else if (currentRecord instanceof CallArgsRecord) {
-                    // ignore
                 } else if (currentRecord instanceof SymbolTableRecord) {
                     // ignore
                 } else if (currentRecord instanceof EofRecord) {

@@ -151,11 +151,6 @@ def runTrcview(args=None, out=None):
     vmArgs, trcviewArgs = truffle_extract_VM_args(args)
     return mx.run_java(getCommonOptions(False) + vmArgs + getTrcviewClasspathOptions() + ['org.graalvm.vm.trcview.ui.MainWindow'] + trcviewArgs, out=out)
 
-def runTrcdump(args=None, out=None):
-    """CLI tool to convert binary execution traces to ascii format"""
-    vmArgs, trcviewArgs = truffle_extract_VM_args(args)
-    return mx.run_java(getCommonOptions(False) + vmArgs + getTrcviewClasspathOptions() + ['org.graalvm.vm.trcview.TextDump'] + trcviewArgs, out=out)
-
 def runTrchk(args=None, out=None):
     """Verify binary execution traces by replaying them on the host CPU"""
     vmArgs, trchkArgs = truffle_extract_VM_args(args)
@@ -199,6 +194,5 @@ mx.update_commands(_suite, {
     'vmx86' : [runAMD64, ''],
     'tvmx86' : [runAMD64Trace, ''],
     'trcview' : [runTrcview, ''],
-    'trcdump' : [runTrcdump, ''],
     'trchk' : [runTrchk, '']
 })

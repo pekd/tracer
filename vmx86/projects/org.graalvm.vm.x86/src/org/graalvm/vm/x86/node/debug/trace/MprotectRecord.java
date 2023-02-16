@@ -47,7 +47,7 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MprotectRecord extends Record {
-    public static final int MAGIC = 0x50524f54; // PROT
+    public static final byte ID = 0x32;
 
     private long addr;
     private long len;
@@ -55,7 +55,7 @@ public class MprotectRecord extends Record {
     private int result;
 
     MprotectRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
     public MprotectRecord(long addr, long len, int prot, int result) {

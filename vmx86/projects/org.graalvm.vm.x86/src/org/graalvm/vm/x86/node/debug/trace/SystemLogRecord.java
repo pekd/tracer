@@ -51,7 +51,7 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class SystemLogRecord extends Record {
-    public static final int MAGIC = 0x4c4f4752; // LOGR
+    public static final byte ID = 0x41;
 
     private long seq;
     private long time;
@@ -64,7 +64,7 @@ public class SystemLogRecord extends Record {
     private String throwable;
 
     SystemLogRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
     public SystemLogRecord(long seq, long time, int level, int threadID, String logger, String clazz, String method, String message, Throwable throwable) {

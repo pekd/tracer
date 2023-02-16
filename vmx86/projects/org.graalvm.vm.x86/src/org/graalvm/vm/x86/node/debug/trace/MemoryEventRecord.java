@@ -49,7 +49,7 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MemoryEventRecord extends Record {
-    public static final int MAGIC = 0x4d454d30; // MEM0
+    public static final byte ID = 0x10;
 
     private static final byte FLAG_DATA = 1;
     private static final byte FLAG_WRITE = 2;
@@ -62,7 +62,7 @@ public class MemoryEventRecord extends Record {
     private Vector128 value128;
 
     MemoryEventRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
     public MemoryEventRecord(long address, boolean write, int size) {

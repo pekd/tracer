@@ -47,7 +47,7 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MmapRecord extends Record {
-    public static final int MAGIC = 0x4d4d4150; // MMAP
+    public static final byte ID = 0x30;
 
     private long addr;
     private long len;
@@ -61,7 +61,7 @@ public class MmapRecord extends Record {
     private byte[] data;
 
     MmapRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
     public MmapRecord(long addr, long len, int prot, int flags, int fildes, long off, String filename, long result) {

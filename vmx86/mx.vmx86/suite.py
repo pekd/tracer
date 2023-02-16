@@ -69,13 +69,6 @@ suite = {
         "urls" : [
           {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
         ]
-      },
-      {
-        "name" : "trcview",
-        "subdir" : True,
-        "urls" : [
-          {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
-        ]
       }
     ]
   },
@@ -189,19 +182,6 @@ suite = {
       "dependencies" : [
         "utils:CORE",
         "sdk:LAUNCHER_COMMON"
-      ],
-      "javaCompliance" : "11+",
-      "workingSets" : "vmx86",
-      "license" : "UPL",
-    },
-
-    "org.graalvm.vm.trcview.arch.x86" : {
-      "subDir" : "projects",
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "org.graalvm.vm.x86",
-        "trcview:TRCVIEW",
-        "trcview:LIBTRC",
       ],
       "javaCompliance" : "11+",
       "workingSets" : "vmx86",
@@ -375,31 +355,6 @@ suite = {
       "distDependencies" : [
         "utils:CORE",
         "sdk:LAUNCHER_COMMON",
-      ],
-      "license" : "UPL",
-    },
-
-    "VMX86_TRCVIEW" : {
-      "path" : "build/trcview.jar",
-      "sourcesPath" : "build/trcview.src.zip",
-      "subDir" : "vmx86",
-      "mainClass" : "org.graalvm.vm.trcview.ui.MainWindow",
-      "dependencies" : [
-        "org.graalvm.vm.trcview.arch.x86",
-        "truffle:TRUFFLE_API",
-      ],
-      "strip" : [
-        "trcview"
-      ],
-      "overlaps" : [
-        "VM",
-        "utils:CORE",
-        "utils:POSIX",
-        "trcview:TRCVIEW",
-        "trcview:LIBTRC",
-        "sdk:GRAAL_SDK",
-        "truffle:TRUFFLE_API",
-        #"truffle:TRUFFLE_NFI",
       ],
       "license" : "UPL",
     },

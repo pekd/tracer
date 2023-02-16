@@ -69,8 +69,6 @@ public class ExecutionTraceReader implements Closeable {
         if (record != null) {
             if (record instanceof CpuStateRecord) {
                 lastState = (CpuStateRecord) record;
-            } else if (record instanceof StepRecord) {
-                lastState = ((StepRecord) record).getState();
             }
         }
         return record;

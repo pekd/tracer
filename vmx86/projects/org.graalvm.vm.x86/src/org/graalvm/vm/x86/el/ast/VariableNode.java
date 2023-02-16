@@ -330,7 +330,7 @@ public class VariableNode extends Expression {
     @Override
     public VariableNode clone() {
         CompilerAsserts.neverPartOfCompilation();
-        ArchitecturalState state = getContextReference().get().getState();
+        ArchitecturalState state = getContextReference().get(this).getState();
         return new VariableNode(name, state);
     }
 }

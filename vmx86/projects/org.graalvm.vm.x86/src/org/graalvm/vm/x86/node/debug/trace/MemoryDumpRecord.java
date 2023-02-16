@@ -6,17 +6,17 @@ import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
 
 public class MemoryDumpRecord extends Record {
-    public static final int MAGIC = 0x4d454d31; // MEM1
+    public static final byte ID = 0x20;
 
     private long address;
     private byte[] data;
 
     MemoryDumpRecord() {
-        super(MAGIC);
+        super(ID);
     }
 
     public MemoryDumpRecord(long address, byte[] data) {
-        super(MAGIC);
+        super(ID);
         this.address = address;
         this.data = data;
     }

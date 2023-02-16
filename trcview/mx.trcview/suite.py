@@ -64,6 +64,17 @@ suite = {
       "license" : "UPL",
     },
 
+    "org.graalvm.vm.trcview.arch.x86" : {
+      "subDir" : "projects",
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "org.graalvm.vm.trcview",
+      ],
+      "javaCompliance" : "11+",
+      "workingSets" : "trcview",
+      "license" : "UPL",
+    },
+
     "org.graalvm.vm.trcview.arch.custom" : {
       "subDir" : "projects",
       "sourceDirs" : ["src"],
@@ -107,6 +118,7 @@ suite = {
         "org.graalvm.vm.trcview.arch.pdp11",
         "org.graalvm.vm.trcview.arch.riscv",
         "org.graalvm.vm.trcview.arch.ppc",
+        "org.graalvm.vm.trcview.arch.x86",
         "mx:JUNIT",
       ],
       "javaCompliance" : "11+",
@@ -140,6 +152,7 @@ suite = {
         "org.graalvm.vm.trcview.arch.pdp11",
         "org.graalvm.vm.trcview.arch.riscv",
         "org.graalvm.vm.trcview.arch.ppc",
+        "org.graalvm.vm.trcview.arch.x86",
         "org.graalvm.vm.trcview.arch.custom",
       ],
       "overlaps" : [

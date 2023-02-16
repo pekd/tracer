@@ -48,16 +48,16 @@ import org.graalvm.vm.util.io.WordOutputStream;
 import org.graalvm.vm.x86.isa.CpuState;
 
 public class FullCpuStateRecord extends CpuStateRecord {
-    public static final int MAGIC = 0x43505530; // CPU0
+    public static final byte ID = 0x01;
 
     private final CpuState state;
 
     FullCpuStateRecord() {
-        this(new CpuState());
+        this(new byte[0], new CpuState());
     }
 
-    public FullCpuStateRecord(CpuState state) {
-        super(MAGIC);
+    public FullCpuStateRecord(byte[] machinecode, CpuState state) {
+        super(ID, machinecode);
         this.state = state;
     }
 
@@ -78,11 +78,12 @@ public class FullCpuStateRecord extends CpuStateRecord {
 
     @Override
     protected int getDataSize() {
-        return 21 * 8 + 16 * 16;
+        return 21 * 8 + 16 * 16 + super.getDataSize();
     }
 
     @Override
     protected void readRecord(WordInputStream in) throws IOException {
+        super.readRecord(in);
         state.rax = in.read64bit();
         state.rcx = in.read64bit();
         state.rdx = in.read64bit();
@@ -114,6 +115,7 @@ public class FullCpuStateRecord extends CpuStateRecord {
 
     @Override
     protected void writeRecord(WordOutputStream out) throws IOException {
+        super.writeRecord(out);
         out.write64bit(state.rax);
         out.write64bit(state.rcx);
         out.write64bit(state.rdx);

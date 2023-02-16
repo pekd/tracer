@@ -42,25 +42,21 @@ package org.graalvm.vm.x86.node.debug.trace;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.io.WordOutputStream;
-import org.graalvm.vm.util.log.Trace;
 import org.graalvm.vm.x86.isa.CpuState;
 import org.graalvm.vm.x86.posix.PosixEnvironment;
 
 public abstract class Record {
-    private static final Logger log = Trace.create(Record.class);
-
-    private final int magic;
+    private final byte type;
     private CpuState lastState;
     private CpuStateRecord lastStateSupplier;
     private int tid;
 
-    protected Record(int magic) {
-        this.magic = magic;
+    protected Record(byte type) {
+        this.type = type;
         this.tid = PosixEnvironment.getTid();
     }
 
@@ -94,58 +90,55 @@ public abstract class Record {
     public static final <T extends Record> T read(WordInputStream in, CpuStateRecord lastState) throws IOException {
         int type;
         try {
-            type = in.read32bit();
+            type = in.read8bit();
         } catch (EOFException e) {
             return null;
         }
-        int size = in.read32bit();
-        long start = in.tell();
+
         int tid = in.read32bit();
 
         Record record = null;
         switch (type) {
-            case FullCpuStateRecord.MAGIC:
+            case FullCpuStateRecord.ID:
                 record = new FullCpuStateRecord();
                 break;
-            case DeltaCpuStateRecord.MAGIC:
+            case DeltaCpuStateRecord.ID:
                 record = new DeltaCpuStateRecord();
                 record.lastStateSupplier = lastState;
                 break;
-            case LocationRecord.MAGIC:
-                record = new LocationRecord();
-                break;
-            case MemoryEventRecord.MAGIC:
-                record = new MemoryEventRecord();
-                break;
-            case MemoryDumpRecord.MAGIC:
-                record = new MemoryDumpRecord();
-                break;
-            case StepRecord.MAGIC:
-                record = new StepRecord();
+            case SmallDeltaCpuStateRecord.ID:
+                record = new SmallDeltaCpuStateRecord();
                 record.lastStateSupplier = lastState;
                 break;
-            case CallArgsRecord.MAGIC:
-                record = new CallArgsRecord();
+            case TinyDeltaCpuStateRecord.ID:
+                record = new TinyDeltaCpuStateRecord();
+                record.lastStateSupplier = lastState;
                 break;
-            case SystemLogRecord.MAGIC:
+            case MemoryEventRecord.ID:
+                record = new MemoryEventRecord();
+                break;
+            case MemoryDumpRecord.ID:
+                record = new MemoryDumpRecord();
+                break;
+            case SystemLogRecord.ID:
                 record = new SystemLogRecord();
                 break;
-            case MmapRecord.MAGIC:
+            case MmapRecord.ID:
                 record = new MmapRecord();
                 break;
-            case MunmapRecord.MAGIC:
+            case MunmapRecord.ID:
                 record = new MunmapRecord();
                 break;
-            case MprotectRecord.MAGIC:
+            case MprotectRecord.ID:
                 record = new MprotectRecord();
                 break;
-            case BrkRecord.MAGIC:
+            case BrkRecord.ID:
                 record = new BrkRecord();
                 break;
-            case SymbolTableRecord.MAGIC:
+            case SymbolTableRecord.ID:
                 record = new SymbolTableRecord();
                 break;
-            case EofRecord.MAGIC:
+            case EofRecord.ID:
                 record = new EofRecord();
                 break;
         }
@@ -153,14 +146,7 @@ public abstract class Record {
             record.readRecord(in);
             record.tid = tid;
         } else {
-            log.warning("Unknown record: 0x" + HexFormatter.tohex(type, 8));
-            in.skip(size - 4);
-        }
-
-        long end = in.tell();
-        long sz = end - start;
-        if (sz != size) {
-            throw new IOException("Error: invalid size (" + size + " vs " + sz + "; " + (record != null ? record.getClass().getSimpleName() : "unknown class") + ")");
+            throw new IOException("Unknown record: 0x" + HexFormatter.tohex(type, 8));
         }
 
         return (T) record;
@@ -168,8 +154,7 @@ public abstract class Record {
 
     public final void write(WordOutputStream out) throws IOException {
         int size = size();
-        out.write32bit(magic);
-        out.write32bit(size);
+        out.write8bit(type);
         long start = out.tell();
         out.write32bit(tid);
         writeRecord(out);

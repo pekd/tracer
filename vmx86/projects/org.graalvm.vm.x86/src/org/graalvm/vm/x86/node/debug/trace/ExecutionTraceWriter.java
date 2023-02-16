@@ -65,11 +65,9 @@ public class ExecutionTraceWriter implements Closeable {
     private static final Logger log = Trace.create(ExecutionTraceWriter.class);
 
     private static final int MAGIC = 0x58545243;
-    private static final long STEP_THRESHOLD = 1000;
 
     private WordOutputStream out;
     private CpuState lastState;
-    private long steps;
 
     public ExecutionTraceWriter(File out) throws IOException {
         this(new BufferedOutputStream(new FileOutputStream(out)));
@@ -79,7 +77,6 @@ public class ExecutionTraceWriter implements Closeable {
         this.out = new BEOutputStream(out);
         this.out.write32bit(MAGIC);
         this.out.write16bit(Elf.EM_X86_64);
-        steps = 0;
     }
 
     @Override
@@ -95,16 +92,14 @@ public class ExecutionTraceWriter implements Closeable {
 
     @TruffleBoundary
     public synchronized void step(CpuState state, AMD64Instruction insn) {
-        CpuStateRecord stateRecord;
-        if (steps > STEP_THRESHOLD || lastState == null) {
-            stateRecord = new FullCpuStateRecord(state);
-            steps = 0;
+        CpuStateRecord record;
+        byte[] code = insn.getBytes();
+        if (lastState == null) {
+            record = new FullCpuStateRecord(code, state);
         } else {
-            stateRecord = new DeltaCpuStateRecord(lastState, state);
-            steps++;
+            record = DeltaCpuStateRecord.get(code, lastState, state);
         }
         lastState = state;
-        StepRecord record = new StepRecord(insn.getBytes(), stateRecord);
         try {
             record.write(out);
         } catch (IOException e) {
@@ -119,16 +114,6 @@ public class ExecutionTraceWriter implements Closeable {
             record.write(out);
         } catch (IOException e) {
             log.log(Level.WARNING, "Error while writing symbol table event: " + e.getMessage(), e);
-        }
-    }
-
-    @TruffleBoundary
-    public synchronized void callArgs(long pc, String name, long[] args, byte[][] memory) {
-        CallArgsRecord record = new CallArgsRecord(pc, name, args, memory);
-        try {
-            record.write(out);
-        } catch (IOException e) {
-            log.log(Level.WARNING, "Error while writing call args: " + e.getMessage(), e);
         }
     }
 
