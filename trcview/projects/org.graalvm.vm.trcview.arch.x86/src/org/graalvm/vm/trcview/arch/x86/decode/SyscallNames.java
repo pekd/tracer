@@ -374,7 +374,10 @@ public class SyscallNames {
                     /* 329 */ "pkey_mprotect",
                     /* 330 */ "pkey_alloc",
                     /* 331 */ "pkey_free",
-                    /* 332 */ "statx"
+                    /* 332 */ "statx",
+                    /* 333 */ "io_pgetevents",
+                    /* 334 */ "rseq"
+
     };
 
     public static String getName(long id) {
