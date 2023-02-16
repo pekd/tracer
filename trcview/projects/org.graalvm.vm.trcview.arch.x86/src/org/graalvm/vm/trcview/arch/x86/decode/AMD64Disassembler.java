@@ -15,13 +15,13 @@ public class AMD64Disassembler extends Disassembler {
 
     @Override
     public String[] getDisassembly(CodeReader code) {
-        AMD64Instruction insn = AMD64InstructionDecoder.decode(0, code);
+        AMD64Instruction insn = AMD64InstructionDecoder.decode(code.getPC(), code);
         return insn.getDisassemblyComponents();
     }
 
     @Override
     public int getLength(CodeReader code) {
-        AMD64Instruction insn = AMD64InstructionDecoder.decode(0, code);
+        AMD64Instruction insn = AMD64InstructionDecoder.decode(code.getPC(), code);
         return insn.getSize();
     }
 
