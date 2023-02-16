@@ -1,5 +1,6 @@
 package org.graalvm.vm.trcview.arch.x86.io;
 
+import org.graalvm.vm.trcview.arch.ByteCodeReader;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -7,7 +8,6 @@ import org.graalvm.vm.trcview.arch.x86.AMD64;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64InstructionDecoder;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64InstructionQuickInfo;
-import org.graalvm.vm.trcview.arch.x86.decode.isa.CodeArrayReader;
 import org.graalvm.vm.util.HexFormatter;
 
 public abstract class AMD64StepEvent extends StepEvent {
@@ -68,7 +68,7 @@ public abstract class AMD64StepEvent extends StepEvent {
 
     public AMD64Instruction getInstruction() {
         try {
-            return AMD64InstructionDecoder.decode(getPC(), new CodeArrayReader(machinecode, 0));
+            return AMD64InstructionDecoder.decode(getPC(), new ByteCodeReader(machinecode, 0, false));
         } catch (ArrayIndexOutOfBoundsException e) {
             return null;
         }

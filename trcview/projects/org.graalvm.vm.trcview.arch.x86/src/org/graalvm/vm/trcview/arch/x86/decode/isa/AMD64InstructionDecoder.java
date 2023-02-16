@@ -42,6 +42,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
 import java.util.Arrays;
 
+import org.graalvm.vm.trcview.arch.CodeReader;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Adc.Adcb;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Adc.Adcl;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Adc.Adcq;
@@ -530,7 +531,7 @@ public class AMD64InstructionDecoder {
     public static AMD64Instruction decode(long pc, CodeReader code) {
         byte[] instruction = new byte[16];
         int instructionLength = 0;
-        byte op = code.read8();
+        byte op = code.nextI8();
         instruction[instructionLength++] = op;
         boolean sizeOverride = false;
         boolean addressOverride = false;
@@ -545,22 +546,22 @@ public class AMD64InstructionDecoder {
             switch (op) {
                 case AMD64InstructionPrefix.OPERAND_SIZE_OVERRIDE:
                     sizeOverride = true;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     break;
                 case AMD64InstructionPrefix.ADDRESS_SIZE_OVERRIDE:
                     addressOverride = true;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     break;
                 case AMD64InstructionPrefix.REPZ:
                     isREPZ = true;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     break;
                 case AMD64InstructionPrefix.REPNZ:
                     isREPNZ = true;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     break;
                 case AMD64InstructionPrefix.LOCK:
@@ -568,37 +569,37 @@ public class AMD64InstructionDecoder {
                     // CMPXCHG, CMPXCH8B, CMPXCHG16B, DEC, INC, NEG, NOT, OR, SBB, SUB, XOR, XADD,
                     // XCHG
                     lock = true;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     break;
                 case AMD64InstructionPrefix.SEGMENT_OVERRIDE_CS:
                     segment = SegmentRegister.CS;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     continue;
                 case AMD64InstructionPrefix.SEGMENT_OVERRIDE_DS:
                     segment = SegmentRegister.DS;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     continue;
                 case AMD64InstructionPrefix.SEGMENT_OVERRIDE_ES:
                     segment = SegmentRegister.ES;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     continue;
                 case AMD64InstructionPrefix.SEGMENT_OVERRIDE_FS:
                     segment = SegmentRegister.FS;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     continue;
                 case AMD64InstructionPrefix.SEGMENT_OVERRIDE_GS:
                     segment = SegmentRegister.GS;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     continue;
                 case AMD64InstructionPrefix.SEGMENT_OVERRIDE_SS:
                     segment = SegmentRegister.SS;
-                    op = code.read8();
+                    op = code.nextI8();
                     instruction[instructionLength++] = op;
                     continue;
                 default:
@@ -611,13 +612,13 @@ public class AMD64InstructionDecoder {
 
         if (AMD64RexPrefix.isREX(op)) {
             rex = new AMD64RexPrefix(op);
-            op = code.read8();
+            op = code.nextI8();
             instruction[instructionLength++] = op;
         }
 
         switch (op) {
             case AMD64Opcode.ADC_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Adcb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
@@ -642,25 +643,25 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.ADD_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Addb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.ADD_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Addq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Addw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -698,25 +699,25 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.AND_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Andb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.AND_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Andq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Andw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -753,7 +754,7 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.CALL_REL: {
-                int rel32 = code.read32();
+                int rel32 = code.nextI32();
                 instruction[instructionLength++] = (byte) rel32;
                 instruction[instructionLength++] = (byte) (rel32 >> 8);
                 instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -781,25 +782,25 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.CLD:
                 return new Cld(pc, Arrays.copyOf(instruction, instructionLength));
             case AMD64Opcode.CMP_AL_I: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Cmpb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.CMP_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Cmpq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Cmpw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -811,35 +812,35 @@ public class AMD64InstructionDecoder {
                 Args args = new Args(code, rex, segment, addressOverride);
                 switch (args.modrm.getReg()) {
                     case 0: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Addb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 1: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Orb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 2: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Adcb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 3: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Sbbb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 4: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Andb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 5: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Subb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 6: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Xorb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 7: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Cmpb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                 }
@@ -934,7 +935,7 @@ public class AMD64InstructionDecoder {
             }
             case AMD64Opcode.IMUL_R_RM_I8: {
                 Args args = new Args(code, rex, segment, addressOverride);
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 if (rex != null && rex.w) {
                     return new Imulq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                 } else if (sizeOverride) {
@@ -946,15 +947,15 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.IMUL_R_RM_I: {
                 Args args = new Args(code, rex, segment, addressOverride);
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                     return new Imulq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                     return new Imulw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                     return new Imull(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                 }
@@ -1012,97 +1013,97 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.INT1:
                 return new Int1(pc, Arrays.copyOf(instruction, instructionLength));
             case AMD64Opcode.JA: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Ja(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JAE: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jae(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JB: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jb(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JBE: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jbe(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JRCXZ: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jrcxz(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JE: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Je(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JG: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jg(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JGE: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jge(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JL: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jl(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JLE: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jle(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JNE: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jne(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JNO: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jno(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JNP: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jnp(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JNS: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jns(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JO: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jo(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JP: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Jp(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JS: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new Js(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JMP_REL8: {
-                byte rel8 = code.read8();
+                byte rel8 = code.nextI8();
                 instruction[instructionLength++] = rel8;
                 return new JmpDirect(pc, Arrays.copyOf(instruction, instructionLength), rel8);
             }
             case AMD64Opcode.JMP_REL32: {
-                int rel32 = code.read32();
+                int rel32 = code.nextI32();
                 instruction[instructionLength++] = (byte) rel32;
                 instruction[instructionLength++] = (byte) (rel32 >> 8);
                 instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -1139,19 +1140,19 @@ public class AMD64InstructionDecoder {
                 }
             case AMD64Opcode.LOOP: {
                 assert !addressOverride;
-                byte offset = code.read8();
+                byte offset = code.nextI8();
                 instruction[instructionLength++] = offset;
                 return new Loop(pc, Arrays.copyOf(instruction, instructionLength), offset);
             }
             case AMD64Opcode.LOOPE: {
                 assert !addressOverride;
-                byte offset = code.read8();
+                byte offset = code.nextI8();
                 instruction[instructionLength++] = offset;
                 return new Loope(pc, Arrays.copyOf(instruction, instructionLength), offset);
             }
             case AMD64Opcode.LOOPNE: {
                 assert !addressOverride;
-                byte offset = code.read8();
+                byte offset = code.nextI8();
                 instruction[instructionLength++] = offset;
                 return new Loopne(pc, Arrays.copyOf(instruction, instructionLength), offset);
             }
@@ -1169,22 +1170,22 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.MOV_RM_I: {
                 Args args = new Args(code, rex, segment, addressOverride);
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     return new Movq(pc, args.getOp2(instruction, instructionLength, new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)}, 4), args.getOperandDecoder(),
                                     imm);
                 }
                 if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     return new Movw(pc, args.getOp2(instruction, instructionLength, new byte[]{(byte) imm, (byte) (imm >> 8)}, 2), args.getOperandDecoder(), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     return new Movl(pc, args.getOp2(instruction, instructionLength, new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)}, 4), args.getOperandDecoder(),
                                     imm);
                 }
             }
             case AMD64Opcode.MOV_RM_I8: {
                 Args args = new Args(code, rex, segment, addressOverride);
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 return new Movb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
             }
             case AMD64Opcode.MOV_R8_I + 0:
@@ -1195,7 +1196,7 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.MOV_R8_I + 5:
             case AMD64Opcode.MOV_R8_I + 6:
             case AMD64Opcode.MOV_R8_I + 7: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 Register reg = getRegister8(op, rex);
                 return new Movb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(reg), imm);
@@ -1209,7 +1210,7 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.MOV_R_I + 6:
             case AMD64Opcode.MOV_R_I + 7: {
                 if (rex != null && rex.w) {
-                    long imm = code.read64();
+                    long imm = code.nextI64();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -1222,13 +1223,13 @@ public class AMD64InstructionDecoder {
                     return new Movq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(reg), imm);
                 }
                 if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     Register reg = getRegister16(op, rex != null ? rex.b : false);
                     return new Movw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(reg), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -1292,7 +1293,7 @@ public class AMD64InstructionDecoder {
                 Args args = new Args(code, rex, segment, addressOverride);
                 switch (args.modrm.getReg()) {
                     case 0: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Testb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 2:
@@ -1315,15 +1316,15 @@ public class AMD64InstructionDecoder {
                 switch (args.modrm.getReg()) {
                     case 0:
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Testq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Testw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Testl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
@@ -1414,25 +1415,25 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.OR_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Orb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.OR_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Orq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Orw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -1521,7 +1522,7 @@ public class AMD64InstructionDecoder {
             }
             case AMD64Opcode.PUSH_I8: {
                 assert rex == null;
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 if (sizeOverride) {
                     return new Pushw(pc, Arrays.copyOf(instruction, instructionLength), new ImmediateOperand(imm));
@@ -1532,12 +1533,12 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.PUSH_I: {
                 assert rex == null;
                 if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Pushw(pc, Arrays.copyOf(instruction, instructionLength), new ImmediateOperand(imm));
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -1556,25 +1557,25 @@ public class AMD64InstructionDecoder {
             case AMD64Opcode.SAHF:
                 return new Sahf(pc, Arrays.copyOf(instruction, instructionLength));
             case AMD64Opcode.SBB_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Sbbb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.SBB_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Sbbq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Sbbw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -1716,23 +1717,23 @@ public class AMD64InstructionDecoder {
                 Args args = new Args(code, rex, segment, addressOverride);
                 switch (args.modrm.getReg()) {
                     case 0: { // ROL r/m8,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Rolb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 1: { // ROR r/m8,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Rorb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 4: { // SHL r/m8,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Shlb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 5: { // SHR r/m8,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Shrb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                     case 7: { // SAR rm8,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         return new Sarb(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                     }
                 }
@@ -1742,7 +1743,7 @@ public class AMD64InstructionDecoder {
                 Args args = new Args(code, rex, segment, addressOverride);
                 switch (args.modrm.getReg()) {
                     case 0: { // ROL r/m,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Rolq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1752,7 +1753,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 1: { // ROR r/m,i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Rorq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1762,7 +1763,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 4: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Shlq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1772,7 +1773,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 5: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Shrq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1782,7 +1783,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 7: {
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Sarq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1877,25 +1878,25 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.SUB_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Subb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.SUB_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Subq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Subw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -1937,7 +1938,7 @@ public class AMD64InstructionDecoder {
                 Args args = new Args(code, rex, segment, addressOverride);
                 switch (args.modrm.getReg()) {
                     case 0: { // ADD r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Addq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1947,7 +1948,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 1: { // OR r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Orq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1957,7 +1958,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 2: { // ADC r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Adcq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1967,7 +1968,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 3: { // SBB r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Sbbq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1977,7 +1978,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 4: { // AND r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Andq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1987,7 +1988,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 5: { // SUB r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Subq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -1997,7 +1998,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 6: { // XOR r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Xorq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -2007,7 +2008,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case 7: { // CMP r/m32 i8
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (rex != null && rex.w) {
                             return new Cmpq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -2024,90 +2025,90 @@ public class AMD64InstructionDecoder {
                 switch (args.modrm.getReg()) {
                     case 0: { // ADD r/m32 i
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Addq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Addw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Addl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
                     }
                     case 1: { // OR r/m32 i
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Orq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Orw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Orl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
                     }
                     case 4: { // AND r/m32 i
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Andq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Andw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Andl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
                     }
                     case 5: { // SUB r/m32 i
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Subq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Subw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Subl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
                     }
                     case 6: { // XOR r/m32 i
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Xorq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Xorw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Xorl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
                     }
                     case 7: { // CMP r/m32 i
                         if (rex != null && rex.w) {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Cmpq(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
-                            short imm = code.read16();
+                            short imm = code.nextI16();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8)};
                             return new Cmpw(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         } else {
-                            int imm = code.read32();
+                            int imm = code.nextI32();
                             byte[] suffix = new byte[]{(byte) imm, (byte) (imm >> 8), (byte) (imm >> 16), (byte) (imm >> 24)};
                             return new Cmpl(pc, args.getOp2(instruction, instructionLength, suffix, suffix.length), args.getOperandDecoder(), imm);
                         }
@@ -2116,25 +2117,25 @@ public class AMD64InstructionDecoder {
                 return new IllegalInstruction(pc, Arrays.copyOf(instruction, instructionLength));
             }
             case AMD64Opcode.TEST_AL_I: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Testb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), imm);
             }
             case AMD64Opcode.TEST_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Testq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), imm);
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Testw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), imm);
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -2182,25 +2183,25 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.XOR_A_I8: {
-                byte imm = code.read8();
+                byte imm = code.nextI8();
                 instruction[instructionLength++] = imm;
                 return new Xorb(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AL), new ImmediateOperand(imm));
             }
             case AMD64Opcode.XOR_A_I: {
                 if (rex != null && rex.w) {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
                     instruction[instructionLength++] = (byte) (imm >> 24);
                     return new Xorq(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.RAX), new ImmediateOperand(imm));
                 } else if (sizeOverride) {
-                    short imm = code.read16();
+                    short imm = code.nextI16();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     return new Xorw(pc, Arrays.copyOf(instruction, instructionLength), new RegisterOperand(Register.AX), new ImmediateOperand(imm));
                 } else {
-                    int imm = code.read32();
+                    int imm = code.nextI32();
                     instruction[instructionLength++] = (byte) imm;
                     instruction[instructionLength++] = (byte) (imm >> 8);
                     instruction[instructionLength++] = (byte) (imm >> 16);
@@ -2238,7 +2239,7 @@ public class AMD64InstructionDecoder {
                 }
             }
             case AMD64Opcode.ESCAPE: {
-                byte op2 = code.read8();
+                byte op2 = code.nextI8();
                 instruction[instructionLength++] = op2;
                 switch (op2) {
                     case AMD64Opcode.ADDSD_X_XM: {
@@ -2371,7 +2372,7 @@ public class AMD64InstructionDecoder {
                     }
                     case AMD64Opcode.BTS_RM_I8: {
                         Args args = new Args(code, rex, segment, addressOverride);
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         switch (args.modrm.getReg()) {
                             case 4: { // BT RM,I8
                                 if (rex != null && rex.w) {
@@ -2576,17 +2577,17 @@ public class AMD64InstructionDecoder {
                     case AMD64Opcode.CMPPD_X_XM: {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (np) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return Cmpps.create(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (isREPZ) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return Cmpss.create(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (isREPNZ) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmpsd.create(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(),
                                             imm);
                         } else if (sizeOverride) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return Cmppd.create(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -2753,7 +2754,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case AMD64Opcode.JA32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2761,7 +2762,7 @@ public class AMD64InstructionDecoder {
                         return new Ja(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JAE32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2769,7 +2770,7 @@ public class AMD64InstructionDecoder {
                         return new Jae(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JB32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2777,7 +2778,7 @@ public class AMD64InstructionDecoder {
                         return new Jb(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JBE32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2785,7 +2786,7 @@ public class AMD64InstructionDecoder {
                         return new Jbe(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JE32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2793,7 +2794,7 @@ public class AMD64InstructionDecoder {
                         return new Je(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JG32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2801,7 +2802,7 @@ public class AMD64InstructionDecoder {
                         return new Jg(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JGE32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2809,7 +2810,7 @@ public class AMD64InstructionDecoder {
                         return new Jge(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JL32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2817,7 +2818,7 @@ public class AMD64InstructionDecoder {
                         return new Jl(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JLE32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2825,7 +2826,7 @@ public class AMD64InstructionDecoder {
                         return new Jle(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JNE32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2833,7 +2834,7 @@ public class AMD64InstructionDecoder {
                         return new Jne(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JNO32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2841,7 +2842,7 @@ public class AMD64InstructionDecoder {
                         return new Jno(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JNP32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2849,7 +2850,7 @@ public class AMD64InstructionDecoder {
                         return new Jnp(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JNS32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2857,7 +2858,7 @@ public class AMD64InstructionDecoder {
                         return new Jns(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JO32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2865,7 +2866,7 @@ public class AMD64InstructionDecoder {
                         return new Jo(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JP32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -2873,7 +2874,7 @@ public class AMD64InstructionDecoder {
                         return new Jp(pc, Arrays.copyOf(instruction, instructionLength), rel32);
                     }
                     case AMD64Opcode.JS32: {
-                        int rel32 = code.read32();
+                        int rel32 = code.nextI32();
                         instruction[instructionLength++] = (byte) rel32;
                         instruction[instructionLength++] = (byte) (rel32 >> 8);
                         instruction[instructionLength++] = (byte) (rel32 >> 16);
@@ -3257,7 +3258,7 @@ public class AMD64InstructionDecoder {
                     case AMD64Opcode.PEXTRW_R_X_I: {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (sizeOverride) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return new Pextrw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3266,7 +3267,7 @@ public class AMD64InstructionDecoder {
                     case AMD64Opcode.PINSRW_X_RM_I: {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (sizeOverride) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return new Pinsrw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3321,7 +3322,7 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case AMD64Opcode.PMULLD_X_XM: {
-                        byte subOp = code.read8();
+                        byte subOp = code.nextI8();
                         instruction[instructionLength++] = subOp;
                         Args args = new Args(code, rex, segment, addressOverride);
                         switch (subOp) {
@@ -3390,13 +3391,13 @@ public class AMD64InstructionDecoder {
                     case AMD64Opcode.PSHUFD: {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (sizeOverride) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return new Pshufd(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (isREPNZ) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return new Pshuflw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (isREPZ) {
-                            byte imm = code.read8();
+                            byte imm = code.nextI8();
                             return new Pshufhw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3406,7 +3407,7 @@ public class AMD64InstructionDecoder {
                         Args args = new Args(code, rex, segment, addressOverride);
                         switch (args.modrm.getReg()) {
                             case 2: {
-                                byte imm = code.read8();
+                                byte imm = code.nextI8();
                                 if (sizeOverride) {
                                     return new Psrlw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
@@ -3414,7 +3415,7 @@ public class AMD64InstructionDecoder {
                                 }
                             }
                             case 4: {
-                                byte imm = code.read8();
+                                byte imm = code.nextI8();
                                 if (sizeOverride) {
                                     return new Psraw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
@@ -3422,7 +3423,7 @@ public class AMD64InstructionDecoder {
                                 }
                             }
                             case 6: {
-                                byte imm = code.read8();
+                                byte imm = code.nextI8();
                                 if (sizeOverride) {
                                     return new Psllw(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
@@ -3445,7 +3446,7 @@ public class AMD64InstructionDecoder {
                         Args args = new Args(code, rex, segment, addressOverride);
                         switch (args.modrm.getReg()) {
                             case 2: {
-                                byte imm = code.read8();
+                                byte imm = code.nextI8();
                                 if (sizeOverride) {
                                     return new Psrld(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
@@ -3453,7 +3454,7 @@ public class AMD64InstructionDecoder {
                                 }
                             }
                             case 4: {
-                                byte imm = code.read8();
+                                byte imm = code.nextI8();
                                 if (sizeOverride) {
                                     return new Psrad(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
@@ -3461,7 +3462,7 @@ public class AMD64InstructionDecoder {
                                 }
                             }
                             case 6: {
-                                byte imm = code.read8();
+                                byte imm = code.nextI8();
                                 if (sizeOverride) {
                                     return new Pslld(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
@@ -3485,7 +3486,7 @@ public class AMD64InstructionDecoder {
                         switch (args.modrm.getReg()) {
                             case 2: {
                                 if (sizeOverride) {
-                                    byte imm = code.read8();
+                                    byte imm = code.nextI8();
                                     return new Psrlq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
                                     return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3493,7 +3494,7 @@ public class AMD64InstructionDecoder {
                             }
                             case 3: {
                                 if (sizeOverride) {
-                                    byte imm = code.read8();
+                                    byte imm = code.nextI8();
                                     return new Psrldq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
                                     return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3501,7 +3502,7 @@ public class AMD64InstructionDecoder {
                             }
                             case 6: {
                                 if (sizeOverride) {
-                                    byte imm = code.read8();
+                                    byte imm = code.nextI8();
                                     return new Psllq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
                                     return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3509,7 +3510,7 @@ public class AMD64InstructionDecoder {
                             }
                             case 7: {
                                 if (sizeOverride) {
-                                    byte imm = code.read8();
+                                    byte imm = code.nextI8();
                                     return new Pslldq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                                 } else {
                                     return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
@@ -3778,7 +3779,7 @@ public class AMD64InstructionDecoder {
                     }
                     case AMD64Opcode.SHLD_RM_R_I: {
                         Args args = new Args(code, rex, segment, addressOverride);
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         ImmediateOperand shamt = new ImmediateOperand(imm);
                         if (rex != null && rex.w) {
                             return new Shldq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), shamt);
@@ -3801,7 +3802,7 @@ public class AMD64InstructionDecoder {
                     }
                     case AMD64Opcode.SHRD_RM_R_I: {
                         Args args = new Args(code, rex, segment, addressOverride);
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         ImmediateOperand shamt = new ImmediateOperand(imm);
                         if (rex != null && rex.w) {
                             return new Shrdq(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), shamt);
@@ -3824,7 +3825,7 @@ public class AMD64InstructionDecoder {
                     }
                     case AMD64Opcode.SHUFPS_X_XM_I8: {
                         Args args = new Args(code, rex, segment, addressOverride);
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         if (np) {
                             return new Shufps(pc, args.getOp2(instruction, instructionLength, new byte[]{imm}, 1), args.getOperandDecoder(), imm);
                         } else if (sizeOverride) {
@@ -3846,11 +3847,11 @@ public class AMD64InstructionDecoder {
                         }
                     }
                     case AMD64Opcode.SSE4: {
-                        byte opcd = code.read8();
+                        byte opcd = code.nextI8();
                         instruction[instructionLength++] = opcd;
 
                         Args args = new Args(code, rex, segment, addressOverride);
-                        byte imm = code.read8();
+                        byte imm = code.nextI8();
                         switch (opcd) {
                             case AMD64Opcode.ROUNDSD_X_XM_I:
                                 if (sizeOverride) {
@@ -4020,9 +4021,9 @@ public class AMD64InstructionDecoder {
             this.rex = rex;
             this.segment = segment;
             this.addressOverride = addressOverride;
-            modrm = new ModRM(code.read8());
+            modrm = new ModRM(code.nextI8());
             if (modrm.hasSIB()) {
-                sib = new SIB(code.read8());
+                sib = new SIB(code.nextI8());
             } else {
                 sib = null;
             }
@@ -4040,7 +4041,7 @@ public class AMD64InstructionDecoder {
             }
             switch (size) {
                 case 1:
-                    displacement = code.read8();
+                    displacement = code.nextI8();
                     if (sib == null) {
                         bytes = new byte[]{modrm.getModRM(), (byte) displacement};
                     } else {
@@ -4048,7 +4049,7 @@ public class AMD64InstructionDecoder {
                     }
                     break;
                 case 2:
-                    displacement = code.read16();
+                    displacement = code.nextI16();
                     if (sib == null) {
                         bytes = new byte[]{modrm.getModRM(), (byte) displacement, (byte) (displacement >> 8)};
                     } else {
@@ -4056,7 +4057,7 @@ public class AMD64InstructionDecoder {
                     }
                     break;
                 case 4:
-                    displacement = code.read32();
+                    displacement = code.nextI32();
                     if (sib == null) {
                         bytes = new byte[]{modrm.getModRM(), (byte) displacement, (byte) (displacement >> 8), (byte) (displacement >> 16), (byte) (displacement >> 24)};
                     } else {

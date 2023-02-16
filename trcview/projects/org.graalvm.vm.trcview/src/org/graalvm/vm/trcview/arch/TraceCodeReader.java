@@ -33,4 +33,15 @@ public class TraceCodeReader extends CodeReader {
             return 0;
         }
     }
+
+    @Override
+    public byte peekI8(int offset) {
+        long o = off + offset;
+        try {
+            return trc.getI8(o, step);
+        } catch (MemoryNotMappedException e) {
+            log.log(Levels.WARNING, "Memory not mapped at 0x" + HexFormatter.tohex(pc + o));
+            return 0;
+        }
+    }
 }

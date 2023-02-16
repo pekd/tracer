@@ -10,6 +10,8 @@ public abstract class CodeReader {
         this.isBE = isBE;
     }
 
+    public abstract byte peekI8(int offset);
+
     public abstract byte nextI8();
 
     public short nextI16() {
@@ -31,6 +33,24 @@ public abstract class CodeReader {
             return (Byte.toUnsignedInt(b1) << 24) | (Byte.toUnsignedInt(b2) << 16) | (Byte.toUnsignedInt(b3) << 8) | Byte.toUnsignedInt(b4);
         } else {
             return Byte.toUnsignedInt(b1) | (Byte.toUnsignedInt(b2) << 8) | (Byte.toUnsignedInt(b3) << 16) | (Byte.toUnsignedInt(b4) << 24);
+        }
+    }
+
+    public long nextI64() {
+        byte a = nextI8();
+        byte b = nextI8();
+        byte c = nextI8();
+        byte d = nextI8();
+        byte e = nextI8();
+        byte f = nextI8();
+        byte g = nextI8();
+        byte h = nextI8();
+        if (isBE) {
+            return (Byte.toUnsignedLong(a) << 56) | (Byte.toUnsignedLong(b) << 48) | (Byte.toUnsignedLong(c) << 40) | (Byte.toUnsignedLong(d) << 32) | (Byte.toUnsignedLong(e) << 24) |
+                            (Byte.toUnsignedLong(f) << 16) | (Byte.toUnsignedLong(g) << 8) | Byte.toUnsignedLong(h);
+        } else {
+            return Byte.toUnsignedLong(a) | (Byte.toUnsignedLong(b) << 8) | (Byte.toUnsignedLong(c) << 16) | (Byte.toUnsignedLong(d) << 24) | (Byte.toUnsignedLong(e) << 32) |
+                            (Byte.toUnsignedLong(f) << 40) | (Byte.toUnsignedLong(g) << 48) | (Byte.toUnsignedLong(h) << 56);
         }
     }
 

@@ -36,4 +36,24 @@ public class ByteCodeReader extends CodeReader {
             return Endianess.get32bitLE(code, offset);
         }
     }
+
+    @Override
+    public long nextI64() {
+        int offset = n;
+        n += 8;
+        if (isBE()) {
+            return Endianess.get64bitBE(code, offset);
+        } else {
+            return Endianess.get64bitLE(code, offset);
+        }
+    }
+
+    @Override
+    public byte peekI8(int off) {
+        int ptr = n + off;
+        if (ptr < 0 || ptr >= code.length) {
+            throw new IndexOutOfBoundsException(ptr);
+        }
+        return code[ptr];
+    }
 }

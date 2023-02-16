@@ -24,6 +24,11 @@ public class ShortCodeReader extends CodeReader {
     }
 
     @Override
+    public byte peekI8(int offset) {
+        throw new UnsupportedOperationException("only 16bit access supported");
+    }
+
+    @Override
     public int n() {
         return n << 1;
     }

@@ -6,8 +6,10 @@ import java.util.Arrays;
 import org.graalvm.vm.posix.elf.Elf;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.arch.x86.decode.AMD64Disassembler;
 import org.graalvm.vm.trcview.arch.x86.decode.AMD64SyscallDecoder;
 import org.graalvm.vm.trcview.arch.x86.io.AMD64TraceReader;
 import org.graalvm.vm.trcview.decode.ABI;
@@ -20,6 +22,7 @@ import org.graalvm.vm.trcview.expression.ast.CallNode;
 import org.graalvm.vm.trcview.expression.ast.MulNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class AMD64 extends Architecture {
     public static final short ID = Elf.EM_X86_64;
@@ -86,6 +89,11 @@ public class AMD64 extends Architecture {
     @Override
     public ArchitectureTypeInfo getTypeInfo() {
         return ArchitectureTypeInfo.LP64;
+    }
+
+    @Override
+    public Disassembler getDisassembler(TraceAnalyzer trc) {
+        return new AMD64Disassembler(trc);
     }
 
     @Override
