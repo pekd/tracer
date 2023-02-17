@@ -64,19 +64,19 @@ public class CodeMemoryReader extends CodeReader {
         if (!memory.isExecutable(ptr)) {
             throw new SegmentationViolation(pc);
         }
-        return memory.getI8(ptr);
+        return memory.getI8X(ptr);
     }
 
     @Override
     public byte read8() {
         check();
-        return memory.getI8(pc++);
+        return memory.getI8X(pc++);
     }
 
     @Override
     public short read16() {
         check();
-        short value = memory.getI16(pc);
+        short value = memory.getI16X(pc);
         pc += 2;
         return value;
     }
@@ -84,7 +84,7 @@ public class CodeMemoryReader extends CodeReader {
     @Override
     public int read32() {
         check();
-        int value = memory.getI32(pc);
+        int value = memory.getI32X(pc);
         pc += 4;
         return value;
     }
@@ -92,7 +92,7 @@ public class CodeMemoryReader extends CodeReader {
     @Override
     public long read64() {
         check();
-        long value = memory.getI64(pc);
+        long value = memory.getI64X(pc);
         pc += 8;
         return value;
     }

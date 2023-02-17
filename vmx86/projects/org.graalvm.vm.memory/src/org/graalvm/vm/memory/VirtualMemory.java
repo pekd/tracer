@@ -310,6 +310,50 @@ public abstract class VirtualMemory {
 
     public abstract boolean isExecutable(long address);
 
+    public byte getI8X(long address) {
+        CompilerAsserts.neverPartOfCompilation();
+        boolean wasDebug = enableAccessTrace;
+        enableAccessTrace = false;
+        try {
+            return getI8(address);
+        } finally {
+            enableAccessTrace = wasDebug;
+        }
+    }
+
+    public short getI16X(long address) {
+        CompilerAsserts.neverPartOfCompilation();
+        boolean wasDebug = enableAccessTrace;
+        enableAccessTrace = false;
+        try {
+            return getI16(address);
+        } finally {
+            enableAccessTrace = wasDebug;
+        }
+    }
+
+    public int getI32X(long address) {
+        CompilerAsserts.neverPartOfCompilation();
+        boolean wasDebug = enableAccessTrace;
+        enableAccessTrace = false;
+        try {
+            return getI32(address);
+        } finally {
+            enableAccessTrace = wasDebug;
+        }
+    }
+
+    public long getI64X(long address) {
+        CompilerAsserts.neverPartOfCompilation();
+        boolean wasDebug = enableAccessTrace;
+        enableAccessTrace = false;
+        try {
+            return getI64(address);
+        } finally {
+            enableAccessTrace = wasDebug;
+        }
+    }
+
     public byte peek(long p) {
         // disable memory access log during peek
         boolean wasDebug = enableAccessTrace;
