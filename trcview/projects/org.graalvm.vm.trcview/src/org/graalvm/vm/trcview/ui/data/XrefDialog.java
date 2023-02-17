@@ -88,6 +88,7 @@ public class XrefDialog extends JDialog {
         close.addActionListener(e -> dispose());
 
         JPanel buttons = new JPanel(new FlowLayout());
+        buttons.add(ok);
         buttons.add(close);
 
         JPanel content = new JPanel(new BorderLayout());
