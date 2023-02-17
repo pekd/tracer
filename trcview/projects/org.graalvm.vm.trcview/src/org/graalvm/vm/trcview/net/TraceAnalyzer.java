@@ -172,6 +172,10 @@ public interface TraceAnalyzer {
 
     DynamicTypePropagation getTypeRecovery();
 
+    List<MemoryRead> getReadXrefs(long addr) throws MemoryNotMappedException;
+
+    List<MemoryUpdate> getWriteXrefs(long addr) throws MemoryNotMappedException;
+
     void setSymbolize(boolean symbolize);
 
     boolean isSymbolize();

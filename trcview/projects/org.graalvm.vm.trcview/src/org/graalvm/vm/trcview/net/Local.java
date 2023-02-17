@@ -32,6 +32,7 @@ import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.IoEvent;
+import org.graalvm.vm.trcview.data.CodeAnalyzer;
 import org.graalvm.vm.trcview.data.DynamicTypePropagation;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.decode.ABI;
@@ -91,6 +92,11 @@ public class Local implements TraceAnalyzer {
         types = new UserTypeDatabase(arch.getTypeInfo());
         typedMemory = new TypedMemory();
         typeRecovery = analysis.getTypeRecovery();
+
+        CodeAnalyzer code = analysis.getCodeAnalyzer();
+        if (code != null) {
+            code.transfer(this);
+        }
 
         // populate default types
         DefaultTypes.populate(types, arch.getTypeInfo());
@@ -501,14 +507,27 @@ public class Local implements TraceAnalyzer {
         return typedMemory;
     }
 
+    @Override
     public DynamicTypePropagation getTypeRecovery() {
         return typeRecovery;
     }
 
+    @Override
+    public List<MemoryRead> getReadXrefs(long addr) throws MemoryNotMappedException {
+        return memory.getReads(addr);
+    }
+
+    @Override
+    public List<MemoryUpdate> getWriteXrefs(long addr) throws MemoryNotMappedException {
+        return memory.getWrites(addr);
+    }
+
+    @Override
     public void setSymbolize(boolean symbolize) {
         this.symbolize = symbolize;
     }
 
+    @Override
     public boolean isSymbolize() {
         return symbolize;
     }

@@ -354,6 +354,34 @@ public class FinePage extends Page {
     }
 
     @Override
+    public List<MemoryRead> getReads(long addr) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (reads[off] == null) {
+            return Collections.emptyList();
+        }
+
+        return Collections.unmodifiableList(reads[off]);
+    }
+
+    @Override
+    public List<MemoryUpdate> getUpdates(long addr) throws MemoryNotMappedException {
+        if (addr < address || addr >= address + 4096) {
+            throw new AssertionError(String.format("wrong page for address 0x%x", addr));
+        }
+
+        int off = (int) (addr - address);
+        if (updates[off] == null) {
+            return Collections.emptyList();
+        }
+
+        return Collections.unmodifiableList(updates[off]);
+    }
+
+    @Override
     public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
         // TODO: this could be implemented more efficiently
         long result = 0;

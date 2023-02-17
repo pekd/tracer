@@ -171,6 +171,7 @@ public class MainWindow extends JFrame implements TraceListenable {
     private JMenuItem gotoNext;
     private JMenuItem exportMemory;
     private JCheckBoxMenuItem typeRecovery;
+    private JCheckBoxMenuItem codeAnalysis;
     private JCheckBoxMenuItem useSymbols;
     private JCheckBoxMenuItem autoComment;
     private JMenu subviewMenu;
@@ -603,7 +604,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         dataWindow.setMnemonic('i');
         dataWindow.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.SHIFT_DOWN_MASK));
         dataWindow.addActionListener(e -> {
-            DataDialog dlg = new DataDialog(this, trc, view, view, this);
+            DataDialog dlg = new DataDialog(this, trc, view, view, view::jump, this);
             dlg.setVisible(true);
         });
         JMenuItem typeRecoveryWindow = new JMenuItem("Type Recovery");
@@ -729,8 +730,13 @@ public class MainWindow extends JFrame implements TraceListenable {
         typeRecovery.setSelected(false);
         toolsMenu.add(typeRecovery);
 
+        codeAnalysis = new JCheckBoxMenuItem("Perform code vs data analysis");
+        codeAnalysis.setMnemonic('c');
+        codeAnalysis.setSelected(true);
+        toolsMenu.add(codeAnalysis);
+
         useSymbols = new JCheckBoxMenuItem("Use symbols/labels");
-        useSymbols.setMnemonic('c');
+        useSymbols.setMnemonic('s');
         useSymbols.setSelected(false);
         useSymbols.addItemListener(e -> {
             if (trc != null) {
@@ -742,7 +748,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         toolsMenu.add(useSymbols);
 
         autoComment = new JCheckBoxMenuItem("Enable autocomment");
-        autoComment.setMnemonic('c');
+        autoComment.setMnemonic('a');
         autoComment.setSelected(false);
         autoComment.addItemListener(e -> view.setAutocomment(autoComment.isSelected()));
         autoComment.setSelected(true);
@@ -919,7 +925,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             if (analyzer != null) {
                 analyzers.add(analyzer);
             }
-            Analysis analysis = new Analysis(reader.getArchitecture(), analyzers, typeRecovery.isSelected());
+            Analysis analysis = new Analysis(reader.getArchitecture(), analyzers, typeRecovery.isSelected(), codeAnalysis.isSelected());
             analysis.start();
             Map<Integer, BlockNode> threads = TraceParser.parse(reader, analysis, pos -> setStatus(text + " (" + (pos * 100L / size) + "%)"));
             BlockNode root = null;

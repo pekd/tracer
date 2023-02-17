@@ -36,6 +36,7 @@ import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.trcview.ui.Utils;
 import org.graalvm.vm.trcview.ui.data.editor.Element;
 import org.graalvm.vm.trcview.ui.data.editor.JEditor;
+import org.graalvm.vm.trcview.ui.event.JumpListener;
 import org.graalvm.vm.trcview.ui.event.MemoryAddressListener;
 import org.graalvm.vm.trcview.ui.event.StepListener;
 
@@ -48,7 +49,7 @@ public class DataView extends JPanel implements StepListener {
 
     private Deque<Long> addressStack = new ArrayDeque<>();
 
-    public DataView(MemoryAddressListener memaddr) {
+    public DataView(MemoryAddressListener memaddr, JumpListener jump) {
         super(new BorderLayout());
         editor = new JEditor(model = new DataViewModel());
         add(BorderLayout.CENTER, new JScrollPane(editor));
@@ -262,6 +263,18 @@ public class DataView extends JPanel implements StepListener {
             }
         });
 
+        KeyStroke x = KeyStroke.getKeyStroke(KeyEvent.VK_X, 0);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(x, x);
+        getActionMap().put(x, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                long addr = getOperandAddress();
+                XrefDialog dlg = new XrefDialog(null, trc, addr, step.getStep(), jump);
+                dlg.setVisible(true);
+                editor.requestFocus();
+            }
+        });
+
         KeyStroke semicolon = KeyStroke.getKeyStroke(';');
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(semicolon, semicolon);
         getActionMap().put(semicolon, new AbstractAction() {
@@ -356,21 +369,13 @@ public class DataView extends JPanel implements StepListener {
 
     private long getOperandAddress() {
         Element element = editor.getCurrentElement();
-        long addr;
         if (element instanceof AddressElement) {
             AddressElement ae = (AddressElement) element;
-            long a = ae.getAddress();
-            if (trc.getComputedSymbol(a) != null || trc.getTypedMemory().get(a) != null) {
-                addr = a;
-            } else {
-                int line = editor.getCursorLine();
-                addr = model.getAddressByLine(line);
-            }
+            return ae.getAddress();
         } else {
             int line = editor.getCursorLine();
-            addr = model.getAddressByLine(line);
+            return model.getAddressByLine(line);
         }
-        return addr;
     }
 
     private Representation getArchRepresentation() {

@@ -341,6 +341,22 @@ public class MemoryTrace {
         return page.getPreviousUpdates(addr, instructionCount, count);
     }
 
+    public List<MemoryUpdate> getWrites(long addr) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getUpdates(addr);
+    }
+
+    public List<MemoryRead> getReads(long addr) throws MemoryNotMappedException {
+        Page page = pages.get(getPageAddress(addr));
+        if (page == null) {
+            throw new MemoryNotMappedException(String.format("no memory mapped to 0x%x [0x%x]", addr, getPageAddress(addr)));
+        }
+        return page.getReads(addr);
+    }
+
     // TODO: use instructionCount to find *last* map time
     public Node getMapNode(long addr, @SuppressWarnings("unused") long instructionCount) throws MemoryNotMappedException {
         Page page = pages.get(getPageAddress(addr));

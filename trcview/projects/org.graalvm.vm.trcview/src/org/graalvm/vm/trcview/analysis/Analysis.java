@@ -78,6 +78,7 @@ import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.MmapEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.SymbolTableEvent;
+import org.graalvm.vm.trcview.data.CodeAnalyzer;
 import org.graalvm.vm.trcview.data.DynamicTypePropagation;
 import org.graalvm.vm.trcview.io.BlockNode;
 import org.graalvm.vm.trcview.io.Node;
@@ -114,6 +115,7 @@ public class Analysis {
     private boolean leightweight = true;
 
     private DynamicTypePropagation typeRecovery;
+    private CodeAnalyzer codeAnalyzer;
 
     private List<Analyzer> analyzers;
 
@@ -122,11 +124,11 @@ public class Analysis {
 
     private final int regcnt;
 
-    public Analysis(Architecture arch, boolean typeAnalysis) {
-        this(arch, Collections.emptyList(), typeAnalysis);
+    public Analysis(Architecture arch, boolean typeAnalysis, boolean codeAnalysis) {
+        this(arch, Collections.emptyList(), typeAnalysis, codeAnalysis);
     }
 
-    public Analysis(Architecture arch, List<Analyzer> analyzers, boolean typeAnalysis) {
+    public Analysis(Architecture arch, List<Analyzer> analyzers, boolean typeAnalysis, boolean codeAnalysis) {
         this.analyzers = analyzers;
         this.arch = arch;
         symbolTable = new TreeMap<>();
@@ -148,6 +150,9 @@ public class Analysis {
         }
         if (regcnt != 0) {
             typeRecovery = new DynamicTypePropagation(arch, symbols, memory);
+        }
+        if (codeAnalysis) {
+            codeAnalyzer = new CodeAnalyzer();
         }
     }
 
@@ -189,6 +194,9 @@ public class Analysis {
 
             if (typeRecovery != null) {
                 typeRecovery.step(step, state);
+            }
+            if (codeAnalyzer != null) {
+                codeAnalyzer.step(step);
             }
             if (step.isSyscall()) {
                 syscalls.add(node);
@@ -603,5 +611,9 @@ public class Analysis {
 
     public DynamicTypePropagation getTypeRecovery() {
         return typeRecovery;
+    }
+
+    public CodeAnalyzer getCodeAnalyzer() {
+        return codeAnalyzer;
     }
 }

@@ -361,14 +361,27 @@ public class MockTraceAnalyzer implements TraceAnalyzer {
         return null;
     }
 
+    @Override
     public DynamicTypePropagation getTypeRecovery() {
         return null;
     }
 
+    @Override
+    public Set<Long> getReadXrefs(long addr) {
+        return null;
+    }
+
+    @Override
+    public Set<Long> getWriteXrefs(long addr) {
+        return null;
+    }
+
+    @Override
     public void setSymbolize(boolean symbolize) {
 
     }
 
+    @Override
     public boolean isSymbolize() {
         return false;
     }

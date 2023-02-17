@@ -404,6 +404,16 @@ public class CoarsePage extends Page {
         return Collections.emptyList();
     }
 
+    @Override
+    public List<MemoryRead> getReads(long addr) throws MemoryNotMappedException {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<MemoryUpdate> getUpdates(long addr) throws MemoryNotMappedException {
+        return Collections.emptyList();
+    }
+
     public int getSize() {
         return (updates.size() + reads.size()) / 2;
     }

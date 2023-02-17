@@ -108,6 +108,10 @@ public abstract class Page {
 
     public abstract List<MemoryUpdate> getPreviousUpdates(long addr, long instructionCount, long max) throws MemoryNotMappedException;
 
+    public abstract List<MemoryRead> getReads(long addr) throws MemoryNotMappedException;
+
+    public abstract List<MemoryUpdate> getUpdates(long addr) throws MemoryNotMappedException;
+
     public void trim() {
         // nothing
     }
