@@ -367,12 +367,12 @@ public class MockTraceAnalyzer implements TraceAnalyzer {
     }
 
     @Override
-    public Set<Long> getReadXrefs(long addr) {
+    public List<MemoryRead> getReadXrefs(long addr) {
         return null;
     }
 
     @Override
-    public Set<Long> getWriteXrefs(long addr) {
+    public List<MemoryUpdate> getWriteXrefs(long addr) {
         return null;
     }
 
