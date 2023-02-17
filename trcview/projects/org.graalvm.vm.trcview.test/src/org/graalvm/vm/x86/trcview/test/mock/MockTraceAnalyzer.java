@@ -364,4 +364,12 @@ public class MockTraceAnalyzer implements TraceAnalyzer {
     public DynamicTypePropagation getTypeRecovery() {
         return null;
     }
+
+    public void setSymbolize(boolean symbolize) {
+
+    }
+
+    public boolean isSymbolize() {
+        return false;
+    }
 }

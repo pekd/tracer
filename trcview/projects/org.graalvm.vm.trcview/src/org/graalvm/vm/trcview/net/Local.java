@@ -68,6 +68,7 @@ public class Local implements TraceAnalyzer {
     private UserTypeDatabase types;
     private TypedMemory typedMemory;
     private DynamicTypePropagation typeRecovery;
+    private boolean symbolize;
 
     public Local(Architecture arch, BlockNode root, Map<Integer, BlockNode> threads, Analysis analysis) {
         this.arch = arch;
@@ -98,6 +99,8 @@ public class Local implements TraceAnalyzer {
         if (typeRecovery != null) {
             typeRecovery.transfer(this);
         }
+
+        symbolize = false;
     }
 
     @Override
@@ -500,5 +503,13 @@ public class Local implements TraceAnalyzer {
 
     public DynamicTypePropagation getTypeRecovery() {
         return typeRecovery;
+    }
+
+    public void setSymbolize(boolean symbolize) {
+        this.symbolize = symbolize;
+    }
+
+    public boolean isSymbolize() {
+        return symbolize;
     }
 }

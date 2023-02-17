@@ -340,7 +340,7 @@ public class StateView extends JPanel {
         }
     }
 
-    private void update() {
+    public void update() {
         String content;
         if (step != null) {
             content = get();

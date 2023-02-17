@@ -171,4 +171,8 @@ public interface TraceAnalyzer {
     TypedMemory getTypedMemory();
 
     DynamicTypePropagation getTypeRecovery();
+
+    void setSymbolize(boolean symbolize);
+
+    boolean isSymbolize();
 }

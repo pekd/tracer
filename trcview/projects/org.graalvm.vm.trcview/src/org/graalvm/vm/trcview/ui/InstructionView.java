@@ -218,6 +218,10 @@ public class InstructionView extends JPanel {
         insns.repaint();
     }
 
+    public void update() {
+        insns.repaint();
+    }
+
     private static void getName(StringBuilder buf, Location loc, StepFormat fmt) {
         Symbol sym = loc.getSymbol();
         if (sym != null) {

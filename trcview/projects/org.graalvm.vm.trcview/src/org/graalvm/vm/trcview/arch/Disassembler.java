@@ -2,6 +2,7 @@ package org.graalvm.vm.trcview.arch;
 
 import static org.graalvm.vm.trcview.disasm.Type.OTHER;
 
+import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
@@ -56,18 +57,26 @@ public abstract class Disassembler {
 
     public abstract InstructionType getType(CodeReader code);
 
-    protected String getName(long addr) {
+    public String getName(long addr) {
         if (trc != null) {
-            ComputedSymbol sym = trc.getComputedSymbol(addr);
-            if (sym != null) {
-                return sym.name;
+            if (!trc.isSymbolize()) {
+                return null;
+            }
+            ComputedSymbol csym = trc.getComputedSymbol(addr);
+            if (csym != null && csym.name != null) {
+                return csym.name;
             } else {
-                Variable v = trc.getTypedMemory().get(addr);
-                if (v != null) {
-                    StepFormat fmt = trc.getArchitecture().getFormat();
-                    return v.getName(fmt);
+                Symbol sym = trc.getSymbol(addr);
+                if (sym != null && sym.getName() != null && sym.getValue() == addr) {
+                    return sym.getName();
                 } else {
-                    return null;
+                    Variable v = trc.getTypedMemory().get(addr);
+                    if (v != null) {
+                        StepFormat fmt = trc.getArchitecture().getFormat();
+                        return v.getName(fmt);
+                    } else {
+                        return null;
+                    }
                 }
             }
         } else {
@@ -75,13 +84,21 @@ public abstract class Disassembler {
         }
     }
 
-    protected String getLocation(long addr) {
+    public String getLocation(long addr) {
         if (trc != null) {
-            ComputedSymbol sym = trc.getComputedSymbol(addr);
-            if (sym != null) {
-                return sym.name;
-            } else {
+            if (!trc.isSymbolize()) {
                 return null;
+            }
+            ComputedSymbol csym = trc.getComputedSymbol(addr);
+            if (csym != null && csym.name != null) {
+                return csym.name;
+            } else {
+                Symbol sym = trc.getSymbol(addr);
+                if (sym != null && sym.getName() != null && sym.getValue() == addr) {
+                    return sym.getName();
+                } else {
+                    return null;
+                }
             }
         } else {
             return null;

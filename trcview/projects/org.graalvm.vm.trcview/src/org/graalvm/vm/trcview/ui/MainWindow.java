@@ -171,6 +171,7 @@ public class MainWindow extends JFrame implements TraceListenable {
     private JMenuItem gotoNext;
     private JMenuItem exportMemory;
     private JCheckBoxMenuItem typeRecovery;
+    private JCheckBoxMenuItem useSymbols;
     private JCheckBoxMenuItem autoComment;
     private JMenu subviewMenu;
 
@@ -728,6 +729,18 @@ public class MainWindow extends JFrame implements TraceListenable {
         typeRecovery.setSelected(false);
         toolsMenu.add(typeRecovery);
 
+        useSymbols = new JCheckBoxMenuItem("Use symbols/labels");
+        useSymbols.setMnemonic('c');
+        useSymbols.setSelected(false);
+        useSymbols.addItemListener(e -> {
+            if (trc != null) {
+                trc.setSymbolize(useSymbols.isSelected());
+                view.update();
+            }
+        });
+        useSymbols.setSelected(true);
+        toolsMenu.add(useSymbols);
+
         autoComment = new JCheckBoxMenuItem("Enable autocomment");
         autoComment.setMnemonic('c');
         autoComment.setSelected(false);
@@ -867,6 +880,7 @@ public class MainWindow extends JFrame implements TraceListenable {
 
     private void setTrace(TraceAnalyzer trc) {
         this.trc = trc;
+        trc.setSymbolize(useSymbols.isSelected());
         view.setTraceAnalyzer(trc);
         loadPrototypes.setEnabled(true);
         loadMap.setEnabled(true);

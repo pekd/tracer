@@ -1,9 +1,12 @@
 package org.graalvm.vm.trcview.disasm;
 
+import org.graalvm.vm.trcview.arch.Disassembler;
+
 public class AssemblerInstruction {
     private String mnemonic;
     private Operand[] operands;
     private long pc;
+    private Disassembler disasm;
 
     public AssemblerInstruction(String mnemonic) {
         this.mnemonic = mnemonic;
@@ -27,14 +30,16 @@ public class AssemblerInstruction {
     public Operand[] getOperands() {
         for (Operand o : operands) {
             o.setPC(pc);
+            o.setDisassembler(disasm);
         }
         return operands;
     }
 
     public String[] getComponents() {
-        String[] result = new String[operands.length + 1];
-        for (int i = 0; i < operands.length; i++) {
-            result[i + 1] = operands[i].toString();
+        Operand[] ops = getOperands();
+        String[] result = new String[ops.length + 1];
+        for (int i = 0; i < ops.length; i++) {
+            result[i + 1] = ops[i].toString();
         }
         result[0] = mnemonic;
         return result;
@@ -42,6 +47,10 @@ public class AssemblerInstruction {
 
     public void setPC(long pc) {
         this.pc = pc;
+    }
+
+    public void setDisassembler(Disassembler disasm) {
+        this.disasm = disasm;
     }
 
     @Override

@@ -5,9 +5,12 @@ import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.x86.AMD64;
+import org.graalvm.vm.trcview.arch.x86.decode.AMD64Disassembler;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64InstructionDecoder;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64InstructionQuickInfo;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 
 public abstract class AMD64StepEvent extends StepEvent {
@@ -118,6 +121,26 @@ public abstract class AMD64StepEvent extends StepEvent {
     }
 
     @Override
+    public String[] getDisassemblyComponents(TraceAnalyzer trc) {
+        if (machinecode != null) {
+            try {
+                AMD64Disassembler disasm = new AMD64Disassembler(trc);
+                AMD64Instruction insn = getInstruction();
+                if (insn == null) {
+                    return new String[]{"db", code()};
+                } else {
+                    AssemblerInstruction asm = disasm.disassemble(insn);
+                    return asm.getComponents();
+                }
+            } catch (Throwable t) {
+                return new String[]{"db", code()};
+            }
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public String getMnemonic() {
         if (machinecode == null) {
             return null;
@@ -126,8 +149,7 @@ public abstract class AMD64StepEvent extends StepEvent {
             if (insn == null) {
                 return "db";
             } else {
-                String[] parts = insn.getDisassemblyComponents();
-                return parts[0];
+                return insn.getAssemblerInstruction().getMnemonic();
             }
         }
     }

@@ -131,7 +131,28 @@ public class MemoryOperand extends Operand {
     }
 
     @Override
+    public Token[] getTokens() {
+        if (base == Register.RIP && index == null && segment == null) {
+            long addr = getPC() + displacement;
+            String loc = getName(addr);
+            if (loc != null) {
+                return new Token[]{new Token(Type.LABEL, loc, addr)};
+            }
+        }
+
+        return super.getTokens();
+    }
+
+    @Override
     public String toString() {
+        if (base == Register.RIP && index == null && segment == null) {
+            long addr = getPC() + displacement;
+            String loc = getName(addr);
+            if (loc != null) {
+                return loc;
+            }
+        }
+
         StringBuilder buf = new StringBuilder();
         if (base != null) {
             buf.append(base.toString());

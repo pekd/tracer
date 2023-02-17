@@ -152,8 +152,7 @@ public abstract class AMD64Instruction {
     }
 
     protected org.graalvm.vm.trcview.disasm.Operand label(long addr) {
-        String str = "0x" + HexFormatter.tohex(addr);
-        return op(Type.ADDRESS, str, addr);
+        return new LocationOperand(addr);
     }
 
     protected org.graalvm.vm.trcview.disasm.Operand imm(long value) {

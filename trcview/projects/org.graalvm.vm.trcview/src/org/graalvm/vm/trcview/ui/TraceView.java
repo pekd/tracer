@@ -282,6 +282,11 @@ public class TraceView extends JPanel implements StepListenable, MemoryAddressLi
         insns.setAutocomment(autocomment);
     }
 
+    public void update() {
+        insns.update();
+        state.update();
+    }
+
     public static class ThreadID {
         public final int id;
         public String name;

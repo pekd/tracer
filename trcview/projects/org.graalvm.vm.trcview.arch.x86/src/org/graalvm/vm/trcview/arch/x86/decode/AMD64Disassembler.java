@@ -24,7 +24,15 @@ public class AMD64Disassembler extends Disassembler {
     public AssemblerInstruction disassemble(CodeReader code) {
         long pc = code.getPC();
         AMD64Instruction insn = AMD64InstructionDecoder.decode(pc, code);
-        return insn.getAssemblerInstruction();
+        AssemblerInstruction asm = insn.getAssemblerInstruction();
+        asm.setDisassembler(this);
+        return asm;
+    }
+
+    public AssemblerInstruction disassemble(AMD64Instruction insn) {
+        AssemblerInstruction asm = insn.getAssemblerInstruction();
+        asm.setDisassembler(this);
+        return asm;
     }
 
     @Override
