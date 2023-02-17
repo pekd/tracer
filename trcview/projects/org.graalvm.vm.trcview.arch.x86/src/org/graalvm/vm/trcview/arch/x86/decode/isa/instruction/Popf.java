@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Popf extends AMD64Instruction {
     protected Popf(long pc, byte[] instruction) {
@@ -65,7 +66,7 @@ public abstract class Popf extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"popf"};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("popf");
     }
 }

@@ -40,8 +40,10 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.disasm.Token;
+import org.graalvm.vm.trcview.disasm.Type;
+import org.graalvm.vm.util.HexFormatter;
 
 public class IllegalInstruction extends AMD64Instruction {
     public IllegalInstruction(long pc, byte[] info) {
@@ -54,12 +56,18 @@ public class IllegalInstruction extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
+    protected AssemblerInstruction disassemble() {
         if (instruction.length > 0) {
-            String data = IntStream.range(0, instruction.length).mapToObj(i -> instruction[i]).map(x -> String.format("0x%02x", x)).collect(Collectors.joining(", "));
-            return new String[]{"db", data};
+            Token[] data = new Token[instruction.length * 2 - 1];
+            for (int i = 0; i < instruction.length; i++) {
+                data[i * 2 + 0] = new Token(Type.NUMBER, "0x" + HexFormatter.tohex(Byte.toUnsignedInt(instruction[i]), 2));
+                if (i + 1 < instruction.length) {
+                    data[i * 2 + 1] = new Token(Type.OTHER, ", ");
+                }
+            }
+            return new AssemblerInstruction("db", data);
         } else {
-            return new String[]{"???"};
+            return new AssemblerInstruction("???");
         }
     }
 }

@@ -41,6 +41,7 @@
 package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Jcc extends AMD64Instruction {
     private final String name;
@@ -160,7 +161,7 @@ public abstract class Jcc extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{name, String.format("0x%x", bta)};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction(name, label(bta));
     }
 }

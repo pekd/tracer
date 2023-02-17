@@ -45,6 +45,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.ImmediateOperand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Xor extends AMD64Instruction {
     private final Operand operand1;
@@ -153,7 +154,7 @@ public abstract class Xor extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"xor", operand1.toString(), operand2.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("xor", operand1, operand2);
     }
 }

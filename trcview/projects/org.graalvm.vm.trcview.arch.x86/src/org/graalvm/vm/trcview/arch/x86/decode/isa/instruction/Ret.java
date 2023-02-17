@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Ret extends AMD64Instruction {
     public Ret(long pc, byte[] instruction) {
@@ -58,7 +59,7 @@ public class Ret extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"ret"};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("ret");
     }
 }

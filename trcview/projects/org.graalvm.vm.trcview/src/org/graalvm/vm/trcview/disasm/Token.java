@@ -6,11 +6,15 @@ public class Token {
     private long value;
     private boolean hasValue;
 
+    private long pc;
+    private boolean pcRelative;
+
     public Token(Type type, String text) {
         this.type = type;
         this.text = text;
         this.value = 0;
         hasValue = false;
+        pcRelative = false;
     }
 
     public Token(Type type, long value) {
@@ -18,6 +22,7 @@ public class Token {
         this.text = null;
         this.value = value;
         hasValue = true;
+        pcRelative = false;
     }
 
     public Token(Type type, String text, long value) {
@@ -25,6 +30,15 @@ public class Token {
         this.text = text;
         this.value = value;
         hasValue = true;
+        pcRelative = false;
+    }
+
+    public Token(Type type, String text, long value, boolean pcRelative) {
+        this.type = type;
+        this.text = text;
+        this.value = value;
+        hasValue = true;
+        this.pcRelative = pcRelative;
     }
 
     public Type getType() {
@@ -36,11 +50,19 @@ public class Token {
     }
 
     public long getValue() {
-        return value;
+        if (pcRelative) {
+            return value + pc;
+        } else {
+            return value;
+        }
     }
 
     public boolean hasValue() {
         return hasValue;
+    }
+
+    public void setPC(long pc) {
+        this.pc = pc;
     }
 
     @Override

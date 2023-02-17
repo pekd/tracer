@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Cwd extends AMD64Instruction {
     public Cwd(long pc, byte[] instruction) {
@@ -53,7 +54,7 @@ public class Cwd extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"cwd"};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("cwd");
     }
 }

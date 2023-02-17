@@ -3,13 +3,19 @@ package org.graalvm.vm.trcview.disasm;
 public class AssemblerInstruction {
     private String mnemonic;
     private Operand[] operands;
+    private long pc;
 
     public AssemblerInstruction(String mnemonic) {
         this.mnemonic = mnemonic;
         operands = new Operand[0];
     }
 
-    public AssemblerInstruction(String mnemonic, Operand[] operands) {
+    public AssemblerInstruction(String mnemonic, Token[] tokens) {
+        this.mnemonic = mnemonic;
+        this.operands = new Operand[]{new Operand(tokens)};
+    }
+
+    public AssemblerInstruction(String mnemonic, Operand... operands) {
         this.mnemonic = mnemonic;
         this.operands = operands;
     }
@@ -19,6 +25,9 @@ public class AssemblerInstruction {
     }
 
     public Operand[] getOperands() {
+        for (Operand o : operands) {
+            o.setPC(pc);
+        }
         return operands;
     }
 
@@ -29,6 +38,10 @@ public class AssemblerInstruction {
         }
         result[0] = mnemonic;
         return result;
+    }
+
+    public void setPC(long pc) {
+        this.pc = pc;
     }
 
     @Override

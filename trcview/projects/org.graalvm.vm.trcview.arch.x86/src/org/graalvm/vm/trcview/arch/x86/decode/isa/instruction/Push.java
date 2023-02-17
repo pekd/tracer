@@ -44,6 +44,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Push extends AMD64Instruction {
     private final Operand operand;
@@ -81,7 +82,7 @@ public abstract class Push extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"push", operand.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("push", operand);
     }
 }

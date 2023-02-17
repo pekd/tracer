@@ -40,10 +40,13 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
+import org.graalvm.vm.trcview.disasm.Type;
+
 public class SegmentRegisterOperand extends Operand {
     private final SegmentRegister segment;
 
     public SegmentRegisterOperand(SegmentRegister segment) {
+        super(Type.REGISTER, segment.toString().toLowerCase());
         this.segment = segment;
     }
 

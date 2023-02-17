@@ -40,11 +40,14 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
+import org.graalvm.vm.trcview.disasm.Type;
+
 public class AVXRegisterOperand extends Operand {
     private final int register;
     private final int size;
 
     public AVXRegisterOperand(int reg, int size) {
+        super(Type.REGISTER, getName(reg, size));
         this.register = reg;
         this.size = size;
     }
@@ -53,8 +56,7 @@ public class AVXRegisterOperand extends Operand {
         return register;
     }
 
-    @Override
-    public String toString() {
+    private static String getName(int register, int size) {
         switch (size) {
             case 64:
                 return "mm" + register;
@@ -67,6 +69,11 @@ public class AVXRegisterOperand extends Operand {
             default:
                 throw new IllegalStateException();
         }
+    }
+
+    @Override
+    public String toString() {
+        return getName(register, size);
     }
 
     @Override

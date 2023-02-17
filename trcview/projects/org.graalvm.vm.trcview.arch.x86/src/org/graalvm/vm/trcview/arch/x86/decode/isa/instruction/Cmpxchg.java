@@ -45,6 +45,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Cmpxchg extends AMD64Instruction {
     private final Operand operand1;
@@ -84,7 +85,7 @@ public abstract class Cmpxchg extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"cmpxchg", operand1.toString(), operand2.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("cmpxchg", operand1, operand2);
     }
 }

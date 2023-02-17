@@ -46,6 +46,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Imul extends AMD64Instruction {
     protected final Operand operand1;
@@ -178,13 +179,13 @@ public abstract class Imul extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
+    protected AssemblerInstruction disassemble() {
         if (operand3 != null) {
-            return new String[]{"imul", operand1.toString(), operand2.toString(), operand3.toString()};
+            return new AssemblerInstruction("imul", operand1, operand2, operand3);
         } else if (operand2 != null) {
-            return new String[]{"imul", operand1.toString(), operand2.toString()};
+            return new AssemblerInstruction("imul", operand1, operand2);
         } else {
-            return new String[]{"imul", operand1.toString()};
+            return new AssemblerInstruction("imul", operand1);
         }
     }
 }

@@ -40,7 +40,26 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
-public abstract class Operand {
+import org.graalvm.vm.trcview.disasm.Token;
+import org.graalvm.vm.trcview.disasm.Type;
+
+public abstract class Operand extends org.graalvm.vm.trcview.disasm.Operand {
+    protected Operand(Type type, String text) {
+        super(type, text);
+    }
+
+    protected Operand(Type type, String text, long value) {
+        super(type, text, value);
+    }
+
+    protected Operand(Token token) {
+        super(token);
+    }
+
+    protected Operand(Token[] tokens) {
+        super(tokens);
+    }
+
     public abstract int getSize();
 
     public Register[] getRegisters() {

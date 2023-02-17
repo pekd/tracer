@@ -6,6 +6,7 @@ import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64InstructionDecoder;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64InstructionQuickInfo;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public class AMD64Disassembler extends Disassembler {
@@ -17,6 +18,13 @@ public class AMD64Disassembler extends Disassembler {
     public String[] getDisassembly(CodeReader code) {
         AMD64Instruction insn = AMD64InstructionDecoder.decode(code.getPC(), code);
         return insn.getDisassemblyComponents();
+    }
+
+    @Override
+    public AssemblerInstruction disassemble(CodeReader code) {
+        long pc = code.getPC();
+        AMD64Instruction insn = AMD64InstructionDecoder.decode(pc, code);
+        return insn.getAssemblerInstruction();
     }
 
     @Override

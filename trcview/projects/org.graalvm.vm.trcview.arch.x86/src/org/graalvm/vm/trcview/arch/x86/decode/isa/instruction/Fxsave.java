@@ -45,6 +45,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.AVXRegisterOperand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.MemoryOperand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Fxsave extends AMD64Instruction {
     private final MemoryOperand operand;
@@ -66,7 +67,7 @@ public class Fxsave extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"fxsave", operand.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("fxsave", operand);
     }
 }

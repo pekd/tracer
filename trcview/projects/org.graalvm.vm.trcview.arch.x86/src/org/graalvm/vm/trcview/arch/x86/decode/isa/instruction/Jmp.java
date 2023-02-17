@@ -43,13 +43,14 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Jmp extends AMD64Instruction {
     public Jmp(long pc, byte[] instruction) {
         super(pc, instruction);
     }
 
-    protected abstract String getOperand();
+    protected abstract org.graalvm.vm.trcview.disasm.Operand getOperand();
 
     public static class JmpDirect extends Jmp {
         private final long bta;
@@ -60,8 +61,8 @@ public abstract class Jmp extends AMD64Instruction {
         }
 
         @Override
-        protected String getOperand() {
-            return String.format("0x%x", bta);
+        protected org.graalvm.vm.trcview.disasm.Operand getOperand() {
+            return label(bta);
         }
     }
 
@@ -76,8 +77,8 @@ public abstract class Jmp extends AMD64Instruction {
         }
 
         @Override
-        protected String getOperand() {
-            return operand.toString();
+        protected Operand getOperand() {
+            return operand;
         }
     }
 
@@ -87,7 +88,7 @@ public abstract class Jmp extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"jmp", getOperand()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("jmp", getOperand());
     }
 }

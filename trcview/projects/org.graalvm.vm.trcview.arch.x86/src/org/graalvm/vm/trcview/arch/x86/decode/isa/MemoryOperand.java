@@ -40,6 +40,12 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.graalvm.vm.trcview.disasm.Token;
+import org.graalvm.vm.trcview.disasm.Type;
+
 public class MemoryOperand extends Operand {
     private final SegmentRegister segment;
     private final Register base;
@@ -48,53 +54,38 @@ public class MemoryOperand extends Operand {
     private final long displacement;
     private final boolean addressOverride;
 
+    private MemoryOperand(boolean addressOverride, SegmentRegister segment, Register base, Register index, int scale, long displacement) {
+        super(getTokens(segment, base, index, scale, displacement));
+        this.addressOverride = addressOverride;
+        this.segment = segment;
+        this.base = base;
+        this.index = index;
+        this.scale = scale;
+        this.displacement = displacement;
+    }
+
     public MemoryOperand(SegmentRegister segment, Register base) {
         this(segment, base, false);
     }
 
     public MemoryOperand(SegmentRegister segment, Register base, boolean addressOverride) {
-        this.addressOverride = addressOverride;
-        this.segment = segment;
-        this.base = getRegister(base);
-        this.index = null;
-        this.scale = 0;
-        this.displacement = 0;
+        this(addressOverride, segment, getRegister(addressOverride, base), null, 0, 0);
     }
 
     public MemoryOperand(SegmentRegister segment, Register base, long displacement, boolean addressOverride) {
-        this.addressOverride = addressOverride;
-        this.segment = segment;
-        this.base = getRegister(base);
-        this.index = null;
-        this.scale = 0;
-        this.displacement = displacement;
+        this(addressOverride, segment, getRegister(addressOverride, base), null, 0, displacement);
     }
 
     public MemoryOperand(SegmentRegister segment, Register base, Register index, int scale, boolean addressOverride) {
-        this.addressOverride = addressOverride;
-        this.segment = segment;
-        this.base = base != null ? getRegister(base) : null;
-        this.index = index != null ? getRegister(index) : null;
-        this.scale = scale;
-        this.displacement = 0;
+        this(addressOverride, segment, base != null ? getRegister(addressOverride, base) : null, index != null ? getRegister(addressOverride, index) : null, scale, 0);
     }
 
     public MemoryOperand(SegmentRegister segment, Register base, Register index, int scale, long displacement, boolean addressOverride) {
-        this.addressOverride = addressOverride;
-        this.segment = segment;
-        this.base = base != null ? getRegister(base) : base;
-        this.index = index != null ? getRegister(index) : index;
-        this.scale = scale;
-        this.displacement = displacement;
+        this(addressOverride, segment, base != null ? getRegister(addressOverride, base) : base, index != null ? getRegister(addressOverride, index) : index, scale, displacement);
     }
 
     public MemoryOperand(SegmentRegister segment, long displacement, boolean addressOverride) {
-        this.addressOverride = addressOverride;
-        this.segment = segment;
-        this.base = null;
-        this.index = null;
-        this.scale = 0;
-        this.displacement = displacement;
+        this(addressOverride, segment, null, null, 0, displacement);
     }
 
     public MemoryOperand getInSegment(SegmentRegister seg) {
@@ -107,7 +98,7 @@ public class MemoryOperand extends Operand {
         return op;
     }
 
-    private Register getRegister(Register reg) {
+    private static Register getRegister(boolean addressOverride, Register reg) {
         if (addressOverride) {
             return reg.get32bit();
         } else {
@@ -169,6 +160,63 @@ public class MemoryOperand extends Operand {
             return segment + ":[" + buf + "]";
         } else {
             return "[" + buf + "]";
+        }
+    }
+
+    private static Token[] getTokens(SegmentRegister segment, Register base, Register index, int scale, long displacement) {
+        List<Token> tokens = new ArrayList<>();
+        if (base != null) {
+            tokens.add(new Token(Type.REGISTER, base.toString()));
+        }
+        if (index != null) {
+            if (tokens.size() > 0) {
+                tokens.add(new Token(Type.OTHER, "+"));
+            }
+            tokens.add(new Token(Type.REGISTER, index.toString()));
+            if (scale > 0) {
+                tokens.add(new Token(Type.OTHER, "*"));
+                tokens.add(new Token(Type.NUMBER, Integer.toString(1 << scale)));
+            }
+        }
+        if (tokens.size() == 0 || displacement != 0) {
+            boolean add = displacement >= 0;
+            boolean pcRelative = base == Register.RIP && index == null;
+            if (add && tokens.size() > 0) {
+                tokens.add(new Token(Type.OTHER, "+"));
+            }
+            if (add) {
+                if (displacement < 10) {
+                    tokens.add(new Token(Type.OFFSET, Long.toString(displacement), displacement, pcRelative));
+                } else {
+                    tokens.add(new Token(Type.OFFSET, String.format("0x%x", displacement), displacement, pcRelative));
+                }
+            } else {
+                tokens.add(new Token(Type.OTHER, "-"));
+                if (displacement > -10) {
+                    tokens.add(new Token(Type.OFFSET, Long.toString(-displacement), displacement, pcRelative));
+                } else {
+                    tokens.add(new Token(Type.OFFSET, String.format("0x%x", -displacement), displacement, pcRelative));
+                }
+            }
+        }
+
+        if (segment != null) {
+            Token[] result = new Token[tokens.size() + 3];
+            result[0] = new Token(Type.REGISTER, segment.toString());
+            result[1] = new Token(Type.OTHER, ":[");
+            for (int i = 0; i < tokens.size(); i++) {
+                result[i + 2] = tokens.get(i);
+            }
+            result[tokens.size() + 2] = new Token(Type.OTHER, "]");
+            return result;
+        } else {
+            Token[] result = new Token[tokens.size() + 2];
+            result[0] = new Token(Type.OTHER, "[");
+            for (int i = 0; i < tokens.size(); i++) {
+                result[i + 1] = tokens.get(i);
+            }
+            result[tokens.size() + 1] = new Token(Type.OTHER, "]");
+            return result;
         }
     }
 

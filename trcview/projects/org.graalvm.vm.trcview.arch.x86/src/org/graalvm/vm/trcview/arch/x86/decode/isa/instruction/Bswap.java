@@ -42,6 +42,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Bswap extends AMD64Instruction {
     private final Operand operand;
@@ -67,7 +68,7 @@ public abstract class Bswap extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"bswap", operand.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("bswap", operand);
     }
 }

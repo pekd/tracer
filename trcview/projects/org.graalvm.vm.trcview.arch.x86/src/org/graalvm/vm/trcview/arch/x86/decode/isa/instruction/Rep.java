@@ -41,9 +41,10 @@
 package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Rep extends AMD64Instruction {
-    private final String[] disasm;
+    private final AssemblerInstruction disasm;
 
     public Rep(long pc, byte[] instruction, AMD64Instruction insn) {
         this(pc, instruction, "rep", insn);
@@ -51,10 +52,8 @@ public class Rep extends AMD64Instruction {
 
     protected Rep(long pc, byte[] instruction, String name, AMD64Instruction insn) {
         super(pc, instruction);
-        String[] asm = insn.getDisassemblyComponents();
-        disasm = new String[asm.length + 1];
-        disasm[0] = name;
-        System.arraycopy(asm, 0, disasm, 1, asm.length);
+        AssemblerInstruction asm = insn.getAssemblerInstruction();
+        disasm = new AssemblerInstruction(name + " " + asm.getMnemonic(), asm.getOperands());
     }
 
     public static class Repz extends Rep {
@@ -70,7 +69,7 @@ public class Rep extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
+    protected AssemblerInstruction disassemble() {
         return disasm;
     }
 }

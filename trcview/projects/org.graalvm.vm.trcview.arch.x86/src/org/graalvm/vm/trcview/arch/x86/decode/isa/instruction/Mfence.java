@@ -41,6 +41,7 @@
 package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Mfence extends AMD64Instruction {
     public Mfence(long pc, byte[] instruction) {
@@ -48,7 +49,7 @@ public class Mfence extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"mfence"};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("mfence");
     }
 }

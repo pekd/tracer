@@ -40,26 +40,33 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
+import org.graalvm.vm.trcview.disasm.Token;
+import org.graalvm.vm.trcview.disasm.Type;
+
 public class ImmediateOperand extends Operand {
     private final long value;
     private final int size;
 
     public ImmediateOperand(byte value) {
+        super(tokens(value, 1));
         this.value = value;
         this.size = 1;
     }
 
     public ImmediateOperand(short value) {
+        super(tokens(value, 2));
         this.value = value;
         this.size = 2;
     }
 
     public ImmediateOperand(int value) {
+        super(tokens(value, 4));
         this.value = value;
         this.size = 4;
     }
 
     public ImmediateOperand(long value) {
+        super(tokens(value, 8));
         this.value = value;
         this.size = 8;
     }
@@ -68,14 +75,28 @@ public class ImmediateOperand extends Operand {
         return value;
     }
 
-    @Override
-    public String toString() {
-        switch (getSize()) {
+    private static Token[] tokens(long value, int size) {
+        String s = toString(value, size);
+        if (s.charAt(0) == '-') {
+            return new Token[]{new Token(Type.OTHER, "-"), new Token(Type.NUMBER, s.substring(1), value)};
+        } else {
+            return new Token[]{new Token(Type.NUMBER, s, value)};
+        }
+    }
+
+    public static String toString(long value, int size) {
+        switch (size) {
             case 1:
                 if ((byte) value == (byte) 0x80) {
                     return "0x80";
                 } else if (value < 0) {
-                    return String.format("-0x%x", (byte) -value);
+                    if ((byte) value > -10) {
+                        return Integer.toString((byte) value);
+                    } else {
+                        return String.format("-0x%x", (byte) -value);
+                    }
+                } else if (value < 10) {
+                    return Integer.toString((byte) value);
                 } else {
                     return String.format("0x%x", (byte) value);
                 }
@@ -83,7 +104,13 @@ public class ImmediateOperand extends Operand {
                 if ((short) value == (short) 0x8000) {
                     return "0x8000";
                 } else if (value < 0) {
-                    return String.format("-0x%x", (short) -value);
+                    if ((short) value > -10) {
+                        return Integer.toString((short) value);
+                    } else {
+                        return String.format("-0x%x", (short) -value);
+                    }
+                } else if ((short) value < 10) {
+                    return Integer.toString((short) value);
                 } else {
                     return String.format("0x%x", (short) value);
                 }
@@ -91,13 +118,36 @@ public class ImmediateOperand extends Operand {
                 if ((int) value == 0x80000000) {
                     return "0x80000000";
                 } else if (value < 0) {
-                    return String.format("-0x%x", (int) -value);
+                    if ((int) value > -10) {
+                        return Integer.toString((int) value);
+                    } else {
+                        return String.format("-0x%x", (int) -value);
+                    }
+                } else if ((int) value < 10) {
+                    return Integer.toString((int) value);
                 } else {
                     return String.format("0x%x", (int) value);
                 }
             default:
-                return String.format("0x%x", value);
+                if (value == 0x8000000000000000L) {
+                    return "0x8000000000000000";
+                } else if (value < 0) {
+                    if (value > -10) {
+                        return Long.toString(value);
+                    } else {
+                        return String.format("-0x%x", -value);
+                    }
+                } else if (value < 10) {
+                    return Long.toString(value);
+                } else {
+                    return String.format("0x%x", value);
+                }
         }
+    }
+
+    @Override
+    public String toString() {
+        return toString(value, size);
     }
 
     @Override

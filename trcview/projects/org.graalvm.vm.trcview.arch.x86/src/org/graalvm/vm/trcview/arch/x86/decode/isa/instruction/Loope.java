@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Register;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.RegisterOperand;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Loope extends AMD64Instruction {
     protected final long bta;
@@ -60,7 +61,7 @@ public class Loope extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"loope", String.format("0x%x", bta)};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("loope", label(bta));
     }
 }

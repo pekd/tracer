@@ -46,6 +46,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.disasm.Type;
 import org.graalvm.vm.util.HexFormatter;
 
 public abstract class AMD64Instruction {
@@ -68,7 +70,7 @@ public abstract class AMD64Instruction {
         gprWriteOperands = operands;
     }
 
-    protected abstract String[] disassemble();
+    protected abstract AssemblerInstruction disassemble();
 
     public Register[] getUsedGPRRead() {
         Set<Register> regs = new HashSet<>();
@@ -126,16 +128,37 @@ public abstract class AMD64Instruction {
     }
 
     public String[] getDisassemblyComponents() {
-        return disassemble();
+        AssemblerInstruction insn = getAssemblerInstruction();
+        return insn.getComponents();
     }
 
     public String getDisassembly() {
-        String[] parts = disassemble();
+        String[] parts = getDisassemblyComponents();
         if (parts.length == 1) {
             return parts[0];
         } else {
             return parts[0] + "\t" + Stream.of(parts).skip(1).collect(Collectors.joining(","));
         }
+    }
+
+    public AssemblerInstruction getAssemblerInstruction() {
+        AssemblerInstruction asm = disassemble();
+        asm.setPC(next());
+        return asm;
+    }
+
+    protected static org.graalvm.vm.trcview.disasm.Operand op(Type type, String text, long value) {
+        return new org.graalvm.vm.trcview.disasm.Operand(type, text, value);
+    }
+
+    protected org.graalvm.vm.trcview.disasm.Operand label(long addr) {
+        String str = "0x" + HexFormatter.tohex(addr);
+        return op(Type.ADDRESS, str, addr);
+    }
+
+    protected org.graalvm.vm.trcview.disasm.Operand imm(long value) {
+        String str = ImmediateOperand.toString(value, 8);
+        return op(Type.NUMBER, str, value);
     }
 
     private String printBytes() {

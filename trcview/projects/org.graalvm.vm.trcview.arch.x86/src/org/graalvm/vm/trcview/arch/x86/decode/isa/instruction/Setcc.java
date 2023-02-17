@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Setcc extends AMD64Instruction {
     private final String name;
@@ -153,7 +154,7 @@ public abstract class Setcc extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{name, operand.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction(name, operand);
     }
 }

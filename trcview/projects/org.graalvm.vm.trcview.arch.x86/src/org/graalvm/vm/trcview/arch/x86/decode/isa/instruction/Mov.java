@@ -44,6 +44,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.ImmediateOperand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public abstract class Mov extends AMD64Instruction {
     protected final Operand operand1;
@@ -150,9 +151,9 @@ public abstract class Mov extends AMD64Instruction {
         }
 
         @Override
-        protected String[] disassemble() {
+        protected AssemblerInstruction disassemble() {
             if (operand2 instanceof ImmediateOperand && ((ImmediateOperand) operand2).getSize() == 8) {
-                return new String[]{"movabs", operand1.toString(), operand2.toString()};
+                return new AssemblerInstruction("movabs", operand1, operand2);
             } else {
                 return super.disassemble();
             }
@@ -160,7 +161,7 @@ public abstract class Mov extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"mov", operand1.toString(), operand2.toString()};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("mov", operand1, operand2);
     }
 }

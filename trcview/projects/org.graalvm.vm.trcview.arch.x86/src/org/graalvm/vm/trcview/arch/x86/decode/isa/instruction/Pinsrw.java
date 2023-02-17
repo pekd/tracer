@@ -43,6 +43,7 @@ package org.graalvm.vm.trcview.arch.x86.decode.isa.instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
 
 public class Pinsrw extends AMD64Instruction {
     private final Operand operand1;
@@ -59,12 +60,12 @@ public class Pinsrw extends AMD64Instruction {
         setGPRWriteOperands(operand1);
     }
 
-    public Pinsrw(long pc, byte[] instruction, OperandDecoder operands, int imm) {
-        this(pc, instruction, operands.getAVXOperand2(128), operands.getOperand1(OperandDecoder.R32), imm);
+    public Pinsrw(long pc, byte[] instruction, OperandDecoder operands, byte imm) {
+        this(pc, instruction, operands.getAVXOperand2(128), operands.getOperand1(OperandDecoder.R32), Byte.toUnsignedInt(imm));
     }
 
     @Override
-    protected String[] disassemble() {
-        return new String[]{"pinsrw", operand1.toString(), operand2.toString(), String.format("0x%x", imm)};
+    protected AssemblerInstruction disassemble() {
+        return new AssemblerInstruction("pinsrw", operand1, operand2, imm(imm));
     }
 }

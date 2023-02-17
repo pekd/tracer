@@ -40,10 +40,13 @@
  */
 package org.graalvm.vm.trcview.arch.x86.decode.isa;
 
+import org.graalvm.vm.trcview.disasm.Type;
+
 public class RegisterOperand extends Operand {
     private final Register register;
 
     public RegisterOperand(Register reg) {
+        super(Type.REGISTER, reg.toString());
         this.register = reg;
     }
 

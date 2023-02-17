@@ -44,6 +44,8 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.AMD64Instruction;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.IllegalInstructionException;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.Operand;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.OperandDecoder;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.disasm.Type;
 
 public abstract class Cmpsd extends AMD64Instruction {
     private final Operand operand1;
@@ -110,11 +112,11 @@ public abstract class Cmpsd extends AMD64Instruction {
     }
 
     @Override
-    protected String[] disassemble() {
+    protected AssemblerInstruction disassemble() {
         if (name == null) {
-            return new String[]{"cmpsd", operand1.toString(), operand2.toString(), Byte.toString(type)};
+            return new AssemblerInstruction("cmpsd", operand1, operand2, op(Type.NUMBER, Byte.toString(type), type));
         } else {
-            return new String[]{name, operand1.toString(), operand2.toString()};
+            return new AssemblerInstruction(name, operand1, operand2);
         }
     }
 }
