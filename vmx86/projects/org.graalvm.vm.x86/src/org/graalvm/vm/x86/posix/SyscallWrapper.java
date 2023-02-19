@@ -73,7 +73,7 @@ public class SyscallWrapper extends AMD64Node {
         this.memory = memory;
     }
 
-    private long brk(long addr) throws SyscallException {
+    private long brk(long addr) {
         if (addr == 0) {
             long brk = memory.brk();
             if (posix.isStrace()) {
