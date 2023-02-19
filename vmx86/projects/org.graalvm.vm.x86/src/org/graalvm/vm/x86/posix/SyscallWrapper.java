@@ -60,6 +60,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 public class SyscallWrapper extends AMD64Node {
     private static final Logger log = Trace.create(SyscallWrapper.class);
 
+    private final static long MAX_BRK = 1 * 1024 * 1024 * 1024;
+
     private final PosixEnvironment posix;
     private final VirtualMemory memory;
 
@@ -71,7 +73,7 @@ public class SyscallWrapper extends AMD64Node {
         this.memory = memory;
     }
 
-    private long brk(long addr) {
+    private long brk(long addr) throws SyscallException {
         if (addr == 0) {
             long brk = memory.brk();
             if (posix.isStrace()) {
@@ -83,6 +85,13 @@ public class SyscallWrapper extends AMD64Node {
             return brk;
         } else {
             long newbrk = addr;
+
+            long curbrk = memory.brk();
+            if (Long.compareUnsigned(newbrk - curbrk, MAX_BRK) > 0) {
+                log.log(Level.INFO, () -> String.format("brk(0x%016x) = ENOMEM", newbrk));
+                return curbrk;
+            }
+
             long brk = memory.brk(newbrk);
             if (posix.isStrace()) {
                 log.log(Level.INFO, () -> String.format("brk(0x%016x) = 0x%016x", newbrk, brk));
