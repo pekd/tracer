@@ -68,6 +68,7 @@ import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.decode.DecoderUtils;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
+import org.graalvm.vm.util.io.Endianess;
 
 @SuppressWarnings("serial")
 public class StateView extends JPanel {
@@ -242,6 +243,8 @@ public class StateView extends JPanel {
                         "Oct: " + Long.toUnsignedString(value, 8) + "<br>" +
                         "Dec: " + value + "<br>" +
                         "Hex: " + Long.toUnsignedString(value, 16) + "<br>" +
+                        "F32: " + Float.intBitsToFloat((int) value) + "<br>" +
+                        "F64: " + Double.longBitsToDouble(value) + "<br>" +
                         "Text: \"" + Utils.html(str(value)) + "\"<br>" +
                         "Text (rev): \"" + Utils.html(rev(value)) + "\"<br>" +
                         memoryText +
@@ -250,14 +253,60 @@ public class StateView extends JPanel {
     }
 
     private static String format(BigInteger value) {
-        String result = "<html><head>" + TOOLTIP_STYLE + "</head><body><pre>" +
-                        "Oct: " + value.toString(8) + "<br>" +
-                        "Dec: " + value + "<br>" +
-                        "Hex: " + value.toString(16) + "<br>" +
-                        "Text: \"" + Utils.html(str(value)) + "\"<br>" +
-                        "Text (rev): \"" + Utils.html(rev(value)) + "\"<br>" +
-                        "</pre></body></html>";
-        return result;
+        // @formatter:off
+        StringBuilder result = new StringBuilder("<html><head>").append(TOOLTIP_STYLE).append("</head><body><pre>")
+                        .append("Oct: ").append(value.toString(8)).append("<br>")
+                        .append("Dec: ").append(value).append("<br>")
+                        .append("Hex: ").append(value.toString(16)).append("<br>")
+                        .append("Text: \"").append(Utils.html(str(value))).append("\"<br>")
+                        .append("Text (rev): \"").append(Utils.html(rev(value))).append("\"<br>");
+        // @formatter:on
+
+        byte[] data = value.toByteArray();
+
+        // 32bit float vector
+        if (data.length >= 4) {
+            int pad = data.length % 4;
+            if (pad != 0) {
+                pad = 4 - pad;
+            }
+            byte[] vec = new byte[data.length + pad];
+            System.arraycopy(data, 0, vec, pad, data.length);
+
+            int veclen = vec.length / 4;
+            result.append("F32: ");
+            for (int i = 0; i < veclen; i++) {
+                if (i > 0) {
+                    result.append(", ");
+                }
+                int bits = Endianess.get32bitBE(vec, i * 4);
+                result.append(Float.intBitsToFloat(bits));
+            }
+            result.append("<br>");
+        }
+
+        // 64bit float vector
+        if (data.length >= 8) {
+            int pad = data.length % 8;
+            if (pad != 0) {
+                pad = 8 - pad;
+            }
+            byte[] vec = new byte[data.length + pad];
+            System.arraycopy(data, 0, vec, pad, data.length);
+
+            int veclen = vec.length / 8;
+            result.append("F64: ");
+            for (int i = 0; i < veclen; i++) {
+                if (i > 0) {
+                    result.append(", ");
+                }
+                long bits = Endianess.get64bitBE(vec, i * 8);
+                result.append(Double.longBitsToDouble(bits));
+            }
+            result.append("<br>");
+        }
+        result.append("</pre></body></html>");
+        return result.toString();
     }
 
     private String format(String data) {
