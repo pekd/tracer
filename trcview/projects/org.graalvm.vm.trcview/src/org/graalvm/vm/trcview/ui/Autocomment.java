@@ -73,7 +73,7 @@ public class Autocomment {
             return data(trc, type, access.getValue());
         } else if (access.hasData() && access.getSize() == 16) {
             Vector128 vec = access.getVector();
-            return vec.hex();
+            return "0x" + vec.hex();
         } else {
             return "???";
         }
@@ -218,7 +218,7 @@ public class Autocomment {
             } else if (type.getType() == DataType.STRUCT) {
                 return name + decode(trc, type, offset, access);
             } else {
-                return name + " = " + data(trc, type, access.getValue());
+                return name + " = " + data(trc, type, access);
             }
         } else {
             return null;
