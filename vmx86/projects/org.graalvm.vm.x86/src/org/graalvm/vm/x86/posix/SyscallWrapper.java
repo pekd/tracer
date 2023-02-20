@@ -86,7 +86,7 @@ public class SyscallWrapper extends AMD64Node {
         } else {
             long newbrk = addr;
 
-            long curbrk = memory.brk();
+            long curbrk = memory.getInitialBrk();
             if (Long.compareUnsigned(newbrk - curbrk, MAX_BRK) > 0) {
                 log.log(Level.INFO, () -> String.format("brk(0x%016x) = ENOMEM", newbrk));
                 return curbrk;

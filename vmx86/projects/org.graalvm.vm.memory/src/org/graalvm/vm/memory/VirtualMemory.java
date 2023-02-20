@@ -81,6 +81,7 @@ public abstract class VirtualMemory {
     @CompilationFinal protected long mask;
 
     protected long brk;
+    protected long initialBrk;
     protected long reportedBrk;
 
     @CompilationFinal protected boolean enableAccessTrace;
@@ -120,6 +121,7 @@ public abstract class VirtualMemory {
         allocator = new MemoryAllocator(pointerBase, pointerEnd - pointerBase);
         brk = 0;
         reportedBrk = brk;
+        initialBrk = brk;
         enableAccessTrace = DEBUG;
         mapSequence = 0;
         logger = new DefaultMemoryAccessLogger();
@@ -175,6 +177,11 @@ public abstract class VirtualMemory {
     public void setBrk(long brk) {
         this.brk = brk;
         this.reportedBrk = brk;
+        this.initialBrk = brk;
+    }
+
+    public long getInitialBrk() {
+        return initialBrk;
     }
 
     public long brk() {
