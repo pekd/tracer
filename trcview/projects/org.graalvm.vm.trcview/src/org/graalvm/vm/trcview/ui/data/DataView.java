@@ -268,7 +268,7 @@ public class DataView extends JPanel implements StepListener {
         getActionMap().put(x, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                long addr = getOperandAddress();
+                long addr = getOperationAddress();
                 XrefDialog dlg = new XrefDialog(null, trc, addr, step.getStep(), jump);
                 dlg.setVisible(true);
                 editor.requestFocus();
@@ -376,6 +376,19 @@ public class DataView extends JPanel implements StepListener {
             int line = editor.getCursorLine();
             return model.getAddressByLine(line);
         }
+    }
+
+    private long getOperationAddress() {
+        Element element = editor.getCurrentElement();
+        if (element instanceof DataElement) {
+            DataElement de = (DataElement) element;
+            if (de.hasLocation()) {
+                return de.getLocation();
+            }
+        }
+
+        int line = editor.getCursorLine();
+        return model.getAddressByLine(line);
     }
 
     private Representation getArchRepresentation() {

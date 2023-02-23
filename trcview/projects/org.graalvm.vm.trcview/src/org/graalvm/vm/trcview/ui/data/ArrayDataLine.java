@@ -40,21 +40,21 @@ public class ArrayDataLine extends DataLine {
         return len;
     }
 
-    private Element encode(long val) {
+    private Element encode(long val, long ptr) {
         boolean isaddr = type.getType() == DataType.PTR;
         if (isaddr) {
             long address = trunc(val);
             if (address == 0) {
                 // special handling for NULL, even if 0 is a valid address
-                return new DefaultElement("NULL", Element.TYPE_NUMBER);
+                return new DataElement("NULL", Element.TYPE_NUMBER, ptr);
             } else {
                 Symbol sym = trc.getSymbol(address);
                 if (sym != null && sym.getName() != null) {
-                    return new AddressElement(sym.getName(), Element.TYPE_IDENTIFIER, address);
+                    return new AddressElement(sym.getName(), Element.TYPE_IDENTIFIER, ptr, address);
                 } else {
                     Variable var = trc.getTypedMemory().get(address);
                     if (var != null && var.getAddress() == address) {
-                        return new AddressElement(var.getName(trc.getArchitecture().getFormat()), Element.TYPE_IDENTIFIER, address);
+                        return new AddressElement(var.getName(trc.getArchitecture().getFormat()), Element.TYPE_IDENTIFIER, ptr, address);
                     }
                 }
             }
@@ -64,17 +64,17 @@ public class ArrayDataLine extends DataLine {
         switch (type.getRepresentation()) {
             case CHAR:
             case RAD50:
-                return new DefaultElement(s, Element.TYPE_STRING);
+                return new DataElement(s, Element.TYPE_STRING, ptr);
             case FX16:
             case FX32:
             case FLOAT:
                 // you cannot follow a float value
-                return new DefaultElement(s, Element.TYPE_NUMBER);
+                return new DataElement(s, Element.TYPE_NUMBER, ptr);
             default:
                 if (isaddr) {
-                    return new AddressElement(s, Element.TYPE_NUMBER, val);
+                    return new AddressElement(s, Element.TYPE_NUMBER, ptr, val);
                 } else {
-                    return new NumberElement(s, Element.TYPE_NUMBER, val);
+                    return new NumberElement(s, Element.TYPE_NUMBER, ptr, val);
                 }
         }
     }
@@ -90,11 +90,12 @@ public class ArrayDataLine extends DataLine {
                     result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
                     for (long i = 0; i < length; i++) {
+                        long p = ptr + i * type.getElementSize();
                         byte val = trc.getI8(ptr + i * type.getElementSize(), step);
                         if (comma) {
                             result.add(new DefaultElement(", ", Element.TYPE_PLAIN));
                         }
-                        result.add(encode(val));
+                        result.add(encode(val, p));
                         comma = true;
                     }
                     break;
@@ -102,11 +103,12 @@ public class ArrayDataLine extends DataLine {
                     result.add(new DefaultElement("DCW", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
                     for (long i = 0; i < length; i++) {
-                        short val = trc.getI16(ptr + i * type.getElementSize(), step);
+                        long p = ptr + i * type.getElementSize();
+                        short val = trc.getI16(p, step);
                         if (comma) {
                             result.add(new DefaultElement(", ", Element.TYPE_PLAIN));
                         }
-                        result.add(encode(val));
+                        result.add(encode(val, p));
                         comma = true;
                     }
                     break;
@@ -114,11 +116,12 @@ public class ArrayDataLine extends DataLine {
                     result.add(new DefaultElement("DCD", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
                     for (long i = 0; i < length; i++) {
+                        long p = ptr + i * type.getElementSize();
                         int val = trc.getI32(ptr + i * type.getElementSize(), step);
                         if (comma) {
                             result.add(new DefaultElement(", ", Element.TYPE_PLAIN));
                         }
-                        result.add(encode(val));
+                        result.add(encode(val, p));
                         comma = true;
                     }
                     break;
@@ -126,11 +129,12 @@ public class ArrayDataLine extends DataLine {
                     result.add(new DefaultElement("DCQ", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
                     for (long i = 0; i < length; i++) {
+                        long p = ptr + i * type.getElementSize();
                         long val = trc.getI64(ptr + i * type.getElementSize(), step);
                         if (comma) {
                             result.add(new DefaultElement(", ", Element.TYPE_PLAIN));
                         }
-                        result.add(encode(val));
+                        result.add(encode(val, p));
                         comma = true;
                     }
                     break;
