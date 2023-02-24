@@ -49,27 +49,27 @@ public class ScalarDataLine extends DataLine {
         }
     }
 
-    private Element encode(long val, boolean isaddr) {
+    private Element encode(long val, boolean isaddr, long ptr) {
         String s = DecoderUtils.str(type, val, trc);
         switch (type.getRepresentation()) {
             case CHAR:
             case RAD50:
-                return new DefaultElement(s, Element.TYPE_STRING);
+                return new DataElement(s, Element.TYPE_STRING, ptr);
             case FX16:
             case FX32:
             case FLOAT:
                 // you cannot follow a float value
-                return new DefaultElement(s, Element.TYPE_NUMBER);
+                return new DataElement(s, Element.TYPE_NUMBER, ptr);
             default:
                 if (isaddr) {
-                    return new AddressElement(s, Element.TYPE_NUMBER, val);
+                    return new AddressElement(s, Element.TYPE_NUMBER, ptr, val);
                 } else {
-                    return new NumberElement(s, Element.TYPE_NUMBER, val);
+                    return new NumberElement(s, Element.TYPE_NUMBER, ptr, val);
                 }
         }
     }
 
-    private void data(List<Element> result, long val) {
+    private void data(List<Element> result, long val, long self) {
         String comment = null;
         if ((type.getType() == DataType.PTR && type.getRepresentation() == Representation.STRING) || (type.getType() == DataType.STRING)) {
             comment = "; " + DecoderUtils.cstr(trunc(val), step, trc);
@@ -122,22 +122,22 @@ public class ScalarDataLine extends DataLine {
             long address = trunc(val);
             if (address == 0) {
                 // special handling for NULL, even if 0 is a valid address
-                data = new DefaultElement("NULL", Element.TYPE_NUMBER);
+                data = new DataElement("NULL", Element.TYPE_NUMBER, self);
             } else {
                 Symbol sym = trc.getSymbol(address);
                 if (sym != null && sym.getName() != null) {
-                    data = new AddressElement(sym.getName(), Element.TYPE_IDENTIFIER, address);
+                    data = new AddressElement(sym.getName(), Element.TYPE_IDENTIFIER, self, address);
                 } else {
                     Variable var = trc.getTypedMemory().get(address);
                     if (var != null && var.getAddress() == address) {
-                        data = new AddressElement(var.getName(trc.getArchitecture().getFormat()), Element.TYPE_IDENTIFIER, address);
+                        data = new AddressElement(var.getName(trc.getArchitecture().getFormat()), Element.TYPE_IDENTIFIER, self, address);
                     } else {
-                        data = encode(val, true);
+                        data = encode(val, true, self);
                     }
                 }
             }
         } else {
-            data = encode(val, false);
+            data = encode(val, false, self);
         }
 
         result.add(data);
@@ -161,30 +161,31 @@ public class ScalarDataLine extends DataLine {
         try {
             int size = (int) type.getSize();
             long val;
+            long ptr = addr + offset;
             switch (size) {
                 case 1:
                     result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI8(addr + offset, step);
-                    data(result, val);
+                    val = trc.getI8(ptr, step);
+                    data(result, val, ptr);
                     break;
                 case 2:
                     result.add(new DefaultElement("DCW", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI16(addr + offset, step);
-                    data(result, val);
+                    val = trc.getI16(ptr, step);
+                    data(result, val, ptr);
                     break;
                 case 4:
                     result.add(new DefaultElement("DCD", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI32(addr + offset, step);
-                    data(result, val);
+                    val = trc.getI32(ptr, step);
+                    data(result, val, ptr);
                     break;
                 case 8:
                     result.add(new DefaultElement("DCQ", Element.TYPE_KEYWORD));
                     result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-                    val = trc.getI64(addr + offset, step);
-                    data(result, val);
+                    val = trc.getI64(ptr, step);
+                    data(result, val, ptr);
                     break;
                 default:
                     result.add(new DefaultElement("DC?", Element.TYPE_KEYWORD));

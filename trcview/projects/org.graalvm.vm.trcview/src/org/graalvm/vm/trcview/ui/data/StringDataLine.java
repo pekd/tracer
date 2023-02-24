@@ -70,7 +70,9 @@ public class StringDataLine extends DataLine {
         } else {
             result.add(new DefaultElement("DCB", Element.TYPE_KEYWORD));
         }
+
+        long ptr = addr + offset + start * sz;
         result.add(new DefaultElement("    ", Element.TYPE_PLAIN));
-        result.add(new DefaultElement(val, Element.TYPE_STRING));
+        result.add(new DataElement(val, Element.TYPE_STRING, ptr));
     }
 }
