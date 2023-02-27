@@ -201,6 +201,10 @@ public class Autocomment {
             }
         }
 
+        if (name == null || name.length() == 0) {
+            return null;
+        }
+
         if (type == null && name != null && var.getAddress() == access.getAddress()) {
             return name + " = " + data(access, fmt);
         } else if (name != null && type != null) {
