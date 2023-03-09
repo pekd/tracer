@@ -113,6 +113,7 @@ public class DynamicTypePropagation {
                 }
 
                 Type lasttype = null;
+                // get array element type
                 for (long addr : addresses) {
                     Variable var = mem.getRecoveredType(addr);
                     if (var != null && var.getAddress() == addr) {
@@ -120,8 +121,12 @@ public class DynamicTypePropagation {
                             if (lasttype.getElementType().equals(var.getType().getElementType())) {
                                 // array types, only the element count is different => ignore
                             } else {
+                                // TODO: come up with better heuristics to find the element type
+                                if (var.getSize() > lasttype.getSize()) {
+                                    lasttype = var.getType();
+                                }
                                 log.warning(fmt.formatShortAddress(pc) + ": array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
-                                continue loop;
+                                continue;
                             }
                         }
                         lasttype = var.getType();
