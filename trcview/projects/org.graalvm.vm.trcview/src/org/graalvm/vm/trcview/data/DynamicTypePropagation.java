@@ -122,6 +122,12 @@ public class DynamicTypePropagation {
                                 // array types, only the element count is different => ignore
                             } else {
                                 // TODO: come up with better heuristics to find the element type
+                                if (var.getType().getType() == DataType.CODE) {
+                                    // cannot have an array of code
+                                    log.warning(fmt.formatShortAddress(pc) + ": array inconsistency at " + fmt.formatShortAddress(addr) + ": " + var.getType() + " vs " + lasttype);
+                                    continue loop;
+                                }
+
                                 if (var.getSize() > lasttype.getSize()) {
                                     lasttype = var.getType();
                                 }
@@ -164,6 +170,11 @@ public class DynamicTypePropagation {
                 if (lasttype.getSize() > array.getElementSize()) {
                     log.warning(fmt.formatShortAddress(pc) + ": array element size mismatch at " + fmt.formatShortAddress(array.getAddresses()[0]) + ": " + lasttype.getSize() + " (" + lasttype +
                                     ") vs array element size " + array.getElementSize());
+                    continue loop;
+                }
+
+                if (lasttype.getType() == DataType.CODE) {
+                    log.warning(fmt.formatShortAddress(pc) + ": cannot define array of code at " + fmt.formatShortAddress(array.getAddresses()[0]));
                     continue loop;
                 }
 
