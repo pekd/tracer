@@ -410,6 +410,8 @@ public class DataViewModel extends EditorModel implements ChangeListener, Symbol
                         } else {
                             return new ArrayDataLine(addr, v.offset, name, v.index, v.delta, v.field.getType(), step, trc);
                         }
+                    } else if (v.field.getType() != null && v.field.getType().getType() == DataType.CODE) {
+                        return new CodeDataLine(addr, v.offset, name, v.index, v.field.getType(), step, trc);
                     } else {
                         return new ScalarDataLine(addr, v.offset, name, v.index, v.field.getType(), step, trc);
                     }
