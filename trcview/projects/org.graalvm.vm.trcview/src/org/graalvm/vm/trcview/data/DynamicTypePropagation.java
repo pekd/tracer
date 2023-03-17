@@ -184,7 +184,7 @@ public class DynamicTypePropagation {
                         // split here
                         if (lastidx != -1) {
                             if (structArray) {
-                                arrays.defineArray(lasttype, array.getElementSize(), addresses[lastidx], addresses[i], laststep);
+                                arrays.defineArray(lasttype, array.getElementSize(), addresses[lastidx], addresses[i]);
                             } else {
                                 defineArray(trc, lasttype, addresses[lastidx], addresses[i], laststep);
                             }
@@ -194,7 +194,7 @@ public class DynamicTypePropagation {
                 }
                 if (lastidx != -1 && lastidx != addresses.length - 1) {
                     if (structArray) {
-                        arrays.defineArray(lasttype, array.getElementSize(), addresses[lastidx], addresses[addresses.length - 1], laststep);
+                        arrays.defineArray(lasttype, array.getElementSize(), addresses[lastidx], addresses[addresses.length - 1]);
                     } else {
                         defineArray(trc, lasttype, addresses[lastidx], addresses[addresses.length - 1], laststep);
                     }

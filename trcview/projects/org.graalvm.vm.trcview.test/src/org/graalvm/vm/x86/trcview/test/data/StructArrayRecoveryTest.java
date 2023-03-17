@@ -62,7 +62,7 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testSimpleArray() {
-        array.defineArray(new Type(DataType.U8), 2, 0x1000, 0x1100, 0);
+        array.defineArray(new Type(DataType.U8), 2, 0x1000, 0x1100);
         array.transfer();
         Variable var = mem.get(0x1000);
         assertEquals(1, mem.getAllTypes().size());
@@ -73,8 +73,8 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testStructBottom() {
-        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100, 0);
-        array.defineArray(new Type(DataType.S16), 4, 0x1002, 0x1102, 0);
+        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100);
+        array.defineArray(new Type(DataType.S16), 4, 0x1002, 0x1102);
         array.transfer();
         Variable var = mem.get(0x1000);
         assertEquals(1, mem.getAllTypes().size());
@@ -93,8 +93,8 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testStructTop() {
-        array.defineArray(new Type(DataType.S16), 4, 0x1002, 0x1102, 0);
-        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100, 0);
+        array.defineArray(new Type(DataType.S16), 4, 0x1002, 0x1102);
+        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100);
         array.transfer();
         Variable var = mem.get(0x1000);
         assertEquals(1, mem.getAllTypes().size());
@@ -113,8 +113,8 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testGap() {
-        array.defineArray(new Type(DataType.U16), 6, 0x1000, 0x1100, 0);
-        array.defineArray(new Type(DataType.S16), 6, 0x1004, 0x1104, 0);
+        array.defineArray(new Type(DataType.U16), 6, 0x1000, 0x1100);
+        array.defineArray(new Type(DataType.S16), 6, 0x1004, 0x1104);
         array.transfer();
         Variable var = mem.get(0x1000);
         assertEquals(1, mem.getAllTypes().size());
@@ -134,8 +134,8 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testGapAtEnd() {
-        array.defineArray(new Type(DataType.U16), 6, 0x1000, 0x1100, 0);
-        array.defineArray(new Type(DataType.S16), 6, 0x1002, 0x1102, 0);
+        array.defineArray(new Type(DataType.U16), 6, 0x1000, 0x1100);
+        array.defineArray(new Type(DataType.S16), 6, 0x1002, 0x1102);
         array.transfer();
         Variable var = mem.get(0x1000);
         assertEquals(1, mem.getAllTypes().size());
@@ -155,8 +155,8 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testOverlapStart() {
-        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100, 0);
-        array.defineArray(new Type(DataType.U16), 4, 0x800, 0x1010, 0);
+        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100);
+        array.defineArray(new Type(DataType.U16), 4, 0x800, 0x1010);
         array.transfer();
         Variable var = mem.get(0x800);
         assertEquals(1, mem.getAllTypes().size());
@@ -175,8 +175,8 @@ public class StructArrayRecoveryTest {
 
     @Test
     public void testOverlapStartOffset() {
-        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100, 0);
-        array.defineArray(new Type(DataType.S16), 4, 0x802, 0x1012, 0);
+        array.defineArray(new Type(DataType.U16), 4, 0x1000, 0x1100);
+        array.defineArray(new Type(DataType.S16), 4, 0x802, 0x1012);
         array.transfer();
         Variable var = mem.get(0x802);
         assertEquals(1, mem.getAllTypes().size());

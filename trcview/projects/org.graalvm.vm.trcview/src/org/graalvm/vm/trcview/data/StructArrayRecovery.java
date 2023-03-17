@@ -28,14 +28,12 @@ public class StructArrayRecovery {
         this.trc = trc;
     }
 
-    public void defineArray(Type type, int elementSize, long first, long last, long laststep) {
+    public void defineArray(Type type, int elementSize, long first, long last) {
         // TODO: find overlapping arrays
 
         Array array = null;
-        boolean found = false;
         Entry<Long, Array> floor = arrays.floorEntry(first);
         if (floor != null) {
-            long addr = floor.getKey();
             Array a = floor.getValue();
             if (a.end < first) {
                 // not found
