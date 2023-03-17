@@ -209,8 +209,11 @@ public class DynamicTypePropagation {
         log.info("Type recovery finished [" + time + " ms]");
     }
 
-    private static void defineArray(TraceAnalyzer trc, Type type, long first, long last, long laststep) {
-        log.log(Levels.INFO, () -> String.format("defining array at %x-%x: %s", first, last, type));
+    private static void defineArray(TraceAnalyzer trc, Type type, long firstAddr, long lastAddr, long laststep) {
+        long first = firstAddr;
+        long last = lastAddr;
+        StepFormat fmt = trc.getArchitecture().getFormat();
+        log.log(Levels.INFO, () -> String.format("defining array at %s-%s: %s", fmt.formatShortAddress(first), fmt.formatShortAddress(lastAddr), type));
 
         TypedMemory mem = trc.getTypedMemory();
 
@@ -249,6 +252,54 @@ public class DynamicTypePropagation {
                 // abort
             }
         }
-        mem.setRecoveredType(first, t);
+
+        // get old array
+        Variable oldEnd = mem.getRecoveredType(last);
+        if (oldEnd != null) {
+            long end = oldEnd.getAddress() + oldEnd.getSize() - 1;
+            if (Long.compareUnsigned(end, last) > 0) {
+                // overlap
+                last = end;
+
+                // check types
+                Type oldType = oldEnd.getType();
+                if (oldType != null && oldType.getElementType().getType() != t.getElementType().getType()) {
+                    // only issue warning for now; TODO: handle properly
+                    log.warning("Conflicting type for overlapping array segments at " + fmt.formatShortAddress(oldEnd.getAddress()) + ": " + oldType + " vs " + type);
+                }
+
+                // adjust element count
+                elements = (int) ((last - first) / type.getSize()) + 1;
+                t.setElements(elements);
+            }
+        }
+
+        Variable old = mem.getRecoveredType(first);
+        if (old != null) {
+            // overlapping type at beginning
+            Type oldType = old.getType();
+            if (oldType != null && oldType.getElementType().getType() == t.getElementType().getType()) {
+                // same type, combine arrays
+                long start = old.getAddress();
+                if (((first - start) % t.getElementSize()) != 0) {
+                    log.warning("Invalid start address for type at " + fmt.formatShortAddress(first));
+                } else if (Long.compareUnsigned(last, old.getAddress() + old.getSize()) < 0) {
+                    log.log(Levels.INFO, () -> "Ignoring new array information, because there is an existing and larger array already: " + fmt.formatShortAddress(old.getAddress()) + "-" +
+                                    fmt.formatShortAddress(old.getAddress() + old.getSize() - 1));
+                } else {
+                    elements = (int) ((last - start) / type.getSize()) + 1;
+                    t.setElements(elements);
+                    final long lasta = last;
+                    log.log(Levels.INFO, () -> String.format("merging array at %s-%s with new array at %s-%s", fmt.formatShortAddress(old.getAddress()),
+                                    fmt.formatShortAddress(old.getAddress() + old.getSize() - 1), fmt.formatShortAddress(first), fmt.formatShortAddress(lasta)));
+                    mem.setRecoveredType(start, t);
+                }
+            } else {
+                log.warning("Unimplemented case at " + fmt.formatShortAddress(first) + ": old=" + oldType + " vs new=" + t);
+            }
+        } else {
+            // no overlapping type
+            mem.setRecoveredType(first, t);
+        }
     }
 }
