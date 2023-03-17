@@ -263,8 +263,16 @@ public class VariableType {
             }
         }
 
+        if (I16.test(bits) && (bits & ~I16.mask) == 0) {
+            return I16;
+        }
+
         if (I32.test(bits) && (bits & ~I32.mask) == 0) {
             return I32;
+        }
+
+        if (I64.test(bits) && (bits & ~I64.mask) == 0) {
+            return I64;
         }
 
         // precise pointer types for f32/f64/fx16/fx32
