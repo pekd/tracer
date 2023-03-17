@@ -71,6 +71,6 @@ public class ParserTest {
     public void testExpression002() throws ParseException {
         Parser p = new Parser("if(x == 49 && y == 42, mem(0) & 0xFF, rax | 0xF)");
         Expression expr = p.parseExpression();
-        System.out.println(expr);
+        assertEquals("if((x == 49) && (y == 42), mem(0) & 255, rax | 15)", expr.toString());
     }
 }
