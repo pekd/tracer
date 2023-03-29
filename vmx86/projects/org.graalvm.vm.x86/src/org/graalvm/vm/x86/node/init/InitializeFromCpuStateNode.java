@@ -106,7 +106,7 @@ public class InitializeFromCpuStateNode extends AMD64Node {
     }
 
     private void createChildren() {
-        ArchitecturalState state = getContextReference().get().getState();
+        ArchitecturalState state = getContextReference().get(this).getState();
         RegisterAccessFactory regs = state.getRegisters();
         rax = regs.getRegister(Register.RAX).createWrite();
         rbx = regs.getRegister(Register.RBX).createWrite();

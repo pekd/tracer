@@ -105,7 +105,7 @@ public class Clone extends AMD64Node {
         if (cpuStateSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             ctxref = getContextReference();
-            AMD64Context ctx = ctxref.get();
+            AMD64Context ctx = ctxref.get(this);
             cpuStateSlot = ctx.getCpuState();
             gprMaskSlot = ctx.getGPRMask();
             avxMaskSlot = ctx.getAVXMask();

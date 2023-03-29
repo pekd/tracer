@@ -48,13 +48,11 @@ import java.util.stream.Stream;
 
 import org.graalvm.vm.util.HexFormatter;
 import org.graalvm.vm.x86.AMD64Context;
-import org.graalvm.vm.x86.AMD64Language;
 import org.graalvm.vm.x86.ArchitecturalState;
 import org.graalvm.vm.x86.node.AMD64Node;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public abstract class AMD64Instruction extends AMD64Node {

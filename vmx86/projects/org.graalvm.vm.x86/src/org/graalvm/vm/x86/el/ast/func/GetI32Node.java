@@ -36,7 +36,7 @@ public class GetI32Node extends Expression {
     @Override
     public GetI32Node clone() {
         CompilerAsserts.neverPartOfCompilation();
-        ArchitecturalState state = getContextReference().get().getState();
+        ArchitecturalState state = getContextReference().get(this).getState();
         return new GetI32Node(address.clone(), state);
     }
 }

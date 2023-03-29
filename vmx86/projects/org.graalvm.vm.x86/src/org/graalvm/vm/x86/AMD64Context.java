@@ -66,14 +66,18 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.nodes.Node;
 
 public class AMD64Context implements TraceStatus {
     private static final String ARCH_NAME = "x86_64";
     private static final String[] REGISTER_NAMES = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
+
+    private static final ContextReference<AMD64Context> CTXREF = ContextReference.create(AMD64Language.class);
 
     private Env env;
 
@@ -81,7 +85,6 @@ public class AMD64Context implements TraceStatus {
     private final PosixEnvironment posix;
     private String[] args;
 
-    private final TruffleLanguage<AMD64Context> language;
     private final FrameDescriptor frameDescriptor;
     private final FrameSlot[] gpr;
     private final FrameSlot[] zmm;
@@ -145,7 +148,6 @@ public class AMD64Context implements TraceStatus {
 
     public AMD64Context(TruffleLanguage<AMD64Context> language, Env env, FrameDescriptor fd, ExecutionTraceWriter traceWriter, LogStreamHandler logHandler) {
         this.env = env;
-        this.language = language;
         this.traceWriter = traceWriter;
         this.logHandler = logHandler;
         frameDescriptor = fd;
@@ -211,6 +213,10 @@ public class AMD64Context implements TraceStatus {
         traceStatus = true;
     }
 
+    public static ContextReference<AMD64Context> getContextReference() {
+        return CTXREF;
+    }
+
     public void initialize() {
         traces.initialize(this);
     }
@@ -219,10 +225,6 @@ public class AMD64Context implements TraceStatus {
         this.env = newEnv;
         posix.setStandardIO(newEnv.in(), newEnv.out(), newEnv.err());
         args = newEnv.getApplicationArguments();
-    }
-
-    public TruffleLanguage<AMD64Context> getLanguage() {
-        return language;
     }
 
     public FrameDescriptor getFrameDescriptor() {

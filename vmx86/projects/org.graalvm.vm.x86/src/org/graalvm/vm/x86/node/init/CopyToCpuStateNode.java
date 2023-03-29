@@ -94,7 +94,7 @@ public class CopyToCpuStateNode extends AMD64Node {
     private void createChildrenIfNecessary() {
         if (!initialized) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            ArchitecturalState state = getContextReference().get().getState();
+            ArchitecturalState state = getContextReference().get(this).getState();
             synchronized (lock) {
                 // check again to avoid initializing multiple times
                 if (initialized) {

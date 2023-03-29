@@ -163,7 +163,7 @@ public class InitializerNode extends AMD64Node {
             register.executeClear(frame);
         }
 
-        AMD64Context ctx = getContextReference().get();
+        AMD64Context ctx = getContextReference().get(this);
 
         if (TRACE) {
             boolean trc = tron != null ? tron.execute(frame, 0) : true;

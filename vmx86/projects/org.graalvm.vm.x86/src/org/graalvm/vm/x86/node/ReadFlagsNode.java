@@ -73,7 +73,7 @@ public class ReadFlagsNode extends ReadNode {
             synchronized (lock) {
                 if (!initialized) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ArchitecturalState state = getContextReference().get().getState();
+                    ArchitecturalState state = getContextReference().get(this).getState();
                     RegisterAccessFactory regs = state.getRegisters();
                     readCF = regs.getCF().createRead();
                     readPF = regs.getPF().createRead();

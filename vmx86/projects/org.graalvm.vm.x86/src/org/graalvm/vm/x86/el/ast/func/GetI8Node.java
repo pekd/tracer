@@ -36,7 +36,7 @@ public class GetI8Node extends Expression {
     @Override
     public GetI8Node clone() {
         CompilerAsserts.neverPartOfCompilation();
-        ArchitecturalState state = getContextReference().get().getState();
+        ArchitecturalState state = getContextReference().get(this).getState();
         return new GetI8Node(address.clone(), state);
     }
 }

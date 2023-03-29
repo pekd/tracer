@@ -54,7 +54,7 @@ public abstract class AMD64RootNode extends RootNode {
     }
 
     protected ContextReference<AMD64Context> getContextReference() {
-        return lookupContextReference(AMD64Language.class);
+        return AMD64Context.getContextReference();
     }
 
     public AMD64Language getAMD64Language() {
