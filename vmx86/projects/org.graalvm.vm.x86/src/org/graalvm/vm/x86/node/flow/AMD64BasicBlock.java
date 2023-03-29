@@ -76,7 +76,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind;
@@ -102,7 +101,7 @@ public class AMD64BasicBlock extends AMD64Node {
     @Children private AMD64Instruction[] instructions;
     @CompilationFinal(dimensions = 1) private AMD64BasicBlock[] successors;
 
-    @CompilationFinal private FrameSlot instructionCount;
+    @CompilationFinal private int instructionCount;
 
     @CompilationFinal public long index;
 

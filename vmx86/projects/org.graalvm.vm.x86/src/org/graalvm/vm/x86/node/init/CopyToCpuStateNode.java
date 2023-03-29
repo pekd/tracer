@@ -51,8 +51,6 @@ import org.graalvm.vm.x86.node.ReadNode;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -86,7 +84,7 @@ public class CopyToCpuStateNode extends AMD64Node {
     @Child private ReadFlagNode readID;
     @Children private ReadNode[] readZMM;
 
-    @CompilationFinal private FrameSlot instructionCount;
+    @CompilationFinal private int instructionCount;
 
     @CompilationFinal private boolean initialized = false;
     private final Object lock = new Object();
@@ -174,7 +172,7 @@ public class CopyToCpuStateNode extends AMD64Node {
         for (int i = 0; i < 16; i++) {
             state.xmm[i] = readZMM[i].executeI128(frame);
         }
-        state.instructionCount = FrameUtil.getLongSafe(frame, instructionCount);
+        state.instructionCount = frame.getLong(instructionCount);
         return state;
     }
 
@@ -269,7 +267,7 @@ public class CopyToCpuStateNode extends AMD64Node {
                 state.xmm[i].setI128(readZMM[i].executeI128(frame));
             }
         }
-        state.instructionCount = FrameUtil.getLongSafe(frame, instructionCount);
+        state.instructionCount = frame.getLong(instructionCount);
         return state;
     }
 
@@ -345,7 +343,7 @@ public class CopyToCpuStateNode extends AMD64Node {
                 state.xmm[i].setI128(readZMM[i].executeI128(frame));
             }
         }
-        state.instructionCount = FrameUtil.getLongSafe(frame, instructionCount);
+        state.instructionCount = frame.getLong(instructionCount);
         return state;
     }
 }

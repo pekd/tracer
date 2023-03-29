@@ -51,15 +51,13 @@ import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class Rdtsc extends AMD64Instruction {
     @Child private WriteNode writeEAX;
     @Child private WriteNode writeEDX;
 
-    @CompilationFinal private FrameSlot insncntslot;
+    @CompilationFinal private int insncntslot;
     private static final boolean useInstructionCount = getBoolean(Options.RDTSC_USE_INSTRUCTION_COUNT);
 
     public Rdtsc(long pc, byte[] instruction) {
@@ -88,7 +86,7 @@ public class Rdtsc extends AMD64Instruction {
     public long executeInstruction(VirtualFrame frame) {
         long time;
         if (useInstructionCount) {
-            time = FrameUtil.getLongSafe(frame, insncntslot);
+            time = frame.getLong(insncntslot);
         } else {
             time = rdtsc();
         }

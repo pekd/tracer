@@ -56,8 +56,6 @@ import org.graalvm.vm.x86.node.WriteNode;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RepeatingNode;
@@ -91,7 +89,7 @@ public class Rep extends AMD64Instruction {
         @Child private WriteNode writeRCX;
         @Child private AMD64Instruction insn;
 
-        @CompilationFinal protected FrameSlot insncnt;
+        @CompilationFinal protected int insncnt;
 
         public RepBody(ArchitecturalState state, AMD64Instruction insn) {
             this.insn = insn;
@@ -106,7 +104,7 @@ public class Rep extends AMD64Instruction {
                 insn.executeInstruction(frame);
                 rcx--;
                 writeRCX.executeI64(frame, rcx);
-                long cnt = FrameUtil.getLongSafe(frame, insncnt);
+                long cnt = frame.getLong(insncnt);
                 frame.setLong(insncnt, cnt + 1);
             }
             return rcx != 0;
@@ -157,7 +155,7 @@ public class Rep extends AMD64Instruction {
         @Child private WriteNode writeRCX;
         @Child private AMD64Instruction insn;
 
-        @CompilationFinal protected FrameSlot insncnt;
+        @CompilationFinal protected int insncnt;
 
         public RepzBody(ArchitecturalState state, AMD64Instruction insn) {
             this.insn = insn;
@@ -173,7 +171,7 @@ public class Rep extends AMD64Instruction {
                 insn.executeInstruction(frame);
                 rcx--;
                 writeRCX.executeI64(frame, rcx);
-                long cnt = FrameUtil.getLongSafe(frame, insncnt);
+                long cnt = frame.getLong(insncnt);
                 frame.setLong(insncnt, cnt + 1);
             }
             boolean zf = readZF.execute(frame);
@@ -225,7 +223,7 @@ public class Rep extends AMD64Instruction {
         @Child private WriteNode writeRCX;
         @Child private AMD64Instruction insn;
 
-        @CompilationFinal protected FrameSlot insncnt;
+        @CompilationFinal protected int insncnt;
 
         public RepnzBody(ArchitecturalState state, AMD64Instruction insn) {
             this.insn = insn;
@@ -241,7 +239,7 @@ public class Rep extends AMD64Instruction {
                 insn.executeInstruction(frame);
                 rcx--;
                 writeRCX.executeI64(frame, rcx);
-                long cnt = FrameUtil.getLongSafe(frame, insncnt);
+                long cnt = frame.getLong(insncnt);
                 frame.setLong(insncnt, cnt + 1);
             }
             boolean zf = readZF.execute(frame);

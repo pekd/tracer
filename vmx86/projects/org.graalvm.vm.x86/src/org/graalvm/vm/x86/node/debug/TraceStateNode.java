@@ -59,18 +59,16 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class TraceStateNode extends AMD64Node {
     @Child private CopyToCpuStateNode read = new CopyToCpuStateNode();
-    private final FrameSlot cpuStateSlot;
-    private final FrameSlot gprMaskSlot;
-    private final FrameSlot avxMaskSlot;
+    private final int cpuStateSlot;
+    private final int gprMaskSlot;
+    private final int avxMaskSlot;
     private final ExecutionTraceWriter traceWriter;
 
-    private final FrameSlot trace;
+    private final int trace;
 
     @Child private BooleanExpression tron;
     @Child private BooleanExpression troff;
@@ -118,14 +116,14 @@ public class TraceStateNode extends AMD64Node {
         CompilerAsserts.partialEvaluationConstant(avxMaskSlot);
         CompilerAsserts.partialEvaluationConstant(cpuStateSlot);
 
-        if (gprMaskSlot != null) {
-            boolean[] gprMask = (boolean[]) FrameUtil.getObjectSafe(frame, gprMaskSlot);
-            boolean[] avxMask = (boolean[]) FrameUtil.getObjectSafe(frame, avxMaskSlot);
+        if (gprMaskSlot != -1) { // TODO: when can this be -1?
+            boolean[] gprMask = (boolean[]) frame.getObject(gprMaskSlot);
+            boolean[] avxMask = (boolean[]) frame.getObject(avxMaskSlot);
 
             // CompilerAsserts.partialEvaluationConstant(gprMask);
             // CompilerAsserts.partialEvaluationConstant(avxMask);
 
-            CpuState initialState = (CpuState) FrameUtil.getObjectSafe(frame, cpuStateSlot);
+            CpuState initialState = (CpuState) frame.getObject(cpuStateSlot);
             if (gprMask != null) {
                 return read.executeDynamic(frame, pc, initialState.clone(), gprMask, avxMask);
             } else {
@@ -162,7 +160,7 @@ public class TraceStateNode extends AMD64Node {
     public void execute(VirtualFrame frame, long pc, AMD64Instruction insn) {
         boolean record = true;
         if (tron != null) {
-            record = FrameUtil.getBooleanSafe(frame, trace);
+            record = frame.getBoolean(trace);
             if (record) {
                 if (troff != null && troff.execute(frame, pc)) {
                     CompilerDirectives.transferToInterpreter();

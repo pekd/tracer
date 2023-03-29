@@ -41,13 +41,12 @@
 package org.graalvm.vm.x86.node;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class WriteFlagNode extends AMD64Node {
-    private final FrameSlot slot;
+    private final int slot;
 
-    public WriteFlagNode(FrameSlot slot) {
+    public WriteFlagNode(int slot) {
         this.slot = slot;
     }
 

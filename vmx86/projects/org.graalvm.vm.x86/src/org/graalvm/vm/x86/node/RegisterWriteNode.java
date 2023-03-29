@@ -41,20 +41,18 @@
 package org.graalvm.vm.x86.node;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class RegisterWriteNode extends WriteNode {
-    private final FrameSlot slot;
+    private final int slot;
     private final int shift;
 
-    public RegisterWriteNode(FrameSlot slot) {
+    public RegisterWriteNode(int slot) {
         this.slot = slot;
         this.shift = 0;
     }
 
-    public RegisterWriteNode(FrameSlot slot, int shift) {
+    public RegisterWriteNode(int slot, int shift) {
         this.slot = slot;
         this.shift = shift;
     }
@@ -62,7 +60,7 @@ public class RegisterWriteNode extends WriteNode {
     @Override
     public void executeI8(VirtualFrame frame, byte value) {
         CompilerAsserts.partialEvaluationConstant(slot);
-        long reg = FrameUtil.getLongSafe(frame, slot);
+        long reg = frame.getLong(slot);
         long val;
         if (shift == 0) {
             val = (reg & ~0xFF) | Byte.toUnsignedLong(value);
@@ -75,7 +73,7 @@ public class RegisterWriteNode extends WriteNode {
     @Override
     public void executeI16(VirtualFrame frame, short value) {
         CompilerAsserts.partialEvaluationConstant(slot);
-        long reg = FrameUtil.getLongSafe(frame, slot);
+        long reg = frame.getLong(slot);
         long val = (reg & ~0xFFFF) | Short.toUnsignedLong(value);
         frame.setLong(slot, val);
     }

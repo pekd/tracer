@@ -44,31 +44,29 @@ import org.graalvm.vm.x86.isa.AVXRegister;
 import org.graalvm.vm.x86.isa.Register;
 import org.graalvm.vm.x86.node.ReadFlagsNode;
 
-import com.oracle.truffle.api.frame.FrameSlot;
-
 public class RegisterAccessFactory {
-    private final FrameSlot[] gpr;
-    private final FrameSlot[] zmm;
-    private final FrameSlot[] xmm;
-    private final FrameSlot[] xmmF32;
-    private final FrameSlot[] xmmF64;
-    private final FrameSlot[] xmmType;
-    private final FrameSlot fs;
-    private final FrameSlot gs;
-    private final FrameSlot pc;
+    private final int[] gpr;
+    private final int[] zmm;
+    private final int[] xmm;
+    private final int[] xmmF32;
+    private final int[] xmmF64;
+    private final int[] xmmType;
+    private final int fs;
+    private final int gs;
+    private final int pc;
 
-    private final FrameSlot cf;
-    private final FrameSlot pf;
-    private final FrameSlot af;
-    private final FrameSlot zf;
-    private final FrameSlot sf;
-    private final FrameSlot df;
-    private final FrameSlot of;
-    private final FrameSlot ac;
-    private final FrameSlot id;
+    private final int cf;
+    private final int pf;
+    private final int af;
+    private final int zf;
+    private final int sf;
+    private final int df;
+    private final int of;
+    private final int ac;
+    private final int id;
 
-    public RegisterAccessFactory(FrameSlot[] gpr, FrameSlot[] zmm, FrameSlot[] xmm, FrameSlot[] xmmF32, FrameSlot[] xmmF64, FrameSlot[] xmmType, FrameSlot pc, FrameSlot fs, FrameSlot gs, FrameSlot cf,
-                    FrameSlot pf, FrameSlot af, FrameSlot zf, FrameSlot sf, FrameSlot df, FrameSlot of, FrameSlot ac, FrameSlot id) {
+    public RegisterAccessFactory(int[] gpr, int[] zmm, int[] xmm, int[] xmmF32, int[] xmmF64, int[] xmmType, int pc, int fs, int gs, int cf, int pf, int af, int zf, int sf, int df, int of, int ac,
+                    int id) {
         this.gpr = gpr;
         this.zmm = zmm;
         this.xmm = xmm;

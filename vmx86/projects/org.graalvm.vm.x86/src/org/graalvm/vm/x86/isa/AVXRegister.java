@@ -40,10 +40,9 @@
  */
 package org.graalvm.vm.x86.isa;
 
+import org.graalvm.vm.x86.AMD64Context;
 import org.graalvm.vm.x86.node.AVXRegisterReadNode;
 import org.graalvm.vm.x86.node.AVXRegisterWriteNode;
-
-import com.oracle.truffle.api.frame.FrameSlot;
 
 public class AVXRegister {
     public static final int TYPE_ZMM = 0;
@@ -51,13 +50,13 @@ public class AVXRegister {
     public static final int TYPE_F32 = 2;
     public static final int TYPE_F64 = 3;
 
-    private final FrameSlot zmm;
-    private final FrameSlot xmm;
-    private final FrameSlot xmmF32;
-    private final FrameSlot xmmF64;
-    private final FrameSlot xmmType;
+    private final int zmm;
+    private final int xmm;
+    private final int xmmF32;
+    private final int xmmF64;
+    private final int xmmType;
 
-    public AVXRegister(FrameSlot zmm, FrameSlot xmm, FrameSlot xmmF32, FrameSlot xmmF64, FrameSlot xmmType) {
+    public AVXRegister(int zmm, int xmm, int xmmF32, int xmmF64, int xmmType) {
         this.zmm = zmm;
         this.xmm = xmm;
         this.xmmF32 = xmmF32;
@@ -75,6 +74,6 @@ public class AVXRegister {
 
     @Override
     public String toString() {
-        return zmm.getIdentifier().toString();
+        return (String) AMD64Context.getFrameDescriptor().getSlotName(zmm);
     }
 }

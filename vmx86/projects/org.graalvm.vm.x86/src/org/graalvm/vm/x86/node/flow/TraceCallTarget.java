@@ -69,7 +69,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class TraceCallTarget extends AMD64RootNode {
@@ -82,10 +81,10 @@ public class TraceCallTarget extends AMD64RootNode {
     @Child private CopyToCpuStateNode read = new CopyToCpuStateNode();
     @Child private TraceDispatchNode dispatch;
 
-    private final FrameSlot cpuStateSlot;
-    private final FrameSlot gprMaskSlot;
-    private final FrameSlot avxMaskSlot;
-    private final FrameSlot trace;
+    private final int cpuStateSlot;
+    private final int gprMaskSlot;
+    private final int avxMaskSlot;
+    private final int trace;
 
     private static final boolean CHECK = getBoolean(Options.TRACE_STATE_CHECK);
 

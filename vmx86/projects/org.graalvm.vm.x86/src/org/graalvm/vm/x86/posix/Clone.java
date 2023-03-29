@@ -55,16 +55,14 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class Clone extends AMD64Node {
     @Child private MemoryWriteNode memory;
     @Child private CopyToCpuStateNode read = new CopyToCpuStateNode();
-    @CompilationFinal private FrameSlot cpuStateSlot;
-    @CompilationFinal private FrameSlot gprMaskSlot;
-    @CompilationFinal private FrameSlot avxMaskSlot;
+    @CompilationFinal private int cpuStateSlot;
+    @CompilationFinal private int gprMaskSlot;
+    @CompilationFinal private int avxMaskSlot;
 
     @CompilationFinal private ContextReference<AMD64Context> ctxref;
 
@@ -102,7 +100,7 @@ public class Clone extends AMD64Node {
             throw new SyscallException(Errno.EINVAL);
         }
 
-        if (cpuStateSlot == null) {
+        if (cpuStateSlot == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             ctxref = getContextReference();
             AMD64Context ctx = ctxref.get(this);
@@ -113,13 +111,13 @@ public class Clone extends AMD64Node {
         }
 
         CpuState state;
-        if (gprMaskSlot != null) {
-            boolean[] gprMask = (boolean[]) FrameUtil.getObjectSafe(frame, gprMaskSlot);
-            boolean[] avxMask = (boolean[]) FrameUtil.getObjectSafe(frame, avxMaskSlot);
+        if (gprMaskSlot != -1) {
+            boolean[] gprMask = (boolean[]) frame.getObject(gprMaskSlot);
+            boolean[] avxMask = (boolean[]) frame.getObject(avxMaskSlot);
             CompilerAsserts.partialEvaluationConstant(gprMask);
             CompilerAsserts.partialEvaluationConstant(avxMask);
 
-            CpuState initialState = (CpuState) FrameUtil.getObjectSafe(frame, cpuStateSlot);
+            CpuState initialState = (CpuState) frame.getObject(cpuStateSlot);
             if (gprMask != null) {
                 state = read.execute(frame, pc, initialState.clone(), gprMask, avxMask);
             } else {

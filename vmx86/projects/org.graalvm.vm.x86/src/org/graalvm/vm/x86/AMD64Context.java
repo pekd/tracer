@@ -69,9 +69,7 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.nodes.Node;
 
 public class AMD64Context implements TraceStatus {
     private static final String ARCH_NAME = "x86_64";
@@ -85,33 +83,33 @@ public class AMD64Context implements TraceStatus {
     private final PosixEnvironment posix;
     private String[] args;
 
-    private final FrameDescriptor frameDescriptor;
-    private final FrameSlot[] gpr;
-    private final FrameSlot[] zmm;
-    private final FrameSlot[] xmm;
-    private final FrameSlot[] xmmF32;
-    private final FrameSlot[] xmmF64;
-    private final FrameSlot[] xmmType;
-    private final FrameSlot fs;
-    private final FrameSlot gs;
-    private final FrameSlot pc;
-    private final FrameSlot cf;
-    private final FrameSlot pf;
-    private final FrameSlot af;
-    private final FrameSlot zf;
-    private final FrameSlot sf;
-    private final FrameSlot df;
-    private final FrameSlot of;
-    private final FrameSlot ac;
-    private final FrameSlot id;
+    private static final FrameDescriptor frameDescriptor;
+    private static final int[] gpr;
+    private static final int[] zmm;
+    private static final int[] xmm;
+    private static final int[] xmmF32;
+    private static final int[] xmmF64;
+    private static final int[] xmmType;
+    private static final int fs;
+    private static final int gs;
+    private static final int pc;
+    private static final int cf;
+    private static final int pf;
+    private static final int af;
+    private static final int zf;
+    private static final int sf;
+    private static final int df;
+    private static final int of;
+    private static final int ac;
+    private static final int id;
 
-    private final FrameSlot instructionCount;
+    private static final int instructionCount;
 
-    private final FrameSlot cpuState;
-    private final FrameSlot dispatchCpuState;
-    private final FrameSlot dispatchTrace;
-    private final FrameSlot gprMask;
-    private final FrameSlot avxMask;
+    private static final int cpuState;
+    private static final int dispatchCpuState;
+    private static final int dispatchTrace;
+    private static final int gprMask;
+    private static final int avxMask;
 
     private final ArchitecturalState state;
 
@@ -136,21 +134,68 @@ public class AMD64Context implements TraceStatus {
 
     private final Assumption singleThreadedAssumption;
 
-    private final FrameSlot trace;
+    private static final int trace;
     @CompilationFinal private BooleanExpression tron;
     @CompilationFinal private BooleanExpression troff;
 
     private boolean traceStatus;
 
-    public AMD64Context(TruffleLanguage<AMD64Context> language, Env env, FrameDescriptor fd) {
-        this(language, env, fd, null, null);
+    static {
+        FrameDescriptor.Builder fd = FrameDescriptor.newBuilder();
+
+        assert REGISTER_NAMES.length == 16;
+        gpr = new int[REGISTER_NAMES.length];
+        for (int i = 0; i < REGISTER_NAMES.length; i++) {
+            gpr[i] = fd.addSlot(FrameSlotKind.Long, REGISTER_NAMES[i], null);
+        }
+
+        zmm = new int[32];
+        xmm = new int[32];
+        xmmF32 = new int[32];
+        xmmF64 = new int[32];
+        xmmType = new int[32];
+        for (int i = 0; i < zmm.length; i++) {
+            zmm[i] = fd.addSlot(FrameSlotKind.Object, "zmm" + i, null);
+            xmm[i] = fd.addSlot(FrameSlotKind.Object, "xmm" + i, null);
+            xmmF32[i] = fd.addSlot(FrameSlotKind.Float, "xmm" + i + "F32", null);
+            xmmF64[i] = fd.addSlot(FrameSlotKind.Double, "xmm" + i + "F64", null);
+            xmmType[i] = fd.addSlot(FrameSlotKind.Int, "xmm" + i + "Type", null);
+        }
+
+        fs = fd.addSlot(FrameSlotKind.Long, "fs", null);
+        gs = fd.addSlot(FrameSlotKind.Long, "gs", null);
+        pc = fd.addSlot(FrameSlotKind.Long, "rip", null);
+        cf = fd.addSlot(FrameSlotKind.Boolean, "cf", null);
+        pf = fd.addSlot(FrameSlotKind.Boolean, "pf", null);
+        af = fd.addSlot(FrameSlotKind.Boolean, "af", null);
+        zf = fd.addSlot(FrameSlotKind.Boolean, "zf", null);
+        sf = fd.addSlot(FrameSlotKind.Boolean, "sf", null);
+        df = fd.addSlot(FrameSlotKind.Boolean, "df", null);
+        of = fd.addSlot(FrameSlotKind.Boolean, "of", null);
+        ac = fd.addSlot(FrameSlotKind.Boolean, "ac", null);
+        id = fd.addSlot(FrameSlotKind.Boolean, "id", null);
+        instructionCount = fd.addSlot(FrameSlotKind.Boolean, "instructionCount", null);
+
+        trace = fd.addSlot(FrameSlotKind.Boolean, "trace", null);
+
+        cpuState = fd.addSlot(FrameSlotKind.Boolean, "cpustate", null);
+        dispatchCpuState = fd.addSlot(FrameSlotKind.Boolean, "dispatchCpuState", null);
+        dispatchTrace = fd.addSlot(FrameSlotKind.Boolean, "dispatchTrace", null);
+
+        gprMask = fd.addSlot(FrameSlotKind.Boolean, "gprmask", null);
+        avxMask = fd.addSlot(FrameSlotKind.Boolean, "avxmask", null);
+
+        frameDescriptor = fd.build();
     }
 
-    public AMD64Context(TruffleLanguage<AMD64Context> language, Env env, FrameDescriptor fd, ExecutionTraceWriter traceWriter, LogStreamHandler logHandler) {
+    public AMD64Context(TruffleLanguage<AMD64Context> language, Env env) {
+        this(language, env, null, null);
+    }
+
+    public AMD64Context(TruffleLanguage<AMD64Context> language, Env env, ExecutionTraceWriter traceWriter, LogStreamHandler logHandler) {
         this.env = env;
         this.traceWriter = traceWriter;
         this.logHandler = logHandler;
-        frameDescriptor = fd;
         memory = VirtualMemory.create();
 
         if (traceWriter != null) {
@@ -161,47 +206,6 @@ public class AMD64Context implements TraceStatus {
         posix = new PosixEnvironment(memory, ARCH_NAME, traceWriter);
         posix.setStandardIO(env.in(), env.out(), env.err());
         args = env.getApplicationArguments();
-        assert REGISTER_NAMES.length == 16;
-        gpr = new FrameSlot[REGISTER_NAMES.length];
-        for (int i = 0; i < REGISTER_NAMES.length; i++) {
-            gpr[i] = frameDescriptor.addFrameSlot(REGISTER_NAMES[i], FrameSlotKind.Long);
-        }
-
-        zmm = new FrameSlot[32];
-        xmm = new FrameSlot[32];
-        xmmF32 = new FrameSlot[32];
-        xmmF64 = new FrameSlot[32];
-        xmmType = new FrameSlot[32];
-        for (int i = 0; i < zmm.length; i++) {
-            zmm[i] = frameDescriptor.addFrameSlot("zmm" + i, FrameSlotKind.Object);
-            xmm[i] = frameDescriptor.addFrameSlot("xmm" + i, FrameSlotKind.Object);
-            xmmF32[i] = frameDescriptor.addFrameSlot("xmm" + i + "F32", FrameSlotKind.Float);
-            xmmF64[i] = frameDescriptor.addFrameSlot("xmm" + i + "F64", FrameSlotKind.Double);
-            xmmType[i] = frameDescriptor.addFrameSlot("xmm" + i + "Type", FrameSlotKind.Int);
-        }
-
-        fs = frameDescriptor.addFrameSlot("fs", FrameSlotKind.Long);
-        gs = frameDescriptor.addFrameSlot("gs", FrameSlotKind.Long);
-        pc = frameDescriptor.addFrameSlot("rip", FrameSlotKind.Long);
-        cf = frameDescriptor.addFrameSlot("cf", FrameSlotKind.Boolean);
-        pf = frameDescriptor.addFrameSlot("pf", FrameSlotKind.Boolean);
-        af = frameDescriptor.addFrameSlot("af", FrameSlotKind.Boolean);
-        zf = frameDescriptor.addFrameSlot("zf", FrameSlotKind.Boolean);
-        sf = frameDescriptor.addFrameSlot("sf", FrameSlotKind.Boolean);
-        df = frameDescriptor.addFrameSlot("df", FrameSlotKind.Boolean);
-        of = frameDescriptor.addFrameSlot("of", FrameSlotKind.Boolean);
-        ac = frameDescriptor.addFrameSlot("ac", FrameSlotKind.Boolean);
-        id = frameDescriptor.addFrameSlot("id", FrameSlotKind.Boolean);
-        instructionCount = frameDescriptor.addFrameSlot("instructionCount", FrameSlotKind.Long);
-
-        trace = frameDescriptor.addFrameSlot("trace", FrameSlotKind.Boolean);
-
-        cpuState = frameDescriptor.addFrameSlot("cpustate", FrameSlotKind.Object);
-        dispatchCpuState = frameDescriptor.addFrameSlot("dispatchCpuState", FrameSlotKind.Object);
-        dispatchTrace = frameDescriptor.addFrameSlot("dispatchTrace", FrameSlotKind.Object);
-
-        gprMask = frameDescriptor.addFrameSlot("gprmask", FrameSlotKind.Object);
-        avxMask = frameDescriptor.addFrameSlot("avxmask", FrameSlotKind.Object);
 
         singleThreadedAssumption = Truffle.getRuntime().createAssumption("single threaded");
         traces = new TraceRegistry(language, frameDescriptor);
@@ -227,7 +231,7 @@ public class AMD64Context implements TraceStatus {
         args = newEnv.getApplicationArguments();
     }
 
-    public FrameDescriptor getFrameDescriptor() {
+    public static FrameDescriptor getFrameDescriptor() {
         return frameDescriptor;
     }
 
@@ -253,107 +257,107 @@ public class AMD64Context implements TraceStatus {
         return args;
     }
 
-    public FrameSlot getGPR(int i) {
+    public int getGPR(int i) {
         return gpr[i];
     }
 
-    public FrameSlot getZMM(int i) {
+    public int getZMM(int i) {
         return zmm[i];
     }
 
-    public FrameSlot getFS() {
+    public int getFS() {
         return fs;
     }
 
-    public FrameSlot getGS() {
+    public int getGS() {
         return gs;
     }
 
-    public FrameSlot getPC() {
+    public int getPC() {
         return pc;
     }
 
-    public FrameSlot[] getGPRs() {
+    public int[] getGPRs() {
         return gpr;
     }
 
-    public FrameSlot[] getZMMs() {
+    public int[] getZMMs() {
         return zmm;
     }
 
-    public FrameSlot[] getXMMs() {
+    public int[] getXMMs() {
         return xmm;
     }
 
-    public FrameSlot[] getXMMF32() {
+    public int[] getXMMF32() {
         return xmmF32;
     }
 
-    public FrameSlot[] getXMMF64() {
+    public int[] getXMMF64() {
         return xmmF64;
     }
 
-    public FrameSlot[] getXMMType() {
+    public int[] getXMMType() {
         return xmmType;
     }
 
-    public FrameSlot getCF() {
+    public int getCF() {
         return cf;
     }
 
-    public FrameSlot getPF() {
+    public int getPF() {
         return pf;
     }
 
-    public FrameSlot getAF() {
+    public int getAF() {
         return af;
     }
 
-    public FrameSlot getZF() {
+    public int getZF() {
         return zf;
     }
 
-    public FrameSlot getSF() {
+    public int getSF() {
         return sf;
     }
 
-    public FrameSlot getDF() {
+    public int getDF() {
         return df;
     }
 
-    public FrameSlot getOF() {
+    public int getOF() {
         return of;
     }
 
-    public FrameSlot getAC() {
+    public int getAC() {
         return ac;
     }
 
-    public FrameSlot getID() {
+    public int getID() {
         return id;
     }
 
-    public FrameSlot getInstructionCount() {
+    public int getInstructionCount() {
         return instructionCount;
     }
 
-    public FrameSlot getCpuState() {
+    public int getCpuState() {
         return cpuState;
     }
 
-    public FrameSlot getDispatchCpuState() {
+    public int getDispatchCpuState() {
         return dispatchCpuState;
     }
 
-    public FrameSlot getDispatchTrace() {
+    public int getDispatchTrace() {
         return dispatchTrace;
     }
 
-    public FrameSlot getGPRMask() {
+    public int getGPRMask() {
         return gprMask;
     }
 
-    public FrameSlot getAVXMask() {
+    public int getAVXMask() {
         return avxMask;
     }
 
@@ -489,7 +493,7 @@ public class AMD64Context implements TraceStatus {
         return troff;
     }
 
-    public FrameSlot getTrace() {
+    public int getTrace() {
         return trace;
     }
 

@@ -58,8 +58,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RepeatingNode;
@@ -83,8 +81,8 @@ public class InterTraceDispatchNode extends AbstractDispatchNode {
 
     @Child private LoopNode loop = Truffle.getRuntime().createLoopNode(new LoopBody());
 
-    private final FrameSlot stateSlot;
-    private final FrameSlot traceSlot;
+    private final int stateSlot;
+    private final int traceSlot;
 
     @CompilationFinal private CompiledTrace startTrace;
 
@@ -111,8 +109,8 @@ public class InterTraceDispatchNode extends AbstractDispatchNode {
     private class LoopBody extends AMD64Node implements RepeatingNode {
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
-            CpuState state = (CpuState) FrameUtil.getObjectSafe(frame, stateSlot);
-            CompiledTrace currentTrace = (CompiledTrace) FrameUtil.getObjectSafe(frame, traceSlot);
+            CpuState state = (CpuState) frame.getObject(stateSlot);
+            CompiledTrace currentTrace = (CompiledTrace) frame.getObject(traceSlot);
             // assert currentTrace.trace.getStartAddress() == state.rip;
             try {
                 state = (CpuState) currentTrace.callTarget.call(state);

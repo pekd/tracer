@@ -53,7 +53,6 @@ import org.graalvm.vm.x86.node.WriteFlagNode;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -88,7 +87,7 @@ public class InitializeFromCpuStateNode extends AMD64Node {
     @Child private WriteFlagNode id;
     @Child private RegisterWriteNode pc;
 
-    @CompilationFinal private FrameSlot instructionCount;
+    @CompilationFinal private int instructionCount;
 
     @CompilationFinal private boolean initialized = false;
     private final Object lock = new Object();

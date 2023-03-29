@@ -48,23 +48,21 @@ import org.graalvm.vm.x86.isa.AVXRegister;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class AVXRegisterWriteNode extends WriteNode {
     private static final boolean USE_XMM = true;
     private static final boolean USE_TYPE = true;
 
-    private final FrameSlot zmm;
-    private final FrameSlot xmm;
-    private final FrameSlot xmmF32;
-    private final FrameSlot xmmF64;
-    private final FrameSlot xmmType;
+    private final int zmm;
+    private final int xmm;
+    private final int xmmF32;
+    private final int xmmF64;
+    private final int xmmType;
 
     @CompilationFinal private int cachedType;
 
-    public AVXRegisterWriteNode(FrameSlot zmm, FrameSlot xmm, FrameSlot xmmF32, FrameSlot xmmF64, FrameSlot xmmType) {
+    public AVXRegisterWriteNode(int zmm, int xmm, int xmmF32, int xmmF64, int xmmType) {
         this.zmm = zmm;
         this.xmm = xmm;
         this.xmmF32 = xmmF32;
@@ -101,13 +99,13 @@ public class AVXRegisterWriteNode extends WriteNode {
     private void materialize(VirtualFrame frame, int type) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (type == AVXRegister.TYPE_F32) {
-            Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
-            float val = FrameUtil.getFloatSafe(frame, xmmF32);
+            Vector128 reg = (Vector128) frame.getObject(xmm);
+            float val = frame.getFloat(xmmF32);
             reg.setF32(3, val);
             frame.setInt(xmmType, AVXRegister.TYPE_XMM);
         } else if (type == AVXRegister.TYPE_F64) {
-            Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
-            double val = FrameUtil.getDoubleSafe(frame, xmmF64);
+            Vector128 reg = (Vector128) frame.getObject(xmm);
+            double val = frame.getDouble(xmmF64);
             reg.setF64(1, val);
             frame.setInt(xmmType, AVXRegister.TYPE_XMM);
         } else {
@@ -119,15 +117,15 @@ public class AVXRegisterWriteNode extends WriteNode {
         CompilerAsserts.partialEvaluationConstant(zmm);
         if (USE_XMM) {
             if (USE_TYPE) {
-                int type = cached(FrameUtil.getIntSafe(frame, xmmType));
+                int type = cached(frame.getInt(xmmType));
                 if (type != AVXRegister.TYPE_XMM) {
                     materialize(frame, type);
                 }
             }
-            Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
+            Vector128 reg = (Vector128) frame.getObject(xmm);
             reg.setI32(i - 12, value);
         } else {
-            Vector512 reg = (Vector512) FrameUtil.getObjectSafe(frame, zmm);
+            Vector512 reg = (Vector512) frame.getObject(zmm);
             reg.setI32(i, value);
         }
     }
@@ -136,15 +134,15 @@ public class AVXRegisterWriteNode extends WriteNode {
         CompilerAsserts.partialEvaluationConstant(zmm);
         if (USE_XMM) {
             if (USE_TYPE) {
-                int type = cached(FrameUtil.getIntSafe(frame, xmmType));
+                int type = cached(frame.getInt(xmmType));
                 if (type != AVXRegister.TYPE_XMM) {
                     materialize(frame, type);
                 }
             }
-            Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
+            Vector128 reg = (Vector128) frame.getObject(xmm);
             reg.setI64(i - 6, value);
         } else {
-            Vector512 reg = (Vector512) FrameUtil.getObjectSafe(frame, zmm);
+            Vector512 reg = (Vector512) frame.getObject(zmm);
             reg.setI64(i, value);
         }
     }
@@ -159,7 +157,7 @@ public class AVXRegisterWriteNode extends WriteNode {
             assert i == 3;
             frame.setObject(xmm, value.clone());
         } else {
-            Vector512 reg = (Vector512) FrameUtil.getObjectSafe(frame, zmm);
+            Vector512 reg = (Vector512) frame.getObject(zmm);
             reg.setI128(i, value);
         }
     }
@@ -170,7 +168,7 @@ public class AVXRegisterWriteNode extends WriteNode {
             CompilerDirectives.transferToInterpreter();
             throw new AssertionError("AVX is unsupported");
         } else {
-            Vector512 reg = (Vector512) FrameUtil.getObjectSafe(frame, zmm);
+            Vector512 reg = (Vector512) frame.getObject(zmm);
             reg.setI256(i, value);
         }
     }
@@ -218,7 +216,7 @@ public class AVXRegisterWriteNode extends WriteNode {
     public void executeF32(VirtualFrame frame, float value) {
         if (USE_XMM) {
             if (USE_TYPE) {
-                int type = cached(FrameUtil.getIntSafe(frame, xmmType));
+                int type = cached(frame.getInt(xmmType));
                 if (type == AVXRegister.TYPE_F32) {
                     frame.setFloat(xmmF32, value);
                 } else {
@@ -227,11 +225,11 @@ public class AVXRegisterWriteNode extends WriteNode {
                     }
                     // frame.setFloat(xmmF32, value);
                     // frame.setInt(xmmType, AVXRegister.TYPE_F32);
-                    Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
+                    Vector128 reg = (Vector128) frame.getObject(xmm);
                     reg.setF32(3, value);
                 }
             } else {
-                Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
+                Vector128 reg = (Vector128) frame.getObject(xmm);
                 reg.setF32(3, value);
             }
         } else {
@@ -248,7 +246,7 @@ public class AVXRegisterWriteNode extends WriteNode {
     public void executeF64(VirtualFrame frame, double value) {
         if (USE_XMM) {
             if (USE_TYPE) {
-                int type = cached(FrameUtil.getIntSafe(frame, xmmType));
+                int type = cached(frame.getInt(xmmType));
                 if (type == AVXRegister.TYPE_F64) {
                     frame.setDouble(xmmF64, value);
                 } else {
@@ -257,11 +255,11 @@ public class AVXRegisterWriteNode extends WriteNode {
                     }
                     // frame.setDouble(xmmF64, value);
                     // frame.setInt(xmmType, AVXRegister.TYPE_F64);
-                    Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
+                    Vector128 reg = (Vector128) frame.getObject(xmm);
                     reg.setF64(1, value);
                 }
             } else {
-                Vector128 reg = (Vector128) FrameUtil.getObjectSafe(frame, xmm);
+                Vector128 reg = (Vector128) frame.getObject(xmm);
                 reg.setF64(1, value);
             }
         } else {

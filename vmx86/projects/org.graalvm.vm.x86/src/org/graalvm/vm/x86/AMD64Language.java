@@ -83,7 +83,7 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
     private static final boolean EXEC_TRACE = Options.getBoolean(Options.EXEC_TRACE);
     private static final int BUFSZ = 64 * 1024; // trace buffer size
 
-    protected FrameDescriptor fd = new FrameDescriptor();
+    protected static final FrameDescriptor fd = AMD64Context.getFrameDescriptor();
 
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
@@ -120,7 +120,7 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
                 LogStreamHandler handler = new LogStreamHandler(trace);
                 Logger.getLogger("").addHandler(handler);
 
-                AMD64Context ctx = new AMD64Context(this, env, fd, trace, handler);
+                AMD64Context ctx = new AMD64Context(this, env, trace, handler);
                 ArchitecturalState state = ctx.getState();
 
                 // parse TRON/TROFF expressions
@@ -143,7 +143,7 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
             }
 
         } else {
-            return new AMD64Context(this, env, fd);
+            return new AMD64Context(this, env);
         }
     }
 

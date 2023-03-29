@@ -68,7 +68,6 @@ import org.graalvm.vm.x86.node.WriteFlagNode;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -99,8 +98,8 @@ public class InitializerNode extends AMD64Node {
 
     @Child private BooleanExpression tron;
 
-    private final FrameSlot instructionCount;
-    private final FrameSlot trace;
+    private final int instructionCount;
+    private final int trace;
 
     public InitializerNode(ArchitecturalState state, String programName) {
         this(state, programName, null);
@@ -135,7 +134,7 @@ public class InitializerNode extends AMD64Node {
         instructionCount = state.getInstructionCount();
         trace = state.getTrace();
         if (TRACE) {
-            BooleanExpression expr = getContextReference().get().getTron();
+            BooleanExpression expr = getContextReference().get(this).getTron();
             tron = expr != null ? expr.clone() : null;
         }
     }

@@ -47,15 +47,14 @@ import org.graalvm.vm.x86.node.flow.TraceRegistry;
 import org.graalvm.vm.x86.substitution.SubstitutionRegistry;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.frame.FrameSlot;
 
 public class ArchitecturalState {
     private final RegisterAccessFactory registerAccess;
     private final VirtualMemory memory;
-    private final FrameSlot instructionCount;
-    private final FrameSlot cpuState;
-    private final FrameSlot trace;
-    private final FrameSlot isTrace;
+    private final int instructionCount;
+    private final int cpuState;
+    private final int trace;
+    private final int isTrace;
     private final TraceRegistry traces;
     private final SubstitutionRegistry substitutions;
     private final Assumption singleThreaded;
@@ -90,19 +89,19 @@ public class ArchitecturalState {
         return new MemoryWriteNode(memory);
     }
 
-    public FrameSlot getInstructionCount() {
+    public int getInstructionCount() {
         return instructionCount;
     }
 
-    public FrameSlot getDispatchCpuState() {
+    public int getDispatchCpuState() {
         return cpuState;
     }
 
-    public FrameSlot getDispatchTrace() {
+    public int getDispatchTrace() {
         return trace;
     }
 
-    public FrameSlot getTrace() {
+    public int getTrace() {
         return isTrace;
     }
 
