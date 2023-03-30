@@ -100,7 +100,7 @@ def truffle_extract_VM_args(args, useDoubleDash=False):
 def getCommonOptions(withAssertion):
     options = [
             #'-Dgraal.TruffleCompilationExceptionsArePrinted=true',
-            '-Dgraal.ExitVMOnException=true',
+            #'-Dgraal.ExitVMOnException=true',
             #'-Dgraal.TruffleOSRCompilationThreshold=10',
             #'-Dgraal.TruffleCompilationThreshold=10',
             '-Dgraal.MaximumLoopExplosionCount=10000']
