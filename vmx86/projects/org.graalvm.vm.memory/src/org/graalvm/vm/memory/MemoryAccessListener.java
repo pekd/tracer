@@ -44,22 +44,33 @@ import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.memory.vector.Vector256;
 import org.graalvm.vm.memory.vector.Vector512;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 public interface MemoryAccessListener {
+    @TruffleBoundary
     void logMemoryRead(long address, int size);
 
+    @TruffleBoundary
     void logMemoryRead(long address, int size, long value);
 
+    @TruffleBoundary
     void logMemoryRead(long address, Vector128 value);
 
+    @TruffleBoundary
     void logMemoryRead(long address, Vector256 value);
 
+    @TruffleBoundary
     void logMemoryRead(long address, Vector512 value);
 
+    @TruffleBoundary
     void logMemoryWrite(long address, int size, long value);
 
+    @TruffleBoundary
     void logMemoryWrite(long address, Vector128 value);
 
+    @TruffleBoundary
     void logMemoryWrite(long address, Vector256 value);
 
+    @TruffleBoundary
     void logMemoryWrite(long address, Vector512 value);
 }

@@ -232,7 +232,13 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         byte value = NativeMemory.i8(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 1);
+            throw e;
+        }
+        logMemoryRead(address, 1, value);
         return value;
     }
 
@@ -240,7 +246,13 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         short value = NativeMemory.i16L(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 2);
+            throw e;
+        }
+        logMemoryRead(address, 2, value);
         return value;
     }
 
@@ -248,7 +260,13 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         short value = NativeMemory.i16B(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 2);
+            throw e;
+        }
+        logMemoryRead(address, 2, value);
         return value;
     }
 
@@ -256,7 +274,13 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         int value = NativeMemory.i32L(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 4);
+            throw e;
+        }
+        logMemoryRead(address, 4, value);
         return value;
     }
 
@@ -264,7 +288,13 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         int value = NativeMemory.i32B(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 4);
+            throw e;
+        }
+        logMemoryRead(address, 4, value);
         return value;
     }
 
@@ -272,7 +302,13 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         long value = NativeMemory.i64L(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 8);
+            throw e;
+        }
+        logMemoryRead(address, 8, value);
         return value;
     }
 
@@ -280,13 +316,20 @@ public class NativeVirtualMemory extends VirtualMemory {
         long addr = addr(address);
         long phy = phy(addr);
         long value = NativeMemory.i64B(phy);
-        checkSegfault(address, phy);
+        try {
+            checkSegfault(address, phy);
+        } catch (SegmentationViolation e) {
+            logMemoryRead(address, 8);
+            throw e;
+        }
+        logMemoryRead(address, 8, value);
         return value;
     }
 
     public void i8(long address, byte val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 1, val);
         NativeMemory.i8(phy, val);
         checkSegfault(address, phy);
     }
@@ -294,6 +337,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public void i16L(long address, short val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 2, val);
         NativeMemory.i16L(phy, val);
         checkSegfault(address, phy);
     }
@@ -301,6 +345,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public void i16B(long address, short val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 2, val);
         NativeMemory.i16B(phy, val);
         checkSegfault(address, phy);
     }
@@ -308,6 +353,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public void i32L(long address, int val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 4, val);
         NativeMemory.i32L(phy, val);
         checkSegfault(address, phy);
     }
@@ -315,6 +361,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public void i32B(long address, int val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 4, val);
         NativeMemory.i32B(phy, val);
         checkSegfault(address, phy);
     }
@@ -322,6 +369,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public void i64L(long address, long val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 8, val);
         NativeMemory.i64L(phy, val);
         checkSegfault(address, phy);
     }
@@ -329,6 +377,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public void i64B(long address, long val) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 8, val);
         NativeMemory.i64B(phy, val);
         checkSegfault(address, phy);
     }
@@ -609,6 +658,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI8(long address, byte expected, byte x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 1, x);
         boolean value = NativeMemory.cmpxchgI8(phy, expected, x);
         checkSegfault(address, phy);
         return value;
@@ -617,6 +667,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI16B(long address, short expected, short x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 2, x);
         boolean value = NativeMemory.cmpxchgI16B(phy, expected, x);
         checkSegfault(address, phy);
         return value;
@@ -625,6 +676,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI16L(long address, short expected, short x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 2, x);
         boolean value = NativeMemory.cmpxchgI16L(phy, expected, x);
         checkSegfault(address, phy);
         return value;
@@ -642,6 +694,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI32B(long address, int expected, int x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 4, x);
         boolean value = NativeMemory.cmpxchgI32B(phy, expected, x);
         checkSegfault(address, phy);
         return value;
@@ -650,6 +703,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI32L(long address, int expected, int x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 4, x);
         boolean value = NativeMemory.cmpxchgI32L(phy, expected, x);
         checkSegfault(address, phy);
         return value;
@@ -667,6 +721,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI64B(long address, long expected, long x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 8, x);
         boolean value = NativeMemory.cmpxchgI64B(phy, expected, x);
         checkSegfault(address, phy);
         return value;
@@ -675,6 +730,7 @@ public class NativeVirtualMemory extends VirtualMemory {
     public boolean cmpxchgI64L(long address, long expected, long x) {
         long addr = addr(address);
         long phy = phy(addr);
+        logMemoryWrite(address, 8, x);
         boolean value = NativeMemory.cmpxchgI64L(phy, expected, x);
         checkSegfault(address, phy);
         return value;

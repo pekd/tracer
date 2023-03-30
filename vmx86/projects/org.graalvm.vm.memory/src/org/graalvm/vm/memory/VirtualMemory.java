@@ -188,15 +188,16 @@ public abstract class VirtualMemory {
         return reportedBrk;
     }
 
-    public long brk(long addr) {
+    public long brk(long address) {
+        long addr = addr(address);
         if (Long.compareUnsigned(addr, brk) > 0 && Long.compareUnsigned(addr, pointerBase) <= 0) {
             long sz = roundToPageSize(addr - brk);
             Memory mem = new ByteMemory(sz, bigEndian);
             MemoryPage page = new MemoryPage(mem, brk, sz, "[heap]");
             add(page);
-            brk = addr;
-            reportedBrk = brk;
-            return brk;
+            brk = roundToPageSize(addr);
+            reportedBrk = addr;
+            return reportedBrk;
         } else {
             reportedBrk = addr;
             return reportedBrk;
@@ -415,14 +416,12 @@ public abstract class VirtualMemory {
 
     protected void logMemoryRead(long address, int size) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryRead(addr(address), size);
         }
     }
 
     protected void logMemoryRead(long address, int size, long value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryRead(addr(address), size, value);
         }
     }
@@ -433,49 +432,42 @@ public abstract class VirtualMemory {
 
     protected void logMemoryRead(long address, Vector128 value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryRead(addr(address), value);
         }
     }
 
     protected void logMemoryRead(long address, Vector256 value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryRead(addr(address), value);
         }
     }
 
     protected void logMemoryRead(long address, Vector512 value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryRead(addr(address), value);
         }
     }
 
     protected void logMemoryWrite(long address, int size, long value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryWrite(addr(address), size, value);
         }
     }
 
     protected void logMemoryWrite(long address, Vector128 value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryWrite(addr(address), value);
         }
     }
 
     protected void logMemoryWrite(long address, Vector256 value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryWrite(addr(address), value);
         }
     }
 
     protected void logMemoryWrite(long address, Vector512 value) {
         if (enableAccessTrace && logger != null) {
-            CompilerAsserts.neverPartOfCompilation();
             logger.logMemoryWrite(addr(address), value);
         }
     }

@@ -45,6 +45,8 @@ import org.graalvm.vm.memory.vector.Vector256;
 import org.graalvm.vm.memory.vector.Vector512;
 import org.graalvm.vm.util.Stringify;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 public class DefaultMemoryAccessLogger implements MemoryAccessListener {
     private static String stringify(int size, long value) {
         switch (size) {
@@ -61,10 +63,14 @@ public class DefaultMemoryAccessLogger implements MemoryAccessListener {
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, int size) {
         System.out.printf("Memory access to 0x%016x: read %d bytes\n", address, size);
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, int size, long value) {
         String val = stringify(size, value);
         if (val != null) {
@@ -74,18 +80,26 @@ public class DefaultMemoryAccessLogger implements MemoryAccessListener {
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, Vector128 value) {
         System.out.printf("Memory access to 0x%016x: read 16 bytes (%s)\n", address, value);
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, Vector256 value) {
         System.out.printf("Memory access to 0x%016x: read 32 bytes (%s)\n", address, value);
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, Vector512 value) {
         System.out.printf("Memory access to 0x%016x: read 64 bytes (%s)\n", address, value);
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, int size, long value) {
         String val = stringify(size, value);
         if (val != null) {
@@ -95,14 +109,20 @@ public class DefaultMemoryAccessLogger implements MemoryAccessListener {
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, Vector128 value) {
         System.out.printf("Memory access to 0x%016x: write 16 bytes (%s)\n", address, value);
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, Vector256 value) {
         System.out.printf("Memory access to 0x%016x: write 32 bytes (%s)\n", address, value);
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, Vector512 value) {
         System.out.printf("Memory access to 0x%016x: write 64 bytes (%s)\n", address, value);
     }

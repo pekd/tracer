@@ -45,6 +45,8 @@ import org.graalvm.vm.memory.vector.Vector128;
 import org.graalvm.vm.memory.vector.Vector256;
 import org.graalvm.vm.memory.vector.Vector512;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 public class MemoryAccessTracer implements MemoryAccessListener {
     private final ExecutionTraceWriter out;
     private final TraceStatus trc;
@@ -54,54 +56,72 @@ public class MemoryAccessTracer implements MemoryAccessListener {
         this.trc = trc;
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, int size) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, false, size);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, int size, long value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, false, size, value);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, Vector128 value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, false, 16, value);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, Vector256 value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, false, 32);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryRead(long address, Vector512 value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, false, 64);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, int size, long value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, true, size, value);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, Vector128 value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, true, 16, value);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, Vector256 value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, true, 32);
         }
     }
 
+    @TruffleBoundary
+    @Override
     public void logMemoryWrite(long address, Vector512 value) {
         if (trc == null || trc.getTraceStatus()) {
             out.memoryAccess(address, true, 64);

@@ -47,6 +47,7 @@ import java.util.List;
 
 import org.graalvm.vm.memory.JavaVirtualMemory;
 import org.graalvm.vm.memory.Memory;
+import org.graalvm.vm.memory.MemoryAccessListener;
 import org.graalvm.vm.memory.MemoryPage;
 import org.graalvm.vm.memory.MemorySegment;
 import org.graalvm.vm.memory.PosixMemory;
@@ -68,6 +69,13 @@ public class HybridVirtualMemory extends VirtualMemory {
     public HybridVirtualMemory() {
         jmem = new JavaVirtualMemory();
         nmem = new NativeVirtualMemory(NativeVirtualMemory.LOW, NativeVirtualMemory.HIGH, 0, NativeVirtualMemory.SIZE);
+    }
+
+    @Override
+    public void setAccessLogger(MemoryAccessListener logger) {
+        super.setAccessLogger(logger);
+        jmem.setAccessLogger(logger);
+        nmem.setAccessLogger(logger);
     }
 
     public NativeVirtualMemory getNativeVirtualMemory() {
