@@ -596,4 +596,36 @@ public class ArrayRecoveryTest {
         assertEquals(8, var.getType().getElementSize());
         assertEquals(DataType.U64, var.getType().getElementType().getType());
     }
+
+    @Test
+    public void testMultiOverlap8bitPattern2() {
+        for (int i = 0; i < 24; i++) {
+            read(0x100 + i, (byte) (i + 42));
+            step(0);
+        }
+
+        for (int i = 0; i < 24; i++) {
+            read(0x120 + i, (byte) (i + 42));
+            step(8);
+        }
+
+        for (int i = 0; i < 24; i++) {
+            read(0x128 + i, (byte) (i + 42));
+            step(12);
+        }
+
+        for (int i = 0; i < 24; i++) {
+            read(0x110 + i, (byte) (i + 42));
+            step(4);
+        }
+
+        finish();
+
+        Variable var = mem.get(0x100);
+        assertNotNull(var);
+        assertEquals(0x100, var.getAddress());
+        assertEquals(64, var.getType().getElements());
+        assertEquals(1, var.getType().getElementSize());
+        assertEquals(DataType.U8, var.getType().getElementType().getType());
+    }
 }
