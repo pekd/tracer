@@ -90,6 +90,7 @@ import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Field;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
 import org.graalvm.vm.trcview.analysis.type.Struct;
@@ -1158,6 +1159,98 @@ public class MainWindow extends JFrame implements TraceListenable {
             });
 
             out.println();
+            out.println("\t// data types");
+            UserTypeDatabase types = trc.getTypeDatabase();
+            if (!types.getTypes().isEmpty()) {
+                out.println("\tauto id;");
+                out.println("\tbegin_type_updating(UTP_STRUCT);");
+            }
+            for (UserDefinedType type : types.getTypes()) {
+                String name = type.getName();
+                if (type instanceof Struct) {
+                    Struct struct = (Struct) type;
+                    out.printf("\tid = add_struc(-1, %s, 0);\n", DecoderUtils.str(name));
+                    for (Field field : struct.getFields()) {
+                        String fieldname = field.getName();
+                        long offset = field.getOffset();
+                        long size = field.getSize();
+                        List<String> flagConstants = new ArrayList<>();
+                        String typeid = "-1";
+                        switch (field.getType().getType()) {
+                            case S8:
+                            case U8:
+                                flagConstants.add("FF_BYTE");
+                                break;
+                            case S16:
+                            case U16:
+                            case FX16:
+                                flagConstants.add("FF_WORD");
+                                break;
+                            case S32:
+                            case U32:
+                            case FX32:
+                                flagConstants.add("FF_DWORD");
+                                break;
+                            case S64:
+                            case U64:
+                                flagConstants.add("FF_QWORD");
+                                break;
+                            case F32:
+                                flagConstants.add("FF_FLOAT");
+                                break;
+                            case F64:
+                                flagConstants.add("FF_DOUBLE");
+                                break;
+                            case STRUCT:
+                                flagConstants.add("FF_STRUCT");
+                                typeid = "get_struc_id(" + DecoderUtils.str(field.getType().getStruct().getName()) + ")";
+                                break;
+                        }
+                        switch (field.getType().getRepresentation()) {
+                            case CHAR:
+                                flagConstants.add("FF_0CHAR");
+                                break;
+                            case DEC:
+                                flagConstants.add("FF_0NUMD");
+                                break;
+                            case HEX:
+                            case FX16:
+                            case FX32:
+                                flagConstants.add("FF_0NUMH");
+                                break;
+                            case OCT:
+                                flagConstants.add("FF_0NUMO");
+                                break;
+                            case FLOAT:
+                                flagConstants.add("FF_0FLT");
+                                break;
+                        }
+                        flagConstants.add("FF_DATA");
+                        String flags = String.join("|", flagConstants);
+                        out.printf("\tadd_struc_member(id, %s, 0x%x, %s, %s, %s);\n", DecoderUtils.str(fieldname), offset, flags, typeid, size);
+                    }
+                }
+            }
+            if (!types.getTypes().isEmpty()) {
+                out.println("\tend_type_updating(UTP_STRUCT);");
+
+                out.println();
+                out.println("\t// struct field types");
+                for (UserDefinedType type : types.getTypes()) {
+                    String name = type.getName();
+                    if (type instanceof Struct) {
+                        out.printf("\tid = get_struc_id(%s);\n", DecoderUtils.str(name));
+                        Struct struct = (Struct) type;
+                        for (Field field : struct.getFields()) {
+                            if (field.getType() != null && field.getType().getType() != DataType.CODE) {
+                                out.printf("\tSetType(get_member_id(id, 0x%x), %s);\n", field.getOffset(), DecoderUtils.str(field.getType().toCType()));
+                            }
+                        }
+                    }
+                }
+            }
+
+            out.println();
             out.println("\t// variables");
             TypedMemory mem = trc.getTypedMemory();
             for (Variable var : mem.getAllTypes()) {
@@ -1175,8 +1268,8 @@ public class MainWindow extends JFrame implements TraceListenable {
 
             out.println("}");
 
-            log.info("Finished generating IDC script " + file + "...");
-            setStatus("Finished generating IDC script " + file + "...");
+            log.info("Finished generating IDC script " + file);
+            setStatus("Finished generating IDC script " + file);
         } catch (Throwable t) {
             log.log(Level.WARNING, "Generating IDC script failed: " + t, t);
             setStatus("Generating IDC script failed: " + t);
