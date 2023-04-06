@@ -94,6 +94,32 @@ public class PDP11 extends Architecture {
     }
 
     @Override
+    public int getRegisterId(String name) {
+        switch (name.toLowerCase()) {
+            case "r0":
+                return 0;
+            case "r1":
+                return 1;
+            case "r2":
+                return 2;
+            case "r3":
+                return 3;
+            case "r4":
+                return 4;
+            case "r5":
+                return 5;
+            case "r6":
+            case "sp":
+                return 6;
+            case "r7":
+            case "pc":
+                return 7;
+            default:
+                return -1;
+        }
+    }
+
+    @Override
     public int getRegisterCount() {
         return 8;
     }

@@ -70,6 +70,10 @@ public abstract class Architecture {
         return 0;
     }
 
+    public int getRegisterId(@SuppressWarnings("unused") String name) {
+        return -1;
+    }
+
     public Disassembler getDisassembler(@SuppressWarnings("unused") TraceAnalyzer trc) {
         return null;
     }

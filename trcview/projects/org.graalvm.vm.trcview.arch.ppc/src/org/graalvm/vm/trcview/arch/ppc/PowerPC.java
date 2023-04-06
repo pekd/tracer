@@ -98,6 +98,111 @@ public class PowerPC extends Architecture {
     }
 
     @Override
+    public int getRegisterId(String name) {
+        switch (name.toLowerCase()) {
+            case "r0":
+            case "gpr0":
+                return 0;
+            case "r1":
+            case "gpr1":
+            case "sp":
+                return 1;
+            case "r2":
+            case "gpr2":
+                return 2;
+            case "r3":
+            case "gpr3":
+                return 3;
+            case "r4":
+            case "gpr4":
+                return 4;
+            case "r5":
+            case "gpr5":
+                return 5;
+            case "r6":
+            case "gpr6":
+                return 6;
+            case "r7":
+            case "gpr7":
+                return 7;
+            case "r8":
+            case "gpr8":
+                return 8;
+            case "r9":
+            case "gpr9":
+                return 9;
+            case "r10":
+            case "gpr10":
+                return 10;
+            case "r11":
+            case "gpr11":
+                return 11;
+            case "r12":
+            case "gpr12":
+                return 12;
+            case "r13":
+            case "gpr13":
+                return 13;
+            case "r14":
+            case "gpr14":
+                return 14;
+            case "r15":
+            case "gpr15":
+                return 15;
+            case "r16":
+            case "gpr16":
+                return 16;
+            case "r17":
+            case "gpr17":
+                return 17;
+            case "r18":
+            case "gpr18":
+                return 18;
+            case "r19":
+            case "gpr19":
+                return 19;
+            case "r20":
+            case "gpr20":
+                return 20;
+            case "r21":
+            case "gpr21":
+                return 21;
+            case "r22":
+            case "gpr22":
+                return 22;
+            case "r23":
+            case "gpr23":
+                return 23;
+            case "r24":
+            case "gpr24":
+                return 24;
+            case "r25":
+            case "gpr25":
+                return 25;
+            case "r26":
+            case "gpr26":
+                return 26;
+            case "r27":
+            case "gpr27":
+                return 27;
+            case "r28":
+            case "gpr28":
+                return 28;
+            case "r29":
+            case "gpr29":
+                return 29;
+            case "r30":
+            case "gpr30":
+                return 30;
+            case "r31":
+            case "gpr31":
+                return 31;
+            default:
+                return -1;
+        }
+    }
+
+    @Override
     public int getRegisterCount() {
         return 32;
     }

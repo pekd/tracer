@@ -1,20 +1,31 @@
 package org.graalvm.vm.trcview.data;
 
+import java.util.List;
 import java.util.logging.Logger;
 
+import org.graalvm.vm.trcview.analysis.ComputedSymbol;
 import org.graalvm.vm.trcview.analysis.SymbolTable;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
+import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.data.ir.MemoryOperand;
+import org.graalvm.vm.trcview.data.ir.Operand;
+import org.graalvm.vm.trcview.data.ir.RegisterOperand;
 import org.graalvm.vm.trcview.data.type.VariableType;
+import org.graalvm.vm.trcview.decode.ABI;
+import org.graalvm.vm.trcview.decode.CallingConvention;
+import org.graalvm.vm.trcview.decode.CallingConventionDecoder;
+import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
@@ -204,9 +215,85 @@ public class DynamicTypePropagation {
 
         arrays.transfer();
 
+        if (trc.getABI() != null) {
+            log.info("Recovering subroutine signatures...");
+
+            ABI abi = trc.getABI();
+            CallingConvention cc = abi.getCall();
+
+            // go through all functions and recover the signature
+            for (ComputedSymbol sym : trc.getSymbols()) {
+                // only process subroutines
+                if (sym.type != ComputedSymbol.Type.SUBROUTINE) {
+                    continue;
+                }
+
+                // only process subroutines without prototype
+                if (sym.prototype != null) {
+                    log.info("Prototype of " + sym.name + " is " + new Function(sym.name, sym.prototype));
+                    continue;
+                }
+
+                // process first step
+                for (Node n : sym.visits) {
+                    if (n instanceof StepEvent) {
+                        StepEvent step = (StepEvent) n;
+                        setPrototype(sym, cc, step, trc);
+                        break;
+                    }
+                }
+            }
+        }
+
         long end = System.currentTimeMillis();
         long time = end - start;
         log.info("Type recovery finished [" + time + " ms]");
+    }
+
+    private Type getOperand(ComputedSymbol sym, Operand op, StepEvent step) {
+        if (op != null && sym.prototype == null) {
+            long flags;
+            if (op instanceof RegisterOperand) {
+                flags = semantics.resolve(sym.address, (RegisterOperand) op);
+            } else if (op instanceof MemoryOperand) {
+                long addr = ((MemoryOperand) op).getAddress();
+                flags = semantics.resolveMemory(addr, step.getStep());
+            } else {
+                return null;
+            }
+            VariableType type = VariableType.resolve(flags, info.getPointerSize());
+            if (type == null) {
+                return null;
+            } else {
+                return type.toType(info);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private void setPrototype(ComputedSymbol sym, CallingConvention cc, StepEvent step, TraceAnalyzer trc) {
+        CpuState state = step.getState();
+
+        // return type
+        Operand ret = CallingConventionDecoder.getReturnLocation(cc, state, trc);
+        Type retType = getOperand(sym, ret, step);
+
+        // arg type
+        // TODO: figure out how many arguments are passed
+        Operand op = CallingConventionDecoder.getArgumentLocation(cc, 0, state, trc);
+        Type type = getOperand(sym, op, step);
+
+        if (type != null) {
+            if (retType == null) {
+                retType = new Type(DataType.VOID);
+            }
+            trc.setPrototype(sym, new Prototype(retType, List.of(type), List.of("a1")));
+            log.info("Updating prototype of " + sym.name + ": " + new Function(sym.name, sym.prototype));
+        } else if (retType != null) {
+            trc.setPrototype(sym, new Prototype(retType));
+            log.info("Updating prototype of " + sym.name + ": " + new Function(sym.name, sym.prototype));
+        }
     }
 
     private static void defineArray(TraceAnalyzer trc, Type type, long firstAddr, long lastAddr, long laststep) {
