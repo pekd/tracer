@@ -318,7 +318,7 @@ public class ElfLoader {
 
                 if (hdr.getType() == Elf.PT_PHDR) {
                     phoff = offset;
-                } else if(fileOffset == 0) {
+                } else if (fileOffset == 0) {
                     phoff = offset + elf.e_phoff;
                 }
 
@@ -416,7 +416,18 @@ public class ElfLoader {
 
                     segment = new byte[(int) size];
                     hdr.load(segment);
-                    MemoryPage p = new MemoryPage(new ByteMemory(segment, false), base + hdr.getVirtualAddress(), segment.length, interpreter, fileOffset);
+
+                    if (offset != memory.pageStart(offset)) {
+                        // unaligned start address: pad the beginning
+                        long diff = offset - memory.pageStart(offset);
+                        byte[] seg = new byte[(int) memory.roundToPageSize(diff + hdr.getMemorySize())];
+                        System.arraycopy(segment, 0, seg, (int) diff, (int) hdr.getFileSize());
+                        segment = seg;
+                        offset = memory.pageStart(offset);
+                        assert seg.length == memory.roundToPageSize(seg.length);
+                        assert offset == memory.pageStart(offset);
+                    }
+                    MemoryPage p = new MemoryPage(new ByteMemory(segment, false), offset, segment.length, interpreter, fileOffset);
                     p.r = hdr.getFlag(Elf.PF_R);
                     p.w = hdr.getFlag(Elf.PF_W);
                     p.x = hdr.getFlag(Elf.PF_X);

@@ -85,6 +85,9 @@ public class MemoryPage {
         x = true;
         name = null;
         fileOffset = 0;
+
+        assert Long.compareUnsigned(base, end) < 0;
+        assert end - base == size;
     }
 
     public MemoryPage(Memory memory, long base, long size, String name) {
@@ -98,6 +101,9 @@ public class MemoryPage {
         w = true;
         x = true;
         fileOffset = 0;
+
+        assert Long.compareUnsigned(base, end) < 0;
+        assert end - base == size;
     }
 
     public MemoryPage(Memory memory, long base, long size, String name, long fileOffset) {
@@ -111,6 +117,9 @@ public class MemoryPage {
         w = true;
         x = true;
         this.fileOffset = fileOffset;
+
+        assert Long.compareUnsigned(base, end) < 0;
+        assert end - base == size;
     }
 
     protected MemoryPage(MemoryPage page) {
@@ -124,6 +133,9 @@ public class MemoryPage {
         this.x = page.x;
         this.name = page.name;
         this.fileOffset = page.fileOffset;
+
+        assert Long.compareUnsigned(base, end) < 0;
+        assert end - base == size;
     }
 
     public MemoryPage(MemoryPage page, long address, long size) {
@@ -137,6 +149,9 @@ public class MemoryPage {
         this.offset = page.offset + address - page.base;
         this.name = page.name;
         this.fileOffset = page.fileOffset + (address - page.base);
+
+        assert Long.compareUnsigned(base, end) < 0;
+        assert end - base == size;
     }
 
     public boolean contains(long address) {
