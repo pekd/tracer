@@ -126,7 +126,7 @@ def getClasspathOptions():
 
 def getTrcviewClasspathOptions():
     """gets the classpath of the trcview distributions"""
-    return mx.get_runtime_jvm_args(['VM', 'VMX86_TRCVIEW', 'utils:CORE', 'utils:POSIX'])
+    return mx.get_runtime_jvm_args(['trcview:TRCVIEW', 'utils:CORE', 'utils:POSIX'])
 
 def getEmu86ClasspathOptions():
     """gets the classpath of the emu86 distributions"""

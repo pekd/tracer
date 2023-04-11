@@ -69,6 +69,13 @@ suite = {
         "urls" : [
           {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
         ]
+      },
+      {
+        "name" : "trcview",
+        "subdir" : True,
+        "urls" : [
+          {"url" : "https://github.com/pekd/tracer", "kind" : "git"},
+        ]
       }
     ]
   },
