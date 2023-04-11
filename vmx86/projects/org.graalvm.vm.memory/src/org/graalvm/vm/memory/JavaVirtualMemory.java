@@ -210,6 +210,8 @@ public class JavaVirtualMemory extends VirtualMemory {
             try {
                 get(base);
             } catch (SegmentationViolation e) {
+                assert size == roundToPageSize(size);
+                assert base == pageStart(base);
                 Memory buf = new ByteMemory(size, bigEndian);
                 MemoryPage bufpage = new MemoryPage(buf, base, size, page.name);
                 pages.put(base, bufpage);
@@ -305,6 +307,8 @@ public class JavaVirtualMemory extends VirtualMemory {
         if (base == 0) {
             return null;
         } else {
+            assert base == addr(base);
+            assert size == roundToPageSize(size);
             Memory mem = new ByteMemory(size, bigEndian);
             MemoryPage page = new MemoryPage(mem, base, size, name);
             add(page);
@@ -734,8 +738,10 @@ public class JavaVirtualMemory extends VirtualMemory {
     @Override
     public void mprotect(long address, long len, boolean r, boolean w, boolean x) throws PosixException {
         long remaining = roundToPageSize(len);
-        long p = addr(address);
+        long p = pageStart(addr(address));
         while (remaining > 0) {
+            assert roundToPageSize(remaining) == remaining;
+            assert pageStart(p) == p;
             MemoryPage page = get(p);
             if (page.base == addr(p) && Long.compareUnsigned(page.size, remaining) <= 0) {
                 // whole "page"
@@ -764,16 +770,31 @@ public class JavaVirtualMemory extends VirtualMemory {
                 long off = p - page.base;
                 MemoryPage p1 = new MemoryPage(page, page.base, off);
                 MemoryPage p2 = new MemoryPage(page, page.base + off, page.size - off);
-                p2.r = r;
-                p2.w = w;
-                p2.x = x;
-                pages.remove(page.base);
-                pages.put(p1.base, p1);
-                pages.put(p2.base, p2);
+
+                if (Long.compareUnsigned(p2.size, remaining) > 0) {
+                    // second part is larger, we cut a piece out of the middle of a bigger page
+                    MemoryPage p3 = new MemoryPage(page, page.base + off, remaining);
+                    MemoryPage p4 = new MemoryPage(page, page.base + off, page.size - off - remaining);
+                    p3.r = r;
+                    p3.w = w;
+                    p3.x = x;
+                    pages.remove(page.base);
+                    pages.put(p1.base, p1);
+                    pages.put(p3.base, p3);
+                    pages.put(p4.base, p4);
+                } else {
+                    p2.r = r;
+                    p2.w = w;
+                    p2.x = x;
+                    pages.remove(page.base);
+                    pages.put(p1.base, p1);
+                    pages.put(p2.base, p2);
+                }
                 cache = null;
                 cache2 = null;
                 p = page.end;
                 remaining -= page.size;
+                checkConsistency();
             }
         }
         checkConsistency();
