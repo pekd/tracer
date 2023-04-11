@@ -733,8 +733,8 @@ public class JavaVirtualMemory extends VirtualMemory {
     @TruffleBoundary
     @Override
     public void mprotect(long address, long len, boolean r, boolean w, boolean x) throws PosixException {
-        long remaining = len;
-        long p = address;
+        long remaining = roundToPageSize(len);
+        long p = addr(address);
         while (remaining > 0) {
             MemoryPage page = get(p);
             if (page.base == addr(p) && Long.compareUnsigned(page.size, remaining) <= 0) {
