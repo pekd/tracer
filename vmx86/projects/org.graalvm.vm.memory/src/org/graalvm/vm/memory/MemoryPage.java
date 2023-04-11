@@ -367,7 +367,7 @@ public class MemoryPage {
     @Override
     public String toString() {
         return String.format("%016x-%016x %c%c%cp %08x 00:00 0 %s",
-                        base, end - 1, r ? 'r' : '-', w ? 'w' : '-', x ? 'x' : '-', fileOffset,
+                        base, end, r ? 'r' : '-', w ? 'w' : '-', x ? 'x' : '-', fileOffset,
                         name != null ? name : "");
     }
 }
