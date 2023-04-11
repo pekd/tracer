@@ -7,6 +7,7 @@ vmx86 is an x86\_64 interpreter built on top of the GraalVM.
 Build Dependencies
 ==================
 
+- compatible JDK
 - gcc for libmemory (high performance memory library) and libemu86 (ptrace based debugging tool)
 - Linux/x86\_64 host with gcc to build the test cases
 
@@ -33,20 +34,16 @@ Clone the Graal repository as well as this repository:
 
 ```
 git clone https://github.com/oracle/graal
-git clone https://github.com/graalvm/vmx86
+git clone https://github.com/pekd/tracer
 ```
 
-*Note:* the current implementation of vmx86's NFI is incompatible with the
-current version of Graal. Use Graal commit
-07bc60dbd6b15073c9c0669e1638855666048915 to avoid this problem.
-
-Set `JAVA_HOME` to a JDK >= 1.8, e.g.:
+Set `JAVA_HOME` to a JDK >= 17, e.g.:
 
 ```
-echo JAVA_HOME=/usr/lib/jvm/java-11-openjdk > vmx86/mx.vmx86/env
+echo JAVA_HOME=/usr/lib/jvm/java-17-openjdk > vmx86/mx.vmx86/env
 ```
 
-*Note:* To avoid unnecessary trouble, use OpenJDK 11.
+*NOTE:* it might be necessary to use a "labsjdk" which has a more up to date implementation of the JVMCI interface. The labsjdk can be obtained from Github ([labs-openjdk-17](https://github.com/graalvm/labs-openjdk-17/releases/)).
 
 Build vmx86:
 
