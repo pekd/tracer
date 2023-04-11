@@ -559,6 +559,19 @@ public class PosixEnvironment {
         }
     }
 
+    public long readlinkat(int fd, long path, long buf, long bufsize) throws SyscallException {
+        String p = cstr(path);
+        PosixPointer ptr = posixPointer(buf);
+        try {
+            return posix.readlinkat(fd, p, ptr, bufsize);
+        } catch (PosixException e) {
+            if (strace) {
+                log.log(Level.INFO, "readlinkat failed: " + Errno.toString(e.getErrno()));
+            }
+            throw new SyscallException(e.getErrno());
+        }
+    }
+
     public int unlink(long pathname) throws SyscallException {
         String path = cstr(pathname);
         try {

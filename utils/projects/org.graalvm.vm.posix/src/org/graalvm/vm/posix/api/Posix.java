@@ -460,6 +460,39 @@ public class Posix {
         return len;
     }
 
+    public int readlinkat(int fd, String path, PosixPointer buf, long bufsize) throws PosixException {
+        if (strace) {
+            log.log(Levels.INFO, () -> String.format("readlinkat(%s, %s, %s, %d)", fd, str(path), buf, bufsize));
+        }
+        if (buf == null) {
+            throw new PosixException(Errno.EFAULT);
+        }
+        if (path == null) {
+            throw new PosixException(Errno.EFAULT);
+        }
+        if (fd == Fcntl.AT_FDCWD) {
+            return __readlink(path, buf, bufsize);
+        }
+
+        FileDescriptor dirfd = fds.getFileDescriptor(fd);
+        if (!(dirfd.stream instanceof DirectoryStream)) {
+            throw new PosixException(Errno.ENOTDIR);
+        }
+        String dir = dirfd.name;
+        String resolved = VFS.resolve(path, dir);
+        return __readlink(resolved, buf, bufsize);
+    }
+
+    private int __readlink(String path, PosixPointer buf, long bufsize) throws PosixException {
+        String link = vfs.readlink(path);
+        int len = link.length();
+        if (len > bufsize) {
+            len = (int) bufsize;
+        }
+        CString.memcpy(buf, link.getBytes(), len);
+        return len;
+    }
+
     public int unlink(String path) throws PosixException {
         if (strace) {
             log.log(Levels.INFO, () -> String.format("unlink(%s)", str(path)));
