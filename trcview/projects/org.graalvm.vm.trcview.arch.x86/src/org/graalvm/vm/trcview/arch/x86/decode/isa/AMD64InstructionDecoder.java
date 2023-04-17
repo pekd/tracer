@@ -390,6 +390,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Psub.Psubq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Psub.Psubw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Psubus.Psubusb;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Psubus.Psubusw;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Ptest;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Punpckh.Punpckhbw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Punpckh.Punpckhdq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Punpckh.Punpckhqdq;
@@ -3341,6 +3342,12 @@ public class AMD64InstructionDecoder {
                             case AMD64Opcode.PMULLD_OP:
                                 if (sizeOverride) {
                                     return new Pmulld(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                } else {
+                                    return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
+                                }
+                            case AMD64Opcode.PTEST_X_XM:
+                                if (sizeOverride) {
+                                    return new Ptest(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                                 } else {
                                     return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                                 }
