@@ -379,8 +379,40 @@ public class SyscallNames {
                     /* 334 */ "rseq"
     };
 
+    public static final String[] NAMES2 = {
+                    /* 424 */ "pidfd_send_signal",
+                    /* 425 */ "io_uring_setup",
+                    /* 426 */ "io_uring_enter",
+                    /* 427 */ "io_uring_register",
+                    /* 428 */ "open_tree",
+                    /* 429 */ "move_mount",
+                    /* 430 */ "fsopen",
+                    /* 431 */ "fsconfig",
+                    /* 432 */ "fsmount",
+                    /* 433 */ "fspick",
+                    /* 434 */ "pidfd_open",
+                    /* 435 */ "clone3",
+                    /* 436 */ "close_range",
+                    /* 437 */ "openat2",
+                    /* 438 */ "pidfd_getfd",
+                    /* 439 */ "faccessat2",
+                    /* 440 */ "process_madvise",
+                    /* 441 */ "epoll_pwait2",
+                    /* 442 */ "mount_setattr",
+                    /* 443 */ "quotactl_fd",
+                    /* 444 */ "landlock_create_ruleset",
+                    /* 445 */ "landlock_add_rule",
+                    /* 446 */ "landlock_restrict_self",
+                    /* 447 */ "memfd_secret",
+                    /* 448 */ "process_mrelease",
+                    /* 449 */ "futex_waitv",
+                    /* 450 */ "set_mempolicy_home_node"
+    };
+
     public static String getName(long id) {
-        if (id < 0 || id >= NAMES.length) {
+        if (id >= 424 && id - 424 < NAMES2.length) {
+            return NAMES2[(int) id - 424];
+        } else if (id < 0 || id >= NAMES.length) {
             return null;
         } else {
             return NAMES[(int) id];
