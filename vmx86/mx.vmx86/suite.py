@@ -48,7 +48,7 @@ suite = {
       {
         "name" : "truffle",
         "subdir" : True,
-        "version" : "edb87981a3fb3b17419e755e7a921e43140b4c5b",
+        "version" : "6360ce65914290b214f3a939bc0eff3281f1f9a0",
         "urls" : [
           {"url" : "https://github.com/oracle/graal", "kind" : "git"},
           {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -57,7 +57,7 @@ suite = {
       {
         "name" : "substratevm",
         "subdir" : True,
-        "version" : "edb87981a3fb3b17419e755e7a921e43140b4c5b",
+        "version" : "6360ce65914290b214f3a939bc0eff3281f1f9a0",
         "urls" : [
           {"url" : "https://github.com/oracle/graal", "kind" : "git"},
           {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -116,7 +116,7 @@ suite = {
         "utils:POSIX",
         "truffle:TRUFFLE_API",
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
       "workingSets" : "vmx86",
       "license" : "UPL",
@@ -129,7 +129,7 @@ suite = {
         "org.graalvm.vm.memory",
         "substratevm:SVM"
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
       "workingSets" : "vmx86",
       "license" : "UPL",
@@ -164,7 +164,7 @@ suite = {
       "dependencies" : [
         "org.graalvm.vm.memory",
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
       "workingSets" : "vmx86",
       "license" : "UPL",
@@ -177,7 +177,7 @@ suite = {
     #    "org.graalvm.vm.x86",
     #    "truffle:TRUFFLE_NFI"
     #  ],
-    #  "javaCompliance" : "11+",
+    #  "javaCompliance" : "17+",
     #  "annotationProcessors" : ["truffle:TRUFFLE_DSL_PROCESSOR"],
     #  "workingSets" : "vmx86",
     #  "license" : "UPL",
@@ -190,7 +190,7 @@ suite = {
         "utils:CORE",
         "sdk:LAUNCHER_COMMON"
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "workingSets" : "vmx86",
       "license" : "UPL",
     },
@@ -218,7 +218,7 @@ suite = {
         "org.graalvm.vm.x86.testcases.c",
         "mx:JUNIT",
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "workingSets" : "vmx86",
       "testProject" : True,
       "license" : "UPL",
@@ -231,7 +231,7 @@ suite = {
         "org.graalvm.vm.memory",
         "mx:JUNIT",
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "workingSets" : "vmx86",
       "testProject" : True,
       "license" : "UPL",
@@ -245,7 +245,7 @@ suite = {
         "org.graalvm.vm.memory",
         "org.graalvm.vm.x86"
       ],
-      "javaCompliance" : "11+",
+      "javaCompliance" : "17+",
       "workingSets" : "vmx86",
       "testProject" : True,
       "license" : "UPL",
