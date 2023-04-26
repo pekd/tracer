@@ -61,7 +61,7 @@ public abstract class Stos extends AMD64Instruction {
     @Child protected WriteNode writeDst;
     @Child protected MemoryWriteNode writeMemory;
 
-    protected final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+    protected final ConditionProfile profile = ConditionProfile.create();
 
     protected Stos(long pc, byte[] instruction, String name) {
         super(pc, instruction);

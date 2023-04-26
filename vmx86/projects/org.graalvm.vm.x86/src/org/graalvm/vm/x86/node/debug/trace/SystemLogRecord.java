@@ -41,6 +41,7 @@
 package org.graalvm.vm.x86.node.debug.trace;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -56,7 +57,7 @@ public class SystemLogRecord extends Record {
     private long seq;
     private long time;
     private int level;
-    private int threadID;
+    private long threadID;
     private String logger;
     private String clazz;
     private String method;
@@ -67,7 +68,7 @@ public class SystemLogRecord extends Record {
         super(ID);
     }
 
-    public SystemLogRecord(long seq, long time, int level, int threadID, String logger, String clazz, String method, String message, Throwable throwable) {
+    public SystemLogRecord(long seq, long time, int level, long threadID, String logger, String clazz, String method, String message, Throwable throwable) {
         this();
         this.seq = seq;
         this.time = time;
@@ -87,10 +88,8 @@ public class SystemLogRecord extends Record {
         };
         LogRecord r = new LogRecord(lvl, clazz);
         r.setSequenceNumber(seq);
-        // TODO: fix once >Java 1.8
-        // r.setInstant(Instant.ofEpochMilli(time));
-        r.setMillis(time);
-        r.setThreadID(threadID);
+        r.setInstant(Instant.ofEpochMilli(time));
+        r.setLongThreadID(threadID);
         r.setLoggerName(logger);
         r.setSourceClassName(clazz);
         r.setSourceMethodName(method);

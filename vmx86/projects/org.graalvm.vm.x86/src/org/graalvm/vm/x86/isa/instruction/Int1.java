@@ -82,7 +82,7 @@ public class Int1 extends AMD64Instruction {
 
     @CompilationFinal private ContextReference<AMD64Context> ctxRef;
 
-    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile profile = ConditionProfile.create();
 
     public Int1(long pc, byte[] instruction) {
         super(pc, instruction);

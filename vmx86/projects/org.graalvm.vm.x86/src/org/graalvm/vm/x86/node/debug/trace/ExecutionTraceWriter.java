@@ -118,7 +118,7 @@ public class ExecutionTraceWriter implements Closeable {
     }
 
     @TruffleBoundary
-    public synchronized void log(long seq, long time, int level, int threadID, String logger, String clazz, String method, String msg, Throwable throwable) {
+    public synchronized void log(long seq, long time, int level, long threadID, String logger, String clazz, String method, String msg, Throwable throwable) {
         SystemLogRecord record = new SystemLogRecord(seq, time, level, threadID, logger, clazz, method, msg, throwable);
         try {
             record.write(out);

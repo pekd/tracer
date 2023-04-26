@@ -48,7 +48,7 @@ import org.graalvm.vm.x86.node.ReadNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 public class Addsd extends AMD64Instruction {
     private final Operand operand1;
@@ -58,7 +58,7 @@ public class Addsd extends AMD64Instruction {
     @Child private ReadNode readB;
     @Child private WriteNode writeDst;
 
-    private final ConditionProfile profile = ConditionProfile.createCountingProfile();
+    private final CountingConditionProfile profile = CountingConditionProfile.create();
 
     private final static double NEG_NAN = Double.longBitsToDouble(0xfff8000000000000L);
 

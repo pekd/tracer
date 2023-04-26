@@ -51,7 +51,7 @@ import org.graalvm.vm.x86.node.WriteFlagNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 public abstract class Shl extends AMD64Instruction {
     protected final Operand operand1;
@@ -67,7 +67,7 @@ public abstract class Shl extends AMD64Instruction {
     @Child protected WriteFlagNode writeSF;
     @Child protected WriteFlagNode writePF;
 
-    protected final ConditionProfile profile = ConditionProfile.createCountingProfile();
+    protected final CountingConditionProfile profile = CountingConditionProfile.create();
 
     protected Shl(long pc, byte[] instruction, Operand operand1, Operand operand2) {
         super(pc, instruction);

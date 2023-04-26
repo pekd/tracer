@@ -50,7 +50,7 @@ import org.graalvm.vm.x86.node.ReadNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 public class Psrldq extends AMD64Instruction {
     private final Operand operand1;
@@ -61,7 +61,7 @@ public class Psrldq extends AMD64Instruction {
 
     private final int shift;
 
-    private final ConditionProfile profile = ConditionProfile.createCountingProfile();
+    private final CountingConditionProfile profile = CountingConditionProfile.create();
 
     protected Psrldq(long pc, byte[] instruction, Operand operand1, int shift) {
         super(pc, instruction);

@@ -50,7 +50,7 @@ import org.graalvm.vm.x86.node.WriteFlagNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.CountingConditionProfile;
 
 public abstract class Rol extends AMD64Instruction {
     private final Operand operand1;
@@ -62,8 +62,8 @@ public abstract class Rol extends AMD64Instruction {
     @Child protected WriteFlagNode writeCF;
     @Child protected WriteFlagNode writeOF;
 
-    protected final ConditionProfile profileGTZ = ConditionProfile.createCountingProfile();
-    protected final ConditionProfile profileEQO = ConditionProfile.createCountingProfile();
+    protected final CountingConditionProfile profileGTZ = CountingConditionProfile.create();
+    protected final CountingConditionProfile profileEQO = CountingConditionProfile.create();
 
     protected Rol(long pc, byte[] instruction, Operand operand1, Operand operand2) {
         super(pc, instruction);

@@ -44,7 +44,7 @@ public class AMD64SystemLogEvent extends SystemLogEvent {
         LogRecord r = new LogRecord(lvl, clazz);
         r.setSequenceNumber(seq);
         r.setInstant(Instant.ofEpochMilli(time));
-        r.setThreadID(threadID);
+        r.setLongThreadID(threadID);
         r.setLoggerName(logger);
         r.setSourceClassName(clazz);
         r.setSourceMethodName(method);

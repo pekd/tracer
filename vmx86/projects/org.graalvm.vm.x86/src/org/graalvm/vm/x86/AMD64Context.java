@@ -182,8 +182,8 @@ public class AMD64Context implements TraceStatus {
         dispatchCpuState = fd.addSlot(FrameSlotKind.Boolean, "dispatchCpuState", null);
         dispatchTrace = fd.addSlot(FrameSlotKind.Boolean, "dispatchTrace", null);
 
-        gprMask = fd.addSlot(FrameSlotKind.Boolean, "gprmask", null);
-        avxMask = fd.addSlot(FrameSlotKind.Boolean, "avxmask", null);
+        gprMask = fd.addSlot(FrameSlotKind.Object, "gprmask", null);
+        avxMask = fd.addSlot(FrameSlotKind.Object, "avxmask", null);
 
         frameDescriptor = fd.build();
     }
@@ -460,7 +460,7 @@ public class AMD64Context implements TraceStatus {
 
     public Thread createThread(int tid, Runnable runnable) {
         ThreadGroup group = posix.getThreadGroup();
-        Thread thread = env.createThread(runnable, null, group);
+        Thread thread = env.newTruffleThreadBuilder(runnable).threadGroup(group).build();
         posix.addThread(tid, thread);
         return thread;
     }

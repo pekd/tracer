@@ -57,7 +57,7 @@ public class LogStreamHandler extends Handler {
         String clazz = record.getSourceClassName();
         String method = record.getSourceMethodName();
         String logger = record.getLoggerName();
-        int threadID = record.getThreadID();
+        long threadID = record.getLongThreadID();
         long seq = record.getSequenceNumber();
         long time = record.getMillis();
         int level = record.getLevel().intValue();

@@ -42,7 +42,6 @@ package org.graalvm.vm.memory.svm;
 
 import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.Platforms;
-import org.graalvm.vm.memory.svm.headers.Errno;
 import org.graalvm.vm.memory.svm.headers.Mman;
 import org.graalvm.vm.posix.api.PosixException;
 import org.graalvm.word.PointerBase;
