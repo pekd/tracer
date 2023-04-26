@@ -60,9 +60,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 public class Clone extends AMD64Node {
     @Child private MemoryWriteNode memory;
     @Child private CopyToCpuStateNode read = new CopyToCpuStateNode();
-    @CompilationFinal private int cpuStateSlot;
-    @CompilationFinal private int gprMaskSlot;
-    @CompilationFinal private int avxMaskSlot;
+    @CompilationFinal private int cpuStateSlot = -1;
+    @CompilationFinal private int gprMaskSlot = -1;
+    @CompilationFinal private int avxMaskSlot = -1;
 
     @CompilationFinal private ContextReference<AMD64Context> ctxref;
 
