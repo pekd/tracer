@@ -356,6 +356,7 @@ import org.graalvm.vm.x86.isa.instruction.Pinsrw;
 import org.graalvm.vm.x86.isa.instruction.Pmaddwd;
 import org.graalvm.vm.x86.isa.instruction.Pmaxub;
 import org.graalvm.vm.x86.isa.instruction.Pminub;
+import org.graalvm.vm.x86.isa.instruction.Pminud;
 import org.graalvm.vm.x86.isa.instruction.Pmovmskb;
 import org.graalvm.vm.x86.isa.instruction.Pmuldq;
 import org.graalvm.vm.x86.isa.instruction.Pmulhuw;
@@ -3346,6 +3347,12 @@ public class AMD64InstructionDecoder {
                             case AMD64Opcode.PTEST_X_XM:
                                 if (sizeOverride) {
                                     return new Ptest(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                } else {
+                                    return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
+                                }
+                            case AMD64Opcode.PMINUD_X_XM:
+                                if (sizeOverride) {
+                                    return new Pminud(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                                 } else {
                                     return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                                 }

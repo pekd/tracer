@@ -318,6 +318,7 @@ public class AMD64Opcode {
     public static final byte PMAXUB_X_XM = (byte) 0xDE;
 
     public static final byte PMINUB_X_XM = (byte) 0xDA;
+    public static final byte PMINUD_X_XM = 0x3B;
 
     public static final byte PMOVMSKB_R_X = (byte) 0xD7;
 
