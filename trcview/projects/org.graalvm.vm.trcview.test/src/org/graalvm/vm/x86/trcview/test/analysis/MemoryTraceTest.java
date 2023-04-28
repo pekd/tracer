@@ -16,7 +16,7 @@ public class MemoryTraceTest {
 
     @Before
     public void setup() {
-        mem = new MemoryTrace();
+        mem = new MemoryTrace(false);
 
         mem.mmap(0xf6eff000L, 0x100000, new Protection(true, true, false), "[stack]", 0x0, 0x0, null, null);
         mem.mmap(0x40000000L, 0x1000, new Protection(true, false, false), "/bin/ls", 0x0, 0x0, null, null);

@@ -7,9 +7,11 @@ import java.util.logging.Logger;
 
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.custom.CustomArchitecture;
 import org.graalvm.vm.trcview.arch.custom.Intrinsics;
 import org.graalvm.vm.trcview.arch.custom.io.CustomStepEvent;
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
@@ -67,7 +69,7 @@ public class CustomAnalyzer implements Analyzer {
     }
 
     @Override
-    public void start(MemoryTrace mem) {
+    public void start(MemoryTrace mem, Architecture hostarch) {
         memory = mem;
         currentStep = 0;
         ctx = new Context(arch.context);
@@ -78,7 +80,7 @@ public class CustomAnalyzer implements Analyzer {
     }
 
     @Override
-    public void process(Event event, Node node) {
+    public void process(Event event, Node node, CpuState state) {
         if (event instanceof StepEvent) {
             currentStep = ((StepEvent) event).getStep();
         }

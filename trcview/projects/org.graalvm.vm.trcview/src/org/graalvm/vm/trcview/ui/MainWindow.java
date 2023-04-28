@@ -57,6 +57,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -103,6 +105,9 @@ import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.io.TraceFileReader;
 import org.graalvm.vm.trcview.arch.io.TraceReader;
+import org.graalvm.vm.trcview.arch.vm.VMArchitecture;
+import org.graalvm.vm.trcview.arch.vm.analysis.VMAnalyzer;
+import org.graalvm.vm.trcview.arch.vm.analysis.VMTransformer;
 import org.graalvm.vm.trcview.data.TypedMemory;
 import org.graalvm.vm.trcview.data.Variable;
 import org.graalvm.vm.trcview.decode.ABI;
@@ -183,6 +188,8 @@ public class MainWindow extends JFrame implements TraceListenable {
 
     private List<TraceListener> traceListeners;
 
+    private List<Constructor<? extends VMTransformer>> vmTransformers;
+
     public MainWindow() {
         this(null);
     }
@@ -191,6 +198,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         super(WINDOW_TITLE);
 
         traceListeners = new ArrayList<>();
+        vmTransformers = new ArrayList<>();
 
         FileDialog load = new FileDialog(this, "Open...", FileDialog.LOAD);
         FileDialog loadSyms = new FileDialog(this, "Load symbols...", FileDialog.LOAD);
@@ -925,6 +933,17 @@ public class MainWindow extends JFrame implements TraceListenable {
             Analyzer analyzer = reader.getAnalyzer();
             if (analyzer != null) {
                 analyzers.add(analyzer);
+                for (Constructor<? extends VMTransformer> clazz : vmTransformers) {
+                    try {
+                        VMTransformer transformer = clazz.newInstance();
+                        if (transformer.isApplicable(reader.getArchitecture())) {
+                            analyzers.add(new VMAnalyzer(transformer));
+                        }
+                    } catch (Throwable t) {
+                        log.log(Levels.ERROR, "Failed to instantiate VM transformer: " + t.getMessage(), t);
+                        throw new IOException(t);
+                    }
+                }
             }
             Analysis analysis = new Analysis(reader.getArchitecture(), analyzers, typeRecovery.isSelected(), codeAnalysis.isSelected());
             analysis.start();
@@ -948,8 +967,15 @@ public class MainWindow extends JFrame implements TraceListenable {
 
             final BlockNode rootNode = root;
             EventQueue.invokeLater(() -> {
-                setTrace(new Local(reader.getArchitecture(), rootNode, threads, analysis));
+                TraceAnalyzer t = new Local(reader.getArchitecture(), rootNode, threads, analysis);
+                setTrace(t);
                 // setTrace(new LocalDatabase(reader.getArchitecture(), root, analysis));
+                for (Analyzer a : analyzers) {
+                    if (a instanceof VMAnalyzer) {
+                        VMAnalyzer va = (VMAnalyzer) a;
+                        va.traceLoaded(this, t);
+                    }
+                }
             });
         } catch (Throwable t) {
             log.log(Level.INFO, "Loading failed: " + t, t);
@@ -1810,16 +1836,89 @@ public class MainWindow extends JFrame implements TraceListenable {
         System.exit(0);
     }
 
+    private void loadAnalyzer(String name)
+                    throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
+                    ClassCastException {
+        log.info("Loading analyzer \"" + name + "\"");
+        @SuppressWarnings("unchecked")
+        Class<? extends VMTransformer> clazz = (Class<? extends VMTransformer>) Class.forName(name);
+        VMTransformer transformer = clazz.getConstructor().newInstance();
+        VMArchitecture arch = transformer.getArchitecture();
+        log.info("Analyzer for architecture " + arch.getName() + " [" + arch.getDescription() + "] loaded");
+        vmTransformers.add(clazz.getConstructor());
+    }
+
+    private void parseArgs(String[] args) {
+        String tracefile = null;
+        String sessionfile = null;
+        int i;
+        loop: for (i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "-a":
+                    if (i + 1 < args.length) {
+                        String analyzer = args[i + 1];
+                        try {
+                            loadAnalyzer(analyzer);
+                        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+                                        | SecurityException | ClassCastException e) {
+                            System.out.println("Failed to load the analyzer class \"" + analyzer + "\"");
+                        }
+                        i++;
+                    } else {
+                        System.out.println("Syntax error: missing argument for option -a");
+                        return;
+                    }
+                    break;
+                case "-f":
+                    if (i + 1 < args.length) {
+                        tracefile = args[i + 1];
+                        i++;
+                    } else {
+                        System.out.println("Syntax error: missing argument for option -f");
+                        return;
+                    }
+                    break;
+                case "-l":
+                    if (i + 1 < args.length) {
+                        sessionfile = args[i + 1];
+                        i++;
+                    } else {
+                        System.out.println("Syntax error: missing argument for option -l");
+                        return;
+                    }
+                    break;
+                case "--":
+                default:
+                    break loop;
+            }
+        }
+
+        if (i < args.length) {
+            tracefile = args[i];
+        }
+
+        if (tracefile != null) {
+            try {
+                load(new File(tracefile));
+            } catch (Throwable t) {
+                System.out.println("Failed to load the trace file specified by the argument \"" + tracefile + "\"");
+                return;
+            }
+        }
+
+        if (sessionfile != null) {
+            try {
+                loadSession(new File(sessionfile));
+            } catch (Throwable t) {
+                System.out.println("Failed to load the session file specified by the argument \"" + sessionfile + "\"");
+            }
+        }
+    }
+
     public static void main(String[] args) {
         Trace.setup();
         MainWindow w = new MainWindow();
         w.setVisible(true);
-        if (args.length == 1) {
-            try {
-                w.load(new File(args[0]));
-            } catch (Throwable t) {
-                System.out.println("Failed to load the file specified by the argument \"" + args[0] + "\"");
-            }
-        }
+        w.parseArgs(args);
     }
 }

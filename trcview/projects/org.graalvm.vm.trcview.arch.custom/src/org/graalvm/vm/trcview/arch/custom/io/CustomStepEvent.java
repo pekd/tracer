@@ -4,13 +4,14 @@ import org.graalvm.vm.trcview.arch.custom.analysis.CustomAnalyzer;
 import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.DerivedStepEvent;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.script.rt.Pointer;
 import org.graalvm.vm.trcview.script.type.PrimitiveType;
 import org.graalvm.vm.trcview.script.type.Struct;
 import org.graalvm.vm.trcview.script.type.Struct.Member;
 
-public class CustomStepEvent extends DerivedStepEvent implements CpuState {
+public class CustomStepEvent extends StepEvent implements DerivedStepEvent, CpuState {
     private final CustomAnalyzer analyzer;
     private final Pointer data;
     private final Pointer state;

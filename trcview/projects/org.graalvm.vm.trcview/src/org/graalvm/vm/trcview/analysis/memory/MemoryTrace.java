@@ -24,8 +24,14 @@ public class MemoryTrace {
 
     private long brk = -1;
 
+    private final boolean isBE;
+
     private static long getPageAddress(long address) {
         return address & 0xFFFFFFFFFFFFF000L;
+    }
+
+    public MemoryTrace(boolean be) {
+        this.isBE = be;
     }
 
     public void mmap(long address, long size, Protection prot, String name, long pc, long instructionCount, Node node, StepEvent step) {
@@ -280,7 +286,12 @@ public class MemoryTrace {
     }
 
     public short getLastShort(long addr) throws MemoryNotMappedException {
-        return (short) (Byte.toUnsignedInt(getLastByte(addr)) | (Byte.toUnsignedInt(getLastByte(addr + 1)) << 8));
+        short value = (short) (Byte.toUnsignedInt(getLastByte(addr)) | (Byte.toUnsignedInt(getLastByte(addr + 1)) << 8));
+        if (isBE) {
+            return Short.reverseBytes(value);
+        } else {
+            return value;
+        }
     }
 
     public int getLastInt(long addr) throws MemoryNotMappedException {
@@ -289,7 +300,11 @@ public class MemoryTrace {
             value >>>= 8;
             value |= Byte.toUnsignedLong(getLastByte(addr + i)) << 24;
         }
-        return (int) value;
+        if (isBE) {
+            return Integer.reverseBytes((int) value);
+        } else {
+            return (int) value;
+        }
     }
 
     public long getLastWord(long addr) throws MemoryNotMappedException {
@@ -298,7 +313,11 @@ public class MemoryTrace {
             value >>>= 8;
             value |= Byte.toUnsignedLong(getLastByte(addr + i)) << 56;
         }
-        return value;
+        if (isBE) {
+            return Long.reverseBytes(value);
+        } else {
+            return value;
+        }
     }
 
     public MemoryUpdate getLastWrite(long addr, long instructionCount) throws MemoryNotMappedException {

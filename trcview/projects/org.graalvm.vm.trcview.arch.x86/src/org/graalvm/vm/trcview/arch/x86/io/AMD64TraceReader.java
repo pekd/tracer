@@ -10,8 +10,10 @@ import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.memory.MemoryNotMappedException;
 import org.graalvm.vm.trcview.analysis.memory.MemoryTrace;
+import org.graalvm.vm.trcview.arch.Architecture;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.BrkEvent;
+import org.graalvm.vm.trcview.arch.io.CpuState;
 import org.graalvm.vm.trcview.arch.io.EofEvent;
 import org.graalvm.vm.trcview.arch.io.Event;
 import org.graalvm.vm.trcview.arch.io.GenericMemoryEvent;
@@ -372,12 +374,12 @@ public class AMD64TraceReader extends ArchTraceReader implements Analyzer {
 
     // Analyzer functions
     @Override
-    public void start(MemoryTrace memory) {
+    public void start(MemoryTrace memory, Architecture arch) {
         mem = memory;
     }
 
     @Override
-    public void process(Event event, Node node) {
+    public void process(Event event, Node node, CpuState state) {
         // nothing
     }
 

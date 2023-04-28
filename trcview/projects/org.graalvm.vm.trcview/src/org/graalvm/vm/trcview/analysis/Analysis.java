@@ -139,7 +139,7 @@ public class Analysis {
         syscalls = new ArrayList<>();
         io = new HashMap<>();
         devices = new HashMap<>();
-        memory = new MemoryTrace();
+        memory = new MemoryTrace(arch.getFormat().be);
         nodes = new ArrayList<>();
         system = arch.isSystemLevel();
         info = arch.getTypeInfo();
@@ -161,7 +161,7 @@ public class Analysis {
         steps = 0;
         idcnt = 0;
         for (Analyzer analyzer : analyzers) {
-            analyzer.start(memory);
+            analyzer.start(memory, arch);
         }
     }
 
@@ -179,7 +179,7 @@ public class Analysis {
         add(node);
 
         for (Analyzer analyzer : analyzers) {
-            analyzer.process(event, node);
+            analyzer.process(event, node, state);
         }
 
         if (event instanceof StepEvent) {

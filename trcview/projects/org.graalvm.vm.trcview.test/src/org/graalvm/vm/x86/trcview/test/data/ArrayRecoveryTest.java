@@ -98,7 +98,7 @@ public class ArrayRecoveryTest {
             }
         };
         SymbolTable symtab = new SymbolTable(fmt, Collections.emptyNavigableMap());
-        MemoryTrace memtrc = new MemoryTrace();
+        MemoryTrace memtrc = new MemoryTrace(false);
         prop = new DynamicTypePropagation(arch, symtab, memtrc);
         step = 0;
         lastStep = null;

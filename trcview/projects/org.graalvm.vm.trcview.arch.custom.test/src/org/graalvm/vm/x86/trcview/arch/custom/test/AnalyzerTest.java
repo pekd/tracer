@@ -51,7 +51,7 @@ public class AnalyzerTest {
 
     @Before
     public void setup() {
-        mem = new MemoryTrace();
+        mem = new MemoryTrace(false);
     }
 
     @Test
@@ -66,16 +66,16 @@ public class AnalyzerTest {
     @Test
     public void analyzer2() {
         CustomAnalyzer analyzer = new CustomAnalyzer(SCRIPT);
-        analyzer.start(mem);
+        analyzer.start(mem, analyzer.getArchitecture());
         Event evt0 = new MockStepEvent(0, 0, 0xBEEE, new String[]{"salad"}, new byte[]{0x41});
         Event evt1 = new MockStepEvent(0, 1, 0xBEEF, new String[]{"noodle"}, new byte[]{0x42}, "temp", 42L);
         Event evt2 = new MockStepEvent(0, 2, 0xBEF0, new String[]{"tomatoe"}, new byte[]{0x43});
         Node node0 = evt0;
         Node node1 = evt1;
         Node node2 = evt2;
-        analyzer.process(evt0, node0);
-        analyzer.process(evt1, node1);
-        analyzer.process(evt2, node2);
+        analyzer.process(evt0, node0, null);
+        analyzer.process(evt1, node1, null);
+        analyzer.process(evt2, node2, null);
         analyzer.finish();
         assertEquals(1, analyzer.getEvents().size());
 
