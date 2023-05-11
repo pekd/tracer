@@ -13,6 +13,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.analysis.type.TypeAlias;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
@@ -178,5 +179,25 @@ public class TypeParserTest {
         assertEquals(DataType.S32, proto.returnType.getType());
         assertEquals(1, proto.args.size());
         assertEquals(DataType.U32, proto.args.get(0).getType());
+    }
+
+    @Test
+    public void testTypedef() throws ParseException {
+        UserTypeDatabase db = new UserTypeDatabase(ArchitectureTypeInfo.LP64);
+        try {
+            db.add(new TypeAlias("mode_t", new Type(DataType.U32)));
+        } catch (NameAlreadyUsedException e) {
+            // ignore
+        }
+
+        Parser p = new Parser("long open(const char* filename, int flags, mode_t mode)", db);
+        Function fun = p.parsePrototype();
+        assertEquals("open", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.S64, proto.returnType.getType());
+        assertEquals(3, proto.args.size());
+        assertEquals(DataType.PTR, proto.args.get(0).getType());
+        assertEquals(DataType.S32, proto.args.get(1).getType());
+        assertEquals(DataType.U32, proto.args.get(2).getType());
     }
 }

@@ -12,6 +12,7 @@ import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.analysis.type.TypeAlias;
 import org.graalvm.vm.trcview.analysis.type.UserDefinedType;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.expression.Token.TokenType;
@@ -504,8 +505,8 @@ public class Parser {
                 }
                 if (type instanceof Struct) {
                     return new Type((Struct) type, isConst);
-                } else {
-                    return new Type(DataType.VOID);
+                } else if (type instanceof TypeAlias) {
+                    return ((TypeAlias) type).getType();
                 }
             }
             case STRUCT: {
