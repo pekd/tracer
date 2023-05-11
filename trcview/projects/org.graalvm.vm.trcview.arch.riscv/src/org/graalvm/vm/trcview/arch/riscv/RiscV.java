@@ -14,8 +14,10 @@ import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.analysis.type.TypeAlias;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.ArchTraceReader;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
+import org.graalvm.vm.trcview.arch.riscv.disasm.RiscVDisassembler;
 import org.graalvm.vm.trcview.arch.riscv.io.RiscVTraceReader;
 import org.graalvm.vm.trcview.decode.ABI;
 import org.graalvm.vm.trcview.decode.CallDecoder;
@@ -29,6 +31,7 @@ import org.graalvm.vm.trcview.expression.ast.MulNode;
 import org.graalvm.vm.trcview.expression.ast.SubNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.ResourceLoader;
 import org.graalvm.vm.util.log.Levels;
 import org.graalvm.vm.util.log.Trace;
@@ -37,7 +40,7 @@ public class RiscV extends Architecture {
     private static final Logger log = Trace.create(RiscV.class);
 
     public static final short ID = Elf.EM_RISCV;
-    public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, true);
+    public static final StepFormat FORMAT = new StepFormat(StepFormat.NUMBERFMT_HEX, 16, 16, 1, false);
 
     private static final SyscallDecoder syscallDecoder = new GenericSyscallDecoder();
     private static final CallDecoder callDecoder = new GenericCallDecoder();
@@ -95,6 +98,11 @@ public class RiscV extends Architecture {
     @Override
     public boolean isTaggedState() {
         return true;
+    }
+
+    @Override
+    public Disassembler getDisassembler(TraceAnalyzer trc) {
+        return new RiscVDisassembler(trc);
     }
 
     @Override

@@ -1,11 +1,22 @@
 package org.graalvm.vm.trcview.arch.riscv.disasm;
 
+import org.graalvm.vm.trcview.arch.CodeReader;
+import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 
-public class RiscVDisassembler {
+public class RiscVDisassembler extends Disassembler {
     public static final InstructionFormat insnfmt = new InstructionFormat();
     public static final CompressedInstructionFormat cinsnfmt = new CompressedInstructionFormat();
+
+    public RiscVDisassembler() {
+        super();
+    }
+
+    public RiscVDisassembler(TraceAnalyzer trc) {
+        super(trc);
+    }
 
     public static int getSize(int insn) {
         if ((insn & 7) != 3) {
@@ -806,5 +817,30 @@ public class RiscVDisassembler {
     private static String[] cfswsp(CompressedInstructionFormat insn) {
         int imm = (insn.imm12_9.get() << 2) | (insn.imm8_7.get() << 6);
         return new String[]{"c.fswsp", r(insn.rd.get()), imm(imm) + "(sp)"};
+    }
+
+    private static int getInstruction(CodeReader code) {
+        int word = Short.toUnsignedInt(code.nextI16());
+        if (getSize(word) == 2) {
+            return word;
+        } else {
+            return word | (code.nextI16() << 16);
+        }
+    }
+
+    @Override
+    public String[] getDisassembly(CodeReader code) {
+        long pc = code.getPC();
+        return disassemble(pc, getInstruction(code));
+    }
+
+    @Override
+    public int getLength(CodeReader code) {
+        return getSize(getInstruction(code));
+    }
+
+    @Override
+    public InstructionType getType(CodeReader code) {
+        return getType(getInstruction(code));
     }
 }
