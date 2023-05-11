@@ -62,6 +62,10 @@ public abstract class Architecture {
         return ArchitectureTypeInfo.LP64;
     }
 
+    public ABI createABI(@SuppressWarnings("unused") UserTypeDatabase types) {
+        return createABI();
+    }
+
     public ABI createABI() {
         return null;
     }

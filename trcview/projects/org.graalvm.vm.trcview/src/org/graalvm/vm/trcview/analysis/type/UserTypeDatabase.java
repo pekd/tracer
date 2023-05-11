@@ -78,6 +78,18 @@ public class UserTypeDatabase {
         }
     }
 
+    // recursively resolve name
+    public Union getUnion(String name) {
+        UserDefinedType type = types.get(name);
+        if ((type == null || !(type instanceof Union)) && parent != null) {
+            return parent.getUnion(name);
+        } else if (type instanceof Union) {
+            return (Union) type;
+        } else {
+            return null;
+        }
+    }
+
     public void undefine(String name) {
         types.remove(name);
     }

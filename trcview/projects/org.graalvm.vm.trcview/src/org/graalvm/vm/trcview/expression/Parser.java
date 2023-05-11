@@ -13,6 +13,7 @@ import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.analysis.type.TypeAlias;
+import org.graalvm.vm.trcview.analysis.type.Union;
 import org.graalvm.vm.trcview.analysis.type.UserDefinedType;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.expression.Token.TokenType;
@@ -107,6 +108,8 @@ public class Parser {
     private Token la;
     private TokenType sym;
 
+    private boolean replaceStructByVoid = false;
+
     public Parser(String s) {
         this(s, EMPTY);
     }
@@ -115,6 +118,10 @@ public class Parser {
         scanner = new Scanner(s);
         userTypes = new UserTypeDatabase(db);
         info = userTypes.getTypeInfo();
+    }
+
+    public void setReplaceStructByVoid(boolean replace) {
+        replaceStructByVoid = replace;
     }
 
     private static void error(String msg) throws ParseException {
@@ -210,6 +217,9 @@ public class Parser {
                     break;
                 case "typedef":
                     la = new Token(TokenType.TYPEDEF);
+                    break;
+                case "enum":
+                    la = new Token(TokenType.ENUM);
                     break;
                 case "code":
                     la = new Token(TokenType.CODE);
@@ -514,11 +524,33 @@ public class Parser {
                 check(TokenType.IDENT);
                 Struct type = userTypes.getStruct(t.str);
                 if (type == null) {
-                    error("Unknown struct " + t.str);
-                    throw new AssertionError("unreachable");
+                    if (replaceStructByVoid) {
+                        return new Type(DataType.VOID);
+                    } else {
+                        error("Unknown struct " + t.str);
+                        throw new AssertionError("unreachable");
+                    }
                 }
                 return new Type(type, isConst);
             }
+            case UNION: {
+                scan();
+                check(TokenType.IDENT);
+                Union type = userTypes.getUnion(t.str);
+                if (type == null) {
+                    if (replaceStructByVoid) {
+                        return new Type(DataType.VOID);
+                    } else {
+                        error("Unknown union " + t.str);
+                        throw new AssertionError("unreachable");
+                    }
+                }
+                return new Type(type, isConst);
+            }
+            case ENUM:
+                scan();
+                check(TokenType.IDENT);
+                return new Type(info.getIntType(false));
             default:
                 error("unexpected token " + sym);
                 throw new AssertionError("unreachable");

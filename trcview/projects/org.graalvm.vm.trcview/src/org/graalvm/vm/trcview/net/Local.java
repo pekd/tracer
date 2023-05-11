@@ -75,7 +75,13 @@ public class Local implements TraceAnalyzer {
         this.arch = arch;
         this.root = root;
         this.threads = threads;
-        abi = arch.createABI();
+
+        types = new UserTypeDatabase(arch.getTypeInfo());
+        // populate default types
+        DefaultTypes.populate(types, arch.getTypeInfo());
+        arch.addStandardTypes(types);
+
+        abi = arch.createABI(types);
         resolver = analysis.getSymbolResolver();
         symbols = analysis.getComputedSymbolTable();
         memory = analysis.getMemoryTrace();
@@ -89,7 +95,6 @@ public class Local implements TraceAnalyzer {
         comments = new Comments();
         expressions = new Expressions();
         highlighter = new Highlighter();
-        types = new UserTypeDatabase(arch.getTypeInfo());
         typedMemory = new TypedMemory();
         typeRecovery = analysis.getTypeRecovery();
 
@@ -97,10 +102,6 @@ public class Local implements TraceAnalyzer {
         if (code != null) {
             code.transfer(this);
         }
-
-        // populate default types
-        DefaultTypes.populate(types, arch.getTypeInfo());
-        arch.addStandardTypes(types);
 
         if (typeRecovery != null) {
             typeRecovery.transfer(this);

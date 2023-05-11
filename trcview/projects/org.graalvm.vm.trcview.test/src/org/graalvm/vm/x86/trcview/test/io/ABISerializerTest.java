@@ -7,8 +7,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.decode.GenericABI;
 import org.graalvm.vm.trcview.expression.ast.CallNode;
 import org.graalvm.vm.trcview.expression.ast.ValueNode;
@@ -41,7 +43,7 @@ public class ABISerializerTest {
     @Test
     public void deserializeNull() throws Exception {
         GenericABI abi = new GenericABI();
-        ABISerializer.load(abi, "\"NULL;NULL\";\"NULL;NULL\";NULL");
+        ABISerializer.load(abi, "\"NULL;NULL\";\"NULL;NULL\";NULL", new UserTypeDatabase(ArchitectureTypeInfo.LP64));
         assertNull(abi.getSyscallId());
         assertTrue(abi.getSyscalls().isEmpty());
 
@@ -58,7 +60,7 @@ public class ABISerializerTest {
     public void deserialize() throws Exception {
         String def = "\"\\\"r0\\\";NULL;\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"\\\"r0\\\";NULL;\\\"r0\\\";\\\"r1\\\";\\\"r2\\\";\\\"r3\\\"\";\"getU16(pc) ^ 34816\";\"0=void test()\"";
         GenericABI abi = new GenericABI();
-        ABISerializer.load(abi, def);
+        ABISerializer.load(abi, def, new UserTypeDatabase(ArchitectureTypeInfo.LP64));
 
         assertNotNull(abi.getSyscallId());
         assertEquals(1, abi.getSyscalls().size());

@@ -9,6 +9,7 @@ public class Type {
     private final DataType type;
     private final Type pointee;
     private final Struct struct;
+    private final Union union;
     private final ArchitectureTypeInfo info;
     private long elements;
     private Representation representation;
@@ -35,11 +36,12 @@ public class Type {
     }
 
     public Type(DataType type, boolean isConst, int elements, Representation repr) {
-        assert type != DataType.STRUCT && type != DataType.PTR && type != DataType.STRING;
+        assert type != DataType.STRUCT && type != DataType.UNION && type != DataType.PTR && type != DataType.STRING;
         assert elements > 0 || elements == -1;
         this.type = type;
         this.pointee = null;
         this.struct = null;
+        this.union = null;
         this.info = null;
         this.isConst = isConst;
         if (repr != null) {
@@ -77,6 +79,7 @@ public class Type {
         this.type = type;
         this.pointee = null;
         this.struct = null;
+        this.union = null;
         this.info = info;
         this.isConst = isConst;
         if (repr != null) {
@@ -100,6 +103,27 @@ public class Type {
         this.type = DataType.STRUCT;
         this.pointee = null;
         this.struct = struct;
+        this.union = null;
+        this.info = null;
+        this.isConst = isConst;
+        this.representation = getDefaultRepresentation();
+        this.elements = elements;
+    }
+
+    public Type(Union union) {
+        this(union, false);
+    }
+
+    public Type(Union union, boolean isConst) {
+        this(union, isConst, -1);
+    }
+
+    public Type(Union union, boolean isConst, int elements) {
+        assert elements > 0 || elements == -1;
+        this.type = DataType.UNION;
+        this.pointee = null;
+        this.struct = null;
+        this.union = union;
         this.info = null;
         this.isConst = isConst;
         this.representation = getDefaultRepresentation();
@@ -120,6 +144,7 @@ public class Type {
         this.type = DataType.PTR;
         this.pointee = type;
         this.struct = null;
+        this.union = null;
         this.info = info;
         this.isConst = isConst;
         if (type.getType() == DataType.U8 || type.getType() == DataType.S8) {
@@ -139,6 +164,7 @@ public class Type {
         this.type = type.type;
         this.pointee = type.pointee;
         this.struct = type.struct;
+        this.union = type.union;
         this.info = type.info;
         this.elements = elements;
         this.representation = type.representation;
@@ -186,6 +212,11 @@ public class Type {
     public Struct getStruct() {
         assert type == DataType.STRUCT;
         return struct;
+    }
+
+    public Union getUnion() {
+        assert type == DataType.UNION;
+        return union;
     }
 
     public Type getPointee() {
@@ -362,7 +393,7 @@ public class Type {
             case STRUCT:
                 return conststr + struct.getName() + arraystr;
             case UNION:
-                return "/* union */";
+                return conststr + union.getName() + arraystr;
             case USER:
                 return "/* user */";
             case CODE:
@@ -429,6 +460,8 @@ public class Type {
                 }
             case STRUCT:
                 return getStruct().getName();
+            case UNION:
+                return getUnion().getName();
             case CODE:
                 return "unsigned char";
             default:

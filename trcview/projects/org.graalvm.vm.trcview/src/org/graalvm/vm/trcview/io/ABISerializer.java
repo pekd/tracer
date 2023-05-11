@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.decode.GenericABI;
 import org.graalvm.vm.trcview.decode.GenericCallingConvention;
 import org.graalvm.vm.trcview.expression.Parser;
@@ -66,12 +67,12 @@ public class ABISerializer {
         return TextSerializer.encode(parts);
     }
 
-    public static void load(GenericABI abi, String s) throws IOException, ParseException {
+    public static void load(GenericABI abi, String s, UserTypeDatabase db) throws IOException, ParseException {
         String[] parts = TextSerializer.tokenize(s);
         decode(abi.getCall(), parts[0]);
         decode(abi.getSyscall(), parts[1]);
         if (parts[2] != null) {
-            abi.setSyscallId(new Parser(parts[2]).parseExpression());
+            abi.setSyscallId(new Parser(parts[2], db).parseExpression());
         } else {
             abi.setSyscallId(null);
         }
@@ -84,7 +85,7 @@ public class ABISerializer {
             }
             try {
                 long id = Long.parseUnsignedLong(def.substring(0, idx));
-                Function func = new Parser(def.substring(idx + 1)).parsePrototype();
+                Function func = new Parser(def.substring(idx + 1), db).parsePrototype();
                 syscalls.put(id, func);
             } catch (NumberFormatException e) {
                 throw new IOException("invalid syscall id: " + e.getMessage(), e);

@@ -1538,7 +1538,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                         try {
                             ABI abi = trc.getABI();
                             if (abi instanceof GenericABI) {
-                                ABISerializer.load((GenericABI) abi, line.substring(idx + 1));
+                                ABISerializer.load((GenericABI) abi, line.substring(idx + 1), trc.getTypeDatabase());
                             } else {
                                 log.info("Cannot change non-generic ABI");
                                 setStatus("Cannot change non-generic ABI");
