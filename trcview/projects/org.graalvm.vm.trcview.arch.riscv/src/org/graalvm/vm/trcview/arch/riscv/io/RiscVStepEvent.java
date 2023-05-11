@@ -1,9 +1,13 @@
 package org.graalvm.vm.trcview.arch.riscv.io;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.arch.io.MemoryEvent;
 import org.graalvm.vm.trcview.arch.io.StepEvent;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.arch.riscv.RiscV;
@@ -68,5 +72,25 @@ public abstract class RiscVStepEvent extends StepEvent {
     @Override
     public StepFormat getFormat() {
         return RiscV.FORMAT;
+    }
+
+    @Override
+    public List<MemoryEvent> getDataReads() {
+        if (RiscVDisassembler.getType(getState().getInstruction()) != InstructionType.OTHER) {
+            // only "OTHER" instructions can be load/store
+            return Collections.emptyList();
+        }
+
+        List<MemoryEvent> reads = super.getDataReads();
+        List<MemoryEvent> data = new ArrayList<>();
+        int len = RiscVDisassembler.getSize(getState().getInstruction());
+        long npc = getPC() + len;
+        for (MemoryEvent evt : reads) {
+            long addr = evt.getAddress();
+            if (addr != npc) {
+                data.add(evt);
+            }
+        }
+        return data;
     }
 }
