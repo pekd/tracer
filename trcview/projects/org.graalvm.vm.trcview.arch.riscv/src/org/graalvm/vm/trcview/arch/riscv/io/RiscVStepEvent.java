@@ -49,7 +49,7 @@ public abstract class RiscVStepEvent extends StepEvent {
 
     @Override
     public String[] getDisassemblyComponents() {
-        return RiscVDisassembler.disassemble((int) getState().getPC(), getState().getInstruction());
+        return new RiscVDisassembler().disassemble((int) getState().getPC(), getState().getInstruction()).getComponents();
     }
 
     @Override

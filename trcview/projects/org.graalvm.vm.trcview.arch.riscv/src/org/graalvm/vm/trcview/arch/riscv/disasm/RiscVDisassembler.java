@@ -3,6 +3,10 @@ package org.graalvm.vm.trcview.arch.riscv.disasm;
 import org.graalvm.vm.trcview.arch.CodeReader;
 import org.graalvm.vm.trcview.arch.Disassembler;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
+import org.graalvm.vm.trcview.disasm.AssemblerInstruction;
+import org.graalvm.vm.trcview.disasm.Operand;
+import org.graalvm.vm.trcview.disasm.Token;
+import org.graalvm.vm.trcview.disasm.Type;
 import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.HexFormatter;
 
@@ -115,7 +119,7 @@ public class RiscVDisassembler extends Disassembler {
         }
     }
 
-    public static String[] disassemble(long pc, int word) {
+    public AssemblerInstruction disassemble(long pc, int word) {
         InstructionFormat insn = new InstructionFormat(word);
 
         int opcd = insn.OPCD.get();
@@ -341,22 +345,22 @@ public class RiscVDisassembler extends Disassembler {
             case Opcode.OP_MISC_MEM:
                 switch (insn.funct3.get()) {
                     case Opcode.F3_FENCEI:
-                        return new String[]{"fence.i"};
+                        return new AssemblerInstruction("fence.i");
                 }
                 break;
             case Opcode.OP_SYSTEM:
                 switch (insn.funct3.get()) {
                     case 0:
                         if (word == Opcode.OP_SYSTEM) {
-                            return new String[]{"ecall"};
+                            return new AssemblerInstruction("ecall");
                         } else if (word == (Opcode.OP_SYSTEM | (1 << 20))) {
-                            return new String[]{"ebreak"};
+                            return new AssemblerInstruction("ebreak");
                         } else if (word == (Opcode.OP_SYSTEM | (0b0001000_00010 << 20))) {
-                            return new String[]{"sret"};
+                            return new AssemblerInstruction("sret");
                         } else if (word == (Opcode.OP_SYSTEM | (0b0011000_00010 << 20))) {
-                            return new String[]{"mret"};
+                            return new AssemblerInstruction("mret");
                         } else if (word == (Opcode.OP_SYSTEM | (0b0001000_00101 << 20))) {
-                            return new String[]{"wfi"};
+                            return new AssemblerInstruction("wfi");
                         }
                         break;
                     case Opcode.F3_CSRRW:
@@ -375,9 +379,10 @@ public class RiscVDisassembler extends Disassembler {
                 break;
         }
 
-        return new String[]{".int", "0x" + HexFormatter.tohex(word & 0xFFFFFFFFL, 8),
-                        "# unknown opcode " + opcd};
+        return new AssemblerInstruction(".int", new Operand(Type.OTHER, "0x" + HexFormatter.tohex(word & 0xFFFFFFFFL, 8)), new Operand(Type.OTHER, "# unknown opcode " + opcd));
     }
+
+    private static final int SP = 2;
 
     private static final String[] REGS = {"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1",
                     "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10",
@@ -386,248 +391,286 @@ public class RiscVDisassembler extends Disassembler {
     private static final String[] FREGS = {"ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7", "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5", "fa6", "fa7", "fs2", "fs3", "fs4", "fs5",
                     "fs6", "fs7", "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"};
 
-    protected static String r(int r) {
-        return REGS[r];
+    protected static Operand r(int r) {
+        return new Operand(Type.REGISTER, REGS[r]);
     }
 
-    protected static String r_(int r) {
+    protected static Token tr(int r) {
+        return new Token(Type.REGISTER, REGS[r]);
+    }
+
+    protected static Operand r_(int r) {
         return r(r + 8);
     }
 
-    protected static String f(int r) {
-        return FREGS[r];
+    protected static Token tr_(int r) {
+        return tr(r + 8);
     }
 
-    protected static String f_(int r) {
+    protected static Operand f(int r) {
+        return new Operand(Type.REGISTER, FREGS[r]);
+    }
+
+    protected static Token tf(int r) {
+        return new Token(Type.REGISTER, FREGS[r]);
+    }
+
+    protected static Operand f_(int r) {
         return f(r + 8);
     }
 
-    protected static String hex(long x) {
+    protected static Token tf_(int r) {
+        return tf(r + 8);
+    }
+
+    protected static Operand hex(long x) {
         if (x >= 0 && x <= 9) {
-            return Long.toString(x);
+            return new Operand(Type.NUMBER, Long.toString(x), x);
         } else {
-            return "0x" + HexFormatter.tohex(x);
+            return new Operand(Type.NUMBER, "0x" + HexFormatter.tohex(x), x);
         }
     }
 
-    protected static String off(int x) {
-        return Integer.toString(x);
+    protected Operand addr(long x) {
+        String name = getName(x);
+        if (name != null) {
+            return new Operand(Type.LABEL, name, x);
+        } else if (x >= 0 && x <= 9) {
+            return new Operand(Type.ADDRESS, Long.toString(x), x);
+        } else {
+            return new Operand(Type.ADDRESS, "0x" + HexFormatter.tohex(x), x);
+        }
     }
 
-    protected static String imm(int x) {
-        return Integer.toUnsignedString(x);
+    protected static Operand off(int x) {
+        return new Operand(Type.OFFSET, Integer.toString(x), x);
     }
 
-    protected static String simm6(int x) {
+    protected static Token toff(int x) {
+        return new Token(Type.OFFSET, Integer.toString(x), x);
+    }
+
+    protected static Operand imm(int x) {
+        return new Operand(Type.NUMBER, Integer.toUnsignedString(x), x);
+    }
+
+    protected static Token timm(int x) {
+        return new Token(Type.NUMBER, Integer.toUnsignedString(x), x);
+    }
+
+    protected static Operand simm6(int x) {
         int val = x << 26 >> 26;
-        return Integer.toString(val);
+        return new Operand(Type.NUMBER, Integer.toString(val), val);
     }
 
-    protected static String simm9(int x) {
+    protected static Operand simm9(int x) {
         int val = x << 23 >> 23;
-        return Integer.toString(val);
+        return new Operand(Type.NUMBER, Integer.toString(val), val);
     }
 
-    protected static String csr(int csr) {
-        return CSR.getName(csr);
+    protected static Operand csr(int csr) {
+        return new Operand(Type.REGISTER, CSR.getName(csr));
     }
 
-    protected static String[] lui(InstructionFormat insn) {
-        return new String[]{"lui", r(insn.rd.get()), hex(insn.imm31_12.get())};
+    protected static Token ts(String s) {
+        return new Token(Type.OTHER, s);
     }
 
-    protected static String[] auipc(InstructionFormat insn) {
-        return new String[]{"auipc", r(insn.rd.get()), hex(insn.imm31_12.get())};
+    protected static AssemblerInstruction lui(InstructionFormat insn) {
+        return new AssemblerInstruction("lui", r(insn.rd.get()), hex(insn.imm31_12.get()));
     }
 
-    protected static String[] jal(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction auipc(InstructionFormat insn) {
+        return new AssemblerInstruction("auipc", r(insn.rd.get()), hex(insn.imm31_12.get()));
+    }
+
+    protected AssemblerInstruction jal(InstructionFormat insn, long pc) {
         int offset20 = (insn.imm20.get() << 20) | (insn.imm10_1.get() << 1) |
                         (insn.imm11_J.get() << 11) | (insn.imm19_12.get() << 12);
         int offset = (offset20 << 11 >> 11);
         long dest = pc + offset;
         int rd = insn.rd.get();
         if (rd == 0) {
-            return new String[]{"j", hex(dest)};
+            return new AssemblerInstruction("j", addr(dest));
         } else if (rd == 1) {
-            return new String[]{"jal", hex(dest)};
+            return new AssemblerInstruction("jal", addr(dest));
         } else {
-            return new String[]{"jal", r(rd), hex(dest)};
+            return new AssemblerInstruction("jal", r(rd), addr(dest));
         }
     }
 
-    protected static String[] jalr(InstructionFormat insn) {
+    protected static AssemblerInstruction jalr(InstructionFormat insn) {
         int imm = insn.imm11_0.get() << 20 >> 20;
         int rd = insn.rd.get();
         int rs = insn.rs1.get();
         if (rd == 0 && rs == 1 && imm == 0) {
-            return new String[]{"ret"};
+            return new AssemblerInstruction("ret");
         } else if (rd == 0 && imm == 0) {
-            return new String[]{"jr", r(rs)};
+            return new AssemblerInstruction("jr", r(rs));
         } else if (rd == 1 && imm == 0) {
-            return new String[]{"jalr", r(rs)};
+            return new AssemblerInstruction("jalr", r(rs));
         } else {
-            return new String[]{"jalr", r(insn.rd.get()), r(insn.rs1.get()), off(imm)};
+            return new AssemblerInstruction("jalr", r(insn.rd.get()), r(insn.rs1.get()), off(imm));
         }
     }
 
-    protected static String[] beq(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction beq(InstructionFormat insn, long pc) {
         int rs1 = insn.rs1.get();
         int rs2 = insn.rs2.get();
         int offset = (insn.imm4_1.get() << 1) | (insn.imm11_B.get() << 11) | (insn.imm12.get() << 12) |
                         (insn.imm10_5.get() << 5);
         long dest = pc + offset;
         if (rs2 == 0) {
-            return new String[]{"beqz", r(rs1), hex(dest)};
+            return new AssemblerInstruction("beqz", r(rs1), hex(dest));
         } else {
-            return new String[]{"beq", r(rs1), r(rs2), hex(dest)};
+            return new AssemblerInstruction("beq", r(rs1), r(rs2), hex(dest));
         }
     }
 
-    protected static String[] bne(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction bne(InstructionFormat insn, long pc) {
         int rs1 = insn.rs1.get();
         int rs2 = insn.rs2.get();
         int offset = (insn.imm4_1.get() << 1) | (insn.imm11_B.get() << 11) | (insn.imm12.get() << 12) |
                         (insn.imm10_5.get() << 5);
         long dest = pc + offset;
         if (rs2 == 0) {
-            return new String[]{"bnez", r(rs1), hex(dest)};
+            return new AssemblerInstruction("bnez", r(rs1), hex(dest));
         } else {
-            return new String[]{"bne", r(rs1), r(rs2), hex(dest)};
+            return new AssemblerInstruction("bne", r(rs1), r(rs2), hex(dest));
         }
     }
 
-    protected static String[] blt(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction blt(InstructionFormat insn, long pc) {
         int rs1 = insn.rs1.get();
         int rs2 = insn.rs2.get();
         int offset = (insn.imm4_1.get() << 1) | (insn.imm11_B.get() << 11) | (insn.imm12.get() << 12) |
                         (insn.imm10_5.get() << 5);
         long dest = pc + offset;
         if (rs2 == 0) {
-            return new String[]{"bltz", r(rs1), hex(dest)};
+            return new AssemblerInstruction("bltz", r(rs1), hex(dest));
         } else if (rs1 == 0) {
-            return new String[]{"bgtz", r(rs2), hex(dest)};
+            return new AssemblerInstruction("bgtz", r(rs2), hex(dest));
         } else {
-            return new String[]{"blt", r(rs1), r(rs2), hex(dest)};
+            return new AssemblerInstruction("blt", r(rs1), r(rs2), hex(dest));
         }
     }
 
-    protected static String[] bge(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction bge(InstructionFormat insn, long pc) {
         int rs1 = insn.rs1.get();
         int rs2 = insn.rs2.get();
         int offset = (insn.imm4_1.get() << 1) | (insn.imm11_B.get() << 11) | (insn.imm12.get() << 12) |
                         (insn.imm10_5.get() << 5);
         long dest = pc + offset;
         if (rs2 == 0) {
-            return new String[]{"bgez", r(rs1), hex(dest)};
+            return new AssemblerInstruction("bgez", r(rs1), hex(dest));
         } else if (rs1 == 0) {
-            return new String[]{"blez", r(rs2), hex(dest)};
+            return new AssemblerInstruction("blez", r(rs2), hex(dest));
         } else {
-            return new String[]{"bge", r(rs1), r(rs2), hex(dest)};
+            return new AssemblerInstruction("bge", r(rs1), r(rs2), hex(dest));
         }
     }
 
-    protected static String[] bltu(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction bltu(InstructionFormat insn, long pc) {
         int rs1 = insn.rs1.get();
         int rs2 = insn.rs2.get();
         int offset = (insn.imm4_1.get() << 1) | (insn.imm11_B.get() << 11) | (insn.imm12.get() << 12) |
                         (insn.imm10_5.get() << 5);
         long dest = pc + offset;
-        return new String[]{"bltu", r(rs1), r(rs2), hex(dest)};
+        return new AssemblerInstruction("bltu", r(rs1), r(rs2), hex(dest));
     }
 
-    protected static String[] bgeu(InstructionFormat insn, long pc) {
+    protected static AssemblerInstruction bgeu(InstructionFormat insn, long pc) {
         int rs1 = insn.rs1.get();
         int rs2 = insn.rs2.get();
         int offset = (insn.imm4_1.get() << 1) | (insn.imm11_B.get() << 11) | (insn.imm12.get() << 12) |
                         (insn.imm10_5.get() << 5);
         long dest = pc + offset;
-        return new String[]{"bgeu", r(rs1), r(rs2), hex(dest)};
+        return new AssemblerInstruction("bgeu", r(rs1), r(rs2), hex(dest));
     }
 
-    protected static String[] load(InstructionFormat insn, String mnemonic) {
+    protected static AssemblerInstruction load(InstructionFormat insn, String mnemonic) {
         int offset = insn.imm11_0.get();
         if (offset != 0) {
-            return new String[]{mnemonic, r(insn.rd.get()), off(offset) + "(" + r(insn.rs1.get()) + ")"};
+            return new AssemblerInstruction(mnemonic, r(insn.rd.get()), new Operand(toff(offset), ts("("), tr(insn.rs1.get()), ts(")")));
         } else {
-            return new String[]{mnemonic, r(insn.rd.get()), "(" + r(insn.rs1.get()) + ")"};
+            return new AssemblerInstruction(mnemonic, r(insn.rd.get()), new Operand(ts("("), tr(insn.rs1.get()), ts(")")));
         }
     }
 
-    protected static String[] store(InstructionFormat insn, String mnemonic) {
+    protected static AssemblerInstruction store(InstructionFormat insn, String mnemonic) {
         int offset = (insn.imm11_5.get() | insn.imm4_0.get()) << 20 >> 20;
         if (offset != 0) {
-            return new String[]{mnemonic, r(insn.rs2.get()),
-                            off(offset) + "(" + r(insn.rs1.get()) + ")"};
+            return new AssemblerInstruction(mnemonic, r(insn.rs2.get()), new Operand(toff(offset), ts("("), tr(insn.rs1.get()), ts(")")));
         } else {
-            return new String[]{mnemonic, r(insn.rs2.get()), "(" + r(insn.rs1.get()) + ")"};
+            return new AssemblerInstruction(mnemonic, r(insn.rs2.get()), new Operand(ts("("), tr(insn.rs1.get()), ts(")")));
         }
     }
 
-    protected static String[] addi(InstructionFormat insn) {
+    protected static AssemblerInstruction addi(InstructionFormat insn) {
         int imm = insn.imm11_0.get();
         int rd = insn.rd.get();
         int rs = insn.rs1.get();
         if (rd == 0) {
-            return new String[]{"nop"};
+            return new AssemblerInstruction("nop");
         } else if (rs == 0) {
-            return new String[]{"li", r(rd), off(imm)};
+            return new AssemblerInstruction("li", r(rd), off(imm));
         } else if (imm == 0) {
-            return new String[]{"mv", r(rd), r(rs)};
+            return new AssemblerInstruction("mv", r(rd), r(rs));
         } else {
-            return new String[]{"addi", r(rd), r(rs), off(imm)};
+            return new AssemblerInstruction("addi", r(rd), r(rs), off(imm));
         }
     }
 
-    protected static String[] xori(InstructionFormat insn) {
+    protected static AssemblerInstruction xori(InstructionFormat insn) {
         int imm = insn.imm11_0.get();
         int rd = insn.rd.get();
         int rs = insn.rs1.get();
         if (imm == -1) {
-            return new String[]{"not", r(rd), r(rs)};
+            return new AssemblerInstruction("not", r(rd), r(rs));
         } else {
-            return new String[]{"xori", r(rd), r(rs), off(imm)};
+            return new AssemblerInstruction("xori", r(rd), r(rs), off(imm));
         }
     }
 
-    protected static String[] sltiu(InstructionFormat insn) {
+    protected static AssemblerInstruction sltiu(InstructionFormat insn) {
         int imm = insn.imm11_0u.get();
         int rd = insn.rd.get();
         int rs = insn.rs1.get();
         if (imm == 1) {
-            return new String[]{"seqz", r(rd), r(rs)};
+            return new AssemblerInstruction("seqz", r(rd), r(rs));
         } else {
-            return new String[]{"sltiu", r(rd), r(rs), imm(imm)};
+            return new AssemblerInstruction("sltiu", r(rd), r(rs), imm(imm));
         }
     }
 
-    protected static String[] opimm(InstructionFormat insn, String mnemonic) {
+    protected static AssemblerInstruction opimm(InstructionFormat insn, String mnemonic) {
         int imm = insn.imm11_0.get();
         int rd = insn.rd.get();
         int rs = insn.rs1.get();
-        return new String[]{mnemonic, r(rd), r(rs), imm(imm)};
+        return new AssemblerInstruction(mnemonic, r(rd), r(rs), imm(imm));
     }
 
-    protected static String[] shiftimm(InstructionFormat insn, String mnemonic) {
+    protected static AssemblerInstruction shiftimm(InstructionFormat insn, String mnemonic) {
         int shamt = insn.rs2.get();
         int rs = insn.rs1.get();
         int rd = insn.rd.get();
-        return new String[]{mnemonic, r(rd), r(rs), imm(shamt)};
+        return new AssemblerInstruction(mnemonic, r(rd), r(rs), imm(shamt));
     }
 
-    protected static String[] op(InstructionFormat insn, String mnemonic) {
-        return new String[]{mnemonic, r(insn.rd.get()), r(insn.rs1.get()), r(insn.rs2.get())};
+    protected static AssemblerInstruction op(InstructionFormat insn, String mnemonic) {
+        return new AssemblerInstruction(mnemonic, r(insn.rd.get()), r(insn.rs1.get()), r(insn.rs2.get()));
     }
 
-    protected static String[] csr(InstructionFormat insn, String mnemonic) {
-        return new String[]{mnemonic, r(insn.rd.get()), csr(insn.imm11_0u.get()), r(insn.rs1.get())};
+    protected static AssemblerInstruction csr(InstructionFormat insn, String mnemonic) {
+        return new AssemblerInstruction(mnemonic, r(insn.rd.get()), csr(insn.imm11_0u.get()), r(insn.rs1.get()));
     }
 
-    protected static String[] csri(InstructionFormat insn, String mnemonic) {
-        return new String[]{mnemonic, r(insn.rd.get()), csr(insn.imm11_0u.get()), imm(insn.rs1.get())};
+    protected static AssemblerInstruction csri(InstructionFormat insn, String mnemonic) {
+        return new AssemblerInstruction(mnemonic, r(insn.rd.get()), csr(insn.imm11_0u.get()), imm(insn.rs1.get()));
     }
 
     // TODO: https://msyksphinz-self.github.io/riscv-isadoc/html/rvc.html
-    public static String[] disassembleCompressedRV32(long pc, int word) {
+    public static AssemblerInstruction disassembleCompressedRV32(long pc, int word) {
         CompressedInstructionFormat insn = new CompressedInstructionFormat(word);
 
         switch (insn.OPCD.get()) {
@@ -635,41 +678,41 @@ public class RiscVDisassembler extends Disassembler {
                 switch (insn.funct3.get()) {
                     case Opcode.F3_CADDI4SPN:
                         if (word == 0) {
-                            return new String[]{".short", "0"};
+                            return new AssemblerInstruction(".short", imm(0));
                         } else {
-                            return new String[]{"c.addi4spn", r_(insn.rd_.get()), imm(insn.imm12_5.get())};
+                            return new AssemblerInstruction("c.addi4spn", r_(insn.rd_.get()), imm(insn.imm12_5.get()));
                         }
                     case Opcode.F3_CFLD:
-                        return new String[]{"c.fld", f_(insn.rd_.get()), imm((insn.imm12_10.get() << 3) | (insn.imm6_5.get() << 6)) + "(" + r_(insn.rs1_.get()) + ")"};
+                        return new AssemblerInstruction("c.fld", f_(insn.rd_.get()), new Operand(timm((insn.imm12_10.get() << 3) | (insn.imm6_5.get() << 6)), ts("("), tr_(insn.rs1_.get()), ts(")")));
                     case Opcode.F3_CLW:
-                        return new String[]{"c.lw", r_(insn.rd_.get()),
-                                        imm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)) + "(" + r_(insn.rs1_.get()) + ")"};
+                        return new AssemblerInstruction("c.lw", r_(insn.rd_.get()),
+                                        new Operand(timm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)), ts("("), tr_(insn.rs1_.get()), ts(")")));
                     case Opcode.F3_CFLW:
-                        return new String[]{"c.flw", f_(insn.rd_.get()),
-                                        imm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)) + "(" + r_(insn.rs1_.get()) + ")"};
+                        return new AssemblerInstruction("c.flw", f_(insn.rd_.get()),
+                                        new Operand(timm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)), ts("("), tr_(insn.rs1_.get()), ts(")")));
                     case Opcode.F3_CFSD:
-                        return new String[]{"c.fsd", f_(insn.rd_.get()), imm((insn.imm12_10.get() << 3) | (insn.imm6_5.get() << 6)) + "(" + r_(insn.rs1_.get()) + ")"};
+                        return new AssemblerInstruction("c.fsd", f_(insn.rd_.get()), new Operand(timm((insn.imm12_10.get() << 3) | (insn.imm6_5.get() << 6)), ts("("), tr_(insn.rs1_.get()), ts(")")));
                     case Opcode.F3_CSW:
-                        return new String[]{"c.sw", r_(insn.rd_.get()),
-                                        imm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)) + "(" + r_(insn.rs1_.get()) + ")"};
+                        return new AssemblerInstruction("c.sw", r_(insn.rd_.get()),
+                                        new Operand(timm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)), ts("("), tr_(insn.rs1_.get()), ts(")")));
                     case Opcode.F3_CFSW:
-                        return new String[]{"c.fsw", f_(insn.rd_.get()),
-                                        imm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)) + "(" + f_(insn.rs1_.get()) + ")"};
+                        return new AssemblerInstruction("c.fsw", f_(insn.rd_.get()),
+                                        new Operand(timm((insn.imm12_10.get() << 2) | ((insn.imm6_5.get() & 1) << 6) | ((insn.imm6_5.get() & 2) << 1)), ts("("), tf_(insn.rs1_.get()), ts(")")));
                 }
                 break;
             case 1:
                 switch (insn.funct3.get()) {
                     case Opcode.F3_CNOP:
                         if ((word & 0xFFFF) == 1) {
-                            return new String[]{"nop"};
+                            return new AssemblerInstruction("nop");
                         } else {
-                            return new String[]{"c.addi", r(insn.rd.get()), simm6(insn.imm6_2.get() | (insn.imm12.get() << 5))};
+                            return new AssemblerInstruction("c.addi", r(insn.rd.get()), simm6(insn.imm6_2.get() | (insn.imm12.get() << 5)));
                         }
                     case Opcode.F3_CJAL:
                         return cjal(insn, pc);
                     case Opcode.F3_CLI:
                         if (insn.rd.get() != 0) {
-                            return new String[]{"c.li", r(insn.rd.get()), simm6(insn.imm6_2.get() | (insn.imm12.get() << 5))};
+                            return new AssemblerInstruction("c.li", r(insn.rd.get()), simm6(insn.imm6_2.get() | (insn.imm12.get() << 5)));
                         }
                         break;
                     case Opcode.F3_CADDI16SP:
@@ -677,35 +720,35 @@ public class RiscVDisassembler extends Disassembler {
                             return addi16sp(insn);
                         } else {
                             int imm = insn.imm6_2.get() | (insn.imm12.get() << 5);
-                            return new String[]{"c.lui", r(insn.rd.get()), simm6(imm)};
+                            return new AssemblerInstruction("c.lui", r(insn.rd.get()), simm6(imm));
                         }
                     case Opcode.F3_CARITHMETIC: {
                         int imm = insn.imm6_2.get() | (insn.imm12.get() << 5);
                         switch (insn.xop.get()) {
                             case Opcode.XOP_CSRLI:
-                                return new String[]{"c.srli", r_(insn.rd_.get()), imm(imm)};
+                                return new AssemblerInstruction("c.srli", r_(insn.rd_.get()), imm(imm));
                             case Opcode.XOP_CSRAI:
-                                return new String[]{"c.srai", r_(insn.rd_.get()), imm(imm)};
+                                return new AssemblerInstruction("c.srai", r_(insn.rd_.get()), imm(imm));
                             case Opcode.XOP_CANDI:
-                                return new String[]{"c.andi", r_(insn.rd_.get()), simm6(imm)};
+                                return new AssemblerInstruction("c.andi", r_(insn.rd_.get()), simm6(imm));
                             case Opcode.XOP_CARITH:
                                 if (!insn.imm12.getBit()) {
                                     switch (insn.funct2.get()) {
                                         case Opcode.F2_CSUB:
-                                            return new String[]{"c.sub", r_(insn.rd_.get()), r_(insn.rs2_.get())};
+                                            return new AssemblerInstruction("c.sub", r_(insn.rd_.get()), r_(insn.rs2_.get()));
                                         case Opcode.F2_CXOR:
-                                            return new String[]{"c.xor", r_(insn.rd_.get()), r_(insn.rs2_.get())};
+                                            return new AssemblerInstruction("c.xor", r_(insn.rd_.get()), r_(insn.rs2_.get()));
                                         case Opcode.F2_COR:
-                                            return new String[]{"c.or", r_(insn.rd_.get()), r_(insn.rs2_.get())};
+                                            return new AssemblerInstruction("c.or", r_(insn.rd_.get()), r_(insn.rs2_.get()));
                                         case Opcode.F2_CAND:
-                                            return new String[]{"c.and", r_(insn.rd_.get()), r_(insn.rs2_.get())};
+                                            return new AssemblerInstruction("c.and", r_(insn.rd_.get()), r_(insn.rs2_.get()));
                                     }
                                 } else {
                                     switch (insn.funct2.get()) {
                                         case Opcode.F2_CSUBW:
-                                            return new String[]{"c.subw", r_(insn.rd_.get()), r_(insn.rs2_.get())};
+                                            return new AssemblerInstruction("c.subw", r_(insn.rd_.get()), r_(insn.rs2_.get()));
                                         case Opcode.F2_CADDW:
-                                            return new String[]{"c.addw", r_(insn.rd_.get()), r_(insn.rs2_.get())};
+                                            return new AssemblerInstruction("c.addw", r_(insn.rd_.get()), r_(insn.rs2_.get()));
                                     }
                                 }
                                 break;
@@ -723,7 +766,7 @@ public class RiscVDisassembler extends Disassembler {
             case 2:
                 switch (insn.funct3.get()) {
                     case Opcode.F3_CSLLI:
-                        return new String[]{"c.slli", r(insn.rd.get()), imm(insn.imm6_2.get() | (insn.imm12.get() << 5))};
+                        return new AssemblerInstruction("c.slli", r(insn.rd.get()), imm(insn.imm6_2.get() | (insn.imm12.get() << 5)));
                     case Opcode.F3_CFLDSP:
                         return cfldsp(insn);
                     case Opcode.F3_CLWSP:
@@ -733,17 +776,17 @@ public class RiscVDisassembler extends Disassembler {
                     case Opcode.F3_CJR:
                         if (!insn.imm12.getBit()) {
                             if (insn.rs2.get() == 0) {
-                                return new String[]{"c.jr", r(insn.rs1.get())};
+                                return new AssemblerInstruction("c.jr", r(insn.rs1.get()));
                             } else {
-                                return new String[]{"c.mv", r(insn.rd.get()), r(insn.rs2.get())};
+                                return new AssemblerInstruction("c.mv", r(insn.rd.get()), r(insn.rs2.get()));
                             }
                         } else {
                             if (insn.rs1.get() == 0 && insn.rs2.get() == 0) {
-                                return new String[]{"c.ebreak"};
+                                return new AssemblerInstruction("c.ebreak");
                             } else if (insn.rs2.get() == 0) {
-                                return new String[]{"c.jalr", r(insn.rd.get())};
+                                return new AssemblerInstruction("c.jalr", r(insn.rd.get()));
                             } else {
-                                return new String[]{"c.add", r(insn.rd.get()), r(insn.rs2.get())};
+                                return new AssemblerInstruction("c.add", r(insn.rd.get()), r(insn.rs2.get()));
                             }
                         }
                     case Opcode.F3_CFSDSP:
@@ -756,67 +799,66 @@ public class RiscVDisassembler extends Disassembler {
                 break;
         }
 
-        return new String[]{".short", "0x" + HexFormatter.tohex(word & 0xFFFFL, 4),
-                        "# unknown opcode " + insn.OPCD.get()};
+        return new AssemblerInstruction(".short", new Operand(Type.OTHER, "0x" + HexFormatter.tohex(word & 0xFFFFL, 4)), new Operand(Type.OTHER, "# unknown opcode " + insn.OPCD.get()));
     }
 
-    private static String[] cjal(CompressedInstructionFormat insn, long pc) {
+    private static AssemblerInstruction cjal(CompressedInstructionFormat insn, long pc) {
         int word = insn.get();
         int imm = ((word & 0b1011010000000) >> 1) | ((word & (1 << 11)) >> 7) | ((word & (1 << 8)) << 2) | ((word & (1 << 6)) << 1) | ((word & 0b111000) >> 2) | ((word & (1 << 2)) << 3);
         int simm = ((short) (imm << 4)) >> 4;
-        return new String[]{"c.jal", hex(pc + simm)};
+        return new AssemblerInstruction("c.jal", hex(pc + simm));
     }
 
-    private static String[] cj(CompressedInstructionFormat insn, long pc) {
+    private static AssemblerInstruction cj(CompressedInstructionFormat insn, long pc) {
         int word = insn.get();
         int imm = ((word & 0b1011010000000) >> 1) | ((word & (1 << 11)) >> 7) | ((word & (1 << 8)) << 2) | ((word & (1 << 6)) << 1) | ((word & 0b111000) >> 2) | ((word & (1 << 2)) << 3);
         int simm = ((short) (imm << 4)) >> 4;
-        return new String[]{"c.j", hex(pc + simm)};
+        return new AssemblerInstruction("c.j", hex(pc + simm));
     }
 
-    private static String[] addi16sp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction addi16sp(CompressedInstructionFormat insn) {
         int word = insn.get();
         int imm = (word & (1 << 12) >> 3) | ((word & (1 << 6)) >> 2) | ((word & (1 << 5)) << 1) | ((word & 0b11000) << 4) | ((word & (1 << 2)) << 3);
-        return new String[]{"c.addi16sp", simm9(imm)};
+        return new AssemblerInstruction("c.addi16sp", simm9(imm));
     }
 
-    private static String[] cbcc(CompressedInstructionFormat insn, long pc, String mnemonic) {
+    private static AssemblerInstruction cbcc(CompressedInstructionFormat insn, long pc, String mnemonic) {
         int word = insn.get();
         int simm = ((word & (1 << 12)) >> 4) | ((word & 0b110000000000) >> 7) | ((word & 0b1100000) << 1) | ((word & 0b11000) >> 2) | ((word & (1 << 2)) << 3);
-        return new String[]{mnemonic, r_(insn.rs1_.get()), hex(pc + simm)};
+        return new AssemblerInstruction(mnemonic, r_(insn.rs1_.get()), hex(pc + simm));
     }
 
-    private static String[] cfldsp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction cfldsp(CompressedInstructionFormat insn) {
         int imm62 = insn.imm6_2.get();
         int imm = (insn.imm12.get() << 5) | ((imm62 >> 2) & 0b11000) | ((imm62 & 0b111) << 6);
-        return new String[]{"c.fldsp", f(insn.rd.get()), imm(imm) + "(sp)"};
+        return new AssemblerInstruction("c.fldsp", f(insn.rd.get()), new Operand(timm(imm), ts("("), tr(SP), ts(")")));
     }
 
-    private static String[] clwsp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction clwsp(CompressedInstructionFormat insn) {
         int imm62 = insn.imm6_2.get();
         int imm = (insn.imm12.get() << 5) | (imm62 & 0b11100) | ((imm62 & 0b11) << 6);
-        return new String[]{"c.lwsp", r(insn.rd.get()), imm(imm) + "(sp)"};
+        return new AssemblerInstruction("c.lwsp", r(insn.rd.get()), new Operand(timm(imm), ts("("), tr(SP), ts(")")));
     }
 
-    private static String[] cflwsp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction cflwsp(CompressedInstructionFormat insn) {
         int imm62 = insn.imm6_2.get();
         int imm = (insn.imm12.get() << 5) | (imm62 & 0b11100) | ((imm62 & 0b11) << 6);
-        return new String[]{"c.flwsp", f(insn.rd.get()), imm(imm) + "(sp)"};
+        return new AssemblerInstruction("c.flwsp", f(insn.rd.get()), new Operand(timm(imm), ts("("), tr(SP), ts(")")));
     }
 
-    private static String[] cfsdsp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction cfsdsp(CompressedInstructionFormat insn) {
         int imm = (insn.imm12_10.get() << 3) | (insn.imm9_7.get() << 6);
-        return new String[]{"c.fsdsp", f(insn.rd.get()), imm(imm) + "(sp)"};
+        return new AssemblerInstruction("c.fsdsp", f(insn.rd.get()), new Operand(timm(imm), ts("("), tr(SP), ts(")")));
     }
 
-    private static String[] cswsp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction cswsp(CompressedInstructionFormat insn) {
         int imm = (insn.imm12_9.get() << 2) | (insn.imm8_7.get() << 6);
-        return new String[]{"c.swsp", r(insn.rd.get()), imm(imm) + "(sp)"};
+        return new AssemblerInstruction("c.swsp", r(insn.rd.get()), new Operand(timm(imm), ts("("), tr(SP), ts(")")));
     }
 
-    private static String[] cfswsp(CompressedInstructionFormat insn) {
+    private static AssemblerInstruction cfswsp(CompressedInstructionFormat insn) {
         int imm = (insn.imm12_9.get() << 2) | (insn.imm8_7.get() << 6);
-        return new String[]{"c.fswsp", r(insn.rd.get()), imm(imm) + "(sp)"};
+        return new AssemblerInstruction("c.fswsp", r(insn.rd.get()), new Operand(timm(imm), ts("("), tr(SP), ts(")")));
     }
 
     private static int getInstruction(CodeReader code) {
@@ -829,9 +871,14 @@ public class RiscVDisassembler extends Disassembler {
     }
 
     @Override
-    public String[] getDisassembly(CodeReader code) {
+    public AssemblerInstruction disassemble(CodeReader code) {
         long pc = code.getPC();
         return disassemble(pc, getInstruction(code));
+    }
+
+    @Override
+    public String[] getDisassembly(CodeReader code) {
+        return getDisassembly(disassemble(code));
     }
 
     @Override
