@@ -66,6 +66,18 @@ public class UserTypeDatabase {
         }
     }
 
+    // recursively resolve name
+    public Struct getStruct(String name) {
+        UserDefinedType type = types.get(name);
+        if ((type == null || !(type instanceof Struct)) && parent != null) {
+            return parent.getStruct(name);
+        } else if (type instanceof Struct) {
+            return (Struct) type;
+        } else {
+            return null;
+        }
+    }
+
     public void undefine(String name) {
         types.remove(name);
     }

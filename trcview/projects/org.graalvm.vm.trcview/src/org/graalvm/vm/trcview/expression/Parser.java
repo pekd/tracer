@@ -391,8 +391,8 @@ public class Parser {
                     }
                     return new Type(info.getLongType(true), isConst);
                 default:
-                    error("unexpected token " + sym);
-                    throw new AssertionError("unreachable");
+                    // standalone "unsigned"
+                    return new Type(info.getIntType(true), isConst);
             }
         } else {
             switch (sym) {
@@ -507,6 +507,16 @@ public class Parser {
                 } else {
                     return new Type(DataType.VOID);
                 }
+            }
+            case STRUCT: {
+                scan();
+                check(TokenType.IDENT);
+                Struct type = userTypes.getStruct(t.str);
+                if (type == null) {
+                    error("Unknown struct " + t.str);
+                    throw new AssertionError("unreachable");
+                }
+                return new Type(type, isConst);
             }
             default:
                 error("unexpected token " + sym);

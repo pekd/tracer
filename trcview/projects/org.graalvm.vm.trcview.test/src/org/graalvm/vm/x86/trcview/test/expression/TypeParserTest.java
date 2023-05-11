@@ -4,12 +4,16 @@ import static org.junit.Assert.assertEquals;
 
 import java.text.ParseException;
 
+import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Field;
 import org.graalvm.vm.trcview.analysis.type.Function;
+import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
 import org.graalvm.vm.trcview.analysis.type.Prototype;
 import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
+import org.graalvm.vm.trcview.analysis.type.Type;
+import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
 import org.graalvm.vm.trcview.expression.Parser;
 import org.graalvm.vm.trcview.expression.ast.VariableNode;
 import org.junit.Test;
@@ -119,5 +123,60 @@ public class TypeParserTest {
         assertEquals(4, x.getType().getElements());
         assertEquals(16, x.getType().getSize());
         assertEquals(DataType.S32, x.getType().getType());
+    }
+
+    @Test
+    public void testStructPtr() throws ParseException {
+        UserTypeDatabase db = new UserTypeDatabase(ArchitectureTypeInfo.LP64);
+        try {
+            db.add(new Struct("str"));
+        } catch (NameAlreadyUsedException e) {
+            // ignore
+        }
+
+        Parser p = new Parser("void func(struct str* ptr)", db);
+        Function fun = p.parsePrototype();
+        assertEquals("func", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.VOID, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.PTR, proto.args.get(0).getType());
+        Type t = proto.args.get(0).getPointee();
+        assertEquals(DataType.STRUCT, t.getType());
+        assertEquals("str", t.getStruct().getName());
+        assertEquals(0, t.getStruct().getSize());
+    }
+
+    @Test
+    public void testUnsignedInt() throws ParseException {
+        Parser p = new Parser("int main(unsigned int argc)");
+        Function fun = p.parsePrototype();
+        assertEquals("main", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.S32, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.U32, proto.args.get(0).getType());
+    }
+
+    @Test
+    public void testUnsigned() throws ParseException {
+        Parser p = new Parser("int main(unsigned argc)");
+        Function fun = p.parsePrototype();
+        assertEquals("main", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.S32, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.U32, proto.args.get(0).getType());
+    }
+
+    @Test
+    public void testUnsignedAnonymous() throws ParseException {
+        Parser p = new Parser("int main(unsigned)");
+        Function fun = p.parsePrototype();
+        assertEquals("main", fun.getName());
+        Prototype proto = fun.getPrototype();
+        assertEquals(DataType.S32, proto.returnType.getType());
+        assertEquals(1, proto.args.size());
+        assertEquals(DataType.U32, proto.args.get(0).getType());
     }
 }
