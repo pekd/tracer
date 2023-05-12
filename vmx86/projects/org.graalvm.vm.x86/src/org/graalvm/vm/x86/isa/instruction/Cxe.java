@@ -66,7 +66,6 @@ public abstract class Cxe extends AMD64Instruction {
         this.size = size;
         this.name = name;
         setGPRReadOperands(new RegisterOperand(Register.RAX));
-        setGPRWriteOperands(new RegisterOperand(Register.RDX));
     }
 
     @Override
@@ -94,6 +93,7 @@ public abstract class Cxe extends AMD64Instruction {
     public static class Cbw extends Cxe {
         public Cbw(long pc, byte[] instruction) {
             super(pc, instruction, CBW, "cbw");
+            setGPRWriteOperands(new RegisterOperand(Register.RAX));
         }
 
         @Override
@@ -107,6 +107,7 @@ public abstract class Cxe extends AMD64Instruction {
     public static class Cwde extends Cxe {
         public Cwde(long pc, byte[] instruction) {
             super(pc, instruction, CWDE, "cwde");
+            setGPRWriteOperands(new RegisterOperand(Register.RAX));
         }
 
         @Override
@@ -120,6 +121,7 @@ public abstract class Cxe extends AMD64Instruction {
     public static class Cdqe extends Cxe {
         public Cdqe(long pc, byte[] instruction) {
             super(pc, instruction, CDQE, "cdqe");
+            setGPRWriteOperands(new RegisterOperand(Register.RDX));
         }
 
         @Override
