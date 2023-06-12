@@ -60,6 +60,17 @@ public class DefaultTypes {
         elf32_phdr.add("p_align", new Type(DataType.U32, Representation.HEX));
         add(db, elf32_phdr);
 
+        Struct elf32_rela = new Struct("Elf32_Rela");
+        elf32_rela.add("r_offset", new Type(DataType.U32, Representation.HEX));
+        elf32_rela.add("r_info", new Type(DataType.U32, Representation.HEX));
+        elf32_rela.add("r_addend", new Type(DataType.U32, Representation.HEX));
+        add(db, elf32_rela);
+
+        Struct elf32_dyn = new Struct("Elf32_Dyn");
+        elf32_dyn.add("d_tag", new Type(DataType.U32, Representation.HEX));
+        elf32_dyn.add("d_un", new Type(DataType.U32, Representation.HEX));
+        add(db, elf32_dyn);
+
         // ELF64
         Struct elf64_ehdr = new Struct("Elf64_Ehdr");
         elf64_ehdr.add("e_ident", new Type(DataType.U8, false, 16, Representation.HEX));
@@ -101,6 +112,17 @@ public class DefaultTypes {
         elf64_phdr.add("p_memsz", new Type(DataType.U64, Representation.HEX));
         elf64_phdr.add("p_align", new Type(DataType.U64, Representation.HEX));
         add(db, elf64_phdr);
+
+        Struct elf64_rela = new Struct("Elf64_Rela");
+        elf64_rela.add("r_offset", new Type(DataType.U64, Representation.HEX));
+        elf64_rela.add("r_info", new Type(DataType.U64, Representation.HEX));
+        elf64_rela.add("r_addend", new Type(DataType.U64, Representation.HEX));
+        add(db, elf64_rela);
+
+        Struct elf64_dyn = new Struct("Elf64_Dyn");
+        elf64_dyn.add("d_tag", new Type(DataType.U64, Representation.HEX));
+        elf64_dyn.add("d_un", new Type(DataType.U64, Representation.HEX));
+        add(db, elf64_dyn);
 
         // various other types
         Struct vecfx32 = new Struct("VecFx32");
