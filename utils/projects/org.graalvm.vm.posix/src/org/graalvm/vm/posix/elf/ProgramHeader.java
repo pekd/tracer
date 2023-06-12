@@ -319,12 +319,29 @@ public class ProgramHeader {
         return elf;
     }
 
+    private long align(long size) {
+        long page_mask = ~(p_align - 1);
+        long base = size & page_mask;
+        if (base != size) {
+            return base + p_align;
+        } else {
+            return base;
+        }
+    }
+
     public void load(byte[] target) {
         if (target.length < p_memsz) {
             throw new IllegalArgumentException();
         }
         if (p_filesz > 0) {
-            System.arraycopy(elf.getData(), (int) p_offset, target, 0, (int) p_filesz);
+            byte[] data = elf.getData();
+            long fileend = align(p_offset + p_filesz);
+            long filesz = fileend - p_offset;
+            if (fileend > data.length) {
+                System.arraycopy(data, (int) p_offset, target, 0, (int) p_filesz);
+            } else {
+                System.arraycopy(data, (int) p_offset, target, 0, (int) filesz);
+            }
         }
     }
 }
