@@ -52,38 +52,47 @@ public class TmpfsFileMemory implements PosixPointer {
         this.offset = offset;
     }
 
-    public PosixPointer add(int off) {
+    @Override
+    public PosixPointer add(long off) {
         return new TmpfsFileMemory(file, offset + off);
     }
 
+    @Override
     public byte getI8() {
         return file.getContent()[(int) offset];
     }
 
+    @Override
     public short getI16() {
         return Endianess.get16bitBE(file.getContent(), (int) offset);
     }
 
+    @Override
     public int getI32() {
         return Endianess.get32bitBE(file.getContent(), (int) offset);
     }
 
+    @Override
     public long getI64() {
         return Endianess.get64bitBE(file.getContent(), (int) offset);
     }
 
+    @Override
     public void setI8(byte val) {
         file.getContent()[(int) offset] = val;
     }
 
+    @Override
     public void setI16(short val) {
         Endianess.set16bitBE(file.getContent(), (int) offset, val);
     }
 
+    @Override
     public void setI32(int val) {
         Endianess.set32bitBE(file.getContent(), (int) offset, val);
     }
 
+    @Override
     public void setI64(long val) {
         Endianess.set64bitBE(file.getContent(), (int) offset, val);
     }

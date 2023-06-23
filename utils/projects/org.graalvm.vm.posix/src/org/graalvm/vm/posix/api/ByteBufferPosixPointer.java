@@ -67,7 +67,7 @@ public class ByteBufferPosixPointer implements PosixPointer {
     }
 
     @Override
-    public PosixPointer add(int off) {
+    public PosixPointer add(long off) {
         // realSize always holds the total buffer size regardless of the offset
         return new ByteBufferPosixPointer(buffer, offset + off, size - off, realSize, name);
     }

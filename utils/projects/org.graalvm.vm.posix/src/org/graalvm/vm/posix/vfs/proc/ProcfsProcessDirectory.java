@@ -109,6 +109,10 @@ public class ProcfsProcessDirectory extends VFSDirectory {
         return new ProcfsPidMaps(this, "maps", 0, 0, 0444, posix);
     }
 
+    private VFSEntry getMem() {
+        return new ProcfsPidMem(this, "mem", 0, 0, 0600, posix);
+    }
+
     @Override
     protected VFSEntry getEntry(String name) throws PosixException {
         switch (name) {
@@ -118,6 +122,8 @@ public class ProcfsProcessDirectory extends VFSDirectory {
                 return getExe();
             case "maps":
                 return getMaps();
+            case "mem":
+                return getMem();
             case "root":
                 return getRoot();
             case "task":
@@ -133,6 +139,7 @@ public class ProcfsProcessDirectory extends VFSDirectory {
         result.add(getCwd());
         result.add(getExe());
         result.add(getMaps());
+        result.add(getMem());
         result.add(getRoot());
         result.add(getTasks());
         return result;

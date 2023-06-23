@@ -344,7 +344,11 @@ public class DatagramSocketStream extends NetworkStream {
 
         ByteBuffer buf;
         if (message.hasMemory((int) length)) {
-            buf = ByteBuffer.wrap(message.getMemory(), message.getOffset(), (int) length);
+            long off = message.getOffset();
+            if (off != (int) off) {
+                throw new PosixException(Errno.EOVERFLOW);
+            }
+            buf = ByteBuffer.wrap(message.getMemory(), (int) off, (int) length);
         } else {
             byte[] b = new byte[(int) length];
             PosixPointer p = message;

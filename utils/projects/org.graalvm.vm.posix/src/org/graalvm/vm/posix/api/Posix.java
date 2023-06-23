@@ -119,6 +119,7 @@ public class Posix {
     private String execfn;
     private String execpath;
     private MemoryMapProvider mapsProvider;
+    private PosixPointer mem;
 
     public Posix() {
         fds = new FileDescriptorManager();
@@ -136,6 +137,7 @@ public class Posix {
 
         execfn = null;
         mapsProvider = null;
+        mem = null;
 
         threadGroup = new ThreadGroup("POSIX Threads");
         threads = new HashMap<>();
@@ -1687,6 +1689,14 @@ public class Posix {
 
     public MemoryMapProvider getMemoryMapProvider() {
         return mapsProvider;
+    }
+
+    public PosixPointer getMemory() {
+        return mem;
+    }
+
+    public void setMemory(PosixPointer mem) {
+        this.mem = mem;
     }
 
     public Info getProcessInfo() {

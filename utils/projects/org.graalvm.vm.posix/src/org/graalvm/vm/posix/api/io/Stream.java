@@ -77,7 +77,11 @@ public abstract class Stream {
         }
 
         if (buf.hasMemory(length)) {
-            return read(buf.getMemory(), buf.getOffset(), length);
+            long off = buf.getOffset();
+            if (off != (int) off) {
+                throw new PosixException(Errno.EOVERFLOW);
+            }
+            return read(buf.getMemory(), (int) off, length);
         } else {
             byte[] b = new byte[length];
             int val = read(b, 0, length);
@@ -100,7 +104,11 @@ public abstract class Stream {
         }
 
         if (buf.hasMemory(length)) {
-            return write(buf.getMemory(), buf.getOffset(), length);
+            long off = buf.getOffset();
+            if (off != (int) off) {
+                throw new PosixException(Errno.EOVERFLOW);
+            }
+            return write(buf.getMemory(), (int) off, length);
         } else {
             byte[] b = new byte[length];
             PosixPointer p = buf;
@@ -133,7 +141,11 @@ public abstract class Stream {
         }
 
         if (buf.hasMemory(length)) {
-            return pread(buf.getMemory(), buf.getOffset(), length, offset);
+            long off = buf.getOffset();
+            if (off != (int) off) {
+                throw new PosixException(Errno.EOVERFLOW);
+            }
+            return pread(buf.getMemory(), (int) off, length, offset);
         } else {
             byte[] b = new byte[length];
             int val = pread(b, 0, length, offset);
@@ -156,7 +168,11 @@ public abstract class Stream {
         }
 
         if (buf.hasMemory(length)) {
-            return pwrite(buf.getMemory(), buf.getOffset(), length, offset);
+            long off = buf.getOffset();
+            if (off != (int) off) {
+                throw new PosixException(Errno.EOVERFLOW);
+            }
+            return pwrite(buf.getMemory(), (int) off, length, offset);
         } else {
             byte[] b = new byte[length];
             PosixPointer p = buf;

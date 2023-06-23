@@ -44,20 +44,20 @@ import org.graalvm.vm.posix.api.PosixPointer;
 
 public class SockaddrPointer implements PosixPointer {
     private PosixPointer ptr;
-    private int offset;
+    private long offset;
 
     public SockaddrPointer(PosixPointer ptr) {
         this.ptr = ptr;
         this.offset = 0;
     }
 
-    private SockaddrPointer(SockaddrPointer p, int off) {
+    private SockaddrPointer(SockaddrPointer p, long off) {
         this.ptr = p.ptr.add(off);
         this.offset = p.offset + off;
     }
 
     @Override
-    public PosixPointer add(int off) {
+    public PosixPointer add(long off) {
         return new SockaddrPointer(this, off);
     }
 

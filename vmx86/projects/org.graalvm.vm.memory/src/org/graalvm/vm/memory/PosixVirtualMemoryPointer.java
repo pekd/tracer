@@ -62,7 +62,7 @@ public class PosixVirtualMemoryPointer implements PosixPointer {
     }
 
     @Override
-    public PosixPointer add(int off) {
+    public PosixPointer add(long off) {
         return new PosixVirtualMemoryPointer(memory, offset + off);
     }
 

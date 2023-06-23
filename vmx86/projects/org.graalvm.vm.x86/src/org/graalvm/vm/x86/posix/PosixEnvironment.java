@@ -152,6 +152,7 @@ public class PosixEnvironment {
                 return null;
             }
         });
+        posix.setMemory(new PosixVirtualMemoryPointer(mem, 0));
 
         // set rlimits
         Info processInfo = posix.getProcessInfo();

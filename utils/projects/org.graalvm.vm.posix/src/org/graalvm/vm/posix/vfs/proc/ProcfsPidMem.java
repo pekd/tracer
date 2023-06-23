@@ -38,48 +38,77 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package org.graalvm.vm.posix.api;
+package org.graalvm.vm.posix.vfs.proc;
 
-public interface PosixPointer {
-    PosixPointer add(long off);
+import java.util.Date;
 
-    byte getI8() throws MemoryFaultException;
+import org.graalvm.vm.posix.api.Errno;
+import org.graalvm.vm.posix.api.Posix;
+import org.graalvm.vm.posix.api.PosixException;
+import org.graalvm.vm.posix.api.PosixPointer;
+import org.graalvm.vm.posix.api.io.Statx;
+import org.graalvm.vm.posix.api.io.Stream;
+import org.graalvm.vm.posix.vfs.VFSDirectory;
+import org.graalvm.vm.posix.vfs.VFSFile;
 
-    short getI16() throws MemoryFaultException;
+public class ProcfsPidMem extends VFSFile {
+    private final Posix posix;
+    private final Date ctime;
 
-    int getI32() throws MemoryFaultException;
-
-    long getI64() throws MemoryFaultException;
-
-    void setI8(byte val) throws MemoryFaultException;
-
-    void setI16(short val) throws MemoryFaultException;
-
-    void setI32(int val) throws MemoryFaultException;
-
-    void setI64(long val) throws MemoryFaultException;
-
-    default long getAddress() {
-        throw new AssertionError("not implemented");
+    public ProcfsPidMem(VFSDirectory parent, String path, long uid, long gid, long permissions, Posix posix) {
+        super(parent, path, uid, gid, permissions);
+        this.posix = posix;
+        ctime = new Date();
     }
 
-    default long size() {
-        throw new AssertionError("not implemented");
+    @Override
+    protected Stream open(boolean read, boolean write) throws PosixException {
+        PosixPointer base = posix.getMemory();
+        if (base == null) {
+            throw new PosixException(Errno.EIO);
+        }
+        return new ProcfsMemoryStream(this, base, read, write);
     }
 
-    default boolean hasMemory(@SuppressWarnings("unused") int size) {
-        return false;
+    @Override
+    public long size() throws PosixException {
+        return 0;
     }
 
-    default byte[] getMemory() {
-        throw new AssertionError("not implemented");
+    @Override
+    public void atime(Date time) throws PosixException {
+        throw new PosixException(Errno.EPERM);
     }
 
-    default long getOffset() {
-        throw new AssertionError("not implemented");
+    @Override
+    public void mtime(Date time) throws PosixException {
+        throw new PosixException(Errno.EPERM);
     }
 
-    default String getName() {
-        return "[posix-pointer]";
+    @Override
+    public void ctime(Date time) throws PosixException {
+        throw new PosixException(Errno.EPERM);
+    }
+
+    @Override
+    public Date atime() throws PosixException {
+        return ctime;
+    }
+
+    @Override
+    public Date mtime() throws PosixException {
+        return ctime;
+    }
+
+    @Override
+    public Date ctime() throws PosixException {
+        return ctime;
+    }
+
+    @Override
+    public void statx(int mask, Statx buf) throws PosixException {
+        super.statx(mask, buf);
+        buf.stx_dev_major = 0;
+        buf.stx_dev_minor = 5;
     }
 }
