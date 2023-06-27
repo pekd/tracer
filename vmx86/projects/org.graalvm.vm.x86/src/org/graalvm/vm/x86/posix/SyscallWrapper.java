@@ -338,6 +338,8 @@ public class SyscallWrapper extends AMD64Node {
                 return posix.clock_gettime((int) a1, a2);
             case Syscalls.SYS_clock_getres:
                 return posix.clock_getres((int) a1, a2);
+            case Syscalls.SYS_clock_nanosleep:
+                return posix.clock_nanosleep((int) a1, (int) a2, a3, a4);
             case Syscalls.SYS_exit_group:
                 posix.exit_group((int) a1);
                 throw new AssertionError("exit must not return");

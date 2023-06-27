@@ -95,6 +95,7 @@ public class Posix {
     private final Uname uname;
     private final VFS vfs;
     private final Clock clock;
+    private final Time time;
     private final Times times;
     private final Linux linux;
     private final Info processInfo;
@@ -127,6 +128,7 @@ public class Posix {
         uname = new Uname();
         vfs = new VFS();
         clock = new Clock();
+        time = new Time(clock);
         times = new Times(clock);
         linux = new Linux();
         processInfo = new Info();
@@ -872,6 +874,13 @@ public class Posix {
             throw new PosixException(Errno.EINTR);
             // return -1;
         }
+    }
+
+    public int clock_nanosleep(int clockid, int flags, Timespec request, Timespec remain) throws PosixException {
+        if (strace) {
+            log.log(Levels.INFO, () -> String.format("clock_nanosleep(%s, %s, %s, %s)", Clock.getClockName(clockid), Time.timerFlags(flags), request, remain));
+        }
+        return time.clock_nanosleep(clockid, flags, request, remain);
     }
 
     public int timer_create(int clockid, Sigevent evp, PosixPointer timerid) throws PosixException {

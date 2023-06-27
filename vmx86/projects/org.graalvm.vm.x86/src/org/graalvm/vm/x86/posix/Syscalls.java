@@ -113,6 +113,7 @@ public class Syscalls {
     public static final int SYS_timer_delete = 226;
     public static final int SYS_clock_gettime = 228;
     public static final int SYS_clock_getres = 229;
+    public static final int SYS_clock_nanosleep = 230;
     public static final int SYS_exit_group = 231;
     public static final int SYS_tgkill = 234;
     public static final int SYS_openat = 257;

@@ -40,10 +40,18 @@
  */
 package org.graalvm.vm.posix.api;
 
+import static org.graalvm.vm.posix.api.Clock.CLOCK_THREAD_CPUTIME_ID;
+
 public class Time {
     public static final long CLOCKS_PER_SEC = 100000;
 
     public static final long TIMER_ABSTIME = 0x01;
+
+    private Clock clock;
+
+    public Time(Clock clock) {
+        this.clock = clock;
+    }
 
     public static String timerFlags(int flags) {
         if (flags == TIMER_ABSTIME) {
@@ -51,5 +59,40 @@ public class Time {
         } else {
             return Integer.toString(flags);
         }
+    }
+
+    public int clock_nanosleep(int clockid, int flags, Timespec request, @SuppressWarnings("unused") Timespec remain) throws PosixException {
+        if (request.tv_nsec < 0 || request.tv_nsec > 999999999) {
+            throw new PosixException(Errno.EINVAL);
+        }
+        if (clockid == CLOCK_THREAD_CPUTIME_ID) {
+            throw new PosixException(Errno.EINVAL);
+        }
+        if (flags == TIMER_ABSTIME) {
+            Timespec now = new Timespec();
+            clock.clock_gettime(clockid, now);
+            if (now.isAfter(request)) {
+                return 0;
+            } else {
+                Timespec diff = request.sub(now);
+                long ms = diff.toMillis();
+                long ns = diff.tv_nsec % 1_000_000L;
+                try {
+                    Thread.sleep(ms, (int) ns);
+                } catch (InterruptedException e) {
+                    throw new PosixException(Errno.EINTR);
+                }
+            }
+        } else {
+            long ms = request.toMillis();
+            long ns = request.tv_nsec % 1_000_000L;
+            try {
+                Thread.sleep(ms, (int) ns);
+            } catch (InterruptedException e) {
+                // update remain
+                throw new PosixException(Errno.EINTR);
+            }
+        }
+        return 0;
     }
 }

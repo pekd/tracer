@@ -1138,6 +1138,24 @@ public class PosixEnvironment {
         }
     }
 
+    public int clock_nanosleep(int clockid, int flags, long request, long remain) throws SyscallException {
+        try {
+            Timespec req = new Timespec();
+            req.read64(posixPointer(request));
+            Timespec rem = remain == 0 ? null : new Timespec();
+            int result = posix.clock_nanosleep(clockid, flags, req, rem);
+            if (rem != null) {
+                rem.write64(posixPointer(remain));
+            }
+            return result;
+        } catch (PosixException e) {
+            if (strace) {
+                log.log(Level.INFO, "clock_nanosleep failed: " + Errno.toString(e.getErrno()));
+            }
+            throw new SyscallException(e.getErrno());
+        }
+    }
+
     public int timer_create(int clockid, long evp, long timerid) throws SyscallException {
         try {
             Sigevent ev;

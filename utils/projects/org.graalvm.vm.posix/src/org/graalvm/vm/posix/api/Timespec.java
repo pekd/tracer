@@ -64,6 +64,44 @@ public class Timespec implements Struct {
         copyFrom(ts);
     }
 
+    public Timespec add(Timespec ts) {
+        long sec = tv_sec + ts.tv_sec;
+        long nsec = tv_nsec + ts.tv_nsec;
+        long overflow = nsec / 1_000_000_000L;
+        nsec %= 1_000_000_000L;
+        return new Timespec(sec + overflow, nsec);
+    }
+
+    public Timespec sub(Timespec ts) {
+        long sec = tv_sec - ts.tv_sec;
+        long nsec = tv_nsec - ts.tv_nsec;
+        if (nsec < 0) {
+            sec--;
+            nsec = 1_000_000_000L + nsec;
+        }
+        return new Timespec(sec, nsec);
+    }
+
+    public boolean isAfter(Timespec ts) {
+        if (tv_sec > ts.tv_sec) {
+            return true;
+        } else if (tv_sec == ts.tv_sec && tv_nsec > ts.tv_nsec) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isBefore(Timespec ts) {
+        if (tv_sec < ts.tv_sec) {
+            return true;
+        } else if (tv_sec == ts.tv_sec && tv_nsec < ts.tv_nsec) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public long toMillis() {
         return tv_sec * 1000 + (tv_nsec / 1000000);
     }
