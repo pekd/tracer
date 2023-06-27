@@ -481,7 +481,9 @@ public class Analysis {
     }
 
     public void finish(BlockNode root) {
-        add(root);
+        if (root != null) {
+            add(root);
+        }
 
         memory.trim();
 
@@ -489,7 +491,7 @@ public class Analysis {
             analyzer.finish();
         }
 
-        StepEvent first = root.getFirstStep();
+        StepEvent first = root != null ? root.getFirstStep() : null;
         if (first == null) {
             log.log(Levels.INFO, "The trace contains no steps");
             return;
