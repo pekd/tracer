@@ -372,7 +372,11 @@ public class StateEncoder {
         if (location.getDisassembly() != null) {
             buf.append(getDisassembly(location));
             buf.append(" <span class=\"comment\">; ");
-            buf.append(Utils.html(location.getPrintableBytes()));
+            if (location.getMachinecode() != null && location.getMachinecode().length > 0) {
+                buf.append(Utils.html(location.getPrintableBytes()));
+            } else {
+                buf.append("&lt;no code&gt;");
+            }
             buf.append("</span>");
         }
         return buf.toString();
