@@ -1184,6 +1184,34 @@ public class Vector128 extends org.graalvm.vm.util.Vector128 implements Cloneabl
     }
 
     @ExplodeLoop
+    public Vector128 minSignedPackedI8(Vector128 vec) {
+        byte[] a = getBytes();
+        byte[] b = vec.getBytes();
+        byte[] result = new byte[a.length];
+        CompilerAsserts.partialEvaluationConstant(result.length);
+        CompilerAsserts.partialEvaluationConstant(a.length);
+        CompilerAsserts.partialEvaluationConstant(b.length);
+        for (int i = 0; i < a.length; i++) {
+            result[i] = (byte) Math.min(a[i], b[i]);
+        }
+        return new Vector128(result);
+    }
+
+    @ExplodeLoop
+    public Vector128 minSignedPackedI16(Vector128 vec) {
+        short[] a = getShorts();
+        short[] b = vec.getShorts();
+        short[] result = new short[a.length];
+        CompilerAsserts.partialEvaluationConstant(result.length);
+        CompilerAsserts.partialEvaluationConstant(a.length);
+        CompilerAsserts.partialEvaluationConstant(b.length);
+        for (int i = 0; i < a.length; i++) {
+            result[i] = (short) Math.min(a[i], b[i]);
+        }
+        return new Vector128(result);
+    }
+
+    @ExplodeLoop
     public Vector128 minPackedF32(Vector128 vec) {
         float[] a = getFloats();
         float[] b = vec.getFloats();
