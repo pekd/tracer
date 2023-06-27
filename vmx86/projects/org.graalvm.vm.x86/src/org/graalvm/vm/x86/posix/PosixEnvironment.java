@@ -83,6 +83,7 @@ import org.graalvm.vm.posix.api.io.Pollfd;
 import org.graalvm.vm.posix.api.io.Stat;
 import org.graalvm.vm.posix.api.io.Statx;
 import org.graalvm.vm.posix.api.io.Stream;
+import org.graalvm.vm.posix.api.linux.Prctl;
 import org.graalvm.vm.posix.api.linux.Ptrace;
 import org.graalvm.vm.posix.api.linux.Sysinfo;
 import org.graalvm.vm.posix.api.mem.Mman;
@@ -1293,6 +1294,23 @@ public class PosixEnvironment {
         } catch (PosixException e) {
             if (strace) {
                 log.log(Level.INFO, "sigaltstack failed: " + Errno.toString(e.getErrno()));
+            }
+            throw new SyscallException(e.getErrno());
+        }
+    }
+
+    public int prctl(int option, long arg2, long arg3, long arg4, long arg5) throws SyscallException {
+        if (strace) {
+            log.log(Level.INFO, String.format("prctl(%s, %s, %s, %s, %s)", Prctl.prctlOption(option), arg2, arg3, arg4, arg5));
+        }
+        try {
+            switch (option) {
+                default:
+                    throw new PosixException(Errno.EINVAL);
+            }
+        } catch (PosixException e) {
+            if (strace) {
+                log.log(Level.INFO, "prctl failed: " + Errno.toString(e.getErrno()));
             }
             throw new SyscallException(e.getErrno());
         }

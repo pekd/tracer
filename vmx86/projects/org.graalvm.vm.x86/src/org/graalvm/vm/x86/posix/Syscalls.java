@@ -101,6 +101,7 @@ public class Syscalls {
     public static final int SYS_geteuid = 107;
     public static final int SYS_getegid = 108;
     public static final int SYS_sigaltstack = 131;
+    public static final int SYS_prctl = 157;
     public static final int SYS_arch_prctl = 158;
     public static final int SYS_gettid = 186;
     public static final int SYS_time = 201;
