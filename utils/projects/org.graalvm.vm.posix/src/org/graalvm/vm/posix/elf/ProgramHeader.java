@@ -329,18 +329,42 @@ public class ProgramHeader {
         }
     }
 
+    private long alignFloor(long size) {
+        long page_mask = ~(p_align - 1);
+        return size & page_mask;
+    }
+
     public void load(byte[] target) {
         if (target.length < p_memsz) {
             throw new IllegalArgumentException();
         }
         if (p_filesz > 0) {
             byte[] data = elf.getData();
+            System.arraycopy(data, (int) p_offset, target, 0, (int) p_filesz);
+        }
+    }
+
+    public void map(byte[] target) {
+        if (target.length < p_memsz) {
+            throw new IllegalArgumentException();
+        }
+        if (p_filesz > 0) {
+            byte[] data = elf.getData();
+            long vaddr = alignFloor(p_vaddr);
+            long delta = p_vaddr - vaddr;
+            long fileoff = p_offset - delta;
+
             long fileend = align(p_offset + p_filesz);
             long filesz = fileend - p_offset;
             if (fileend > data.length) {
-                System.arraycopy(data, (int) p_offset, target, 0, (int) p_filesz);
-            } else {
-                System.arraycopy(data, (int) p_offset, target, 0, (int) filesz);
+                filesz = data.length - fileoff;
+            }
+            System.arraycopy(data, (int) fileoff, target, 0, (int) filesz);
+            long zero = p_memsz - p_filesz;
+            if (zero > 0) {
+                for (int i = 0; i < zero; i++) {
+                    target[(int) (i + delta + p_filesz)] = 0;
+                }
             }
         }
     }

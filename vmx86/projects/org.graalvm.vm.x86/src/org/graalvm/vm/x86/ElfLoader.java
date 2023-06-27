@@ -302,13 +302,12 @@ public class ElfLoader {
                 assert start <= offset;
                 assert (offset - start) >= 0;
 
-                byte[] segment = new byte[(int) size];
-                hdr.load(segment);
+                long segmentLength = size;
 
                 // fill start of page with zero if necessary
                 size += offset - start;
                 byte[] load = new byte[(int) size];
-                System.arraycopy(segment, 0, load, (int) (offset - start), segment.length);
+                hdr.map(load);
 
                 MemoryPage p = new MemoryPage(new ByteMemory(load, false), start, load.length, filename, off);
                 p.r = hdr.getFlag(Elf.PF_R);
@@ -336,7 +335,7 @@ public class ElfLoader {
                     traceWriter.mmap(start, p.size, prot, Mman.MAP_PRIVATE | Mman.MAP_FIXED, -1, off, p.base, filename, load);
                 }
 
-                long end = load_bias + hdr.getVirtualAddress() + segment.length;
+                long end = load_bias + hdr.getVirtualAddress() + segmentLength;
                 if (brk < load_bias + hdr.getVirtualAddress() + hdr.getMemorySize()) {
                     brk = end;
                 }
