@@ -346,6 +346,8 @@ public class AMD64Opcode {
 
     public static final byte PREFETCH = 0x18;
 
+    public static final byte PSADBW_X_XM = (byte) 0xF6;
+
     public static final byte PSHUFB_OP = 0x00;
     public static final byte PSHUFD = 0x70;
 

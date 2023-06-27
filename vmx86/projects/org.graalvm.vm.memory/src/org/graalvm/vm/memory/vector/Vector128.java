@@ -1239,6 +1239,20 @@ public class Vector128 extends org.graalvm.vm.util.Vector128 implements Cloneabl
         return new Vector128(result);
     }
 
+    @ExplodeLoop
+    public Vector128 absoluteDifferenceI8(Vector128 vec) {
+        byte[] a = getBytes();
+        byte[] b = vec.getBytes();
+        byte[] result = new byte[a.length];
+        CompilerAsserts.partialEvaluationConstant(result.length);
+        CompilerAsserts.partialEvaluationConstant(a.length);
+        CompilerAsserts.partialEvaluationConstant(b.length);
+        for (int i = 0; i < a.length; i++) {
+            result[i] = (byte) Math.abs(Byte.toUnsignedInt(a[i]) - Byte.toUnsignedInt(b[i]));
+        }
+        return new Vector128(result);
+    }
+
     @Override
     public int hashCode() {
         long result = 0;

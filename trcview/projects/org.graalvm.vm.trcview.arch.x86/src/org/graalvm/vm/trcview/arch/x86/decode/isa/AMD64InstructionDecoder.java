@@ -278,6 +278,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movd.MovdToRM;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movd.MovdToReg;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movd.MovqToRM;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movd.MovqToReg;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movddup;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movdqa.MovdqaToReg;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movdqu.MovdquToReg;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Movhlps;
@@ -372,6 +373,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Popf.Popfq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Popf.Popfw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Por;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Prefetch;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Psadbw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Pshufb;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Pshufd;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Pshufhw;
@@ -3002,6 +3004,8 @@ public class AMD64InstructionDecoder {
                             }
                         } else if (sizeOverride) {
                             return new Movlpd(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else if (isREPNZ) {
+                            return new Movddup(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                         }
@@ -3409,6 +3413,14 @@ public class AMD64InstructionDecoder {
                                 return new Prefetch(pc, insn, args.getOperandDecoder(), Prefetch.PREFETCHNTA);
                             default:
                                 return new IllegalInstruction(pc, insn);
+                        }
+                    }
+                    case AMD64Opcode.PSADBW_X_XM: {
+                        Args args = new Args(code, rex, segment, addressOverride);
+                        if (sizeOverride) {
+                            return new Psadbw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else {
+                            return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                         }
                     }
                     case AMD64Opcode.PSHUFD: {
