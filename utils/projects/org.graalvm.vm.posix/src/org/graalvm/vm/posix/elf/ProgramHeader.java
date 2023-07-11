@@ -344,7 +344,7 @@ public class ProgramHeader {
         }
     }
 
-    public void map(byte[] target) {
+    public void map(byte[] target, long start) {
         if (target.length < p_memsz) {
             throw new IllegalArgumentException();
         }
@@ -354,16 +354,24 @@ public class ProgramHeader {
             long delta = p_vaddr - vaddr;
             long fileoff = p_offset - delta;
 
+            assert start == vaddr;
+            assert delta >= 0;
+            assert fileoff >= 0;
+
             long fileend = align(p_offset + p_filesz);
-            long filesz = fileend - p_offset;
+            long filesz = fileend - p_offset + delta;
             if (fileend > data.length) {
                 filesz = data.length - fileoff;
             }
+
             System.arraycopy(data, (int) fileoff, target, 0, (int) filesz);
+
+            // zero the space between filesz and memsz
             long zero = p_memsz - p_filesz;
+            long zerostart = delta + p_filesz;
             if (zero > 0) {
                 for (int i = 0; i < zero; i++) {
-                    target[(int) (i + delta + p_filesz)] = 0;
+                    target[(int) (zerostart + i)] = 0;
                 }
             }
         }
