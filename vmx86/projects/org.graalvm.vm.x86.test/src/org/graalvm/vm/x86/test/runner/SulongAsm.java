@@ -188,7 +188,7 @@ public class SulongAsm {
 
     @Test
     public void cpuid002() throws Exception {
-        TestRunner.run("cpuid002.elf", new String[0], "", "'VMX86onGraal'\n", "", 0);
+        TestRunner.run("cpuid002.elf", new String[0], "", "'GenuineIntel'\n", "", 0);
     }
 
     @Test
