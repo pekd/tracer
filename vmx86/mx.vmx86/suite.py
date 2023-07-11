@@ -209,6 +209,13 @@ suite = {
       "license" : "UPL",
     },
 
+    "org.graalvm.vm.x86.testcases.sulong.asm" : {
+      "subDir" : "tests",
+      "class" : "VMX86TestSuite",
+      "testProject" : True,
+      "license" : "UPL",
+    },
+
     "org.graalvm.vm.x86.test" : {
       "subDir" : "projects",
       "sourceDirs" : ["src"],
@@ -216,6 +223,7 @@ suite = {
         "org.graalvm.vm.x86",
         "org.graalvm.vm.x86.testcases.asm",
         "org.graalvm.vm.x86.testcases.c",
+        "org.graalvm.vm.x86.testcases.sulong.asm",
         "mx:JUNIT",
       ],
       "javaCompliance" : "17+",
@@ -373,6 +381,7 @@ suite = {
       "dependencies" : [
         "org.graalvm.vm.x86.testcases.asm",
         "org.graalvm.vm.x86.testcases.c",
+        "org.graalvm.vm.x86.testcases.sulong.asm",
       ],
       "javaProperties" : {
         "library.path" : "<path:VM_MEMORY_NATIVE>/<lib:memory>"
