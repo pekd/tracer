@@ -307,7 +307,7 @@ public class ElfLoader {
                 // fill start of page with zero if necessary
                 size += offset - start;
                 byte[] load = new byte[(int) size];
-                hdr.map(load, start);
+                hdr.map(load, start - load_bias);
 
                 MemoryPage p = new MemoryPage(new ByteMemory(load, false), start, load.length, filename, off);
                 p.r = hdr.getFlag(Elf.PF_R);

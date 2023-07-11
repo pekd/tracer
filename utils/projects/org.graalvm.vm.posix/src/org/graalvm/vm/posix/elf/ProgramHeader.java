@@ -329,11 +329,6 @@ public class ProgramHeader {
         }
     }
 
-    private long alignFloor(long size) {
-        long page_mask = ~(p_align - 1);
-        return size & page_mask;
-    }
-
     public void load(byte[] target) {
         if (target.length < p_memsz) {
             throw new IllegalArgumentException();
@@ -350,7 +345,7 @@ public class ProgramHeader {
         }
         if (p_filesz > 0) {
             byte[] data = elf.getData();
-            long vaddr = alignFloor(p_vaddr);
+            long vaddr = start;
             long delta = p_vaddr - vaddr;
             long fileoff = p_offset - delta;
 
