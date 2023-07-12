@@ -450,7 +450,7 @@ suite = {
         "native-image.properties" : "file:mx.vmx86/native-image.properties",
         #"./" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/<lib:memory>", "extracted-dependency:vmx86:VM_NFI_NATIVE/<lib:nfi>"],
         "./" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/<lib:memory>"],
-        "clibraries/<os>-<arch>/" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/libmemory.a", "file:projects/org.graalvm.vm.memory.native/include"],
+        "clibraries/" : ["extracted-dependency:vmx86:VM_MEMORY_NATIVE/libmemory.a", "file:projects/org.graalvm.vm.memory.native/include"],
       },
       "license" : "UPL",
     },
