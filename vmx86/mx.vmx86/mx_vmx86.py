@@ -174,17 +174,13 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     support_distributions=[
         'vmx86:VMX86_GRAALVM_SUPPORT'
     ],
-    #polyglot_lib_build_args=[
-    #    '-H:CLibraryPath=<path:vmx86:VMX86_GRAALVM_SUPPORT>/clibraries'
-    #],
     launcher_configs=[
         mx_sdk.LanguageLauncherConfig(
             destination='bin/<exe:vmx86>',
             jar_distributions=['vmx86:VMX86_LAUNCHER'],
             main_class='org.graalvm.vm.x86.launcher.AMD64Launcher',
             build_args=[
-                '-H:+TruffleCheckBlackListedMethods'
-                #'-H:CLibraryPath=<path:vmx86:VMX86_GRAALVM_SUPPORT>/clibraries'
+                '-H:+TruffleCheckBlockListMethods'
             ],
             language='amd64'
         )
