@@ -9,6 +9,7 @@ import org.graalvm.vm.x86.isa.OperandDecoder;
 import org.graalvm.vm.x86.node.WriteFlagNode;
 import org.graalvm.vm.x86.node.WriteNode;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public abstract class Rdrand extends AMD64Instruction {
@@ -25,6 +26,16 @@ public abstract class Rdrand extends AMD64Instruction {
         setGPRWriteOperands(dst);
     }
 
+    @TruffleBoundary
+    private static int randInt() {
+        return rng.nextInt();
+    }
+
+    @TruffleBoundary
+    private static long randLong() {
+        return rng.nextLong();
+    }
+
     @Override
     protected void createChildNodes() {
         ArchitecturalState state = getState();
@@ -39,7 +50,7 @@ public abstract class Rdrand extends AMD64Instruction {
 
         @Override
         public long executeInstruction(VirtualFrame frame) {
-            short value = (short) rng.nextInt();
+            short value = (short) randInt();
             writeDst.executeI16(frame, value);
             writeCF.execute(frame, true);
             return next();
@@ -53,7 +64,7 @@ public abstract class Rdrand extends AMD64Instruction {
 
         @Override
         public long executeInstruction(VirtualFrame frame) {
-            int value = rng.nextInt();
+            int value = randInt();
             writeDst.executeI32(frame, value);
             writeCF.execute(frame, true);
             return next();
@@ -67,7 +78,7 @@ public abstract class Rdrand extends AMD64Instruction {
 
         @Override
         public long executeInstruction(VirtualFrame frame) {
-            long value = rng.nextLong();
+            long value = randLong();
             writeDst.executeI64(frame, value);
             writeCF.execute(frame, true);
             return next();

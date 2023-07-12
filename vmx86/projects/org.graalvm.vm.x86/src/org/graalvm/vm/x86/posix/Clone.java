@@ -54,6 +54,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -134,6 +135,11 @@ public class Clone extends AMD64Node {
             state.fs = newtls;
         }
 
+	return createThread(state, flags, ptid, ctid, pc);
+    }
+
+    @TruffleBoundary
+    private int createThread(CpuState state, long flags, long ptid, long ctid, long pc) throws SyscallException {
         AMD64Context ctx = ctxref.get(this);
         CallTarget threadMain = ctx.getInterpreter();
         PosixEnvironment posix = ctx.getPosixEnvironment();

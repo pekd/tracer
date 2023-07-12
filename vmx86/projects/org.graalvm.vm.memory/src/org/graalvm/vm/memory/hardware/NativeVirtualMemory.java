@@ -389,6 +389,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         return phy;
     }
 
+    @TruffleBoundary
     @Override
     public void mprotect(long address, long len, boolean r, boolean w, boolean x) throws PosixException {
         long addr = addr(address);
@@ -396,6 +397,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         MMU.mprotect(phy, len, r, w, x);
     }
 
+    @TruffleBoundary
     @Override
     public void add(MemoryPage page) {
         Memory mem = page.getMemory();
@@ -486,6 +488,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         updateMemoryMap();
     }
 
+    @TruffleBoundary
     @Override
     public void remove(long address, long len) throws PosixException {
         long addr = addr(address);
@@ -496,6 +499,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         updateMemoryMap();
     }
 
+    @TruffleBoundary
     @Override
     public MemoryPage allocate(long size, String name) {
         long base = allocateRegion(size);
@@ -504,6 +508,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         return page;
     }
 
+    @TruffleBoundary
     @Override
     public MemoryPage allocate(Memory memory, long size, String name, long offset) {
         if (memory instanceof PosixMemory) {
@@ -526,6 +531,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         return page;
     }
 
+    @TruffleBoundary
     @Override
     public void free(long address) {
         throw new UnsupportedOperationException();
@@ -781,6 +787,7 @@ public class NativeVirtualMemory extends VirtualMemory {
 
     @Override
     public void printAddressInfo(long addr, PrintStream out) {
+        CompilerAsserts.neverPartOfCompilation();
         for (MemorySegment s : map) {
             if (s.contains(phy(addr(addr)))) {
                 MemorySegment seg = segment(s);
@@ -789,6 +796,7 @@ public class NativeVirtualMemory extends VirtualMemory {
         }
     }
 
+    @TruffleBoundary
     @Override
     public List<MemorySegment> getSegments() {
         return map.stream().map(this::segment).collect(Collectors.toList());
