@@ -50,7 +50,6 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
-import org.graalvm.nativeimage.ImageInfo;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -87,14 +86,6 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
     @Override
     protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
         final List<String> unrecognizedOptions = new ArrayList<>();
-
-        if (ImageInfo.inImageCode()) {
-            // set default thresholds
-            polyglotOptions.put("engine.OSRCompilationThreshold", "10");
-            polyglotOptions.put("engine.SingleTierCompilationThreshold", "10");
-            polyglotOptions.put("engine.FirstTierCompilationThreshold", "5");
-            polyglotOptions.put("engine.LastTierCompilationThreshold", "10");
-        }
 
         ListIterator<String> iterator = arguments.listIterator();
         while (iterator.hasNext()) {
