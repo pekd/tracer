@@ -75,7 +75,7 @@ public class TraceCallTarget extends AMD64RootNode {
     private static final Logger log = Trace.create(TraceCallTarget.class);
 
     public static final boolean TRUFFLE_CALLS = getBoolean(Options.TRUFFLE_CALLS);
-    public static final boolean TRACE = getBoolean(Options.EXEC_TRACE);
+    private final boolean TRACE = getBoolean(Options.EXEC_TRACE);
 
     @Child private InitializeFromCpuStateNode write = new InitializeFromCpuStateNode();
     @Child private CopyToCpuStateNode read = new CopyToCpuStateNode();

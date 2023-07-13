@@ -72,7 +72,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 public class InitializerNode extends AMD64Node {
-    private static final boolean TRACE = Options.getBoolean(Options.EXEC_TRACE);
+    private final boolean TRACE = Options.getBoolean(Options.EXEC_TRACE);
 
     private static final Logger log = Trace.create(LoaderNode.class);
     @CompilationFinal(dimensions = 1) public static final byte[] BINARY = loadBinary();

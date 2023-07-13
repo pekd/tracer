@@ -116,8 +116,8 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 public class PosixEnvironment {
     private static final Logger log = Trace.create(PosixEnvironment.class);
 
-    private static final boolean SYMBOLS = Options.getBoolean(Options.EXEC_TRACE) || Options.getBoolean(Options.DEBUG_EXEC) || Options.getBoolean(Options.DEBUG_SYMBOLS);
-    private static final boolean STATIC_TIME = Options.getBoolean(Options.USE_STATIC_TIME);
+    private final boolean SYMBOLS = Options.getBoolean(Options.EXEC_TRACE) || Options.getBoolean(Options.DEBUG_EXEC) || Options.getBoolean(Options.DEBUG_SYMBOLS);
+    private final boolean STATIC_TIME = Options.getBoolean(Options.USE_STATIC_TIME);
 
     private final VirtualMemory mem;
     private final Posix posix;

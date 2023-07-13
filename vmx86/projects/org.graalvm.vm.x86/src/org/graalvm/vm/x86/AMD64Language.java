@@ -80,7 +80,7 @@ public class AMD64Language extends TruffleLanguage<AMD64Context> {
 
     private static final boolean DEBUG = Options.getBoolean(Options.DEBUG_EXEC);
     private static final boolean DEBUG_TRACE = Options.getBoolean(Options.DEBUG_EXEC_TRACE);
-    private static final boolean EXEC_TRACE = Options.getBoolean(Options.EXEC_TRACE);
+    private final boolean EXEC_TRACE = Options.getBoolean(Options.EXEC_TRACE);
     private static final int BUFSZ = 64 * 1024; // trace buffer size
 
     protected static final FrameDescriptor fd = AMD64Context.getFrameDescriptor();

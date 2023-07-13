@@ -84,7 +84,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 public class AMD64BasicBlock extends AMD64Node {
     private static final boolean DEBUG = getBoolean(Options.DEBUG_EXEC);
     private static final boolean DEBUG_TRACE = getBoolean(Options.DEBUG_EXEC_TRACE);
-    private static final boolean EXEC_TRACE = getBoolean(Options.EXEC_TRACE);
+    private final boolean EXEC_TRACE = getBoolean(Options.EXEC_TRACE);
 
     @CompilationFinal private static boolean DEBUG_COMPILER = false;
 

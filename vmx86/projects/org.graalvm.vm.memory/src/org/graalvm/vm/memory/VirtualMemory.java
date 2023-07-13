@@ -61,7 +61,6 @@ public abstract class VirtualMemory {
     private static final Logger log = Trace.create(VirtualMemory.class);
 
     protected static final boolean DEBUG = MemoryOptions.MEM_DEBUG.get();
-    protected static final boolean VIRTUAL = MemoryOptions.MEM_VIRTUAL.get();
     protected static final boolean VERIFY = MemoryOptions.MEM_VERIFY.get();
     protected static final boolean MAP_NATIVE = MemoryOptions.MEM_MAP_NATIVE.get();
 
@@ -101,7 +100,7 @@ public abstract class VirtualMemory {
                 return new VirtualMemoryVerifier();
             }
         }
-        if (VIRTUAL) {
+        if (MemoryOptions.MEM_VIRTUAL.get()) {
             return new JavaVirtualMemory();
         } else if (NativeVirtualMemory.isSupported()) {
             return new HybridVirtualMemory();

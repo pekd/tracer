@@ -58,7 +58,7 @@ public class Rdtsc extends AMD64Instruction {
     @Child private WriteNode writeEDX;
 
     @CompilationFinal private int insncntslot;
-    private static final boolean useInstructionCount = getBoolean(Options.RDTSC_USE_INSTRUCTION_COUNT);
+    private final boolean useInstructionCount = getBoolean(Options.RDTSC_USE_INSTRUCTION_COUNT);
 
     public Rdtsc(long pc, byte[] instruction) {
         super(pc, instruction);

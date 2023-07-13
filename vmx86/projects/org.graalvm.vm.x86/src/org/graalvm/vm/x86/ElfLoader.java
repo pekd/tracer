@@ -125,7 +125,6 @@ public class ElfLoader {
     private static final Logger log = Trace.create(ElfLoader.class);
 
     private static final boolean DEBUG = Options.getBoolean(Options.DEBUG_EXEC);
-    private static final boolean DEBUG_STATIC_ENV = Options.getBoolean(Options.DEBUG_STATIC_ENV);
 
     public static final String PLATFORM = "x86_64";
     public static final int RANDOM_SIZE = 16;
@@ -158,8 +157,6 @@ public class ElfLoader {
     public static final int AT_EXECFN = 31;
     public static final int AT_SYSINFO = 32;
     public static final int AT_SYSINFO_EHDR = 33;
-
-    public static final long LOAD_BIAS = getLong(Options.LOAD_BIAS);
 
     private Elf elf;
     private long load_bias;
@@ -271,8 +268,9 @@ public class ElfLoader {
             load_bias = 0;
         }
 
-        if (LOAD_BIAS != 0) {
-            load_bias = LOAD_BIAS;
+        long bias = getLong(Options.LOAD_BIAS);
+        if (bias != 0) {
+            load_bias = bias;
         }
 
         symbols = new TreeMap<>();
@@ -595,7 +593,7 @@ public class ElfLoader {
         // auxv data
         ptr = r1 + pointersSize;
         long ptrRandom = ptr;
-        Random random = DEBUG_STATIC_ENV ? new Random(0) : new Random();
+        Random random = Options.getBoolean(Options.DEBUG_STATIC_ENV) ? new Random(0) : new Random();
         for (int i = 0; i < RANDOM_SIZE / 4; i++) {
             mem.setI32(ptr, random.nextInt());
             ptr += 4;
@@ -717,7 +715,7 @@ public class ElfLoader {
         // auxv data
         ptr = r1 + pointersSize;
         long ptrRandom = ptr;
-        Random random = DEBUG_STATIC_ENV ? new Random(0) : new Random();
+        Random random = Options.getBoolean(Options.DEBUG_STATIC_ENV) ? new Random(0) : new Random();
         for (int i = 0; i < RANDOM_SIZE / 4; i++) {
             mem.setI32(ptr, random.nextInt());
             ptr += 4;
