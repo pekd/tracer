@@ -51,7 +51,6 @@ import java.util.logging.Level;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.nativeimage.ImageInfo;
-import org.graalvm.nativeimage.RuntimeOptions;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -62,17 +61,18 @@ import org.graalvm.vm.util.log.Trace;
 public class AMD64Launcher extends AbstractLanguageLauncher {
     public static void main(String[] args) {
         Trace.setupConsoleApplication(Level.INFO);
-        if (ImageInfo.inImageCode()) {
-            // set default thresholds
-            RuntimeOptions.set("TruffleOSRCompilationThreshold", 10);
-            RuntimeOptions.set("TruffleCompilationThreshold", 10);
-        }
         new AMD64Launcher().launch(args);
     }
 
     private String[] programArgs;
     private String file;
     private VersionAction versionAction = VersionAction.None;
+
+    private String traceFile = null;
+    private boolean virtualMemory = false;
+    private boolean strace = false;
+    private String fsroot = null;
+    private String cwd = null;
 
     @Override
     protected void launch(Context.Builder contextBuilder) {
@@ -87,6 +87,14 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
     @Override
     protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
         final List<String> unrecognizedOptions = new ArrayList<>();
+
+        if (ImageInfo.inImageCode()) {
+            // set default thresholds
+            polyglotOptions.put("engine.OSRCompilationThreshold", "10");
+            polyglotOptions.put("engine.SingleTierCompilationThreshold", "10");
+            polyglotOptions.put("engine.FirstTierCompilationThreshold", "5");
+            polyglotOptions.put("engine.LastTierCompilationThreshold", "10");
+        }
 
         ListIterator<String> iterator = arguments.listIterator();
         while (iterator.hasNext()) {
@@ -105,21 +113,53 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
                 case "--version":
                     versionAction = VersionAction.PrintAndExit;
                     break;
+                case "--vmem":
+                    virtualMemory = true;
+                    break;
+                case "--strace":
+                    strace = true;
+                    break;
                 default:
                     // options with argument
+                    String name;
                     String argument;
                     int equalsIndex = option.indexOf('=');
                     if (equalsIndex > 0) {
+                        name = option.substring(0, equalsIndex);
                         argument = option.substring(equalsIndex + 1);
                     } else if (iterator.hasNext()) {
+                        name = option;
                         argument = iterator.next();
                     } else {
+                        name = option;
                         argument = null;
                     }
-                    // ignore unknown options
-                    unrecognizedOptions.add(option);
-                    if (equalsIndex < 0 && argument != null) {
-                        iterator.previous();
+
+                    switch(name) {
+                        case "--trace":
+                            if (argument == null) {
+                                throw abortInvalidArgument("--trace", "missing trace file name");
+                            }
+                            traceFile = argument;
+                            break;
+                        case "--chroot":
+                            if (argument == null) {
+                                throw abortInvalidArgument("--chroot", "missing fs root path");
+                            }
+                            fsroot = argument;
+                            break;
+                        case "--cwd":
+                            if (argument == null) {
+                                throw abortInvalidArgument("--cwd", "missing cwd path");
+                            }
+                            cwd = argument;
+                            break;
+                        default:
+                            // ignore unknown options
+                            unrecognizedOptions.add(option);
+                            if (equalsIndex < 0 && argument != null) {
+                                iterator.previous();
+                            }
                     }
                     break;
             }
@@ -155,6 +195,11 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
         System.out.println("Run x86_64 programs for Linux on the GraalVM's x86_64 interpreter.\n");
         System.out.println("Mandatory arguments to long options are mandatory for short options too.\n");
         System.out.println("Options:");
+        printOption("--vmem",            "use Java virtual memory implementation");
+        printOption("--strace",          "print system calls like in \"strace\" tool");
+        printOption("--trace=file",      "record execution trace to file");
+        printOption("--chroot=path",     "set filesystem root to path");
+        printOption("--cwd=path",        "set cwd to path");
         printOption("--version",         "print the version and exit");
         printOption("--show-version",    "print the version and continue");
         // @formatter:on
@@ -164,6 +209,11 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
     protected void collectArguments(Set<String> args) {
         // @formatter:off
         args.addAll(Arrays.asList(
+                        "--vmem",
+                        "--strace",
+                        "--trace=file",
+                        "--chroot=path",
+                        "--cwd=path",
                         "--version",
                         "--show-version"));
         // @formatter:on
@@ -181,6 +231,28 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
     }
 
     protected int execute(Context.Builder contextBuilder) {
+        // configure interpreter
+        if (strace) {
+            System.setProperty("posix.strace", "1");
+        }
+
+        if (virtualMemory || traceFile != null) {
+            System.setProperty("mem.virtual", "1");
+        }
+
+        if (traceFile != null) {
+            System.setProperty("vmx86.exec.trace", "1");
+            System.setProperty("vmx86.debug.exec.tracefile", traceFile);
+        }
+
+        if (fsroot != null) {
+            System.setProperty("vmx86.fsroot", fsroot);
+        }
+
+        if (cwd != null) {
+            System.setProperty("vmx86.cwd", cwd);
+        }
+
         contextBuilder.arguments(getLanguageId(), programArgs);
         contextBuilder.allowCreateThread(true);
         try (Context context = contextBuilder.build()) {
