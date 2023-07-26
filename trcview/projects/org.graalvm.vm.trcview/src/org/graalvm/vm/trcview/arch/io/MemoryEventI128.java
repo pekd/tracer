@@ -32,4 +32,17 @@ public class MemoryEventI128 extends MemoryEvent {
         }
         return value;
     }
+
+    @Override
+    public MemoryEventI128 add(long offset) {
+        boolean be = isBigEndian();
+        int tid = getTid();
+        long address = getAddress();
+        boolean write = isWrite();
+        if (hasData()) {
+            return new MemoryEventI128(be, tid, address + offset, write, value);
+        } else {
+            return new MemoryEventI128(be, tid, address + offset, write);
+        }
+    }
 }

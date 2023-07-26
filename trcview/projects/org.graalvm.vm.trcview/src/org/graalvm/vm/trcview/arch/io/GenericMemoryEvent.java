@@ -42,4 +42,19 @@ public class GenericMemoryEvent extends MemoryEvent {
     public Vector128 getVector() {
         return value128;
     }
+
+    @Override
+    public GenericMemoryEvent add(long offset) {
+        boolean be = isBigEndian();
+        int tid = getTid();
+        long address = getAddress();
+        boolean write = isWrite();
+        if (!hasData()) {
+            return new GenericMemoryEvent(be, tid, address + offset, size, write);
+        } else if (value128 == null) {
+            return new GenericMemoryEvent(be, tid, address + offset, size, write, value128);
+        } else {
+            return new GenericMemoryEvent(be, tid, address + offset, size, write, value64);
+        }
+    }
 }

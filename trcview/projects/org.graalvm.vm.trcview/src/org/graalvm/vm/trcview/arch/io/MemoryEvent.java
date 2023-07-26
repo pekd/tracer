@@ -56,6 +56,12 @@ public abstract class MemoryEvent extends Event {
 
     public abstract Vector128 getVector();
 
+    public abstract MemoryEvent add(long offset);
+
+    public MemoryEvent subtract(long offset) {
+        return add(-offset);
+    }
+
     public void setNext(MemoryEvent next) {
         assert next != this;
         this.next = next;

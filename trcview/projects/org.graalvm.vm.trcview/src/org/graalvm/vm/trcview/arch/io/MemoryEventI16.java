@@ -32,4 +32,17 @@ public class MemoryEventI16 extends MemoryEvent {
     public Vector128 getVector() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public MemoryEventI16 add(long offset) {
+        boolean be = isBigEndian();
+        int tid = getTid();
+        long address = getAddress();
+        boolean write = isWrite();
+        if (hasData()) {
+            return new MemoryEventI16(be, tid, address + offset, write, value);
+        } else {
+            return new MemoryEventI16(be, tid, address + offset, write);
+        }
+    }
 }
