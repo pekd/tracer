@@ -7,7 +7,7 @@ trcview is an extensible execution trace analyzer written in Java.
 Build Dependencies
 ==================
 
-- JDK11+
+- JDK17+
 - mx
 - Python (required by mx)
 
@@ -34,10 +34,10 @@ Clone this repository:
 git clone https://github.com/pekd/tracer
 ```
 
-Set `JAVA_HOME` to a JDK >= 11, e.g.:
+Set `JAVA_HOME` to a JDK >= 17, e.g.:
 
 ```
-echo JAVA_HOME=/usr/lib/jvm/java-11-openjdk > tracer/trcview/mx.trcview/env
+echo JAVA_HOME=/usr/lib/jvm/java-17-openjdk > tracer/trcview/mx.trcview/env
 ```
 
 Build trcview:
@@ -55,7 +55,7 @@ After building the project with mx, you can find an executable jar file in the f
 java -jar build/trcview.jar
 ```
 
-This build of trcview will contain support for the generic architecture as well as for PDP-11 and RISC-V.
+This build of trcview will contain support for the generic architecture as well as for AMD64, PDP-11 and RISC-V.
 
 IDE Setup
 ---------
