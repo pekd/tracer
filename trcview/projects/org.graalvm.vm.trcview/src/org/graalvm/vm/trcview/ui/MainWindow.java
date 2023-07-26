@@ -217,6 +217,8 @@ public class MainWindow extends JFrame implements TraceListenable {
 
         JMenuBar menu = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic('F');
+
         open = new JMenuItem("Open...");
         open.setMnemonic('O');
         open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MENU_SHORTCUT_MASK));
@@ -462,11 +464,23 @@ public class MainWindow extends JFrame implements TraceListenable {
             fileMenu.add(refresh);
             fileMenu.addSeparator();
             fileMenu.add(exit);
-            fileMenu.setMnemonic('F');
         } else {
             JMenuItem close = new JMenuItem("Close");
             close.addActionListener(e -> this.dispose());
             close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MENU_SHORTCUT_MASK));
+
+            fileMenu.add(loadSession);
+            fileMenu.add(saveSession);
+            fileMenu.addSeparator();
+            fileMenu.add(loadSymbols);
+            fileMenu.add(saveSymbols);
+            fileMenu.addSeparator();
+            fileMenu.add(loadPrototypes);
+            fileMenu.add(loadMap);
+            fileMenu.add(loadIdaMap);
+            fileMenu.addSeparator();
+            fileMenu.add(generateIDC);
+            fileMenu.addSeparator();
             fileMenu.add(close);
 
             // synchronize master view to slave view
