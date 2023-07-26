@@ -1,0 +1,2 @@
+#!/bin/sh
+cd ~/git/graal/vm && mx --dynamicimport /vmx86 --disable-polyglot --disable-libpolyglot --skip-libraries=true --disable-installables=true --force-bash-launchers=native-image,native-image-configure,gu --exclude-components=ni,nic,pbi,pbm,pmh,polynative,gu build
