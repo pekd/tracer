@@ -79,6 +79,7 @@ public class Options {
 
     public static final StringOption FSROOT = new StringOption("vmx86.fsroot", null);
     public static final StringOption CWD = new StringOption("vmx86.cwd", null);
+    public static final StringOption LD_PRELOAD = new StringOption("vmx86.ldpreload", null);
 
     // CPUID
     public static final StringOption CPUID_BRAND = new StringOption("vmx86.cpuid.brand", "VMX86 on Graal/Truffle");

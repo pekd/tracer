@@ -83,6 +83,7 @@ public class LoaderNode extends AMD64Node {
 
     @TruffleBoundary
     private static Map<String, String> getenv() {
+        String ldpreload = Options.getString(Options.LD_PRELOAD);
         if (Options.getString(Options.ENVIRON) != null) {
             String environ = Options.getString(Options.ENVIRON);
             Map<String, String> env = new HashMap<>();
@@ -104,12 +105,21 @@ public class LoaderNode extends AMD64Node {
             env.put("PATH", System.getenv("PATH"));
             env.put("LANG", System.getenv("LANG"));
             env.put("HOME", System.getenv("HOME"));
+            if (ldpreload != null) {
+                env.put("LD_PRELOAD", ldpreload);
+            }
             if (System.getenv("DISPLAY") != null) {
                 env.put("DISPLAY", System.getenv("DISPLAY"));
             }
             return env;
         } else {
-            return System.getenv();
+            if (ldpreload != null) {
+                Map<String, String> env = new HashMap<>(System.getenv());
+                env.put("LD_PRELOAD", ldpreload);
+                return env;
+            } else {
+                return System.getenv();
+            }
         }
     }
 

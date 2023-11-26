@@ -72,6 +72,7 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
     private boolean strace = false;
     private String fsroot = null;
     private String cwd = null;
+    private String ldpreload = null;
 
     @Override
     protected void launch(Context.Builder contextBuilder) {
@@ -126,7 +127,7 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
                         argument = null;
                     }
 
-                    switch(name) {
+                    switch (name) {
                         case "--trace":
                             if (argument == null) {
                                 throw abortInvalidArgument("--trace", "missing trace file name");
@@ -144,6 +145,12 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
                                 throw abortInvalidArgument("--cwd", "missing cwd path");
                             }
                             cwd = argument;
+                            break;
+                        case "--ld-preload":
+                            if (argument == null) {
+                                throw abortInvalidArgument("--ld-preload", "missing LD_PRELOAD path");
+                            }
+                            ldpreload = argument;
                             break;
                         default:
                             // ignore unknown options
@@ -191,6 +198,7 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
         printOption("--trace=file",      "record execution trace to file");
         printOption("--chroot=path",     "set filesystem root to path");
         printOption("--cwd=path",        "set cwd to path");
+        printOption("--ld-preload=path", "set LD_PRELOAD to path");
         printOption("--version",         "print the version and exit");
         printOption("--show-version",    "print the version and continue");
         // @formatter:on
@@ -205,6 +213,7 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
                         "--trace=file",
                         "--chroot=path",
                         "--cwd=path",
+                        "--ld-preload=path",
                         "--version",
                         "--show-version"));
         // @formatter:on
@@ -242,6 +251,10 @@ public class AMD64Launcher extends AbstractLanguageLauncher {
 
         if (cwd != null) {
             System.setProperty("vmx86.cwd", cwd);
+        }
+
+        if (ldpreload != null) {
+            System.setProperty("vmx86.ldpreload", ldpreload);
         }
 
         contextBuilder.arguments(getLanguageId(), programArgs);
