@@ -19,8 +19,8 @@ public class CoarsePage extends Page {
 
     public CoarsePage(long address, byte[] data, long pc, long instructionCount, Node node, Protection prot) {
         this(address, pc, instructionCount, node, prot);
-        assert data.length == 4096;
-        System.arraycopy(data, 0, this.data, 0, 4096);
+        assert data.length == SIZE;
+        System.arraycopy(data, 0, this.data, 0, SIZE);
     }
 
     @Override
@@ -44,14 +44,14 @@ public class CoarsePage extends Page {
 
     @Override
     public void clear(long instructionCount, Node node, StepEvent step) {
-        for (int i = 0; i < 4096; i += 8) {
+        for (int i = 0; i < SIZE; i += 8) {
             addUpdate(address + i, (byte) 8, 0, instructionCount, node, step, false);
         }
     }
 
     @Override
     public void overwrite(byte[] update, long instructionCount, Node node, StepEvent step) {
-        for (int i = 0; i < 4096; i += 8) {
+        for (int i = 0; i < SIZE; i += 8) {
             long value = Endianess.get64bitLE(update, i);
             addUpdate(address + i, (byte) 8, value, instructionCount, node, step, false);
         }
@@ -72,7 +72,7 @@ public class CoarsePage extends Page {
 
     @Override
     public MemoryUpdate getLastUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -153,7 +153,7 @@ public class CoarsePage extends Page {
 
     @Override
     public long getWord(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -254,7 +254,7 @@ public class CoarsePage extends Page {
 
     @Override
     public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -330,7 +330,7 @@ public class CoarsePage extends Page {
 
     @Override
     public MemoryRead getNextRead(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 

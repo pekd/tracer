@@ -10,8 +10,8 @@ import org.graalvm.vm.trcview.io.Node;
 import org.graalvm.vm.util.io.Endianess;
 
 public class FinePage extends Page {
-    @SuppressWarnings("unchecked") private final ArrayList<MemoryUpdate>[] updates = new ArrayList[4096];
-    @SuppressWarnings("unchecked") private final ArrayList<MemoryRead>[] reads = new ArrayList[4096];
+    @SuppressWarnings("unchecked") private final ArrayList<MemoryUpdate>[] updates = new ArrayList[SIZE];
+    @SuppressWarnings("unchecked") private final ArrayList<MemoryRead>[] reads = new ArrayList[SIZE];
     private final byte[] data = new byte[SIZE]; // initial data
 
     public FinePage(long address, long pc, long instructionCount, Node node, Protection prot) {
@@ -20,8 +20,8 @@ public class FinePage extends Page {
 
     public FinePage(long address, byte[] data, long pc, long instructionCount, Node node, Protection prot) {
         this(address, pc, instructionCount, node, prot);
-        assert data.length == 4096;
-        System.arraycopy(data, 0, this.data, 0, 4096);
+        assert data.length == SIZE;
+        System.arraycopy(data, 0, this.data, 0, SIZE);
     }
 
     @Override
@@ -85,14 +85,14 @@ public class FinePage extends Page {
 
     @Override
     public void clear(long instructionCount, Node node, StepEvent step) {
-        for (int i = 0; i < 4096; i += 8) {
+        for (int i = 0; i < SIZE; i += 8) {
             addUpdate(address + i, (byte) 8, 0, instructionCount, node, step, false);
         }
     }
 
     @Override
     public void overwrite(byte[] update, long instructionCount, Node node, StepEvent step) {
-        for (int i = 0; i < 4096; i += 8) {
+        for (int i = 0; i < SIZE; i += 8) {
             long value = Endianess.get64bitLE(update, i);
             addUpdate(address + i, (byte) 8, value, instructionCount, node, step, false);
         }
@@ -110,7 +110,7 @@ public class FinePage extends Page {
 
     @Override
     public MemoryUpdate getLastUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -166,7 +166,7 @@ public class FinePage extends Page {
 
     @Override
     public MemoryUpdate getNextUpdate(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -205,7 +205,7 @@ public class FinePage extends Page {
 
     @Override
     public MemoryRead getLastRead(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -256,7 +256,7 @@ public class FinePage extends Page {
 
     @Override
     public MemoryRead getNextRead(long addr, long instructionCount) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -295,7 +295,7 @@ public class FinePage extends Page {
 
     @Override
     public List<MemoryUpdate> getPreviousUpdates(long addr, long instructionCount, long max) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -355,7 +355,7 @@ public class FinePage extends Page {
 
     @Override
     public List<MemoryRead> getReads(long addr) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -369,7 +369,7 @@ public class FinePage extends Page {
 
     @Override
     public List<MemoryUpdate> getUpdates(long addr) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
@@ -394,7 +394,7 @@ public class FinePage extends Page {
 
     @Override
     public byte getLastByte(long addr) throws MemoryNotMappedException {
-        if (addr < address || addr >= address + 4096) {
+        if (addr < address || addr >= address + SIZE) {
             throw new AssertionError(String.format("wrong page for address 0x%x", addr));
         }
 
