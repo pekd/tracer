@@ -93,6 +93,25 @@ public class Scanner {
                             error("unexpected char: '" + (char) c + "'");
                         }
                     }
+                } else if (tmp == 0 && c == 'b') {
+                    int digits = 0;
+                    while (true) {
+                        c = read();
+                        if (c == '0' || c == '1') {
+                            digits++;
+                            tmp <<= 1L;
+                            tmp |= c - '0';
+                        } else {
+                            break;
+                        }
+                    }
+                    if (digits == 0) {
+                        if (c == -1) {
+                            error("unexpected eof");
+                        } else {
+                            error("unexpected char: '" + (char) c + "'");
+                        }
+                    }
                 } else if (tmp == 0) {
                     while (c >= '0' && c <= '7') {
                         tmp <<= 3L;
