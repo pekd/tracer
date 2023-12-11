@@ -4,20 +4,28 @@ import org.graalvm.vm.util.io.Endianess;
 
 public class ByteCodeReader extends CodeReader {
     private final byte[] code;
+    private final int offs;
 
     public ByteCodeReader(byte[] code, long pc, boolean isBE) {
         super(pc, isBE);
         this.code = code;
+        this.offs = 0;
+    }
+
+    public ByteCodeReader(byte[] code, long pc, int off, boolean isBE) {
+        super(pc, isBE);
+        this.code = code;
+        this.offs = off;
     }
 
     @Override
     public byte nextI8() {
-        return code[n++];
+        return code[offs + n++];
     }
 
     @Override
     public short nextI16() {
-        int offset = n;
+        int offset = offs + n;
         n += 2;
         if (isBE()) {
             return Endianess.get16bitBE(code, offset);
@@ -28,7 +36,7 @@ public class ByteCodeReader extends CodeReader {
 
     @Override
     public int nextI32() {
-        int offset = n;
+        int offset = offs + n;
         n += 4;
         if (isBE()) {
             return Endianess.get32bitBE(code, offset);
@@ -39,7 +47,7 @@ public class ByteCodeReader extends CodeReader {
 
     @Override
     public long nextI64() {
-        int offset = n;
+        int offset = offs + n;
         n += 8;
         if (isBE()) {
             return Endianess.get64bitBE(code, offset);
@@ -50,7 +58,7 @@ public class ByteCodeReader extends CodeReader {
 
     @Override
     public byte peekI8(int off) {
-        int ptr = n + off;
+        int ptr = offs + n + off;
         if (ptr < 0 || ptr >= code.length) {
             throw new IndexOutOfBoundsException(ptr);
         }
