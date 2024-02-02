@@ -25,7 +25,11 @@ suite = {
     "LGPL-2.1" : {
       "name" : "GNU Lesser General Public License version 2.1",
       "url" : "http://opensource.org/licenses/LGPL-2.1",
-    }
+    },
+    "GPLv3" : {
+      "name" : "GNU General Public License, version 3",
+      "url" : "https://opensource.org/licenses/GPL-3.0",
+    },
   },
 
   "defaultLicense" : "UPL",
@@ -75,6 +79,17 @@ suite = {
       "license" : "UPL",
     },
 
+    "org.graalvm.vm.trcview.arch.z80" : {
+      "subDir" : "projects",
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "org.graalvm.vm.trcview",
+      ],
+      "javaCompliance" : "17+",
+      "workingSets" : "trcview",
+      "license" : "GPLv3",
+    },
+
     "org.graalvm.vm.trcview.arch.custom" : {
       "subDir" : "projects",
       "sourceDirs" : ["src"],
@@ -119,6 +134,7 @@ suite = {
         "org.graalvm.vm.trcview.arch.riscv",
         "org.graalvm.vm.trcview.arch.ppc",
         "org.graalvm.vm.trcview.arch.x86",
+        "org.graalvm.vm.trcview.arch.z80",
         "mx:JUNIT",
       ],
       "javaCompliance" : "17+",
@@ -153,6 +169,7 @@ suite = {
         "org.graalvm.vm.trcview.arch.riscv",
         "org.graalvm.vm.trcview.arch.ppc",
         "org.graalvm.vm.trcview.arch.x86",
+        "org.graalvm.vm.trcview.arch.z80",
         "org.graalvm.vm.trcview.arch.custom",
       ],
       "overlaps" : [
