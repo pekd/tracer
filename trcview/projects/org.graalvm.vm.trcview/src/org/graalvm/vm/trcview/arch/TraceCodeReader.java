@@ -44,4 +44,9 @@ public class TraceCodeReader extends CodeReader {
             return 0;
         }
     }
+
+    @Override
+    public TraceCodeReader clone() {
+        return new TraceCodeReader(trc, getPC(), isBE(), step);
+    }
 }

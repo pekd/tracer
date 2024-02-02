@@ -65,4 +65,7 @@ public abstract class CodeReader {
     public boolean isBE() {
         return isBE;
     }
+
+    @Override
+    public abstract CodeReader clone();
 }

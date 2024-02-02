@@ -32,4 +32,9 @@ public class ShortCodeReader extends CodeReader {
     public int n() {
         return n << 1;
     }
+
+    @Override
+    public ShortCodeReader clone() {
+        return new ShortCodeReader(code, getPC());
+    }
 }

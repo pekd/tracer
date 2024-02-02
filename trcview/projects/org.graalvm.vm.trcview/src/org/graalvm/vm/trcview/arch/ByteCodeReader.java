@@ -64,4 +64,9 @@ public class ByteCodeReader extends CodeReader {
         }
         return code[ptr];
     }
+
+    @Override
+    public ByteCodeReader clone() {
+        return new ByteCodeReader(code, getPC(), offs, isBE());
+    }
 }
