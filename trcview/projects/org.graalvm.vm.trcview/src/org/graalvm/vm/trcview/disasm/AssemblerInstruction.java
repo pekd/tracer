@@ -55,6 +55,15 @@ public class AssemblerInstruction {
 
     @Override
     public String toString() {
-        return mnemonic + " " + String.join(", ", getComponents());
+        Operand[] ops = getOperands();
+        if (ops.length == 0) {
+            return mnemonic;
+        } else {
+            String[] c = new String[ops.length];
+            for (int i = 0; i < c.length; i++) {
+                c[i] = ops[i].toString();
+            }
+            return mnemonic + " " + String.join(", ", c);
+        }
     }
 }
