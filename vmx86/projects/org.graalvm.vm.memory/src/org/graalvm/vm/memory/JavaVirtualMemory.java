@@ -706,32 +706,57 @@ public class JavaVirtualMemory extends VirtualMemory {
     // TODO: this is *not* atomic for now!
     @Override
     public boolean cmpxchgI8(long address, byte expected, byte x) {
-        setI8(address, x);
-        return true;
+        byte actual = getI8(address);
+        if (actual == expected) {
+            setI8(address, x);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean cmpxchgI16(long address, short expected, short x) {
-        setI16(address, x);
-        return true;
+        short actual = getI16(address);
+        if (actual == expected) {
+            setI16(address, x);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean cmpxchgI32(long address, int expected, int x) {
-        setI32(address, x);
-        return true;
+        int actual = getI32(address);
+        if (actual == expected) {
+            setI32(address, x);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean cmpxchgI64(long address, long expected, long x) {
-        setI64(address, x);
-        return true;
+        long actual = getI64(address);
+        if (actual == expected) {
+            setI64(address, x);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean cmpxchgI128(long address, Vector128 expected, Vector128 x) {
-        setI128(address, x);
-        return true;
+        Vector128 actual = getI128(address);
+        if (actual == expected) {
+            setI128(address, x);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @TruffleBoundary
