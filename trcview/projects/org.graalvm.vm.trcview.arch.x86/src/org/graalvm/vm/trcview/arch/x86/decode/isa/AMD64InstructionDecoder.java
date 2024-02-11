@@ -240,6 +240,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lea.Leal;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lea.Leaq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lea.Leaw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Leave.Leaveq;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lfence;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgb;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgl;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgq;
@@ -4016,6 +4017,8 @@ public class AMD64InstructionDecoder {
                                     return new Ldmxcsr(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                                 case 3:
                                     return new Stmxcsr(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                                case 5:
+                                    return new Lfence(pc, args.getOp(instruction, instructionLength));
                                 case 6:
                                     return new Mfence(pc, args.getOp(instruction, instructionLength));
                                 case 7:
