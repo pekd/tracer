@@ -374,6 +374,9 @@ import org.graalvm.vm.x86.isa.instruction.Pmullw;
 import org.graalvm.vm.x86.isa.instruction.Pmuludq;
 import org.graalvm.vm.x86.isa.instruction.Pop.Popq;
 import org.graalvm.vm.x86.isa.instruction.Pop.Popw;
+import org.graalvm.vm.x86.isa.instruction.Popcnt.Popcntl;
+import org.graalvm.vm.x86.isa.instruction.Popcnt.Popcntq;
+import org.graalvm.vm.x86.isa.instruction.Popcnt.Popcntw;
 import org.graalvm.vm.x86.isa.instruction.Popf.Popfq;
 import org.graalvm.vm.x86.isa.instruction.Popf.Popfw;
 import org.graalvm.vm.x86.isa.instruction.Por;
@@ -3409,6 +3412,20 @@ public class AMD64InstructionDecoder {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (sizeOverride) {
                             return new Pmuludq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else {
+                            return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
+                        }
+                    }
+                    case AMD64Opcode.POPCNT_R_RM: {
+                        Args args = new Args(code, rex, segment, addressOverride);
+                        if (isREPZ) {
+                            if (rex != null && rex.w) {
+                                return new Popcntq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            } else if (sizeOverride) {
+                                return new Popcntw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            } else {
+                                return new Popcntl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            }
                         } else {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                         }

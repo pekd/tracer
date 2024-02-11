@@ -341,6 +341,8 @@ public class AMD64Opcode {
 
     public static final byte POP_RM = (byte) 0x8F;
 
+    public static final byte POPCNT_R_RM = (byte) 0xB8;
+
     public static final byte POPF = (byte) 0x9D;
 
     public static final byte POR_X_XM = (byte) 0xEB;
