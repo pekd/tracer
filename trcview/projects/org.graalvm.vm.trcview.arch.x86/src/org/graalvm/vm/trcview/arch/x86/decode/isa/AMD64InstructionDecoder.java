@@ -148,6 +148,7 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmps.Cmpsd;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmps.Cmpsq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmps.Cmpsw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmpss;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmpxchg.Cmpxchgb;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmpxchg.Cmpxchgl;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmpxchg.Cmpxchgq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Cmpxchg.Cmpxchgw;
@@ -239,6 +240,10 @@ import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lea.Leal;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lea.Leaq;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Lea.Leaw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.Leave.Leaveq;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgb;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgl;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgq;
+import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockCmpxchg.LockCmpxchgw;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockDec.LockDecb;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockDec.LockDecl;
 import org.graalvm.vm.trcview.arch.x86.decode.isa.instruction.LockDec.LockDecq;
@@ -2598,12 +2603,30 @@ public class AMD64InstructionDecoder {
                             return new IllegalInstruction(pc, args.getOp(instruction, instructionLength));
                         }
                     }
+                    case AMD64Opcode.CMPXCHG_RM8_R8: {
+                        Args args = new Args(code, rex, segment, addressOverride);
+                        if (lock) {
+                            return new LockCmpxchgb(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        } else {
+                            return new Cmpxchgb(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                        }
+                    }
                     case AMD64Opcode.CMPXCHG_RM_R: {
                         Args args = new Args(code, rex, segment, addressOverride);
                         if (rex != null && rex.w) {
-                            return new Cmpxchgq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            if (lock) {
+                                return new LockCmpxchgq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            } else {
+                                return new Cmpxchgq(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            }
                         } else if (sizeOverride) {
-                            return new Cmpxchgw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            if (lock) {
+                                return new LockCmpxchgw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            } else {
+                                return new Cmpxchgw(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
+                            }
+                        } else if (lock) {
+                            return new LockCmpxchgl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                         } else {
                             return new Cmpxchgl(pc, args.getOp(instruction, instructionLength), args.getOperandDecoder());
                         }
