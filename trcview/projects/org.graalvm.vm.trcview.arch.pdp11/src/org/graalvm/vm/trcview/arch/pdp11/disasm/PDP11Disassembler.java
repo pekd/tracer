@@ -423,7 +423,12 @@ public class PDP11Disassembler extends Disassembler {
 
     @Override
     public String[] getDisassembly(CodeReader code) {
-        return getDisassembly(disassemble(code));
+        AssemblerInstruction asm = disassemble(code);
+        if (asm == null) {
+            return null;
+        } else {
+            return getDisassembly(asm);
+        }
     }
 
     @Override
