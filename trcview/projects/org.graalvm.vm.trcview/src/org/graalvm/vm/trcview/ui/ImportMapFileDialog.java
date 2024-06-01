@@ -54,7 +54,7 @@ public class ImportMapFileDialog extends JDialog {
         center.add(LabeledPairLayout.LABEL, new JLabel("Base address:"));
         center.add(LabeledPairLayout.COMPONENT, baseAddress = new JFormattedTextField(fmt));
 
-        FileDialog save = new FileDialog(this, "Open...", FileDialog.SAVE);
+        FileDialog save = new FileDialog(this, "Open...", FileDialog.LOAD);
         JPanel fileinput = new JPanel(new BorderLayout());
         JTextField filenameView = new JTextField();
         filenameView.setEditable(false);
