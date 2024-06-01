@@ -358,7 +358,7 @@ public class DataView extends JPanel implements StepListener {
         editor.addActionListener(e -> {
             Element element = editor.getCurrentElement();
             if (element instanceof AddressElement) {
-                jump(((AddressElement) element).getAddress());
+                jump(truncptr(((AddressElement) element).getAddress()));
             } else if (element instanceof NumberElement) {
                 jump(((NumberElement) element).getValue());
             } else if (element instanceof LineAddressElement) {
@@ -461,6 +461,29 @@ public class DataView extends JPanel implements StepListener {
             }
         } else {
             return new Type(new Type(DataType.VOID), info);
+        }
+    }
+
+    private long truncptr(long ptr) {
+        ArchitectureTypeInfo info = trc.getArchitecture().getTypeInfo();
+        if (info != null) {
+            return truncptr(ptr, info.getPointerSize());
+        } else {
+            return ptr;
+        }
+    }
+
+    private static long truncptr(long ptr, int size) {
+        switch (size) {
+            case 1:
+                return ptr & 0xFF;
+            case 2:
+                return ptr & 0xFFFF;
+            case 4:
+                return ptr & 0xFFFFFFFFL;
+            case 8:
+            default:
+                return ptr;
         }
     }
 
