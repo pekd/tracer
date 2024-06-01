@@ -313,7 +313,7 @@ public class InstructionView extends JPanel {
         buf.append("</span></pre></body></html>");
     }
 
-    private String format(StepEvent step, StepEvent next) {
+    private String format(StepEvent step, StepEvent next, boolean showComment) {
         StepFormat fmt = step.getFormat();
         Location loc = Location.getLocation(trc, step);
         StringBuilder buf = new StringBuilder();
@@ -335,7 +335,7 @@ public class InstructionView extends JPanel {
                 }
             }
         }
-        if (comment != null) {
+        if (showComment && comment != null) {
             comment(buf, loc.getAsm(tabSize), comment);
         }
         return buf.toString();
@@ -593,11 +593,11 @@ public class InstructionView extends JPanel {
                     } else {
                         next = (StepEvent) nn;
                     }
-                    String result = format(step, next);
+                    String result = format(step, next, true);
                     updatePrototype(result);
                     return result;
                 } else {
-                    String result = format(step, null);
+                    String result = format(step, null, true);
                     updatePrototype(result);
                     return result;
                 }
@@ -611,6 +611,7 @@ public class InstructionView extends JPanel {
                 Location loc = Location.getLocation(trc, firstStep);
                 StringBuilder buf = new StringBuilder();
                 StepEvent next = null;
+                String syscall = null;
                 if (((BlockNode) n).isInterrupt()) {
                     buf.append(format((BlockNode) n));
                 } else {
@@ -621,9 +622,16 @@ public class InstructionView extends JPanel {
                         } else {
                             next = (StepEvent) nn;
                         }
-                        buf.append(format(step, next));
+                        buf.append(format(step, next, false));
+                        if (step.getType() == InstructionType.SYSCALL) {
+                            CpuState ns = next == null ? null : next.getState();
+                            syscall = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), ns, trc);
+                        }
                     } else {
-                        buf.append(format(step, null));
+                        buf.append(format(step, null, false));
+                        if (step.getType() == InstructionType.SYSCALL) {
+                            syscall = trc.getArchitecture().getSyscallDecoder().decode(step.getState(), null, trc);
+                        }
                     }
                 }
                 if (loc.getSymbol() != null) {
@@ -650,6 +658,13 @@ public class InstructionView extends JPanel {
                     CpuState ns = next == null ? null : next.getState();
                     String decoded = trc.getArchitecture().getCallDecoder().decode(fun, step.getState(), ns, trc);
                     String comments = comments(step);
+                    if (syscall != null) {
+                        if (comments == null) {
+                            comments = syscall;
+                        } else {
+                            comments = syscall + "; " + comments;
+                        }
+                    }
                     if (decoded == null) {
                         decoded = comments;
                     } else if (comments != null) {
@@ -657,7 +672,7 @@ public class InstructionView extends JPanel {
                     }
                     if (decoded != null) {
                         int length = buf.length() - step.getFormat().formatAddress(step.getPC()).length() - 3;
-                        String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+                        String str = escapeHTML(buf.toString());
                         buf = new StringBuilder();
                         buf.append("<html><head><style>").append(STYLE).append("</style></head><body><pre>");
                         buf.append(str);
@@ -672,6 +687,13 @@ public class InstructionView extends JPanel {
                     }
                 } else {
                     String comments = comments(step);
+                    if (syscall != null) {
+                        if (comments == null) {
+                            comments = syscall;
+                        } else {
+                            comments = syscall + "; " + comments;
+                        }
+                    }
                     if (comments != null) {
                         int length = buf.length() - step.getFormat().formatAddress(step.getPC()).length() - 3;
                         String str = buf.toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;");
