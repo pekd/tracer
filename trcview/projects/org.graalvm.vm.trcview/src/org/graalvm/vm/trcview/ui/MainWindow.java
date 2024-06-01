@@ -95,6 +95,7 @@ import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Field;
 import org.graalvm.vm.trcview.analysis.type.Function;
 import org.graalvm.vm.trcview.analysis.type.NameAlreadyUsedException;
+import org.graalvm.vm.trcview.analysis.type.Representation;
 import org.graalvm.vm.trcview.analysis.type.Struct;
 import org.graalvm.vm.trcview.analysis.type.UserDefinedType;
 import org.graalvm.vm.trcview.analysis.type.UserTypeDatabase;
@@ -160,6 +161,7 @@ public class MainWindow extends JFrame implements TraceListenable {
     private JMenuItem loadPrototypes;
     private JMenuItem loadMap;
     private JMenuItem loadIdaMap;
+    private JMenuItem loadMapDialog;
     private JMenuItem generateIDC;
     private JMenuItem loadSymbols;
     private JMenuItem saveSymbols;
@@ -207,6 +209,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         FileDialog loadSess = new FileDialog(this, "Load session...", FileDialog.LOAD);
         FileDialog saveSess = new FileDialog(this, "Save session...", FileDialog.SAVE);
         ExportMemoryDialog exportMemoryDialog = new ExportMemoryDialog(this);
+        ImportMapFileDialog importMapDialog = new ImportMapFileDialog(this);
 
         setLayout(new BorderLayout());
         add(BorderLayout.CENTER, view = new TraceView(this::setStatus, this::setPosition));
@@ -323,7 +326,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
-                        loadMap(new File(filename));
+                        loadMap(new File(filename), 0);
                     } catch (IOException ex) {
                         MessageBox.showError(MainWindow.this, ex);
                     }
@@ -345,7 +348,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
-                        loadIdaMap(new File(filename));
+                        loadIdaMap(new File(filename), 0);
                     } catch (IOException ex) {
                         MessageBox.showError(MainWindow.this, ex);
                     }
@@ -355,6 +358,18 @@ public class MainWindow extends JFrame implements TraceListenable {
             worker.execute();
         });
         loadIdaMap.setEnabled(false);
+        loadMapDialog = new JMenuItem("Load map (advanced)...");
+        loadMapDialog.setMnemonic('i');
+        loadMapDialog.addActionListener(e -> {
+            if (trc == null) {
+                return;
+            }
+
+            SwingUtilities.invokeLater(importMapDialog::focus);
+            importMapDialog.setTraceAnalyzer(trc);
+            importMapDialog.setVisible(true);
+        });
+        loadMapDialog.setEnabled(false);
         generateIDC = new JMenuItem("Generate IDC...");
         generateIDC.setMnemonic('i');
         generateIDC.addActionListener(e -> {
@@ -458,6 +473,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             fileMenu.add(loadPrototypes);
             fileMenu.add(loadMap);
             fileMenu.add(loadIdaMap);
+            fileMenu.add(loadMapDialog);
             fileMenu.addSeparator();
             fileMenu.add(generateIDC);
             fileMenu.addSeparator();
@@ -478,6 +494,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             fileMenu.add(loadPrototypes);
             fileMenu.add(loadMap);
             fileMenu.add(loadIdaMap);
+            fileMenu.add(loadMapDialog);
             fileMenu.addSeparator();
             fileMenu.add(generateIDC);
             fileMenu.addSeparator();
@@ -914,6 +931,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         loadPrototypes.setEnabled(true);
         loadMap.setEnabled(true);
         loadIdaMap.setEnabled(true);
+        loadMapDialog.setEnabled(true);
         generateIDC.setEnabled(true);
         loadSymbols.setEnabled(true);
         saveSymbols.setEnabled(true);
@@ -1049,15 +1067,17 @@ public class MainWindow extends JFrame implements TraceListenable {
         log.info("Prototype file loaded");
     }
 
-    public void loadMap(File file) throws IOException {
+    public void loadMap(File file, long relocate) throws IOException {
         log.info("Loading map file " + file + "...");
         setStatus("Loading map file " + file + "...");
         loadMap.setEnabled(false);
+        loadMapDialog.setEnabled(false);
         boolean reanalyze = false;
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
             Set<Long> globals = new HashSet<>();
+            TypedMemory mem = trc.getTypedMemory();
             while ((line = in.readLine()) != null) {
                 lineno++;
                 line = line.trim();
@@ -1076,6 +1096,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                     log.info("Parse error in line " + lineno + ": invalid type");
                     continue;
                 }
+                addr += relocate;
                 String name = parts[2].trim();
                 char type = parts[1].charAt(0);
                 switch (type) {
@@ -1097,6 +1118,20 @@ public class MainWindow extends JFrame implements TraceListenable {
                         }
                         break;
                     }
+                    case 'd':
+                    case 'D': {
+                        if (mem != null) {
+                            Variable var = mem.get(addr);
+                            if (var != null) {
+                                mem.setName(var, name);
+                            } else {
+                                StepFormat fmt = trc.getArchitecture().getFormat();
+                                Representation repr = fmt.numberfmt == StepFormat.NUMBERFMT_OCT ? Representation.OCT : Representation.HEX;
+                                mem.set(addr, new org.graalvm.vm.trcview.analysis.type.Type(DataType.U8, repr), name);
+                            }
+                        }
+                        break;
+                    }
                 }
             }
             setStatus("Map file loaded");
@@ -1107,6 +1142,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             throw t;
         } finally {
             loadMap.setEnabled(true);
+            loadMapDialog.setEnabled(true);
             if (reanalyze) {
                 trc.reanalyze();
             }
@@ -1114,7 +1150,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         log.info("Map file loaded");
     }
 
-    public void loadIdaMap(File file) throws IOException {
+    public void loadIdaMap(File file, long relocate) throws IOException {
         log.info("Loading map file " + file + "...");
         setStatus("Loading map file " + file + "...");
         loadIdaMap.setEnabled(false);
@@ -1142,6 +1178,7 @@ public class MainWindow extends JFrame implements TraceListenable {
                     log.info("Parse error in line " + lineno + ": invalid address");
                     continue;
                 }
+                addr += relocate;
                 String name = parts[1].trim();
                 if (!globals.contains(addr)) {
                     ComputedSymbol sym = trc.getComputedSymbol(addr);
