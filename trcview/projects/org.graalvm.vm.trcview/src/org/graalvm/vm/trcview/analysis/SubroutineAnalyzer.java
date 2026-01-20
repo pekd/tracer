@@ -133,6 +133,8 @@ public class SubroutineAnalyzer {
         while (!code.contains(addr)) {
             try {
                 Node n = trc.getMapNode(addr, step);
+                // check if this is within the same memory segment; this is important to skip things
+                // like empty RAM space
                 if (n != node) {
                     break;
                 }
@@ -140,7 +142,7 @@ public class SubroutineAnalyzer {
                 break;
             }
 
-            // figure out if this is a valid instruction as well as its instruction
+            // figure out if this is a valid instruction as well as its size
             int len = disasm.getLength(getCodeReader(addr));
             if (len == 0) {
                 break;
@@ -199,7 +201,7 @@ public class SubroutineAnalyzer {
                 // there was a name; transfer it over
                 ComputedSymbol sym = trc.getComputedSymbol(addr);
                 if (sym != null) {
-                    // this was a loc/sub
+                    // this was a loc/sub, rename it
                     trc.renameSymbol(sym, name);
                     mem.set(addr, DefaultTypes.getCodeType(len));
                 } else {
