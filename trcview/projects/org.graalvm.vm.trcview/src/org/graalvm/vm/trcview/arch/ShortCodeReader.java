@@ -29,6 +29,11 @@ public class ShortCodeReader extends CodeReader {
     }
 
     @Override
+    public short peekI16(int offset) {
+        return code[n + offset / 2];
+    }
+
+    @Override
     public int n() {
         return n << 1;
     }

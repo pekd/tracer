@@ -66,6 +66,45 @@ public class ByteCodeReader extends CodeReader {
     }
 
     @Override
+    public short peekI16(int off) {
+        int ptr = offs + n + off;
+        if (ptr < 0 || ptr + 1 >= code.length) {
+            throw new IndexOutOfBoundsException(ptr);
+        }
+        if (isBE()) {
+            return Endianess.get16bitBE(code, ptr);
+        } else {
+            return Endianess.get16bitLE(code, ptr);
+        }
+    }
+
+    @Override
+    public int peekI32(int off) {
+        int ptr = offs + n + off;
+        if (ptr < 0 || ptr + 3 >= code.length) {
+            throw new IndexOutOfBoundsException(ptr);
+        }
+        if (isBE()) {
+            return Endianess.get32bitBE(code, ptr);
+        } else {
+            return Endianess.get32bitLE(code, ptr);
+        }
+    }
+
+    @Override
+    public long peekI64(int off) {
+        int ptr = offs + n + off;
+        if (ptr < 0 || ptr + 7 >= code.length) {
+            throw new IndexOutOfBoundsException(ptr);
+        }
+        if (isBE()) {
+            return Endianess.get64bitBE(code, ptr);
+        } else {
+            return Endianess.get64bitLE(code, ptr);
+        }
+    }
+
+    @Override
     public ByteCodeReader clone() {
         return new ByteCodeReader(code, getPC(), offs, isBE());
     }
