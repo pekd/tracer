@@ -4,6 +4,8 @@ import static org.graalvm.vm.trcview.disasm.Type.OTHER;
 
 import org.graalvm.vm.posix.elf.Symbol;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.type.DataType;
+import org.graalvm.vm.trcview.analysis.type.Type;
 import org.graalvm.vm.trcview.arch.io.InstructionType;
 import org.graalvm.vm.trcview.arch.io.StepFormat;
 import org.graalvm.vm.trcview.data.Variable;
@@ -77,7 +79,27 @@ public abstract class Disassembler {
                     Variable v = trc.getTypedMemory().get(addr);
                     if (v != null) {
                         StepFormat fmt = trc.getArchitecture().getFormat();
-                        return v.getName(fmt);
+                        String name = v.getName(fmt);
+                        Type type = v.getType();
+                        long offset = addr - v.getAddress();
+                        if (type.getElements() > 1) {
+                            // is an array
+                            long idx = offset / type.getElementSize();
+                            long off = offset % type.getElementSize();
+                            if (off != 0) {
+                                return name + "[" + idx + "]+" + fmt.formatOffset(off);
+                            } else if (idx != 0) {
+                                return name + "[" + idx + "]";
+                            } else {
+                                return name;
+                            }
+                        } else {
+                            if (offset != 0) {
+                                return v.getName() + "+" + fmt.formatOffset(offset);
+                            } else {
+                                return v.getName(fmt);
+                            }
+                        }
                     } else {
                         return null;
                     }
