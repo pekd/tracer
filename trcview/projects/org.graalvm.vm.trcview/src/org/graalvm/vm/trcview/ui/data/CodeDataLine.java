@@ -100,6 +100,9 @@ public class CodeDataLine extends DataLine {
         int len = 0;
         for (Token token : operand.getTokens()) {
             String text = token.getText();
+            if (text == null) {
+                text = Long.toString(token.getValue());
+            }
             switch (token.getType()) {
                 case NUMBER:
                     result.add(new NumberElement(text, Element.TYPE_NUMBER, token.getValue()));
