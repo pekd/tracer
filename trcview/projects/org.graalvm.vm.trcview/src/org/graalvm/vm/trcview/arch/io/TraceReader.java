@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 
 public abstract class TraceReader {
     private Architecture arch;
@@ -25,5 +26,9 @@ public abstract class TraceReader {
 
     public Architecture getArchitecture() {
         return arch;
+    }
+
+    public void finish(@SuppressWarnings("unused") TraceAnalyzer trc) {
+        // nothing
     }
 }

@@ -1000,6 +1000,7 @@ public class MainWindow extends JFrame implements TraceListenable {
             final BlockNode rootNode = root;
             EventQueue.invokeLater(() -> {
                 TraceAnalyzer t = new Local(reader.getArchitecture(), rootNode, threads, analysis);
+                reader.finish(t);
                 setTrace(t);
                 // setTrace(new LocalDatabase(reader.getArchitecture(), root, analysis));
                 for (Analyzer a : analyzers) {

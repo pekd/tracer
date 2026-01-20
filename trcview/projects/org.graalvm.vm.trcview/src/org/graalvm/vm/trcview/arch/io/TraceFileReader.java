@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.arch.Architecture;
+import org.graalvm.vm.trcview.net.TraceAnalyzer;
 import org.graalvm.vm.util.io.BEInputStream;
 import org.graalvm.vm.util.io.WordInputStream;
 import org.graalvm.vm.util.log.Trace;
@@ -50,6 +51,11 @@ public class TraceFileReader extends TraceReader {
         } catch (EOFException e) {
             return null;
         }
+    }
+
+    @Override
+    public void finish(TraceAnalyzer trc) {
+        reader.finish(trc);
     }
 
     @Override
