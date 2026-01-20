@@ -90,6 +90,7 @@ import org.graalvm.vm.posix.elf.ElfStrings;
 import org.graalvm.vm.trcview.analysis.Analysis;
 import org.graalvm.vm.trcview.analysis.Analyzer;
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.SymbolName;
 import org.graalvm.vm.trcview.analysis.memory.VirtualMemorySnapshot;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.Field;
@@ -1389,6 +1390,7 @@ public class MainWindow extends JFrame implements TraceListenable {
         Map<Integer, String> threadNames = new HashMap<>();
         Map<Integer, Long> threadInstructions = new HashMap<>();
         Map<String, String> types = new HashMap<>();
+        SymbolName symbolName = new SymbolName(trc.getArchitecture().getFormat());
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line;
             int lineno = 0;
@@ -1644,6 +1646,29 @@ public class MainWindow extends JFrame implements TraceListenable {
                             ok = false;
                             continue;
                         }
+                    } else if (everything && address.startsWith("LOC:")) {
+                        // location
+                        long pc;
+                        if (data.length != 1) {
+                            log.info("Syntax error in line " + lineno + ": invalid location");
+                            setStatus("Syntax error in line " + lineno + ": invalid location");
+                            ok = false;
+                            continue;
+                        }
+                        try {
+                            pc = Long.parseUnsignedLong(address.substring(4), 16);
+                        } catch (NumberFormatException e) {
+                            log.info("Syntax error in line " + lineno + ": invalid address");
+                            setStatus("Syntax error in line " + lineno + ": invalid address");
+                            ok = false;
+                            continue;
+                        }
+                        trc.addLocation(pc);
+                        // add the name if it is not the generic loc_addr
+                        ComputedSymbol sym = trc.getComputedSymbol(pc);
+                        if (sym != null && !symbolName.loc(pc).equals(data[0])) {
+                            trc.renameSymbol(sym, data[0]);
+                        }
                     } else {
                         // symbol
                         // first, flush all pending types
@@ -1820,6 +1845,15 @@ public class MainWindow extends JFrame implements TraceListenable {
                                     TextSerializer.encode(sym.name, sym.prototype.returnType.toString(), String.join(", ", sym.prototype.getArgumentsAsString())));
                 } else {
                     out.printf("%x=%s\n", sym.address, TextSerializer.encode(sym.name));
+                }
+            });
+            Set<ComputedSymbol> locations = trc.getLocations();
+            locations.stream().sorted((a, b) -> Long.compareUnsigned(a.address, b.address)).forEach(sym -> {
+                if (sym.prototype != null) {
+                    out.printf("LOC:%x=%s\n", sym.address,
+                                    TextSerializer.encode(sym.name, sym.prototype.returnType.toString(), String.join(", ", sym.prototype.getArgumentsAsString())));
+                } else {
+                    out.printf("LOC:%x=%s\n", sym.address, TextSerializer.encode(sym.name));
                 }
             });
             if (everything) {
