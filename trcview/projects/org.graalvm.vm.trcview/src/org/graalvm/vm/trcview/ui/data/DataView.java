@@ -15,6 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
 import org.graalvm.vm.trcview.analysis.ComputedSymbol;
+import org.graalvm.vm.trcview.analysis.SubroutineAnalyzer;
 import org.graalvm.vm.trcview.analysis.type.ArchitectureTypeInfo;
 import org.graalvm.vm.trcview.analysis.type.DataType;
 import org.graalvm.vm.trcview.analysis.type.DefaultTypes;
@@ -254,10 +255,36 @@ public class DataView extends JPanel implements StepListener {
                 }
 
                 Variable var = mem.get(addr);
+                String name = null;
                 if (var != null) {
+                    name = var.getRawName();
                     trc.getTypedMemory().set(addr, null);
                 }
-                mem.set(addr, DefaultTypes.getCodeType(len));
+                if (name != null) {
+                    mem.set(addr, DefaultTypes.getCodeType(len), name);
+                } else {
+                    mem.set(addr, DefaultTypes.getCodeType(len));
+                }
+                model.update();
+                editor.requestFocus();
+            }
+        });
+
+        KeyStroke shiftC = KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.SHIFT_DOWN_MASK);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(shiftC, shiftC);
+        getActionMap().put(shiftC, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Disassembler disasm = trc.getArchitecture().getDisassembler(trc);
+                if (disasm == null) {
+                    return;
+                }
+
+                int line = editor.getCursorLine();
+                long addr = model.getAddressByLine(line);
+
+                SubroutineAnalyzer analyzer = new SubroutineAnalyzer(trc, step.getStep());
+                analyzer.analyzeCode(addr);
                 model.update();
                 editor.requestFocus();
             }

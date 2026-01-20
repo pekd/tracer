@@ -57,6 +57,10 @@ public abstract class Disassembler {
 
     public abstract InstructionType getType(CodeReader code);
 
+    public BranchTarget getBranchTarget(@SuppressWarnings("unused") CodeReader code) {
+        return null;
+    }
+
     public String getName(long addr) {
         if (trc != null) {
             if (!trc.isSymbolize()) {

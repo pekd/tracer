@@ -59,6 +59,10 @@ public interface TraceAnalyzer {
 
     void addSubroutine(long pc, String name, Prototype prototype);
 
+    void addSubroutine(long pc);
+
+    void addLocation(long pc);
+
     void reanalyze();
 
     void refresh();
