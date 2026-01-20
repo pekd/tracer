@@ -86,7 +86,7 @@ public abstract class Disassembler {
                             long idx = offset / type.getElementSize();
                             long off = offset % type.getElementSize();
                             if (off != 0) {
-                                return name + "[" + idx + "]+" + fmt.formatOffset(off);
+                                return name + "[" + idx + "]" + fmt.formatOffset(off);
                             } else if (idx != 0) {
                                 return name + "[" + idx + "]";
                             } else {
@@ -94,7 +94,7 @@ public abstract class Disassembler {
                             }
                         } else {
                             if (offset != 0) {
-                                return v.getName() + "+" + fmt.formatOffset(offset);
+                                return v.getName() + fmt.formatOffset(offset);
                             } else {
                                 return v.getName(fmt);
                             }

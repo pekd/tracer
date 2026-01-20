@@ -155,7 +155,7 @@ public class Autocomment {
         }
     }
 
-    private static String decode(TraceAnalyzer trc, Type type, long off, MemoryEvent access) {
+    private static String decode(TraceAnalyzer trc, Type type, long off, MemoryEvent access, StepFormat fmt) {
         long offset = off;
         String prefix = "";
 
@@ -174,14 +174,14 @@ public class Autocomment {
             for (Field field : struct.getFields()) {
                 if (field.getOffset() <= offset && field.end() > offset) {
                     // found it
-                    return prefix + "." + field.getName() + decode(trc, field.getType(), offset - field.getOffset(), access);
+                    return prefix + "." + field.getName() + decode(trc, field.getType(), offset - field.getOffset(), access, fmt);
                 }
             }
             log.log(Levels.ERROR, "Field not found at offset " + offset + " in struct " + struct);
             return prefix + " = ??? (field not found)";
         } else {
             if (offset != 0) {
-                return prefix + " (+" + offset + ") = " + data(trc, type, access);
+                return prefix + " (" + fmt.formatOffset(offset) + ") = " + data(trc, type, access);
             } else {
                 return prefix + " = " + data(trc, type, access);
             }
@@ -215,12 +215,14 @@ public class Autocomment {
                 long off = offset % type.getElementSize();
                 if (type.getType() == DataType.STRUCT) {
                     // we got a struct
-                    return name + "[" + idx + "]" + decode(trc, type.getElementType(), off, access);
+                    return name + "[" + idx + "]" + decode(trc, type.getElementType(), off, access, fmt);
                 } else {
                     return name + "[" + idx + "] = " + data(trc, type, access);
                 }
             } else if (type.getType() == DataType.STRUCT) {
-                return name + decode(trc, type, offset, access);
+                return name + decode(trc, type, offset, access, fmt);
+            } else if (offset != 0) {
+                return name + " (" + fmt.formatOffset(offset) + ") = " + data(trc, type, access);
             } else {
                 return name + " = " + data(trc, type, access);
             }
