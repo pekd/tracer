@@ -93,13 +93,13 @@ public class SubroutineAnalyzer {
 
     private void addLocation(long addr) {
         trc.addLocation(addr);
-        log.log(Levels.INFO, () -> String.format("adding loc: 0x%X\n", addr));
+        log.log(Levels.INFO, () -> String.format("adding loc: 0x%X", addr));
     }
 
     private void addSubroutine(long addr) {
         // TODO: track the subroutine size here
         trc.addSubroutine(addr);
-        log.log(Levels.INFO, () -> String.format("adding sub: 0x%X\n", addr));
+        log.log(Levels.INFO, () -> String.format("adding sub: 0x%X", addr));
     }
 
     public void analyzeCode(long address) {
