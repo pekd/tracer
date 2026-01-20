@@ -101,6 +101,14 @@ public class MockTraceAnalyzer implements TraceAnalyzer {
 
     }
 
+    public void addSubroutine(long pc) {
+
+    }
+
+    public void addLocation(long pc) {
+
+    }
+
     @Override
     public void reanalyze() {
 
